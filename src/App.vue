@@ -6,6 +6,7 @@
         后端：风险因子 + 行为评分 + 自动对冲引擎<br>
         前端：实时状态总览 + 标的行为画像 + Greeks 风险水位（Vue3）
       </p>
+      <ScoreGuideline class="guideline" />
     </aside>
     <main class="main">
       <section class="admin-bar">
@@ -80,6 +81,7 @@ import { computed, onMounted, ref } from "vue";
 import RiskSummaryCard from "./components/RiskSummaryCard.vue";
 import SymbolBehaviorCard from "./components/SymbolBehaviorCard.vue";
 import GreeksWaterLevel from "./components/GreeksWaterLevel.vue";
+import ScoreGuideline from "./components/ScoreGuideline.vue";
 import { fetchAiState, type AiStateResponse, rebuildBehavior, type BehaviorRebuildResponse } from "./api/client";
 
 const aiState = ref<AiStateResponse | null>(null);
@@ -139,16 +141,23 @@ onMounted(loadAiState);
 .sidebar {
   padding: 24px 20px;
   border-right: 1px solid rgba(30, 64, 175, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
   background: radial-gradient(circle at top left, #111827 0, #020617 70%);
-}
-.sidebar h1 {
-  margin: 0 0 12px;
-  font-size: 1.15rem;
+  flex-shrink: 0;
 }
 .desc {
   font-size: 0.8rem;
   color: #9ca3af;
   line-height: 1.4;
+  margin: 0;
+  flex-shrink: 0;
+}
+.guideline {
+  flex: 1;
+  min-height: 0;
 }
 .main {
   padding: 20px 24px;
