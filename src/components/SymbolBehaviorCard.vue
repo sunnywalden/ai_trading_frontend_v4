@@ -4,7 +4,7 @@
       <h3>{{ symbol }}</h3>
       <span class="tier" :class="'tier-' + tier.toLowerCase()">{{ tier }}</span>
     </div>
-    <p class="label">行为画像（Demo 静态数据，可接后端 /behavior API）</p>
+    <p class="label">行为画像（基于历史交易数据实时计算）</p>
 
     <div class="grid">
       <div class="metric">

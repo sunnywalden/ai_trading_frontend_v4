@@ -65,8 +65,10 @@ export async function runAutoHedgeOnce(): Promise<{ status: string; detail: stri
   return data;
 }
 
-export async function fetchAiState(): Promise<AiStateResponse> {
-  const { data } = await api.get<AiStateResponse>("/ai/state");
+export async function fetchAiState(window_days?: number): Promise<AiStateResponse> {
+  const { data } = await api.get<AiStateResponse>("/ai/state", {
+    params: window_days ? { window_days } : undefined
+  });
   return data;
 }
 

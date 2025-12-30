@@ -282,7 +282,7 @@ npm install pinia
 **解决方案**：
 
 - 检查后端日志确认计算是否成功
-- 确认后端 `/api/behavior/rebuild` 接口返回正确
+- 确认后端 `/api/avior/rebuild` 接口返回正确
 - 尝试手动刷新页面或点击"刷新状态"按钮
 
 ### 3. 样式显示异常
