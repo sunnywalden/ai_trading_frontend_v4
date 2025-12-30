@@ -20,13 +20,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 import { fetchHealth, runAutoHedgeOnce, type HealthResponse } from "../api/client";
 
 const health = ref<HealthResponse | null>(null);
 const loading = ref(false);
 const running = ref(false);
 const message = ref("");
+
+// 监听外部刷新触发
+const refreshTrigger = inject<any>('refreshTrigger', ref(0));
+watch(refreshTrigger, () => {
+  load();
+});
 
 const modeClass = computed(() => {
   if (!health.value) return "badge-gray";

@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, provide, ref } from "vue";
 import RiskSummaryCard from "./components/RiskSummaryCard.vue";
 import SymbolBehaviorCard from "./components/SymbolBehaviorCard.vue";
 import GreeksWaterLevel from "./components/GreeksWaterLevel.vue";
@@ -88,9 +88,14 @@ const aiState = ref<AiStateResponse | null>(null);
 const loading = ref(false);
 const errorMsg = ref("");
 
-const behaviorWindowDays = ref(60);
+const behaviorWindowDays = ref(15);
 const rebuilding = ref(false);
 const rebuildMsg = ref("");
+
+// 提供刷新函数给子组件
+const refreshTrigger = ref(0);
+provide('refreshTrigger', refreshTrigger);
+provide('loadAiState', loadAiState);
 
 async function onRebuildBehavior() {
   if (rebuilding.value) return;
@@ -101,6 +106,8 @@ async function onRebuildBehavior() {
     rebuildMsg.value = `已重算 ${resp.symbols_processed.length} 个标的的行为评分`;
     // 重算后自动刷新 AI 状态
     await loadAiState();
+    // 触发全局刷新
+    refreshTrigger.value++;
   } catch (e: any) {
     console.error(e);
     rebuildMsg.value = "行为评分重算失败，请稍后重试";
@@ -118,7 +125,7 @@ async function loadAiState() {
   loading.value = true;
   errorMsg.value = "";
   try {
-    aiState.value = await fetchAiState();
+    aiState.value = await fetchAiState(behaviorWindowDays.value);
   } catch (e: any) {
     console.error(e);
     errorMsg.value = "获取 AI 风控/行为状态失败";
