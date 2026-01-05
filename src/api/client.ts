@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",
-  timeout: 10000
+  baseURL: "http://localhost:8088",
+  timeout: 30000
 });
 
 export interface HealthResponse {
@@ -85,5 +85,287 @@ export async function rebuildBehavior(window_days: number): Promise<BehaviorRebu
   const { data } = await api.post<BehaviorRebuildResponse>("/admin/behavior/rebuild", {
     window_days
   });
+  return data;
+}
+
+// ========== 持仓评估 API ==========
+
+export interface PositionItem {
+  symbol: string;
+  quantity: number;
+  avg_cost: number;
+  current_price: number;
+  unrealized_pnl: number;
+  technical_score: number;
+  fundamental_score: number;
+  sentiment_score: number;
+  overall_score: number;
+  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  ai_advice: string;
+}
+
+export interface PositionsSummary {
+  total_positions: number;
+  total_value: number;
+  total_pnl: number;
+  avg_score: number;
+  high_risk_count: number;
+  recommendations: {
+    strong_buy: number;
+    buy: number;
+    hold: number;
+    sell: number;
+    strong_sell: number;
+  };
+}
+
+export interface PositionsAssessmentResponse {
+  positions: PositionItem[];
+  summary: PositionsSummary;
+  timestamp: string;
+}
+
+export interface TechnicalAnalysisResponse {
+  symbol: string;
+  timeframe: string;
+  trend_direction: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';
+  trend_strength: number;
+  rsi: number;
+  macd: number;
+  macd_signal: number;
+  bollinger_upper: number;
+  bollinger_lower: number;
+  support: number[];
+  resistance: number[];
+  volume_ratio: number;
+  overall_score: number;
+  ai_summary: string;
+  timestamp: string;
+}
+
+export interface ValuationMetrics {
+  pe_ratio: number | null;
+  pb_ratio: number | null;
+  peg_ratio: number | null;
+  score: number;
+}
+
+export interface ProfitabilityMetrics {
+  roe: number;
+  roa: number;
+  profit_margin: number;
+  score: number;
+}
+
+export interface GrowthMetrics {
+  revenue_growth: number;
+  earnings_growth: number;
+  score: number;
+}
+
+export interface HealthMetrics {
+  current_ratio: number;
+  debt_to_equity: number;
+  score: number;
+}
+
+export interface FundamentalAnalysisResponse {
+  symbol: string;
+  valuation: ValuationMetrics;
+  profitability: ProfitabilityMetrics;
+  growth: GrowthMetrics;
+  health: HealthMetrics;
+  overall_score: number;
+  ai_summary: string;
+  timestamp: string;
+}
+
+export async function fetchPositionsAssessment(window_days?: number): Promise<PositionsAssessmentResponse> {
+  const { data } = await api.get<PositionsAssessmentResponse>("/api/v1/positions/assessment", {
+    params: window_days ? { window_days } : undefined
+  });
+  return data;
+}
+
+export async function fetchTechnicalAnalysis(
+  symbol: string,
+  timeframe?: string,
+  force_refresh?: boolean
+): Promise<TechnicalAnalysisResponse> {
+  const { data } = await api.get<TechnicalAnalysisResponse>(`/api/v1/positions/${symbol}/technical`, {
+    params: { timeframe, force_refresh }
+  });
+  return data;
+}
+
+export async function fetchFundamentalAnalysis(
+  symbol: string,
+  force_refresh?: boolean
+): Promise<FundamentalAnalysisResponse> {
+  const { data } = await api.get<FundamentalAnalysisResponse>(`/api/v1/positions/${symbol}/fundamental`, {
+    params: { force_refresh }
+  });
+  return data;
+}
+
+export async function refreshPositions(): Promise<{
+  status: string;
+  refreshed_count: number;
+  failed_symbols: string[];
+  message: string;
+  timestamp: string;
+}> {
+  const { data } = await api.post("/api/v1/positions/refresh");
+  return data;
+}
+
+// ========== 宏观风险 API ==========
+
+export interface RiskScore {
+  score: number;
+  description: string;
+}
+
+export interface OverallRisk {
+  score: number;
+  level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  summary: string;
+  confidence: number;
+}
+
+export interface RiskAlert {
+  level: 'INFO' | 'WARNING' | 'CRITICAL';
+  dimension: string;
+  message: string;
+  recommendation: string;
+}
+
+export interface MacroRiskOverviewResponse {
+  timestamp: string;
+  overall_risk: OverallRisk;
+  risk_breakdown: {
+    monetary_policy: RiskScore;
+    geopolitical: RiskScore;
+    sector_bubble: RiskScore;
+    economic_cycle: RiskScore;
+    market_sentiment: RiskScore;
+  };
+  alerts: RiskAlert[];
+  key_concerns: string[];
+  recommendations: string;
+  ai_analysis: string;
+  recent_events: any[];
+}
+
+export interface MonetaryPolicyData {
+  fed_funds_rate: number;
+  treasury_10y: number;
+  treasury_2y: number;
+  yield_curve_slope: number;
+  inflation_rate: number;
+  m2_growth: number;
+  policy_stance: string;
+  last_updated: string;
+}
+
+export interface EconomicCycleData {
+  gdp_growth_rate: number;
+  unemployment_rate: number;
+  industrial_production_growth: number;
+  estimated_pmi: number;
+  consumer_sentiment: number;
+  cycle_phase: string;
+  recession_probability: number;
+  last_updated: string;
+}
+
+export interface MonetaryPolicyResponse {
+  monetary_policy: MonetaryPolicyData;
+  economic_cycle: EconomicCycleData;
+  last_updated: string;
+}
+
+export interface GeopoliticalEvent {
+  event_id: number;
+  title: string;
+  category: 'MILITARY_CONFLICT' | 'TRADE_WAR' | 'SANCTIONS' | 'POLITICAL_CRISIS' | 'TERRORISM' | 'CYBER_ATTACK' | 'DIPLOMATIC_TENSION';
+  severity: number;
+  market_impact: number;
+  affected_regions: string[];
+  affected_sectors: string[];
+  published_at: string;
+  source: string;
+  summary: string;
+}
+
+export interface GeopoliticalRiskAssessment {
+  score: number;
+  event_count: number;
+  avg_severity: number;
+  avg_market_impact: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface GeopoliticalEventsResponse {
+  total_events: number;
+  risk_assessment: GeopoliticalRiskAssessment;
+  events: GeopoliticalEvent[];
+}
+
+export interface SchedulerJob {
+  id: string;
+  name: string;
+  trigger: string;
+  interval_hours?: number;
+  cron?: string;
+  next_run_time: string;
+  status: string;
+}
+
+export interface SchedulerJobsResponse {
+  total_jobs: number;
+  jobs: SchedulerJob[];
+}
+
+export async function fetchMacroRiskOverview(): Promise<MacroRiskOverviewResponse> {
+  const { data } = await api.get<MacroRiskOverviewResponse>("/api/v1/macro/risk/overview");
+  return data;
+}
+
+export async function fetchMonetaryPolicy(): Promise<MonetaryPolicyResponse> {
+  const { data } = await api.get<MonetaryPolicyResponse>("/api/v1/macro/monetary-policy");
+  return data;
+}
+
+export async function fetchGeopoliticalEvents(days?: number): Promise<GeopoliticalEventsResponse> {
+  const { data } = await api.get<GeopoliticalEventsResponse>("/api/v1/macro/geopolitical-events", {
+    params: days ? { days } : undefined
+  });
+  return data;
+}
+
+export async function refreshMacroData(): Promise<{
+  status: string;
+  refreshed_components: string[];
+  message: string;
+  timestamp: string;
+}> {
+  const { data } = await api.post("/api/v1/macro/refresh");
+  return data;
+}
+
+export async function fetchSchedulerJobs(): Promise<SchedulerJobsResponse> {
+  const { data } = await api.get<SchedulerJobsResponse>("/admin/scheduler/jobs");
+  return data;
+}
+
+export async function pauseScheduler(): Promise<{ status: string; message: string }> {
+  const { data } = await api.post("/admin/scheduler/pause");
+  return data;
+}
+
+export async function resumeScheduler(): Promise<{ status: string; message: string }> {
+  const { data } = await api.post("/admin/scheduler/resume");
   return data;
 }
