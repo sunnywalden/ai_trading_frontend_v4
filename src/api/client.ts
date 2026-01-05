@@ -369,3 +369,163 @@ export async function resumeScheduler(): Promise<{ status: string; message: stri
   const { data } = await api.post("/admin/scheduler/resume");
   return data;
 }
+
+// ========== 潜在机会 API ==========
+
+export interface OpportunityItem {
+  rank: number;
+  symbol: string;
+  current_price: number;
+  technical_score: number;
+  fundamental_score: number;
+  sentiment_score: number;
+  overall_score: number;
+  recommendation: string;
+  reason: string;
+}
+
+export interface MacroRisk {
+  overall_score: number;
+  risk_level: string;
+  risk_summary: string;
+}
+
+export interface OpportunityRun {
+  run_id: number;
+  run_key: string;
+  status: string;
+  as_of: string;
+  universe_name: string;
+  min_score: number;
+  max_results: number;
+  force_refresh: boolean;
+  macro_risk: MacroRisk;
+  total_symbols: number;
+  qualified_symbols: number;
+  elapsed_ms: number;
+  items: OpportunityItem[];
+  notes?: {
+    idempotent?: boolean;
+    macro_adjustment?: {
+      before_threshold: number;
+      after_threshold: number;
+    };
+    universe?: {
+      cache_hit?: boolean;
+      fallback_used?: boolean;
+    };
+  };
+}
+
+export interface OpportunityRunSummary {
+  run_id: number;
+  universe_name: string;
+  as_of: string;
+  qualified_symbols: number;
+  total_symbols: number;
+  elapsed_ms: number;
+  macro_risk_level: string;
+}
+
+export interface ScanOpportunitiesRequest {
+  universe_name?: string;
+  min_score?: number;
+  max_results?: number;
+  force_refresh?: boolean;
+}
+
+export interface ScanOpportunitiesResponse extends OpportunityRun {}
+
+export interface LatestOpportunitiesResponse {
+  status: string;
+  latest: OpportunityRun | null;
+}
+
+export interface RunHistoryResponse {
+  status?: string;
+  total_runs: number;
+  runs: OpportunityRunSummary[];
+}
+
+export async function fetchLatestOpportunities(universeName?: string): Promise<LatestOpportunitiesResponse> {
+  const { data } = await api.get<LatestOpportunitiesResponse>("/api/v1/opportunities/latest", {
+    params: universeName ? { universe_name: universeName } : undefined
+  });
+  return data;
+}
+
+export async function scanOpportunities(request: ScanOpportunitiesRequest): Promise<ScanOpportunitiesResponse> {
+  const { data } = await api.post<ScanOpportunitiesResponse>("/api/v1/opportunities/scan", request);
+  return data;
+}
+
+export async function fetchOpportunityRuns(limit?: number, universeName?: string): Promise<RunHistoryResponse> {
+  const { data } = await api.get<RunHistoryResponse>("/api/v1/opportunities/runs", {
+    params: {
+      limit: limit || 20,
+      universe_name: universeName
+    }
+  });
+  return data;
+}
+
+export async function fetchOpportunityRunDetail(runId: number): Promise<OpportunityRun> {
+  const { data } = await api.get<OpportunityRun>(`/api/v1/opportunities/runs/${runId}`);
+  return data;
+}
+
+// ========== 定时任务管理 API ==========
+
+export interface SchedulerJobDetail {
+  id: string;
+  name: string;
+  next_run_time: string;
+  trigger: string;
+  timezone?: string;
+  status?: string;
+}
+
+export interface SchedulerJobsListResponse {
+  status: string;
+  total_jobs: number;
+  jobs: SchedulerJobDetail[];
+}
+
+export interface UpdateJobScheduleRequest {
+  hour: number;
+  minute: number;
+  timezone?: string;
+}
+
+export interface UpdateJobScheduleResponse {
+  status: string;
+  message: string;
+  job: SchedulerJobDetail;
+}
+
+export async function fetchSchedulerJobsList(): Promise<SchedulerJobsListResponse> {
+  const { data } = await api.get<SchedulerJobsListResponse>('/admin/scheduler/jobs');
+  return data;
+}
+
+export async function pauseSchedulerJob(jobId: string): Promise<{ status: string; message: string }> {
+  const { data } = await api.post(`/admin/scheduler/jobs/${jobId}/pause`);
+  return data;
+}
+
+export async function resumeSchedulerJob(jobId: string): Promise<{ status: string; message: string }> {
+  const { data } = await api.post(`/admin/scheduler/jobs/${jobId}/resume`);
+  return data;
+}
+
+export async function updateJobSchedule(
+  jobId: string,
+  request: UpdateJobScheduleRequest
+): Promise<UpdateJobScheduleResponse> {
+  const { data } = await api.put<UpdateJobScheduleResponse>(
+    `/admin/scheduler/jobs/${jobId}/schedule`,
+    request
+  );
+  return data;
+}
+

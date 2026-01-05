@@ -22,6 +22,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Macro',
     component: () => import('../views/MacroRiskPage.vue'),
     meta: { title: '宏观风险' }
+  },
+  {
+    path: '/opportunities',
+    name: 'Opportunities',
+    component: () => import('../views/OpportunitiesPage.vue'),
+    meta: { title: '潜在机会' }
   }
 ];
 
