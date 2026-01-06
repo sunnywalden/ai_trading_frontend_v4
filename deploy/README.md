@@ -54,7 +54,7 @@ docker run -d \
   --name ai-trading-frontend \
   -p 8080:80 \
   -e BACKEND_URL=http://backend-service:8088 \
-  ai-trading-frontend:latest
+  sunnywalden/ai-trading-frontend:latest
 ```
 
 #### 方式二：使用 Docker Compose
