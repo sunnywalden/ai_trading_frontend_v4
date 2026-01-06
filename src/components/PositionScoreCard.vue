@@ -3,7 +3,7 @@
     <div class="card-header">
       <div class="symbol-info">
         <h3>{{ symbol }}</h3>
-        <span class="recommendation" :class="recommendationClass">{{ recommendation }}</span>
+        <span class="recommendation" :class="recommendationClass">{{ displayRecommendation }}</span>
         <span v-if="riskLevel" class="risk-badge" :class="'risk-' + riskLevel.toLowerCase()">
           {{ riskLevel }}
         </span>
@@ -31,6 +31,9 @@
         <span class="info-label">未实现盈亏</span>
         <span class="info-value" :class="(unrealizedPnl ?? 0) >= 0 ? 'profit' : 'loss'">
           ${{ (unrealizedPnl ?? 0).toLocaleString() }}
+          <span v-if="unrealizedPnlPercent !== undefined" class="pnl-percent">
+            ({{ (unrealizedPnlPercent * 100).toFixed(1) }}%)
+          </span>
         </span>
       </div>
     </div>
@@ -67,6 +70,12 @@
       </div>
     </div>
 
+    <!-- 趋势快照 -->
+    <TrendSnapshotCard 
+      :snapshot="trendSnapshot ?? null" 
+      @refresh="$emit('refreshSnapshot', symbol)"
+    />
+
     <div class="ai-summary" v-if="aiAdvice">
       <div class="summary-icon">💡</div>
       <div class="summary-text">{{ aiAdvice }}</div>
@@ -76,6 +85,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import TrendSnapshotCard from './TrendSnapshotCard.vue';
+import type { TrendSnapshot } from '../api/client';
 
 interface Props {
   symbol: string;
@@ -83,18 +94,24 @@ interface Props {
   avgCost?: number;
   currentPrice?: number;
   unrealizedPnl?: number;
+  unrealizedPnlPercent?: number;
   overallScore: number;
   technicalScore: number;
   fundamentalScore: number;
   sentimentScore: number;
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
-  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'REDUCE' | 'SELL' | 'STRONG_SELL';
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
+  trendSnapshot?: TrendSnapshot | null;
   aiAdvice?: string;
   // 保持向后兼容
   aiSummary?: string;
 }
 
 const props = defineProps<Props>();
+
+defineEmits<{
+  refreshSnapshot: [symbol: string];
+}>();
 
 const scoreClass = computed(() => {
   if (props.overallScore >= 75) return 'excellent';
@@ -105,6 +122,10 @@ const scoreClass = computed(() => {
 
 const recommendationClass = computed(() => {
   return `rec-${props.recommendation.toLowerCase().replace('_', '-')}`;
+});
+
+const displayRecommendation = computed(() => {
+  return props.recommendation.replace('_', ' ');
 });
 </script>
 
@@ -195,6 +216,17 @@ const recommendationClass = computed(() => {
   color: #f87171;
 }
 
+.risk-extreme {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  font-weight: 700;
+}
+
+.rec-reduce {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
 .position-info {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -218,6 +250,9 @@ const recommendationClass = computed(() => {
 .info-value {
   color: #e5e7eb;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .info-value.profit {
@@ -226,6 +261,11 @@ const recommendationClass = computed(() => {
 
 .info-value.loss {
   color: #ef4444;
+}
+
+.pnl-percent {
+  font-size: 0.75rem;
+  opacity: 0.8;
 }
 
 .overall-score {

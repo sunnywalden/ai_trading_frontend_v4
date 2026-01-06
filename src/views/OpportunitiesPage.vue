@@ -349,14 +349,14 @@ async function loadRunHistory() {
   loadingHistory.value = true;
   try {
     const result = await fetchOpportunityRuns(historyLimit.value, scanParams.value.universe_name);
-    console.log('✅ 历史记录 API 返回:', result);
-    console.log('✅ runs 数组:', result.runs);
-    console.log('✅ runs 数组长度:', result.runs?.length);
     runHistory.value = result.runs;
-    console.log('✅ runHistory.value 已设置:', runHistory.value);
-    console.log('✅ runHistory.value 长度:', runHistory.value.length);
   } catch (e: any) {
-    console.error('❌ 加载历史失败:', e);
+    console.error('加载历史失败:', e);
+    if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
+      console.warn('⏱️ 历史记录加载超时，请点击"刷新历史"重试');
+    } else if (e.code === 'ERR_NETWORK') {
+      console.warn('🌐 网络连接失败，无法加载历史记录');
+    }
   } finally {
     loadingHistory.value = false;
   }
@@ -367,7 +367,13 @@ async function onViewRunDetail(runId: number) {
     selectedRunDetail.value = await fetchOpportunityRunDetail(runId);
   } catch (e: any) {
     console.error('加载详情失败:', e);
-    errorMsg.value = '加载详情失败';
+    if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
+      errorMsg.value = '⏱️ 加载详情超时，请稍后重试';
+    } else if (e.code === 'ERR_NETWORK') {
+      errorMsg.value = '🌐 网络连接失败，无法加载详情';
+    } else {
+      errorMsg.value = '❌ 加载详情失败';
+    }
   }
 }
 

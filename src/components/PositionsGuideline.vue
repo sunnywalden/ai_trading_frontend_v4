@@ -29,6 +29,23 @@
     </div>
 
     <div class="score-section">
+      <h3>日线趋势快照 (Wall Street视角)</h3>
+      <p class="desc">每日每标的生成一次，持久化缓存，手动触发刷新</p>
+      <ul>
+        <li><strong>趋势方向</strong>：BULLISH（看涨）/ BEARISH（看跌）/ SIDEWAYS（横盘）</li>
+        <li><strong>趋势强度</strong>：0-100（算法强度打分，非置信度）</li>
+        <li><strong>RSI状态</strong>：OVERSOLD（超卖）/ NEUTRAL（中性）/ OVERBOUGHT（超买）</li>
+        <li><strong>MACD状态</strong>：BULLISH_CROSSOVER（金叉）/ BEARISH_CROSSOVER（死叉）</li>
+        <li><strong>布林带位置</strong>：当前价格在布林带的相对位置</li>
+        <li><strong>量能分析</strong>：volume_ratio > 1 放量（绿色），< 1 缩量（橙色）</li>
+        <li><strong>关键价位</strong>：支撑位和阻力位（显示前2-3个）</li>
+        <li><strong>AI摘要</strong>：OpenAI生成的交易员风格解读（失败降级为规则摘要）</li>
+      </ul>
+      <p class="impact">💡 快照为持久化缓存，可能为空，需手动刷新</p>
+      <p class="warning">⚠️ 宏观风险与日线趋势独立分析，不混合为一个信号源</p>
+    </div>
+
+    <div class="score-section">
       <h3>基本面评分 (0-100)</h3>
       <p class="desc">基于估值、盈利能力、成长性、财务健康度</p>
       <ul>
@@ -68,13 +85,13 @@
           <span class="rec-label">HOLD</span>
           <span class="rec-desc">持有 (40-75)</span>
         </div>
+        <div class="rec-item rec-reduce">
+          <span class="rec-label">REDUCE</span>
+          <span class="rec-desc">减仓 (30-40)</span>
+        </div>
         <div class="rec-item rec-sell">
           <span class="rec-label">SELL</span>
-          <span class="rec-desc">卖出 (25-40)</span>
-        </div>
-        <div class="rec-item rec-strong-sell">
-          <span class="rec-label">STRONG SELL</span>
-          <span class="rec-desc">强烈卖出 (<25)</span>
+          <span class="rec-desc">卖出 (<30)</span>
         </div>
       </div>
     </div>
@@ -94,8 +111,8 @@
           <span class="risk-label">HIGH</span>
           <span class="risk-desc">高风险 (40-60)</span>
         </div>
-        <div class="risk-item risk-critical">
-          <span class="risk-label">CRITICAL</span>
+        <div class="risk-item risk-extreme">
+          <span class="risk-label">EXTREME</span>
           <span class="risk-desc">极高风险 (<40)</span>
         </div>
       </div>
@@ -105,9 +122,12 @@
       <p>⚠️ <strong>重要提示</strong>：</p>
       <ul>
         <li>评分仅供参考，不构成投资建议</li>
+        <li>趋势快照为持久化缓存，每日每标的只保留最新快照</li>
+        <li>快照可能为空（未生成/未刷新/无数据），需手动触发刷新</li>
+        <li>趋势强度为算法打分，不是置信度</li>
+        <li>宏观风险与持仓趋势独立分析，不混合信号</li>
         <li>建议结合个人风险承受能力做决策</li>
         <li>注意及时止损，控制仓位</li>
-        <li>AI分析可能存在滞后，请关注最新市场动态</li>
       </ul>
     </div>
   </div>
@@ -197,6 +217,16 @@
   color: #a7f3d0;
 }
 
+.warning {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
+
 .recommendation-section,
 .risk-section {
   margin-bottom: 24px;
@@ -248,6 +278,11 @@
   border-color: rgba(245, 158, 11, 0.3);
 }
 
+.rec-reduce {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
 .rec-sell {
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.3);
@@ -273,7 +308,7 @@
   border-color: rgba(249, 115, 22, 0.4);
 }
 
-.risk-critical {
+.risk-extreme {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.4);
 }

@@ -40,6 +40,10 @@
           <span class="summary-label">高风险</span>
           <span class="summary-value warning">{{ positionsData.summary.high_risk_count || 0 }}</span>
         </div>
+        <div class="summary-item">
+          <span class="summary-label">BUY推荐</span>
+          <span class="summary-value buy">{{ positionsData.summary.buy_recommendation_count || 0 }}</span>
+        </div>
       </section>
 
       <!-- 持仓列表 -->
@@ -52,13 +56,16 @@
           :avg-cost="position.avg_cost"
           :current-price="position.current_price"
           :unrealized-pnl="position.unrealized_pnl"
+          :unrealized-pnl-percent="position.unrealized_pnl_percent"
           :overall-score="position.overall_score"
           :technical-score="position.technical_score"
           :fundamental-score="position.fundamental_score"
           :sentiment-score="position.sentiment_score"
           :recommendation="position.recommendation"
           :risk-level="position.risk_level"
+          :trend-snapshot="position.trend_snapshot"
           :ai-advice="position.ai_advice"
+          @refresh-snapshot="onRefreshSinglePosition"
         />
       </section>
 
@@ -104,9 +111,11 @@ async function loadPositionsData() {
 }
 
 async function onRefreshPositions() {
+  loading.value = true;
+  errorMsg.value = '';
   try {
     const result = await refreshPositions();
-    console.log(result.message);
+    console.log('刷新成功:', result);
     await loadPositionsData();
   } catch (e: any) {
     console.error('刷新持仓数据失败:', e);
@@ -116,6 +125,28 @@ async function onRefreshPositions() {
       errorMsg.value = '🌐 网络连接失败，无法刷新数据';
     } else {
       errorMsg.value = '❌ 刷新持仓数据失败';
+    }
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function onRefreshSinglePosition(symbol: string) {
+  console.log('刷新单标的:', symbol);
+  errorMsg.value = '';
+  try {
+    const result = await refreshPositions([symbol]);
+    console.log('刷新成功:', result);
+    // 重新加载数据以获取更新后的快照
+    await loadPositionsData();
+  } catch (e: any) {
+    console.error('刷新单标的失败:', e);
+    if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
+      errorMsg.value = `⏱️ 刷新 ${symbol} 超时，请稍后再试！`;
+    } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
+      errorMsg.value = '🌐 网络连接失败，无法刷新数据';
+    } else {
+      errorMsg.value = `❌ 刷新 ${symbol} 失败`;
     }
   }
 }
@@ -209,6 +240,10 @@ onMounted(() => {
 
 .summary-value.warning {
   color: #f59e0b;
+}
+
+.summary-value.buy {
+  color: #22c55e;
 }
 
 .positions-grid {
