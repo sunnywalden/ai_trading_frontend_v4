@@ -18,8 +18,10 @@ AI Trading System v8
 │   └── 报复性交易评分 (Revenge Trading Score)
 ├── 持仓评估模块 (已实现)
 │   ├── 持仓标的综合评分 (技术+基本面+情绪)
-│   ├── 技术分析 (趋势、RSI、MACD等)
+│   ├── 日线趋势快照 (Wall Street交易员视角)
+│   ├── 技术分析 (趋势、RSI、MACD、布林带等)
 │   ├── 基本面分析 (估值、盈利、成长性)
+│   ├── 关键价位追踪 (支撑/阻力位)
 │   └── 操作建议 (BUY/HOLD/SELL)
 ├── 宏观风险分析模块 (已实现)
     ├── 货币政策风险 (政策、通胀、利率)
@@ -35,7 +37,24 @@ AI Trading System v8
   └── 结果落库与回溯 (run 表 + items 表)
 ```
 
-### 1.3 UI/UX 设计理念
+### 1.3 产品核心约束 (必须遵守)
+
+**三大约束原则**（来自 `Overview.md` 与 `FRONTEND_POSITIONS_ASSESSMENT_GUIDE.md`）：
+
+1. **宏观与短期趋势不联动**
+   - 宏观风险模块（`/api/v1/macro/...`）独立输出，不参与日线短期趋势判断
+   - 前端呈现：宏观风险与持仓评估/日线趋势分区展示，不混为一个信号源
+
+2. **趋势快照持久化**
+   - 日线走势分析写入 `position_trend_snapshots` 表（每日每标的只保留最新快照）
+   - 持仓评估接口直接读取快照，不是每次都调用 AI
+   - `trend_snapshot` 可能为空（未生成/未刷新/无数据），应有空态与按钮触发刷新
+
+3. **不输出趋势置信度**
+   - **前端不要设计/期待任何趋势置信度字段（例如 70%/0.7 等）**
+   - 允许展示：趋势方向、趋势强度（算法强度打分，不叫置信度）、触发条件、关键价位与操作条件
+
+### 1.4 UI/UX 设计理念
 
 **核心设计原则**：
 - **模块化导航**：采用 Vue Router 实现四个独立页面，而非 Tab 页切换
@@ -193,10 +212,31 @@ PositionsPage
 │   ├── 总市值
 │   ├── 总盈亏
 │   ├── 平均评分
-│   └── 高风险数量
+│   ├── 高风险数量
+│   └── BUY推荐数量
 ├── PositionScoreCard × N (持仓评分卡片)
+│   ├── 基本信息（标的/仓位/市值/盈亏）
+│   ├── 综合评分（overall_score）
+│   ├── 三维评分条（技术/基本面/情绪）
+│   ├── 风险等级（risk_level）
+│   ├── 操作建议（recommendation）
+│   └── 日线趋势快照（TrendSnapshotCard）
+│       ├── 趋势方向 & 强度
+│       ├── RSI/MACD/布林带状态
+│       ├── 支撑/阻力位
+│       ├── 量能比率
+│       └── AI摘要（交易员视角）
 └── PositionsGuideline (持仓评估说明)
 ```
+
+**趋势快照卡片设计 (TrendSnapshotCard)**：
+- **空态**：显示"尚未生成今日快照" + "刷新评估"按钮
+- **趋势方向**：图标 + 颜色（BULLISH=绿色上箭头，BEARISH=红色下箭头，SIDEWAYS=黄色横线）
+- **趋势强度**：进度条或刻度显示（0-100，标注为"趋势强度"而非"置信度"）
+- **关键位**：支撑/阻力位列表（显示前2-3个，其余折叠）
+- **量能**：`volume_ratio` > 1 放量（绿色），< 1 缩量（橙色）
+- **AI摘要**：Wall Street交易员风格解读，作为"交易员摘要"展示
+- **时间戳**：显示快照生成时间
 
 **核心数据展示**：
 ```typescript
@@ -205,22 +245,74 @@ interface Position {
   quantity: number;
   avg_cost: number;
   current_price: number;
+  market_value: number;
   unrealized_pnl: number;
+  unrealized_pnl_percent: number;
   overall_score: number;      // 综合评分 0-100
   technical_score: number;    // 技术面 0-100
   fundamental_score: number;  // 基本面 0-100
   sentiment_score: number;    // 情绪面 0-100
-  recommendation: string;     // BUY/HOLD/SELL
-  risk_level: string;         // LOW/MEDIUM/HIGH/CRITICAL
-  ai_advice: string;          // AI建议
+  recommendation: string;     // BUY/STRONG_BUY/HOLD/REDUCE/SELL
+  risk_level: string;         // LOW/MEDIUM/HIGH/EXTREME
+  target_position: number;    // 目标仓位
+  stop_loss: number;          // 止损价
+  take_profit: number;        // 止盈价
+  trend_snapshot: TrendSnapshot | null;  // 日线趋势快照（可能为空）
+}
+
+interface TrendSnapshot {
+  symbol: string;
+  trend_direction?: string;         // BULLISH/BEARISH/SIDEWAYS
+  trend_strength?: number;          // 趋势强度 (整数，非置信度)
+  trend_description?: string;       // 趋势描述
+  
+  // RSI指标
+  rsi_value?: number;
+  rsi_status?: string;              // OVERSOLD/NEUTRAL/OVERBOUGHT
+  
+  // MACD指标
+  macd_status?: string;             // BULLISH_CROSSOVER/BEARISH_CROSSOVER/...
+  macd_signal?: number;
+  
+  // 布林带
+  bollinger_position?: string;      // 当前价格在布林带的位置
+  volume_ratio?: number;            // 当前量/20日均量
+  
+  // 关键价位
+  support_levels: number[];         // 支撑位
+  resistance_levels: number[];      // 阻力位
+  
+  // AI解读（Wall Street风格，OpenAI失败会降级为规则摘要）
+  ai_summary?: string;
+  timestamp: string;                // ISO时间
 }
 ```
 
+**核心API接口**：
+- 获取持仓评估：`GET /api/v1/positions/assessment`
+- 刷新趋势快照：`POST /api/v1/positions/refresh`（支持单标的或全部刷新）
+- 技术分析明细：`GET /api/v1/positions/{symbol}/technical?timeframe=1D&force_refresh=false`
+
 **交互功能**：
-- 刷新按钮：调用 `/api/v1/positions/refresh` 更新持仓数据
-- 数据加载：显示"正在加载持仓数据..."提示
-- 空状态：无持仓时显示"暂无持仓数据"
-- 错误处理：网络错误显示"🌐 网络连接失败，请检查网络或后端服务状态"
+1. **页面初始化**：
+   - 调用 `GET /api/v1/positions/assessment` 获取持仓列表（含快照）
+   - 显示"正在加载持仓数据..."提示
+
+2. **趋势快照刷新**（用户触发）：
+   - 全部刷新：调用 `POST /api/v1/positions/refresh`（不传body或传空）
+   - 单标的刷新：body传 `{"symbols": ["AAPL"]}`
+   - Query参数：`force?: bool` （是否强制刷新）
+   - 刷新成功后再次调用 `GET /api/v1/positions/assessment` 获取更新后的快照
+
+3. **空态与降级处理**：
+   - `trend_snapshot == null`：显示"尚未生成今日快照"，提供"刷新评估"按钮
+   - `ai_summary` 为空：展示 `trend_description` + 指标状态（RSI/MACD）+ "文案待生成/已降级"
+   - 无持仓：显示"暂无持仓数据"
+
+4. **错误处理**：
+   - 网络错误：显示"🌐 网络连接失败，请检查网络或后端服务状态"
+   - 请求超时：显示"⏱️ 请求超时，请稍后再试！"
+   - OpenAI失败：快照降级为规则摘要（不阻断页面渲染）
 
 #### 2.3.3 宏观风险页面 (MacroRiskPage.vue)
 
@@ -369,11 +461,24 @@ OpportunitiesPage
 #### 2.4.2 持仓评估说明 (PositionsGuideline.vue)
 **内容模块**：
 - 综合评分说明（技术+基本面+情绪加权）
+- 日线趋势快照说明（Wall Street交易员视角）
+  - 趋势方向：BULLISH（看涨）/BEARISH（看跌）/SIDEWAYS（横盘）
+  - 趋势强度：0-100（算法强度打分，不是置信度）
+  - 关键价位：支撑位/阻力位及其意义
+  - 量能分析：volume_ratio > 1 放量，< 1 缩量
+  - AI摘要：OpenAI生成的交易员解读（失败降级为规则摘要）
 - 技术面评分详解（趋势、RSI、MACD、布林带等）
+  - RSI状态：OVERSOLD（超卖）/NEUTRAL（中性）/OVERBOUGHT（超买）
+  - MACD状态：BULLISH_CROSSOVER（金叉）/BEARISH_CROSSOVER（死叉）
+  - 布林带位置：当前价格在布林带的相对位置
 - 基本面评分详解（估值、盈利能力、成长性、财务健康）
 - 情绪面评分详解（分析师评级、机构持仓、期权数据）
-- 操作建议说明（STRONG BUY/BUY/HOLD/SELL/STRONG SELL）
-- 风险等级说明（LOW/MEDIUM/HIGH/CRITICAL）
+- 操作建议说明（STRONG_BUY/BUY/HOLD/REDUCE/SELL）
+- 风险等级说明（LOW/MEDIUM/HIGH/EXTREME）
+- **重要提示**：
+  - 宏观风险与日线趋势独立分析，不混合为一个信号源
+  - 趋势快照为持久化缓存，每日每标的只保留最新快照
+  - 快照可能为空，需手动触发刷新
 
 **布局特点**：
 - 多列网格展示：充分利用页面宽度
@@ -511,6 +616,65 @@ try {
 ## 三、持仓评估模块设计
 
 ### 3.1 功能定义
+
+#### 3.1.0 日线趋势快照 (Trend Snapshot)
+**设计目标**：为每个持仓标的生成 Wall Street 交易员视角的日线走势分析快照
+
+**核心特性**：
+- **持久化缓存**：写入 `position_trend_snapshots` 表，每日每标的只保留最新快照
+- **按需生成**：不是每次进入页面都调用 AI，通过刷新按钮手动触发
+- **降级机制**：OpenAI 失败时降级为规则摘要，不阻断页面渲染
+- **独立分析**：与宏观风险模块独立，不混合信号
+
+**API接口**：
+- 获取评估（含快照）：`GET /api/v1/positions/assessment`
+- 刷新快照：`POST /api/v1/positions/refresh?force=false`
+  - Body: `{"symbols": ["AAPL"]}` 或不传（刷新全部）
+- 技术明细：`GET /api/v1/positions/{symbol}/technical?timeframe=1D&force_refresh=false`
+
+**输出内容**：
+```typescript
+interface TrendSnapshot {
+  // 趋势判断
+  trend_direction?: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';  // 趋势方向
+  trend_strength?: number;          // 趋势强度 0-100（非置信度）
+  trend_description?: string;       // 趋势文字描述
+  
+  // 技术指标状态
+  rsi_value?: number;               // RSI值 0-100
+  rsi_status?: 'OVERSOLD' | 'NEUTRAL' | 'OVERBOUGHT';
+  macd_status?: string;             // MACD状态（金叉/死叉等）
+  macd_signal?: number;             // MACD信号值
+  bollinger_position?: string;      // 价格在布林带的位置
+  volume_ratio?: number;            // 当前量/20日均量
+  
+  // 关键价位
+  support_levels: number[];         // 支撑位数组
+  resistance_levels: number[];      // 阻力位数组
+  
+  // AI生成内容
+  ai_summary?: string;              // Wall Street交易员风格解读
+  timestamp: string;                // 快照生成时间
+}
+```
+
+**UI展示原则**：
+- **趋势方向**：使用图标+颜色（绿/红/黄）直观展示
+- **趋势强度**：条形图或刻度显示，标注"趋势强度"而非"置信度"
+- **关键位**：列表展示前2-3个支撑/阻力位，其余折叠
+- **量能**：`volume_ratio` > 1 标绿（放量），< 1 标橙（缩量）
+- **AI摘要**：作为"交易员摘要"展示，降级时显示"已使用规则摘要"
+
+**空态与刷新**：
+- `trend_snapshot == null`：显示"尚未生成今日快照" + 刷新按钮
+- 刷新入口：全部刷新或单标的刷新
+- 刷新流程：`POST /api/v1/positions/refresh` → 重新获取评估数据
+
+**前端注意事项**：
+- 不要实现"趋势置信度"字段
+- `trend_snapshot` 允许为空，必须做空态处理
+- 宏观风险与持仓趋势不要合并成综合信号
+- 不要依赖 `docs/legacy/*` 的旧契约
 
 #### 3.1.1 持仓标的评分 (Position Scoring)
 **目标**：为每个持仓标的生成综合评分 (0-100)
@@ -898,6 +1062,190 @@ Response:
   "calculation_time_ms": 1250
 }
 ```
+
+### 3.5 前端API接口清单（持仓评估模块）
+
+基于 `FRONTEND_POSITIONS_ASSESSMENT_GUIDE.md` 的权威契约，前端需接入以下接口：
+
+#### 3.5.1 获取持仓评估（含趋势快照）
+```http
+GET /api/v1/positions/assessment
+
+Response:
+{
+  "positions": [
+    {
+      "symbol": "AAPL",
+      "quantity": 100,
+      "avg_cost": 175.50,
+      "current_price": 182.30,
+      "market_value": 18230.00,
+      "unrealized_pnl": 680.00,
+      "unrealized_pnl_percent": 0.0387,
+      "overall_score": 82,
+      "technical_score": 78,
+      "fundamental_score": 88,
+      "sentiment_score": 75,
+      "risk_level": "MEDIUM",
+      "recommendation": "BUY",
+      "target_position": 120,
+      "stop_loss": 170.00,
+      "take_profit": 195.00,
+      "trend_snapshot": {
+        "symbol": "AAPL",
+        "trend_direction": "BULLISH",
+        "trend_strength": 75,
+        "trend_description": "强势上涨趋势",
+        "rsi_value": 62.5,
+        "rsi_status": "NEUTRAL",
+        "macd_status": "BULLISH_CROSSOVER",
+        "macd_signal": 2.15,
+        "bollinger_position": "MIDDLE_TO_UPPER",
+        "volume_ratio": 1.35,
+        "support_levels": [175.00, 170.50, 165.00],
+        "resistance_levels": [185.00, 190.00, 195.00],
+        "ai_summary": "技术面偏多，RSI中性区域，MACD金叉确认，建议回调至175支撑位加仓",
+        "timestamp": "2026-01-06T08:30:00Z"
+      }
+    }
+  ],
+  "summary": {
+    "total_positions": 5,
+    "total_value": 125000.00,
+    "total_pnl": 8500.00,
+    "avg_score": 76,
+    "high_risk_count": 1,
+    "buy_recommendation_count": 2
+  }
+}
+```
+
+**字段说明**：
+- `trend_snapshot` 可能为 `null`（未生成/未刷新/无数据）
+- `trend_strength` 是算法强度打分（0-100），**不是置信度**
+- `risk_level`: `LOW/MEDIUM/HIGH/EXTREME`
+- `recommendation`: `BUY/STRONG_BUY/HOLD/REDUCE/SELL`
+
+#### 3.5.2 刷新趋势快照
+```http
+POST /api/v1/positions/refresh?force=false
+
+Body (可选):
+{
+  "symbols": ["AAPL"]  // 不传表示刷新全部持仓
+}
+
+Response:
+{
+  "status": "success",
+  "refreshed_symbols": ["AAPL"],
+  "timestamp": "2026-01-06T08:30:00Z"
+}
+```
+
+**调用时机**：
+- 用户点击"刷新评估"按钮
+- 全部刷新：不传 body 或传空
+- 单标的刷新：传 `{"symbols": ["AAPL"]}`
+- 刷新成功后需再次调用 `GET /api/v1/positions/assessment` 获取更新后的快照
+
+#### 3.5.3 获取技术分析明细（可选）
+```http
+GET /api/v1/positions/{symbol}/technical?timeframe=1D&force_refresh=false
+
+Response:
+{
+  "symbol": "AAPL",
+  "timeframe": "1D",
+  "trend": {
+    "direction": "BULLISH",
+    "strength": 75,
+    "description": "强势上涨趋势"
+  },
+  "indicators": {
+    "rsi": {
+      "value": 62.5,
+      "status": "NEUTRAL",
+      "signal": "HOLD"
+    },
+    "macd": {
+      "value": 2.15,
+      "signal_line": 1.89,
+      "histogram": 0.26,
+      "status": "BULLISH_CROSSOVER"
+    },
+    "bollinger_bands": {
+      "upper": 185.50,
+      "middle": 180.00,
+      "lower": 174.50,
+      "current_price": 182.30,
+      "position": "MIDDLE_TO_UPPER",
+      "width_percentile": 65
+    }
+  },
+  "support_resistance": {
+    "key_support": [175.00, 170.50, 165.00],
+    "key_resistance": [185.00, 190.00, 195.00],
+    "current_level": "NEAR_RESISTANCE"
+  },
+  "volume_analysis": {
+    "avg_volume_20d": 45000000,
+    "current_volume": 52000000,
+    "volume_trend": "INCREASING",
+    "volume_ratio": 1.35
+  }
+}
+```
+
+**用途**：
+- 在持仓详情页/抽屉中展示更详细的技术分析面板
+- 比趋势快照更"分析面板化"
+
+#### 3.5.4 获取基本面分析（可选）
+```http
+GET /api/v1/positions/{symbol}/fundamental
+
+Response:
+{
+  "symbol": "AAPL",
+  "valuation": {
+    "pe_ratio": 28.5,
+    "peg_ratio": 1.8,
+    "pb_ratio": 42.5,
+    "valuation_grade": "B"
+  },
+  "profitability": {
+    "roe": 0.175,
+    "roa": 0.265,
+    "gross_margin": 0.438,
+    "profitability_grade": "A+"
+  },
+  "growth": {
+    "revenue_growth_yoy": 0.082,
+    "eps_growth_yoy": 0.115,
+    "growth_grade": "A"
+  },
+  "financial_health": {
+    "debt_to_equity": 1.98,
+    "current_ratio": 1.07,
+    "free_cash_flow": 99800000000,
+    "health_grade": "A"
+  }
+}
+```
+
+#### 3.5.5 前端注意事项
+
+**必须遵守的约束**：
+1. **不要实现"趋势置信度"**：后端明确不返回该字段，UI 也不要呈现
+2. **趋势快照允许为空**：必须做空态与刷新入口
+3. **宏观风险与持仓趋势不联动**：不要合并成一个综合信号
+4. **不要依赖旧文档**：以 `API.md` 和本文档为准
+
+**能力开关影响**：
+- Tiger 未配置：持仓可能来自 Dummy 数据
+- OpenAI 未配置或失败：`ai_summary` 可能为规则摘要或为空（不应阻断页面渲染）
+- 代理：网络受限环境需开启代理后 OpenAI/FRED 才能访问
 
 ---
 
@@ -1566,3 +1914,67 @@ ai_trading_frontend_v4/
 1. 创建数据库 Migration 脚本
 2. 集成第一个外部 API (yfinance)
 3. 实现第一个技术指标计算函数
+
+---
+
+## 九、更新日志
+
+### 2026-01-06 - 根据FRONTEND_POSITIONS_ASSESSMENT_GUIDE.md更新
+
+**更新内容**：
+1. **添加产品核心约束章节（1.3）**
+   - 宏观与短期趋势不联动
+   - 趋势快照持久化机制
+   - 不输出趋势置信度的明确约束
+
+2. **更新持仓评估数据结构**
+   - 添加 `TrendSnapshot` 接口定义
+   - 新增字段：`market_value`, `unrealized_pnl_percent`, `target_position`, `stop_loss`, `take_profit`
+   - 更新 `risk_level` 枚举值：`LOW/MEDIUM/HIGH/EXTREME`（原为 CRITICAL）
+   - 更新 `recommendation` 枚举值：`BUY/STRONG_BUY/HOLD/REDUCE/SELL`
+
+3. **新增日线趋势快照功能设计（3.1.0）**
+   - Wall Street 交易员视角的趋势分析
+   - 持久化缓存机制说明
+   - 按需生成与降级机制
+   - UI展示原则（趋势方向、强度、关键位、量能）
+   - 空态与刷新交互设计
+
+4. **更新持仓评估页面设计（2.3.2）**
+   - 添加趋势快照卡片组件（TrendSnapshotCard）
+   - 更新API接口调用流程
+   - 添加空态与降级处理说明
+   - 更新SummaryBar增加BUY推荐数量
+
+5. **更新持仓评估说明指南（2.4.2）**
+   - 添加日线趋势快照说明
+   - RSI/MACD/布林带指标状态说明
+   - 关键价位和量能分析说明
+   - 添加重要提示（宏观独立、快照持久化）
+
+6. **新增前端API接口清单章节（3.5）**
+   - 详细的API接口文档和示例
+   - 字段说明和枚举值定义
+   - 调用时机和流程说明
+   - 前端注意事项和能力开关影响
+
+7. **更新页面布局设计**
+   - 持仓评估页面增加趋势快照展示
+   - 支撑/阻力位显示设计
+   - 量能比率可视化设计
+   - AI摘要展示规范
+
+**重要约束强调**：
+- ❌ 不实现趋势置信度字段
+- ✅ 趋势快照允许为空，必须做空态处理
+- ✅ 宏观风险与持仓趋势分区展示，不混合信号
+- ✅ 趋势强度标注为"算法强度"而非"置信度"
+
+**参考文档**：
+- `FRONTEND_POSITIONS_ASSESSMENT_GUIDE.md`（前端接入指南）
+- `Overview.md`（产品口径）
+- `API.md`（接口契约）
+
+---
+
+*本文档持续更新中，最后更新：2026-01-06*

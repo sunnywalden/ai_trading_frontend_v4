@@ -90,19 +90,42 @@ export async function rebuildBehavior(window_days: number): Promise<BehaviorRebu
 
 // ========== 持仓评估 API ==========
 
+export interface TrendSnapshot {
+  symbol: string;
+  trend_direction?: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';
+  trend_strength?: number;
+  trend_description?: string;
+  rsi_value?: number;
+  rsi_status?: 'OVERSOLD' | 'NEUTRAL' | 'OVERBOUGHT';
+  macd_status?: string;
+  macd_signal?: number;
+  bollinger_position?: string;
+  volume_ratio?: number;
+  support_levels: number[];
+  resistance_levels: number[];
+  ai_summary?: string;
+  timestamp: string;
+}
+
 export interface PositionItem {
   symbol: string;
   quantity: number;
   avg_cost: number;
   current_price: number;
+  market_value: number;
   unrealized_pnl: number;
+  unrealized_pnl_percent: number;
   technical_score: number;
   fundamental_score: number;
   sentiment_score: number;
   overall_score: number;
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
-  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  ai_advice: string;
+  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'REDUCE' | 'SELL';
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
+  target_position?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  trend_snapshot: TrendSnapshot | null;
+  ai_advice?: string;
 }
 
 export interface PositionsSummary {
@@ -111,7 +134,8 @@ export interface PositionsSummary {
   total_pnl: number;
   avg_score: number;
   high_risk_count: number;
-  recommendations: {
+  buy_recommendation_count?: number;
+  recommendations?: {
     strong_buy: number;
     buy: number;
     hold: number;
@@ -209,14 +233,16 @@ export async function fetchFundamentalAnalysis(
   return data;
 }
 
-export async function refreshPositions(): Promise<{
+export async function refreshPositions(symbols?: string[], force?: boolean): Promise<{
   status: string;
-  refreshed_count: number;
-  failed_symbols: string[];
-  message: string;
+  refreshed: string[];
   timestamp: string;
+  message?: string;
 }> {
-  const { data } = await api.post("/api/v1/positions/refresh");
+  const { data } = await api.post("/api/v1/positions/refresh", 
+    symbols || [],  // 直接传递数组，空数组表示刷新全部
+    { params: force ? { force } : undefined }
+  );
   return data;
 }
 
