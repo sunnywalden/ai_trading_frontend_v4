@@ -79,6 +79,10 @@ npm run preview
 
 ## 🔌 后端 API 集成
 
+> 文档索引：更多文档请查看 `docs/README.md`（包含 UI/UX、实现总结、监控与部署等文档快速导航）
+
+## 🔌 后端 API 集成
+
 前端通过 Vite 代理与后端通信，所有 `/api` 请求会被转发到后端服务：
 
 ```typescript

@@ -28,6 +28,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Opportunities',
     component: () => import('../views/OpportunitiesPage.vue'),
     meta: { title: '潜在机会' }
+  },
+  {
+    path: '/monitoring',
+    name: 'Monitoring',
+    component: () => import('../views/ApiMonitoringPage.vue'),
+    meta: { title: 'API监控' }
   }
 ];
 

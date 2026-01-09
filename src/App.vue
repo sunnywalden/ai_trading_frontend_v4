@@ -43,7 +43,8 @@ const routes = [
   { path: '/behavior', label: '行为评分', icon: '🎯' },
   { path: '/positions', label: '持仓评估', icon: '📊' },
   { path: '/macro', label: '宏观风险', icon: '🌍' },
-  { path: '/opportunities', label: '潜在机会', icon: '💡' }
+  { path: '/opportunities', label: '潜在机会', icon: '💡' },
+  { path: '/monitoring', label: 'API监控', icon: '📡' }
 ];
 </script>
 

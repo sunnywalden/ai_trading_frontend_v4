@@ -1,7 +1,8 @@
 import axios from "axios";
 
+// 开发环境使用代理，生产环境使用环境变量
 const api = axios.create({
-  baseURL: "http://localhost:8088",
+  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088"),
   timeout: 30000
 });
 
@@ -552,6 +553,105 @@ export async function updateJobSchedule(
     `/admin/scheduler/jobs/${jobId}/schedule`,
     request
   );
+  return data;
+}
+
+// ========== API 监控 ==========
+
+export interface ApiStats {
+  provider: string;
+  total_calls: number;
+  success_calls: number;
+  error_calls: number;
+  success_rate: number;
+  rate_limit: number;
+  usage_percent: number;
+  status: string;
+  remaining: number;
+  suggestion?: string;
+}
+
+export interface Alert {
+  provider: string;
+  message: string;
+  remaining: number;
+  timestamp?: string;
+}
+
+export interface ErrorLog {
+  timestamp: string;
+  provider: string;
+  endpoint: string;
+  error_message: string;
+  error_details?: any;
+}
+
+export interface RateLimitPolicy {
+  provider: string;
+  daily_limit?: number;
+  hourly_limit?: number;
+  minute_limit?: number;
+  warning_threshold: number;
+  critical_threshold: number;
+  notes?: string;
+}
+
+export interface MonitoringReport {
+  generated_at: string;
+  summary: {
+    total_providers: number;
+    critical_alerts: number;
+    warnings: number;
+    total_errors_today: number;
+  };
+  daily_stats: ApiStats[];
+  critical_alerts: Alert[];
+  warnings: Alert[];
+  recent_errors: ErrorLog[];
+  rate_limit_policies: Record<string, RateLimitPolicy>;
+}
+
+export interface RateLimitStatus {
+  provider: string;
+  can_call: boolean;
+  status: string;
+  usage_percent: number;
+  remaining: number;
+  reason?: string;
+  suggestion?: string;
+}
+
+export interface MonitoringHealthResponse {
+  status: string;
+  monitoring_enabled: boolean;
+  redis_enabled: boolean;
+  timestamp: string;
+}
+
+export async function fetchMonitoringStats(timeRange: 'day' | 'hour' | 'minute' = 'day'): Promise<ApiStats[]> {
+  const { data } = await api.get<ApiStats[]>('/v1/monitoring/stats', {
+    params: { time_range: timeRange }
+  });
+  return data;
+}
+
+export async function fetchMonitoringReport(): Promise<MonitoringReport> {
+  const { data } = await api.get<MonitoringReport>('/v1/monitoring/report');
+  return data;
+}
+
+export async function checkRateLimitStatus(provider: string): Promise<RateLimitStatus> {
+  const { data } = await api.get<RateLimitStatus>(`/v1/monitoring/rate-limit/${provider}`);
+  return data;
+}
+
+export async function fetchRateLimitPolicies(): Promise<Record<string, RateLimitPolicy>> {
+  const { data } = await api.get<Record<string, RateLimitPolicy>>('/v1/monitoring/policies');
+  return data;
+}
+
+export async function fetchMonitoringHealth(): Promise<MonitoringHealthResponse> {
+  const { data } = await api.get<MonitoringHealthResponse>('/v1/monitoring/health');
   return data;
 }
 
