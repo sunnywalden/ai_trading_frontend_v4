@@ -383,17 +383,17 @@ export async function refreshMacroData(): Promise<{
 }
 
 export async function fetchSchedulerJobs(): Promise<SchedulerJobsResponse> {
-  const { data } = await api.get<SchedulerJobsResponse>("/admin/scheduler/jobs");
+  const { data } = await api.get<SchedulerJobsResponse>("/v1/admin/scheduler/jobs");
   return data;
 }
 
 export async function pauseScheduler(): Promise<{ status: string; message: string }> {
-  const { data } = await api.post("/admin/scheduler/pause");
+  const { data } = await api.post("/v1/admin/scheduler/pause");
   return data;
 }
 
 export async function resumeScheduler(): Promise<{ status: string; message: string }> {
-  const { data } = await api.post("/admin/scheduler/resume");
+  const { data } = await api.post("/v1/admin/scheduler/resume");
   return data;
 }
 
@@ -531,17 +531,17 @@ export interface UpdateJobScheduleResponse {
 }
 
 export async function fetchSchedulerJobsList(): Promise<SchedulerJobsListResponse> {
-  const { data } = await api.get<SchedulerJobsListResponse>('/admin/scheduler/jobs');
+  const { data } = await api.get<SchedulerJobsListResponse>('/v1/admin/scheduler/jobs');
   return data;
 }
 
 export async function pauseSchedulerJob(jobId: string): Promise<{ status: string; message: string }> {
-  const { data } = await api.post(`/admin/scheduler/jobs/${jobId}/pause`);
+  const { data } = await api.post(`/v1/admin/scheduler/jobs/${jobId}/pause`);
   return data;
 }
 
 export async function resumeSchedulerJob(jobId: string): Promise<{ status: string; message: string }> {
-  const { data } = await api.post(`/admin/scheduler/jobs/${jobId}/resume`);
+  const { data } = await api.post(`/v1/admin/scheduler/jobs/${jobId}/resume`);
   return data;
 }
 
@@ -550,7 +550,7 @@ export async function updateJobSchedule(
   request: UpdateJobScheduleRequest
 ): Promise<UpdateJobScheduleResponse> {
   const { data } = await api.put<UpdateJobScheduleResponse>(
-    `/admin/scheduler/jobs/${jobId}/schedule`,
+    `/v1/admin/scheduler/jobs/${jobId}/schedule`,
     request
   );
   return data;
