@@ -207,7 +207,7 @@ export interface FundamentalAnalysisResponse {
 }
 
 export async function fetchPositionsAssessment(window_days?: number): Promise<PositionsAssessmentResponse> {
-  const { data } = await api.get<PositionsAssessmentResponse>("/api/v1/positions/assessment", {
+  const { data } = await api.get<PositionsAssessmentResponse>("/v1/positions/assessment", {
     params: window_days ? { window_days } : undefined
   });
   return data;
@@ -218,7 +218,7 @@ export async function fetchTechnicalAnalysis(
   timeframe?: string,
   force_refresh?: boolean
 ): Promise<TechnicalAnalysisResponse> {
-  const { data } = await api.get<TechnicalAnalysisResponse>(`/api/v1/positions/${symbol}/technical`, {
+  const { data } = await api.get<TechnicalAnalysisResponse>(`/v1/positions/${symbol}/technical`, {
     params: { timeframe, force_refresh }
   });
   return data;
@@ -228,7 +228,7 @@ export async function fetchFundamentalAnalysis(
   symbol: string,
   force_refresh?: boolean
 ): Promise<FundamentalAnalysisResponse> {
-  const { data } = await api.get<FundamentalAnalysisResponse>(`/api/v1/positions/${symbol}/fundamental`, {
+  const { data } = await api.get<FundamentalAnalysisResponse>(`/v1/positions/${symbol}/fundamental`, {
     params: { force_refresh }
   });
   return data;
@@ -240,7 +240,7 @@ export async function refreshPositions(symbols?: string[], force?: boolean): Pro
   timestamp: string;
   message?: string;
 }> {
-  const { data } = await api.post("/api/v1/positions/refresh", 
+  const { data } = await api.post("/v1/positions/refresh", 
     symbols || [],  // 直接传递数组，空数组表示刷新全部
     { params: force ? { force } : undefined }
   );
@@ -356,17 +356,17 @@ export interface SchedulerJobsResponse {
 }
 
 export async function fetchMacroRiskOverview(): Promise<MacroRiskOverviewResponse> {
-  const { data } = await api.get<MacroRiskOverviewResponse>("/api/v1/macro/risk/overview");
+  const { data } = await api.get<MacroRiskOverviewResponse>("/v1/macro/risk/overview");
   return data;
 }
 
 export async function fetchMonetaryPolicy(): Promise<MonetaryPolicyResponse> {
-  const { data } = await api.get<MonetaryPolicyResponse>("/api/v1/macro/monetary-policy");
+  const { data } = await api.get<MonetaryPolicyResponse>("/v1/macro/monetary-policy");
   return data;
 }
 
 export async function fetchGeopoliticalEvents(days?: number): Promise<GeopoliticalEventsResponse> {
-  const { data } = await api.get<GeopoliticalEventsResponse>("/api/v1/macro/geopolitical-events", {
+  const { data } = await api.get<GeopoliticalEventsResponse>("/v1/macro/geopolitical-events", {
     params: days ? { days } : undefined
   });
   return data;
@@ -378,7 +378,7 @@ export async function refreshMacroData(): Promise<{
   message: string;
   timestamp: string;
 }> {
-  const { data } = await api.post("/api/v1/macro/refresh");
+  const { data } = await api.post("/v1/macro/refresh");
   return data;
 }
 
@@ -475,19 +475,19 @@ export interface RunHistoryResponse {
 }
 
 export async function fetchLatestOpportunities(universeName?: string): Promise<LatestOpportunitiesResponse> {
-  const { data } = await api.get<LatestOpportunitiesResponse>("/api/v1/opportunities/latest", {
+  const { data } = await api.get<LatestOpportunitiesResponse>("/v1/opportunities/latest", {
     params: universeName ? { universe_name: universeName } : undefined
   });
   return data;
 }
 
 export async function scanOpportunities(request: ScanOpportunitiesRequest): Promise<ScanOpportunitiesResponse> {
-  const { data } = await api.post<ScanOpportunitiesResponse>("/api/v1/opportunities/scan", request);
+  const { data } = await api.post<ScanOpportunitiesResponse>("/v1/opportunities/scan", request);
   return data;
 }
 
 export async function fetchOpportunityRuns(limit?: number, universeName?: string): Promise<RunHistoryResponse> {
-  const { data } = await api.get<RunHistoryResponse>("/api/v1/opportunities/runs", {
+  const { data } = await api.get<RunHistoryResponse>("/v1/opportunities/runs", {
     params: {
       limit: limit || 20,
       universe_name: universeName
@@ -497,7 +497,7 @@ export async function fetchOpportunityRuns(limit?: number, universeName?: string
 }
 
 export async function fetchOpportunityRunDetail(runId: number): Promise<OpportunityRun> {
-  const { data } = await api.get<OpportunityRun>(`/api/v1/opportunities/runs/${runId}`);
+  const { data } = await api.get<OpportunityRun>(`/v1/opportunities/runs/${runId}`);
   return data;
 }
 
