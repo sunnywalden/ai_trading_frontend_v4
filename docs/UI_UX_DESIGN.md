@@ -1,12 +1,9 @@
-# 持仓评估 & 宏观风险分析 - 产品设计文档
+# UI/UX 设计（已合并并精简）
 
-## 一、产品概述
+> 本文中的详细 UI/UX 设计已合并到 `docs/CONSOLIDATED_DOCS.md` 的“页面与 UX 要点”一节。
+> 完整历史版本已迁移到 `docs/archived/UI_UX_DESIGN.md`。
 
-### 1.1 目标
-在现有行为评分（历史交易）基础上，新增三大核心模块：
-- **持仓评估**：实时评估当前持仓标的质量、风险、机会
-- **宏观风险分析**：华尔街视角的系统性风险监控
-- **潜在机会**：每日自动扫描科技股股票池，输出 1-3 只高分标的
+如需查看页面布局、组件细节或完整的交互规范，请查阅归档文件。
 
 ### 1.2 整体架构
 ```
@@ -24,17 +21,23 @@ AI Trading System v8
 │   ├── 关键价位追踪 (支撑/阻力位)
 │   └── 操作建议 (BUY/HOLD/SELL)
 ├── 宏观风险分析模块 (已实现)
-    ├── 货币政策风险 (政策、通胀、利率)
-    ├── 地缘政治风险 (冲突、制裁、选举)
-    ├── 行业泡沫风险 (估值、情绪、杠杆)
-    ├── 经济周期风险 (GDP、PMI、失业率)
-    └── 市场情绪风险 (VIX、Put/Call、资金流向)
-└── 潜在机会模块 (已实现)
-  ├── 动态股票池 (按市值/行业筛选：中大型科技股)
-  ├── 三维评分门槛 (技术/基本面/情绪均 ≥ 75)
-  ├── 宏观风险融合 (HIGH/EXTREME 时阈值提高到 80)
-  ├── 每日定时任务 (北京时间 20:30 自动运行)
-  └── 结果落库与回溯 (run 表 + items 表)
+│   ├── 货币政策风险 (政策、通胀、利率)
+│   ├── 地缘政治风险 (冲突、制裁、选举)
+│   ├── 行业泡沫风险 (估值、情绪、杠杆)
+│   ├── 经济周期风险 (GDP、PMI、失业率)
+│   └── 市场情绪风险 (VIX、Put/Call、资金流向)
+├── 潜在机会模块 (已实现)
+│   ├── 动态股票池 (按市值/行业筛选：中大型科技股)
+│   ├── 三维评分门槛 (技术/基本面/情绪均 ≥ 75)
+│   ├── 宏观风险融合 (HIGH/EXTREME 时阈值提高到 80)
+│   ├── 每日定时任务 (北京时间 20:30 自动运行)
+│   └── 结果落库与回溯 (run 表 + items 表)
+└── API监控模块 (已实现)
+    ├── 外部API调用监控 (FRED/News/Tiger/Yahoo/OpenAI)
+    ├── Rate Limit管理 (日/时/分钟级限额)
+    ├── 智能告警 (警告阈值70%、临界阈值90%)
+    ├── Redis缓存策略 (减少重复调用)
+    └── 监控报告与健康检查 (实时统计与错误追踪)
 ```
 
 ### 1.3 产品核心约束 (必须遵守)
@@ -93,7 +96,7 @@ AI Trading System v8
 │ │ 📊 持仓 │ │ │                     │   │  │
 │ │ 🌍 宏观 │ │ └─────────────────────┘   │  │
 │ │ 💡 机会 │ │                           │  │
-│ │         │ │                           │  │
+│ │ 📡 监控 │ │                           │  │
 │ │         │ │ Footer (版本信息)          │  │
 │ └─────────┘ └───────────────────────────┘  │
 └─────────────────────────────────────────────┘
@@ -136,6 +139,12 @@ const routes = [
     name: 'Opportunities',
     component: () => import('../views/OpportunitiesPage.vue'),
     meta: { title: '潜在机会' }
+  },
+  {
+    path: '/monitoring',
+    name: 'ApiMonitoring',
+    component: () => import('../views/ApiMonitoringPage.vue'),
+    meta: { title: '外部API调用监控' }
   }
 ];
 ```
@@ -439,6 +448,338 @@ OpportunitiesPage
 - 中间：三维评分条（颜色从红→黄→绿）
 - 底部：reason（最多 2 行，超出省略，点击展开）
 
+#### 2.3.5 API监控页面 (ApiMonitoringPage.vue)
+
+**页面定位**：
+- 实时监控外部API调用情况，确保系统稳定运行并遵守Rate Limit限制
+- 提供完整的API使用统计、告警管理和限额保护
+- 支持5个主要API提供商的监控：FRED、News API、Tiger、Yahoo Finance、OpenAI
+
+**核心接口**：
+- 获取监控统计：`GET /api/v1/monitoring/stats?time_range=day`
+- 生成监控报告：`GET /api/v1/monitoring/report`
+- 检查Rate Limit：`GET /api/v1/monitoring/rate-limit/{provider}`
+- 获取策略配置：`GET /api/v1/monitoring/policies`
+- 健康检查：`GET /api/v1/monitoring/health`
+
+**页面布局**：
+```
+ApiMonitoringPage
+├── Header (标题 + 刷新按钮 + 时间范围选择器)
+├── HealthStatusBar (健康状态总览)
+│   ├── 监控服务状态 (online/offline)
+│   ├── 临界告警数 (critical_alerts)
+│   ├── 警告数 (warnings)
+│   ├── 今日错误数 (total_errors_today)
+│   └── 最后更新时间 (generated_at)
+├── ApiProviderCards (5个API提供商卡片)
+│   ├── FRED API Card
+│   │   ├── Provider信息 (logo + 名称 + 用途)
+│   │   ├── 使用情况 (圆环图/进度条)
+│   │   │   ├── 已用次数 / 日限额
+│   │   │   ├── 使用百分比 (usage_percent)
+│   │   │   └── 剩余额度 (remaining)
+│   │   ├── 状态徽章 (normal/warning/critical)
+│   │   ├── 统计数据
+│   │   │   ├── 总调用次数 (total_calls)
+│   │   │   ├── 成功次数 (success_calls)
+│   │   │   ├── 失败次数 (error_calls)
+│   │   │   └── 成功率 (success_rate)
+│   │   ├── Rate Limit信息
+│   │   │   ├── 日限制 (120,000)
+│   │   │   ├── 小时限制 (-)
+│   │   │   └── 分钟限制 (-)
+│   │   └── 建议提示 (suggestion)
+│   ├── News API Card
+│   │   └── [同上结构，日限额100]
+│   ├── Tiger API Card
+│   │   └── [同上结构，时/分限制]
+│   ├── Yahoo Finance Card
+│   │   └── [同上结构，多级限制]
+│   └── OpenAI API Card
+│       └── [同上结构，分钟限制]
+├── AlertsPanel (告警与警告面板)
+│   ├── CriticalAlerts (临界告警)
+│   │   ├── Provider名称
+│   │   ├── 告警信息
+│   │   ├── 剩余额度
+│   │   └── 时间戳
+│   └── Warnings (警告列表)
+│       └── [同上结构]
+├── RecentErrorsPanel (最近错误日志)
+│   ├── 时间
+│   ├── Provider
+│   ├── 端点 (endpoint)
+│   ├── 错误信息
+│   └── 错误详情 (展开查看)
+└── MonitoringGuideline (监控说明指南)
+    ├── Rate Limit策略表
+    ├── 告警阈值说明
+    ├── 缓存策略说明
+    └── 最佳实践建议
+```
+
+**核心数据结构**：
+```typescript
+// 监控报告
+interface MonitoringReport {
+  generated_at: string;           // ISO时间戳
+  summary: {
+    total_providers: number;      // 总API数量
+    critical_alerts: number;      // 临界告警数
+    warnings: number;             // 警告数
+    total_errors_today: number;   // 今日错误总数
+  };
+  daily_stats: ApiStats[];        // 各API统计
+  critical_alerts: Alert[];       // 临界告警列表
+  warnings: Alert[];              // 警告列表
+  recent_errors: ErrorLog[];      // 最近错误
+  rate_limit_policies: Record<string, RateLimitPolicy>;
+}
+
+// API统计
+interface ApiStats {
+  provider: string;               // FRED/NewsAPI/Tiger/YahooFinance/OpenAI
+  total_calls: number;            // 总调用次数
+  success_calls: number;          // 成功次数
+  error_calls: number;            // 失败次数
+  success_rate: number;           // 成功率 (%)
+  rate_limit: number;             // 日限额
+  usage_percent: number;          // 使用百分比
+  status: string;                 // normal/warning/critical
+  remaining: number;              // 剩余额度
+  suggestion?: string;            // 建议提示
+}
+
+// 告警信息
+interface Alert {
+  provider: string;
+  message: string;
+  remaining: number;
+  timestamp?: string;
+}
+
+// 错误日志
+interface ErrorLog {
+  timestamp: string;
+  provider: string;
+  endpoint: string;
+  error_message: string;
+  error_details?: any;
+}
+
+// Rate Limit策略
+interface RateLimitPolicy {
+  provider: string;
+  daily_limit?: number;
+  hourly_limit?: number;
+  minute_limit?: number;
+  warning_threshold: number;      // 警告阈值 (70%)
+  critical_threshold: number;     // 临界阈值 (90%)
+  notes?: string;
+}
+
+// Rate Limit状态检查
+interface RateLimitStatus {
+  provider: string;
+  can_call: boolean;              // 是否可以调用
+  status: string;                 // normal/warning/critical
+  usage_percent: number;
+  remaining: number;
+  reason?: string;                // 不可调用原因
+  suggestion?: string;            // 建议
+}
+```
+
+**API提供商卡片设计 (ApiProviderCard)**：
+
+**视觉布局**（专业深色交易风格）：
+```
+┌────────────────────────────────────────┐
+│ 🔷 FRED API          [⚠️ WARNING]      │
+│ 宏观经济数据                            │
+├────────────────────────────────────────┤
+│         使用情况                        │
+│    ╭────────────╮                      │
+│    │    72%     │   72 / 100           │
+│    │  ████████  │   剩余: 28           │
+│    ╰────────────╯                      │
+├────────────────────────────────────────┤
+│ 📊 统计                                 │
+│ • 总调用: 72                            │
+│ • 成功: 70  失败: 2                     │
+│ • 成功率: 97.2%                         │
+├────────────────────────────────────────┤
+│ ⚙️ Rate Limit                          │
+│ • 日限额: 100                           │
+│ • 小时: -  分钟: -                      │
+├────────────────────────────────────────┤
+│ 💡 建议: 接近限额，建议减少调用          │
+└────────────────────────────────────────┘
+```
+
+**状态徽章颜色编码**：
+- **🟢 NORMAL** (绿色): 使用率 < 70%，运行正常
+- **🟡 WARNING** (黄色): 使用率 70-90%，需要注意
+- **🔴 CRITICAL** (红色): 使用率 > 90%，接近限额
+
+**使用情况可视化**：
+1. **圆环图** (推荐)：
+   - 中心显示使用百分比（大号字体）
+   - 圆环填充颜色：绿→黄→红（根据使用率）
+   - 下方显示：已用/限额，剩余额度
+
+2. **进度条** (备选)：
+   - 横向彩色进度条
+   - 分段颜色：0-70%绿色，70-90%黄色，90-100%红色
+   - 右侧显示百分比和剩余数
+
+**Rate Limit信息展示**：
+```typescript
+// Rate Limit策略表（截至2026年1月）
+const RATE_LIMITS = {
+  FRED: {
+    daily: 120000,
+    hourly: null,
+    minute: null,
+    note: "建议控制在合理范围"
+  },
+  NewsAPI: {
+    daily: 100,
+    hourly: null,
+    minute: null,
+    note: "免费版限制"
+  },
+  Tiger: {
+    daily: null,
+    hourly: 3600,
+    minute: 60,
+    note: "约1请求/秒"
+  },
+  YahooFinance: {
+    daily: 2000,
+    hourly: 100,
+    minute: 5,
+    note: "非官方API，避免被限"
+  },
+  OpenAI: {
+    daily: null,
+    hourly: null,
+    minute: 3,
+    note: "取决于订阅级别"
+  }
+};
+```
+
+**健康状态栏设计 (HealthStatusBar)**：
+```
+┌──────────────────────────────────────────────────────┐
+│ 🟢 监控服务运行中  |  ⚠️ 1个警告  |  🚨 0个临界告警  │
+│ ❌ 今日错误: 2次  |  🕐 最后更新: 2分钟前           │
+└──────────────────────────────────────────────────────┘
+```
+
+**告警面板设计 (AlertsPanel)**：
+
+**临界告警** (优先级最高):
+```
+🚨 临界告警 (0)
+┌────────────────────────────────────────┐
+│ 暂无临界告警                            │
+└────────────────────────────────────────┘
+
+或有告警时：
+┌────────────────────────────────────────┐
+│ 🔴 News API                            │
+│ NewsAPI 已使用 91% 的日配额             │
+│ 剩余: 9 次                              │
+│ 时间: 2分钟前                           │
+└────────────────────────────────────────┘
+```
+
+**警告列表**:
+```
+⚠️ 警告 (1)
+┌────────────────────────────────────────┐
+│ 🟡 News API                            │
+│ NewsAPI 已使用 72% 的日配额             │
+│ 剩余: 28 次                             │
+│ 建议: 接近限额，建议减少调用            │
+└────────────────────────────────────────┘
+```
+
+**最近错误面板 (RecentErrorsPanel)**：
+```
+🐛 最近错误 (显示最近10条)
+┌────────────────────────────────────────────────────┐
+│ 🕐 10:23:15  |  NewsAPI  |  get_everything        │
+│ ❌ Connection timeout after 30 seconds             │
+│ [详情] 展开查看完整堆栈信息                         │
+├────────────────────────────────────────────────────┤
+│ 🕐 10:15:42  |  Tiger  |  get_market_data         │
+│ ❌ Rate limit exceeded                             │
+│ [详情] 展开查看完整堆栈信息                         │
+└────────────────────────────────────────────────────┘
+```
+
+**交互功能**：
+
+1. **页面初始化**：
+   - 自动调用 `GET /api/v1/monitoring/report` 获取完整监控报告
+   - 显示"正在加载监控数据..."提示
+
+2. **刷新按钮**：
+   - 手动刷新监控数据
+   - 显示加载态："正在刷新..."
+   - 成功后显示"✅ 刷新成功"（2秒后消失）
+
+3. **时间范围选择器**：
+   - 下拉选择：`day`（日）/ `hour`（时）/ `minute`（分）
+   - 切换后重新调用 `GET /api/v1/monitoring/stats?time_range={range}`
+   - 更新所有API卡片的统计数据
+
+4. **自动刷新**（可选）：
+   - 设置定时器，每60秒自动刷新一次
+   - 右上角显示倒计时："下次刷新: 45秒"
+   - 用户手动刷新时重置倒计时
+
+5. **单个API详情**：
+   - 点击API卡片展开更多信息
+   - 显示端点级别统计（如果后端提供）
+   - 显示历史趋势图（可选，Phase 2功能）
+
+6. **Rate Limit检查**：
+   - 卡片右上角添加"检查状态"按钮
+   - 点击调用 `GET /api/v1/monitoring/rate-limit/{provider}`
+   - 弹出提示：
+     - ✅ "可以调用"（绿色）
+     - ⚠️ "建议减少调用"（黄色）
+     - 🚫 "已达限额，暂时无法调用"（红色）
+
+7. **策略配置查看**：
+   - 底部"查看完整策略"按钮
+   - 打开抽屉/弹窗展示 `GET /api/v1/monitoring/policies` 返回的策略表
+
+**错误处理**：
+- 网络错误：显示"🌐 网络连接失败，请检查网络或后端服务状态"
+- 请求超时：显示"⏱️ 请求超时，请稍后再试！"
+- 监控服务离线：在HealthStatusBar显示"🔴 监控服务离线"
+
+**空态与异常状态**：
+- 无告警：显示"🎉 暂无告警，系统运行正常"
+- 无错误：显示"✅ 今日暂无错误记录"
+- 首次加载：显示骨架屏或加载动画
+
+**响应式设计**：
+- 桌面端：API卡片2-3列网格布局
+- 平板端：2列布局
+- 移动端：单列堆叠布局
+
+**性能优化**：
+- 使用虚拟滚动处理大量错误日志
+- 折叠/展开功能减少初始渲染
+- 只加载可见区域的详细数据
+
 ### 2.4 页面级说明指南设计
 
 **设计理念**：将评分标准和指标说明从全局侧边栏移至各页面底部，实现上下文相关的帮助信息。
@@ -502,6 +843,100 @@ OpportunitiesPage
 - 风险区间：用颜色区分低/中/高风险
 - 策略网格：四宫格展示应对策略
 - 指标监控：关键指标阈值一览表
+
+#### 2.4.4 API监控说明 (MonitoringGuideline.vue)
+**内容模块**：
+1. **监控概述**
+   - 外部API监控的重要性
+   - 支持的5个API提供商（FRED、News API、Tiger、Yahoo Finance、OpenAI）
+   - 监控指标说明（调用次数、成功率、响应时间、错误详情）
+
+2. **Rate Limit策略表**（截至2026年1月）
+   ```
+   | API           | 日限制    | 小时限制 | 分钟限制 | 备注                    |
+   |---------------|----------|---------|---------|------------------------|
+   | FRED          | 120,000  | -       | -       | 建议控制在合理范围        |
+   | News API      | 100      | -       | -       | 免费版限制               |
+   | Tiger         | -        | 3,600   | 60      | 约1请求/秒              |
+   | Yahoo Finance | 2,000    | 100     | 5       | 非官方API，避免被限      |
+   | OpenAI        | -        | -       | 3       | 取决于订阅级别           |
+   ```
+
+3. **告警阈值说明**
+   - **警告阈值（70%）**: 达到日配额的70%时发出警告
+     - 状态：🟡 WARNING（黄色）
+     - 建议：减少调用频率，优先使用缓存数据
+   - **临界阈值（90%）**: 达到日配额的90%时标记为临界状态
+     - 状态：🔴 CRITICAL（红色）
+     - 建议：立即停止非必要调用，等待额度重置
+   - **正常状态（<70%）**: 使用率低于70%
+     - 状态：🟢 NORMAL（绿色）
+     - 建议：可以正常调用
+
+4. **缓存策略说明**
+   - **宏观指标**: 6-24小时缓存（FRED API）
+   - **地缘政治事件**: 4-24小时缓存（News API）
+   - **市场数据**: 5分钟-1小时缓存（Tiger/Yahoo Finance）
+   - **AI决策**: 按需调用，无固定缓存（OpenAI）
+   - **跨进程共享**: Redis缓存在多实例环境下减少重复调用
+
+5. **状态徽章说明**
+   - 🟢 **NORMAL** (正常): 使用率 < 70%，运行正常
+   - 🟡 **WARNING** (警告): 使用率 70-90%，需要注意
+   - 🔴 **CRITICAL** (临界): 使用率 > 90%，接近限额
+   - ⚫ **OFFLINE** (离线): 监控服务或API服务不可用
+
+6. **错误类型说明**
+   - **Rate Limit Exceeded**: 超过API限额
+     - 处理方式：等待额度重置（通常为UTC午夜或小时/分钟刷新）
+   - **Connection Timeout**: 连接超时
+     - 处理方式：检查网络连接，稍后重试
+   - **Authentication Failed**: 认证失败
+     - 处理方式：检查API密钥配置
+   - **Service Unavailable**: 服务不可用
+     - 处理方式：外部API服务暂时故障，使用备用数据源
+
+7. **最佳实践建议**
+   - ✅ **定期查看监控报告**: 每天检查一次监控页面
+   - ✅ **合理设置缓存时长**: 根据数据更新频率调整TTL
+   - ✅ **及时响应告警**: 收到WARNING时调整调用策略
+   - ✅ **使用Redis缓存**: 确保Redis服务正常运行
+   - ✅ **避免频繁强制刷新**: 尽量使用缓存数据
+   - ⚠️ **注意非官方API**: Yahoo Finance为非官方API，更容易被限
+   - ⚠️ **OpenAI成本控制**: OpenAI按Token计费，注意控制调用
+
+8. **故障排查指南**
+   - **问题：API调用被拒绝**
+     - 检查Rate Limit状态卡片
+     - 查看是否有临界告警
+     - 确认是否达到限额
+   - **问题：监控数据不更新**
+     - 检查监控服务健康状态
+     - 确认Redis连接正常
+     - 查看最后更新时间
+   - **问题：缓存未生效**
+     - 确认Redis服务运行中
+     - 检查环境变量`REDIS_ENABLED=true`
+     - 查看后端日志是否有"Using Redis cache"字样
+
+9. **额度重置时间**
+   - **日限额**: UTC午夜重置（北京时间早上8点）
+   - **小时限额**: 每小时整点重置
+   - **分钟限额**: 每分钟开始时重置
+   - 注意：重启服务会清空Redis计数器（设计如此，避免累积过期数据）
+
+10. **数据来源与更新**
+    - 监控数据存储在Redis中，实时更新
+    - 统计数据按天/时/分钟聚合
+    - 错误日志保留最近100条
+    - Rate Limit策略信息截至2026年1月，需定期更新
+
+**布局特点**：
+- 分段卡片：每个模块独立卡片展示
+- 表格展示：Rate Limit策略用表格清晰呈现
+- 颜色编码：使用状态徽章颜色（绿/黄/红）强化视觉
+- 实用性强：提供可操作的建议和故障排查步骤
+- 定期更新：标注数据截止时间，提醒定期检查更新
 
 ### 2.5 错误处理与用户体验
 
@@ -1973,6 +2408,72 @@ ai_trading_frontend_v4/
 **参考文档**：
 - `FRONTEND_POSITIONS_ASSESSMENT_GUIDE.md`（前端接入指南）
 - `Overview.md`（产品口径）
+- `API.md`（接口契约）
+
+### 2026-01-09 - 新增API监控模块完整设计
+
+**更新内容**：
+1. **新增API监控页面设计（2.3.5）**
+   - 页面定位：监控5个外部API提供商（FRED、News API、Tiger、Yahoo Finance、OpenAI）
+   - 核心功能：实时统计、Rate Limit管理、告警机制、错误追踪
+   - 页面布局：健康状态栏 + API提供商卡片 + 告警面板 + 错误日志
+   - 交互功能：手动刷新、时间范围选择、自动刷新、Rate Limit检查
+
+2. **新增API监控说明指南（2.4.4）**
+   - 监控概述与指标说明
+   - Rate Limit策略表（截至2026年1月）
+   - 告警阈值说明（70%警告、90%临界）
+   - 缓存策略说明（Redis跨进程共享）
+   - 状态徽章说明（NORMAL/WARNING/CRITICAL/OFFLINE）
+   - 错误类型说明与处理方式
+   - 最佳实践建议（10条）
+   - 故障排查指南
+   - 额度重置时间说明
+
+3. **更新路由配置（2.2.2）**
+   - 添加 `/monitoring` 路由，指向 `ApiMonitoringPage.vue`
+   - 路由元信息：`{ title: 'API监控' }`
+
+4. **更新侧边栏导航（2.2.1）**
+   - 添加 `📡 监控` 菜单项
+   - 与现有4个页面（行为、持仓、宏观、机会）保持一致风格
+
+5. **更新整体架构图（1.2）**
+   - 添加 `API监控模块` 为第五大模块
+   - 列出核心功能：外部API监控、Rate Limit管理、智能告警、Redis缓存、监控报告
+
+**核心设计特点**：
+- 🎨 **深色专业风格**：保持与现有页面一致的交易风格
+- 📊 **可视化展示**：圆环图/进度条展示使用率，颜色编码（绿/黄/红）
+- ⚡ **实时监控**：支持手动刷新和自动刷新（可选）
+- 🚨 **智能告警**：警告阈值70%、临界阈值90%
+- 📈 **统计详尽**：调用次数、成功率、响应时间、错误日志
+- 🔧 **故障排查**：提供详细的错误类型说明和处理建议
+- 📚 **文档完善**：页面级说明指南包含策略表、最佳实践、FAQ
+
+**数据结构**：
+- `MonitoringReport`: 监控报告完整结构
+- `ApiStats`: 单个API统计信息
+- `Alert`: 告警/警告信息
+- `ErrorLog`: 错误日志记录
+- `RateLimitPolicy`: Rate Limit策略配置
+- `RateLimitStatus`: Rate Limit状态检查
+
+**交互流程**：
+1. 页面初始化 → 获取监控报告 → 渲染卡片
+2. 手动刷新 → 显示加载态 → 更新数据 → 提示成功
+3. 时间范围切换 → 重新获取统计 → 更新卡片
+4. Rate Limit检查 → 弹出状态提示 → 给出建议
+5. 自动刷新（可选）→ 定时器60秒 → 后台更新
+
+**参考文档**：
+- `API_Monitoring.md`（后端API监控文档）
+- 现有页面设计规范（2.3.1-2.3.4）
+- 错误处理规范（2.5.1）
+
+---
+
+*本文档持续更新中，最后更新：2026-01-09*
 - `API.md`（接口契约）
 
 ---
