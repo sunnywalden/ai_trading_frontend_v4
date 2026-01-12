@@ -376,7 +376,10 @@ interface MacroRiskOverview {
 
 **核心接口（与后端实现保持一致）**：
 - 获取最新：`GET /api/v1/opportunities/latest?universe_name=US_LARGE_MID_TECH`
-- 手动扫描：`POST /api/v1/opportunities/scan`（body：`universe_name/min_score/max_results/force_refresh`）
+- 手动扫描：`POST /api/v1/opportunities/scan`（body：`universe_name/min_score/max_results/force_refresh/schedule_cron?/schedule_timezone?`）
+  - **异步执行**：请求立即返回 `status=SCHEDULED` 占位 run，实际扫描在后台执行
+  - 响应：`{ status: 'SCHEDULED'|'COMPLETED', run, notes: { scheduled_job_id?, scheduled_run_id? } }`
+  - 前端需轮询 `GET /api/v1/opportunities/runs/{run_id}` 查询最终结果（`status=SUCCESS` 或 `FAILED`）
 - 历史列表：`GET /api/v1/opportunities/runs?limit=20&universe_name=...`
 - 单次详情：`GET /api/v1/opportunities/runs/{run_id}`
 
@@ -2475,6 +2478,54 @@ ai_trading_frontend_v4/
 
 *本文档持续更新中，最后更新：2026-01-09*
 - `API.md`（接口契约）
+
+---
+
+## 附录：API 变更记录
+
+### 2026-01-09：潜在机会扫描接口异步化
+
+**变更概述**：
+`POST /api/v1/opportunities/scan` 接口已改为异步执行模式，以优化用户体验和系统性能。
+
+**接口变更**：
+1. **请求参数新增**：
+   - `schedule_cron`（可选）：定时任务 cron 表达式
+   - `schedule_timezone`（可选）：定时任务时区
+
+2. **响应格式变更**：
+   ```typescript
+   {
+     status: 'ok',                        // 响应状态（固定为 "ok"）
+     run: OpportunityRun,                 // 占位 run（status=SCHEDULED）或完整结果（status=SUCCESS）
+     notes?: {
+       scheduled_job_id?: string,        // 定时任务 ID
+       scheduled_run_id?: number,        // 异步运行 ID
+       idempotent?: boolean,
+       // ... 其他字段
+     }
+   }
+   ```
+
+3. **OpportunityRun 状态扩展**：
+   - `SUCCESS`：扫描成功完成
+   - `FAILED`：扫描失败
+   - `SCHEDULED`：任务已提交，等待执行
+   - `RUNNING`：任务正在执行中
+
+**前端适配要点**：
+1. 扫描请求立即返回后，检查 `run.status` 字段（不是响应的 status）
+2. 若 `run.status` 为 `SCHEDULED`，从 `notes.scheduled_run_id` 获取运行 ID
+3. 轮询调用 `GET /api/v1/opportunities/runs/{run_id}` 查询结果
+4. 建议轮询参数：最多 30 次，间隔 2 秒
+5. 查询到 `run.status=SUCCESS` 或 `FAILED` 时停止轮询
+6. 超时未完成时提示用户稍后手动刷新
+
+**用户体验优化**：
+- 扫描按钮点击后立即响应，避免长时间等待
+- 显示友好的进度提示："扫描已提交后台执行，预计 30-90 秒完成"
+- 自动轮询查询结果，无需用户手动刷新
+- 超时保护，避免无限等待
 
 ---
 
