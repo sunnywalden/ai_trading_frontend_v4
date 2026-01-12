@@ -121,9 +121,11 @@
     <!-- 加载/错误/空状态 -->
     <p v-if="errorMsg" class="error-message">{{ errorMsg }}</p>
     <p v-else-if="loading" class="loading-message">正在加载潜在机会数据...</p>
-    <p v-else-if="scanning" class="scanning-message">
-      🔍 正在扫描股票池（可能需要 30-90 秒）...
-    </p>
+    <div v-else-if="scanning" class="scanning-message">
+      <div class="scanning-icon">🔍</div>
+      <p class="scanning-text">正在扫描股票池...</p>
+      <p class="scanning-hint">扫描已提交后台执行，预计 30-90 秒完成</p>
+    </div>
 
     <!-- Top Picks 推荐卡片 -->
     <div v-else-if="latestRun">
@@ -319,14 +321,33 @@ async function onScanOpportunities() {
   
   try {
     const result = await scanOpportunities(scanParams.value);
-    latestRun.value = result;
     
-    // 检查是否幂等
-    if (result.notes?.idempotent) {
-      idempotentNotice.value = true;
-      setTimeout(() => {
-        idempotentNotice.value = false;
-      }, 5000);
+    // 判断是否为异步扫描（基于 run.status）
+    if (result.run.status === 'SCHEDULED') {
+      const scheduledRunId = result.notes?.scheduled_run_id;
+      
+      if (scheduledRunId) {
+        // 提示用户扫描已启动
+        console.log(`📋 扫描任务已提交，run_id: ${scheduledRunId}，正在后台执行...`);
+        
+        // 开始轮询查询结果
+        await pollScanResult(scheduledRunId);
+      } else {
+        // 如果没有run_id，直接使用占位结果
+        latestRun.value = result.run;
+        errorMsg.value = '⏳ 扫描任务已提交，请稍后手动刷新查看结果';
+      }
+    } else {
+      // 同步返回的结果（SUCCESS状态）
+      latestRun.value = result.run;
+      
+      // 检查是否幂等
+      if (result.notes?.idempotent) {
+        idempotentNotice.value = true;
+        setTimeout(() => {
+          idempotentNotice.value = false;
+        }, 5000);
+      }
     }
     
     // 刷新历史记录
@@ -343,6 +364,38 @@ async function onScanOpportunities() {
   } finally {
     scanning.value = false;
   }
+}
+
+// 轮询查询扫描结果
+async function pollScanResult(runId: number, maxAttempts = 30, intervalMs = 2000) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      
+      const runDetail = await fetchOpportunityRunDetail(runId);
+      
+      if (runDetail.status === 'SUCCESS') {
+        // 扫描成功
+        latestRun.value = runDetail;
+        console.log(`✅ 扫描完成，共找到 ${runDetail.qualified_symbols} 个机会`);
+        return;
+      } else if (runDetail.status === 'FAILED') {
+        // 扫描失败
+        errorMsg.value = '❌ 扫描任务执行失败，请重试';
+        return;
+      }
+      // 状态为 SCHEDULED 或 RUNNING，继续轮询
+      
+    } catch (e: any) {
+      console.error('查询扫描结果失败:', e);
+      if (attempt >= maxAttempts - 1) {
+        errorMsg.value = '⏱️ 扫描任务超时，请稍后手动刷新查看结果';
+      }
+    }
+  }
+  
+  // 超过最大尝试次数
+  errorMsg.value = '⏳ 扫描任务仍在执行中，请稍后手动刷新查看结果';
 }
 
 async function loadRunHistory() {
@@ -616,6 +669,39 @@ onMounted(() => {
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.3);
   color: #93c5fd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.scanning-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.scanning-text {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.scanning-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
 }
 
 .info-message {

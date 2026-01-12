@@ -420,7 +420,7 @@ export interface MacroRisk {
 export interface OpportunityRun {
   run_id: number;
   run_key: string;
-  status: string;
+  status: 'SUCCESS' | 'FAILED' | 'SCHEDULED' | 'RUNNING';
   as_of: string;
   universe_name: string;
   min_score: number;
@@ -459,9 +459,27 @@ export interface ScanOpportunitiesRequest {
   min_score?: number;
   max_results?: number;
   force_refresh?: boolean;
+  schedule_cron?: string;
+  schedule_timezone?: string;
 }
 
-export interface ScanOpportunitiesResponse extends OpportunityRun {}
+export interface ScanOpportunitiesResponse {
+  status: string;
+  run: OpportunityRun;
+  notes?: {
+    scheduled_job_id?: string;
+    scheduled_run_id?: number;
+    idempotent?: boolean;
+    macro_adjustment?: {
+      before_threshold: number;
+      after_threshold: number;
+    };
+    universe?: {
+      cache_hit?: boolean;
+      fallback_used?: boolean;
+    };
+  };
+}
 
 export interface LatestOpportunitiesResponse {
   status: string;
