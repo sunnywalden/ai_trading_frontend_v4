@@ -30,17 +30,17 @@
       {{ rebuildMsg }}
     </p>
 
-    <section class="top-row">
-      <RiskSummaryCard />
-      <GreeksWaterLevel
-        v-if="aiState"
-        class="gauge"
-        :limits="aiState.limits"
-        :exposure="aiState.exposure"
-      />
-    </section>
+    <p v-if="errorMsg" class="state-message error">{{ errorMsg }}</p>
+    <p v-else-if="loading" class="state-message loading">正在加载行为评分...</p>
 
-    <section class="grid-row">
+    <PlanDeviationSummaryCard
+      v-if="aiState"
+      :total-symbols="symbolList.length"
+      :overtrade-count="overtradeCount"
+      :revenge-count="revengeCount"
+    />
+
+    <section v-if="aiState" class="grid-row">
       <SymbolBehaviorCard
         v-for="item in symbolList"
         :key="item.symbol"
@@ -48,6 +48,7 @@
         :tier="item.tier"
         :behavior-score="item.behavior_score"
         :sell-fly-score="item.sell_fly_score"
+        :discipline-score="item.discipline_score"
         :overtrade-score="item.overtrade_score"
         :revenge-score="item.revenge_score"
         :trade-count="item.trade_count"
@@ -64,9 +65,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import RiskSummaryCard from '../components/RiskSummaryCard.vue';
+import PlanDeviationSummaryCard from '../components/PlanDeviationSummaryCard.vue';
 import SymbolBehaviorCard from '../components/SymbolBehaviorCard.vue';
-import GreeksWaterLevel from '../components/GreeksWaterLevel.vue';
 import BehaviorGuideline from '../components/BehaviorGuideline.vue';
 import { 
   fetchAiState, 
@@ -86,6 +86,14 @@ const windowDays = ref(appConfig.windowDays);
 const symbolList = computed(() => {
   if (!aiState.value) return [];
   return Object.values(aiState.value.symbols);
+});
+
+const overtradeCount = computed(() => {
+  return symbolList.value.filter(item => item.overtrade_score >= 70).length;
+});
+
+const revengeCount = computed(() => {
+  return symbolList.value.filter(item => item.revenge_score >= 70).length;
 });
 
 async function loadAiState() {
@@ -226,26 +234,28 @@ onMounted(() => {
   color: #a5b4fc;
 }
 
-.top-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-  gap: 12px;
-  align-items: stretch;
-}
-
-.gauge {
-  align-self: stretch;
-}
-
 .grid-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
-@media (max-width: 900px) {
-  .top-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.state-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
 }
+
+.state-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.state-message.loading {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
 </style>

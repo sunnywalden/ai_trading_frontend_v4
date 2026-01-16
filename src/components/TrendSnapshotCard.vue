@@ -31,7 +31,7 @@
           </div>
         </div>
         
-        <div v-if="snapshot.trend_strength !== undefined" class="trend-strength">
+        <div v-if="snapshot.trend_strength != null" class="trend-strength">
           <div class="strength-header">
             <span class="strength-label">趋势强度</span>
             <span class="strength-value">{{ snapshot.trend_strength }}</span>
@@ -40,7 +40,7 @@
             <div 
               class="strength-fill" 
               :class="strengthClass"
-              :style="{ width: snapshot.trend_strength + '%' }"
+              :style="{ width: (snapshot.trend_strength ?? 0) + '%' }"
             ></div>
           </div>
         </div>
@@ -48,7 +48,7 @@
 
       <!-- 技术指标 -->
       <div class="indicators-section">
-        <div v-if="snapshot.rsi_value !== undefined" class="indicator-item">
+        <div v-if="snapshot.rsi_value != null" class="indicator-item">
           <span class="indicator-label">RSI</span>
           <span class="indicator-value">{{ snapshot.rsi_value.toFixed(1) }}</span>
           <span class="indicator-status" :class="'status-' + (snapshot.rsi_status || '').toLowerCase()">
@@ -68,7 +68,7 @@
           <span class="indicator-status">{{ snapshot.bollinger_position }}</span>
         </div>
 
-        <div v-if="snapshot.volume_ratio !== undefined" class="indicator-item">
+        <div v-if="snapshot.volume_ratio != null" class="indicator-item">
           <span class="indicator-label">量能</span>
           <span class="volume-value" :class="volumeClass">
             {{ snapshot.volume_ratio.toFixed(2) }}x
@@ -87,7 +87,7 @@
               :key="'s' + idx"
               class="level-tag support"
             >
-              ${{ level.toFixed(2) }}
+              ${{ (level != null) ? level.toFixed(2) : '-' }}
             </span>
             <span v-if="snapshot.support_levels.length > 3" class="more-tag">
               +{{ snapshot.support_levels.length - 3 }}
@@ -103,7 +103,7 @@
               :key="'r' + idx"
               class="level-tag resistance"
             >
-              ${{ level.toFixed(2) }}
+              ${{ (level != null) ? level.toFixed(2) : '-' }}
             </span>
             <span v-if="snapshot.resistance_levels.length > 3" class="more-tag">
               +{{ snapshot.resistance_levels.length - 3 }}

@@ -3,8 +3,8 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h2>🌍 宏观风险</h2>
-          <p>货币政策、地缘政治、行业泡沫、经济周期、市场情绪</p>
+          <h2>🌍 宏观提醒</h2>
+          <p>只展示摘要与等级，详细内容可展开</p>
         </div>
         <button class="refresh-button" @click="onRefreshMacro" :disabled="loading">
           {{ loading ? '刷新中...' : '刷新数据' }}
@@ -16,7 +16,11 @@
     <p v-else-if="loading" class="loading-message">正在加载宏观风险数据...</p>
     
     <div v-else-if="macroRiskData">
-      <MacroRiskDashboard :data="macroRiskData" />
+      <MacroRiskDigestCard :data="macroRiskData" />
+      <details class="detail-accordion">
+        <summary>展开宏观详情</summary>
+        <MacroRiskDashboard :data="macroRiskData" />
+      </details>
       <MacroRiskGuideline />
     </div>
     <p v-else class="info-message">暂无宏观风险数据</p>
@@ -26,6 +30,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import MacroRiskDashboard from '../components/MacroRiskDashboard.vue';
+import MacroRiskDigestCard from '../components/MacroRiskDigestCard.vue';
 import MacroRiskGuideline from '../components/MacroRiskGuideline.vue';
 import { 
   fetchMacroRiskOverview, 
@@ -150,5 +155,20 @@ onMounted(() => {
   color: #9ca3af;
   font-size: 0.9rem;
   text-align: center;
+}
+
+.detail-accordion {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.detail-accordion summary {
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
 }
 </style>

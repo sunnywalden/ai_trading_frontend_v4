@@ -1,10 +1,67 @@
 import axios from "axios";
 
-// 开发环境使用代理，生产环境使用环境变量
+// 后端基础 URL
+const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088");
+
+// 业务 API（/api/v1/*）
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088"),
+  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088") + "/api",
   timeout: 30000
 });
+
+// 系统 API（无前缀，如 /health）
+const systemApi = axios.create({
+  baseURL: BACKEND_URL,
+  timeout: 30000
+});
+
+// 临时请求/响应拦截器：打印请求信息，便于调试为什么请求被取消或未发出
+api.interceptors.request.use((config) => {
+  try {
+    // 打印最终请求 URL（包含 baseURL + url）和 params
+    const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+    // eslint-disable-next-line no-console
+    console.debug('[API Request]', fullUrl, config.method, config.params || config.data || {});
+  } catch (e) {
+    // ignore
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (resp) => {
+    // eslint-disable-next-line no-console
+    console.debug('[API Response]', resp.config?.url, resp.status);
+    return resp;
+  },
+  (err) => {
+    // eslint-disable-next-line no-console
+    console.error('[API Error]', err?.config?.url, err?.message || err);
+    return Promise.reject(err);
+  }
+);
+
+systemApi.interceptors.request.use((config) => {
+  try {
+    const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+    // eslint-disable-next-line no-console
+    console.debug('[System API Request]', fullUrl, config.method, config.params || config.data || {});
+  } catch (e) {}
+  return config;
+});
+
+systemApi.interceptors.response.use(
+  (resp) => {
+    // eslint-disable-next-line no-console
+    console.debug('[System API Response]', resp.config?.url, resp.status);
+    return resp;
+  },
+  (err) => {
+    // eslint-disable-next-line no-console
+    console.error('[System API Error]', err?.config?.url, err?.message || err);
+    return Promise.reject(err);
+  }
+);
 
 export interface HealthResponse {
   status: string;
@@ -40,6 +97,7 @@ export interface SymbolBehaviorView {
   tier: "T1" | "T2" | "T3" | "T4";
   behavior_score: number;
   sell_fly_score: number;
+  discipline_score: number;
   overtrade_score: number;
   revenge_score: number;
   trade_count: number;
@@ -57,19 +115,32 @@ export interface AiStateResponse {
 }
 
 export async function fetchHealth(): Promise<HealthResponse> {
-  const { data } = await api.get<HealthResponse>("/health");
+  const { data } = await systemApi.get<HealthResponse>("/health");
   return data;
 }
 
 export async function runAutoHedgeOnce(): Promise<{ status: string; detail: string }> {
-  const { data } = await api.post("/run-auto-hedge-once");
+  const { data } = await api.post("/v1/run-auto-hedge-once");
   return data;
 }
 
 export async function fetchAiState(window_days?: number): Promise<AiStateResponse> {
-  const { data } = await api.get<AiStateResponse>("/ai/state", {
+  const { data } = await api.get<AiStateResponse>("/v1/ai/state", {
     params: window_days ? { window_days } : undefined
   });
+  return data;
+}
+
+export interface AiAdviceRequest {
+  [key: string]: any;
+}
+
+export interface AiAdviceResponse {
+  [key: string]: any;
+}
+
+export async function fetchAiAdvice(request: AiAdviceRequest): Promise<AiAdviceResponse> {
+  const { data } = await api.post<AiAdviceResponse>("/v1/ai/advice", request);
   return data;
 }
 
@@ -80,12 +151,89 @@ export interface BehaviorRebuildResponse {
   account_id: string;
   window_days: number;
   symbols_processed: string[];
+  metrics?: Record<string, any>;
 }
 
-export async function rebuildBehavior(window_days: number): Promise<BehaviorRebuildResponse> {
-  const { data } = await api.post<BehaviorRebuildResponse>("/admin/behavior/rebuild", {
-    window_days
+export async function rebuildBehavior(
+  window_days: number,
+  account_id?: string,
+  async_run?: boolean
+): Promise<BehaviorRebuildResponse> {
+  const { data } = await api.post<BehaviorRebuildResponse>("/v1/admin/behavior/rebuild", {
+    window_days,
+    ...(account_id ? { account_id } : {})
+  }, {
+    params: async_run ? { async_run } : undefined
   });
+  return data;
+}
+
+// ========== 交易计划 API ==========
+
+export type PlanStatus = 'ACTIVE' | 'EXECUTED' | 'EXPIRED' | 'CANCELLED';
+
+export interface PlanView {
+  id: number;
+  account_id: string;
+  symbol: string;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  target_position: number;
+  plan_status: PlanStatus;
+  plan_tags?: Record<string, any> | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanCreateRequest {
+  symbol: string;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  target_position: number;
+  plan_tags?: Record<string, any> | null;
+  valid_until?: string | null;
+  notes?: string | null;
+}
+
+export interface PlanUpdateRequest {
+  entry_price?: number | null;
+  stop_loss?: number | null;
+  take_profit?: number | null;
+  target_position?: number | null;
+  plan_status?: PlanStatus | null;
+  plan_tags?: Record<string, any> | null;
+  valid_until?: string | null;
+  notes?: string | null;
+}
+
+export interface PlanListResponse {
+  status: string;
+  total: number;
+  plans: PlanView[];
+}
+
+export async function fetchPlans(params?: { status?: PlanStatus; symbol?: string }): Promise<PlanListResponse> {
+  const { data } = await api.get<PlanListResponse>('/v1/plan/list', { params });
+  return data;
+}
+
+export async function createPlan(request: PlanCreateRequest): Promise<PlanView> {
+  const { data } = await api.post<PlanView>('/v1/plan/create', request);
+  return data;
+}
+
+export async function updatePlan(planId: number, request: PlanUpdateRequest): Promise<PlanView> {
+  const { data } = await api.patch<PlanView>(`/v1/plan/${planId}`, request);
+  return data;
+}
+
+export async function deletePlan(planId: number): Promise<{ status: string } | void> {
+  const { data } = await api.delete<{ status: string }>(`/v1/plan/${planId}`);
   return data;
 }
 
@@ -116,11 +264,13 @@ export interface PositionItem {
   market_value: number;
   unrealized_pnl: number;
   unrealized_pnl_percent: number;
+  budget_utilization?: number;
+  plan_deviation?: number;
   technical_score: number;
   fundamental_score: number;
   sentiment_score: number;
   overall_score: number;
-  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'REDUCE' | 'SELL';
+  recommendation: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'REDUCE' | 'SELL' | 'STRONG_SELL';
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
   target_position?: number;
   stop_loss?: number;
@@ -206,9 +356,15 @@ export interface FundamentalAnalysisResponse {
   timestamp: string;
 }
 
-export async function fetchPositionsAssessment(window_days?: number): Promise<PositionsAssessmentResponse> {
+export async function fetchPositionsAssessment(
+  window_days?: number,
+  force_refresh?: boolean
+): Promise<PositionsAssessmentResponse> {
+  const params: Record<string, any> = {};
+  if (window_days) params.window_days = window_days;
+  if (force_refresh) params.force_refresh = force_refresh;
   const { data } = await api.get<PositionsAssessmentResponse>("/v1/positions/assessment", {
-    params: window_days ? { window_days } : undefined
+    params: Object.keys(params).length ? params : undefined
   });
   return data;
 }
@@ -234,15 +390,28 @@ export async function fetchFundamentalAnalysis(
   return data;
 }
 
-export async function refreshPositions(symbols?: string[], force?: boolean): Promise<{
+export async function refreshPositions(
+  symbols?: string[],
+  force?: boolean,
+  async_run?: boolean
+): Promise<{
   status: string;
   refreshed: string[];
   timestamp: string;
   message?: string;
+  results?: {
+    technical?: Record<string, any>;
+    fundamental?: Record<string, any>;
+    scores?: Record<string, any>;
+  };
 }> {
-  const { data } = await api.post("/v1/positions/refresh", 
-    symbols || [],  // 直接传递数组，空数组表示刷新全部
-    { params: force ? { force } : undefined }
+  const params: Record<string, any> = {};
+  if (force) params.force = force;
+  if (async_run) params.async_run = async_run;
+  const { data } = await api.post(
+    "/v1/positions/refresh",
+    symbols || [],
+    { params: Object.keys(params).length ? params : undefined }
   );
   return data;
 }
@@ -280,9 +449,14 @@ export interface MacroRiskOverviewResponse {
   };
   alerts: RiskAlert[];
   key_concerns: string[];
-  recommendations: string;
+  recommendations: string[] | string;
   ai_analysis: string;
   recent_events: any[];
+  _meta?: {
+    response_time_ms?: number;
+    cache_hit?: boolean;
+    data_freshness?: string;
+  };
 }
 
 export interface MonetaryPolicyData {
@@ -355,8 +529,10 @@ export interface SchedulerJobsResponse {
   jobs: SchedulerJob[];
 }
 
-export async function fetchMacroRiskOverview(): Promise<MacroRiskOverviewResponse> {
-  const { data } = await api.get<MacroRiskOverviewResponse>("/v1/macro/risk/overview");
+export async function fetchMacroRiskOverview(force_refresh?: boolean): Promise<MacroRiskOverviewResponse> {
+  const { data } = await api.get<MacroRiskOverviewResponse>("/v1/macro/risk/overview", {
+    params: force_refresh ? { force_refresh } : undefined
+  });
   return data;
 }
 
@@ -365,20 +541,33 @@ export async function fetchMonetaryPolicy(): Promise<MonetaryPolicyResponse> {
   return data;
 }
 
-export async function fetchGeopoliticalEvents(days?: number): Promise<GeopoliticalEventsResponse> {
+export async function fetchGeopoliticalEvents(
+  days?: number,
+  category?: string,
+  min_impact?: number
+): Promise<GeopoliticalEventsResponse> {
+  const params: Record<string, any> = {};
+  if (days) params.days = days;
+  if (category) params.category = category;
+  if (min_impact !== undefined) params.min_impact = min_impact;
   const { data } = await api.get<GeopoliticalEventsResponse>("/v1/macro/geopolitical-events", {
-    params: days ? { days } : undefined
+    params: Object.keys(params).length ? params : undefined
   });
   return data;
 }
 
-export async function refreshMacroData(): Promise<{
-  status: string;
-  refreshed_components: string[];
-  message: string;
-  timestamp: string;
+export async function refreshMacroData(params?: {
+  refresh_indicators?: boolean;
+  refresh_events?: boolean;
+  refresh_risk?: boolean;
+}): Promise<{
+  status?: string;
+  refreshed_components?: string[];
+  message?: string;
+  timestamp?: string;
+  results?: Record<string, any>;
 }> {
-  const { data } = await api.post("/v1/macro/refresh");
+  const { data } = await api.post("/v1/macro/refresh", null, { params });
   return data;
 }
 
@@ -409,6 +598,8 @@ export interface OpportunityItem {
   overall_score: number;
   recommendation: string;
   reason: string;
+  plan_match_score?: number;
+  plan_match_reason?: string;
 }
 
 export interface MacroRisk {
@@ -641,30 +832,47 @@ export interface RateLimitStatus {
 
 export interface MonitoringHealthResponse {
   status: string;
-  monitoring_enabled: boolean;
-  redis_enabled: boolean;
-  timestamp: string;
+  monitoring_active?: boolean;
+  monitoring_enabled?: boolean;
+  redis_enabled?: boolean;
+  timestamp?: string;
+  last_updated?: string;
 }
 
 export async function fetchMonitoringStats(timeRange: 'day' | 'hour' | 'minute' = 'day'): Promise<ApiStats[]> {
-  const { data } = await api.get<ApiStats[]>('/v1/monitoring/stats', {
+  const { data } = await api.get<ApiStats[]>('/v1/stats', {
+    params: { time_range: timeRange }
+  });
+  return data;
+}
+
+export async function fetchMonitoringStatsByProvider(
+  provider: string,
+  timeRange: 'day' | 'hour' | 'minute' = 'day'
+): Promise<ApiStats> {
+  const { data } = await api.get<ApiStats>(`/v1/stats/${provider}`, {
     params: { time_range: timeRange }
   });
   return data;
 }
 
 export async function fetchMonitoringReport(): Promise<MonitoringReport> {
-  const { data } = await api.get<MonitoringReport>('/v1/monitoring/report');
+  const { data } = await api.get<MonitoringReport>('/v1/report');
   return data;
 }
 
 export async function checkRateLimitStatus(provider: string): Promise<RateLimitStatus> {
-  const { data } = await api.get<RateLimitStatus>(`/v1/monitoring/rate-limit/${provider}`);
+  const { data } = await api.get<RateLimitStatus>(`/v1/rate-limit/${provider}`);
   return data;
 }
 
 export async function fetchRateLimitPolicies(): Promise<Record<string, RateLimitPolicy>> {
-  const { data } = await api.get<Record<string, RateLimitPolicy>>('/v1/monitoring/policies');
+  const { data } = await api.get<Record<string, RateLimitPolicy>>('/v1/policies');
+  return data;
+}
+
+export async function fetchRateLimitPolicy(provider: string): Promise<RateLimitPolicy> {
+  const { data } = await api.get<RateLimitPolicy>(`/v1/policies/${provider}`);
   return data;
 }
 

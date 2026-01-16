@@ -7,12 +7,15 @@
           <span class="symbol">{{ opportunity.symbol }}</span>
           <span class="price">${{ opportunity.current_price.toFixed(2) }}</span>
         </div>
-        <span 
-          class="recommendation-badge" 
-          :class="`recommendation-${opportunity.recommendation.toLowerCase()}`"
-        >
-          {{ recommendationText }}
-        </span>
+        <div class="tag-row">
+          <PlanMatchTag :score="matchScore" />
+          <span 
+            class="recommendation-badge" 
+            :class="`recommendation-${opportunity.recommendation.toLowerCase()}`"
+          >
+            {{ recommendationText }}
+          </span>
+        </div>
       </div>
       <div class="overall-score">
         <span class="score-label">综合评分</span>
@@ -48,13 +51,14 @@
 
     <div class="reason-section">
       <span class="reason-label">🎯 推荐理由</span>
-      <p class="reason-text">{{ opportunity.reason }}</p>
+      <p class="reason-text">{{ displayReason }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import PlanMatchTag from './PlanMatchTag.vue';
 import type { OpportunityItem } from '../api/client';
 
 const props = defineProps<{
@@ -70,6 +74,17 @@ const recommendationText = computed(() => {
     STRONG_SELL: '清仓'
   };
   return map[props.opportunity.recommendation] || props.opportunity.recommendation;
+});
+
+const matchScore = computed(() => {
+  if (props.opportunity.plan_match_score !== undefined && props.opportunity.plan_match_score !== null) {
+    return Math.round(props.opportunity.plan_match_score * 100);
+  }
+  return props.opportunity.overall_score;
+});
+
+const displayReason = computed(() => {
+  return props.opportunity.plan_match_reason || props.opportunity.reason || '暂无理由';
 });
 </script>
 
@@ -137,6 +152,13 @@ const recommendationText = computed(() => {
   font-size: 1rem;
   font-weight: 600;
   color: #9ca3af;
+}
+
+.tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .recommendation-badge {

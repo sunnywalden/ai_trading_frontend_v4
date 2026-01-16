@@ -16,6 +16,10 @@
         <span class="value">{{ sellFlyScore }}</span>
       </div>
       <div class="metric">
+        <span class="name">执行纪律</span>
+        <span class="value">{{ typeof disciplineScore === 'number' ? disciplineScore : '-' }}</span>
+      </div>
+      <div class="metric">
         <span class="name">过度交易</span>
         <span class="value">{{ overtradeScore }}</span>
       </div>
@@ -61,6 +65,7 @@ interface Props {
   tier: "T1" | "T2" | "T3" | "T4";
   behaviorScore: number;
   sellFlyScore: number;
+  disciplineScore?: number;
   overtradeScore: number;
   revengeScore: number;
 
