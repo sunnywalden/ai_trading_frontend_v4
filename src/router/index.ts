@@ -27,13 +27,31 @@ const routes: RouteRecordRaw[] = [
     path: '/opportunities',
     name: 'Opportunities',
     component: () => import('../views/OpportunitiesPage.vue'),
-    meta: { title: '潜在机会' }
+    meta: { title: '执行列表' }
+  },
+  {
+    path: '/advice',
+    name: 'AiAdvice',
+    component: () => import('../views/AiAdvicePage.vue'),
+    meta: { title: 'AI 建议' }
+  },
+  {
+    path: '/api-monitoring',
+    name: 'ApiMonitoring',
+    component: () => import('../views/ApiMonitoringPage.vue'),
+    meta: { title: 'API 监控' }
   },
   {
     path: '/monitoring',
     name: 'Monitoring',
-    component: () => import('../views/ApiMonitoringPage.vue'),
-    meta: { title: 'API监控' }
+    component: () => import('../views/SystemHealthPage.vue'),
+    meta: { title: '系统健康' }
+  },
+  {
+    path: '/plans',
+    name: 'TradingPlans',
+    component: () => import('../views/TradingPlanPage.vue'),
+    meta: { title: '交易计划' }
   }
 ];
 

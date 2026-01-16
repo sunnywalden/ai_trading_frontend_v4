@@ -8,6 +8,10 @@
           {{ riskLevel }}
         </span>
       </div>
+      <div class="status-tags">
+        <BudgetUtilizationBadge v-if="budgetUtilization !== undefined" :utilization="budgetUtilization" />
+        <PlanDeviationTag v-if="planDeviation !== undefined" :deviation="planDeviation" />
+      </div>
       <div class="overall-score">
         <div class="score-value" :class="scoreClass">{{ overallScore.toFixed(1) }}</div>
         <div class="score-label">综合评分</div>
@@ -86,6 +90,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import TrendSnapshotCard from './TrendSnapshotCard.vue';
+import BudgetUtilizationBadge from './BudgetUtilizationBadge.vue';
+import PlanDeviationTag from './PlanDeviationTag.vue';
 import type { TrendSnapshot } from '../api/client';
 
 interface Props {
@@ -105,6 +111,8 @@ interface Props {
   aiAdvice?: string;
   // 保持向后兼容
   aiSummary?: string;
+  budgetUtilization?: number;
+  planDeviation?: number;
 }
 
 const props = defineProps<Props>();
@@ -148,6 +156,14 @@ const displayRecommendation = computed(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20px;
+  gap: 12px;
+}
+
+.status-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
 }
 
 .symbol-info h3 {

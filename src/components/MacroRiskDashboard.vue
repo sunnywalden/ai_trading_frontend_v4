@@ -117,9 +117,12 @@
     </div>
 
     <!-- 总体建议 -->
-    <div class="recommendations-section" v-if="data.recommendations">
+    <div class="recommendations-section" v-if="recommendationsList.length">
       <h3>💡 总体建议</h3>
-      <p class="recommendations-text">{{ data.recommendations }}</p>
+      <ul v-if="recommendationsList.length > 1" class="recommendations-list">
+        <li v-for="(item, index) in recommendationsList" :key="index">{{ item }}</li>
+      </ul>
+      <p v-else class="recommendations-text">{{ recommendationsList[0] }}</p>
     </div>
   </div>
 </template>
@@ -140,6 +143,12 @@ const overallRiskClass = computed(() => {
   if (score >= 50) return 'risk-medium';
   if (score >= 30) return 'risk-high';
   return 'risk-extreme';
+});
+
+const recommendationsList = computed(() => {
+  const raw = props.data.recommendations;
+  if (!raw) return [] as string[];
+  return Array.isArray(raw) ? raw : [raw];
 });
 
 function getScoreClass(score: number): string {

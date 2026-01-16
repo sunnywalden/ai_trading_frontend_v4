@@ -1,7 +1,7 @@
 // 全局配置
 export const globalConfig = {
   // 数据窗口天数 - 用于行为评分和持仓评估
-  windowDays: 15,
+  windowDays: 7,
   
   // API配置
   api: {

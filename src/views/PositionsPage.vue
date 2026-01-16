@@ -57,6 +57,8 @@
           :current-price="position.current_price"
           :unrealized-pnl="position.unrealized_pnl"
           :unrealized-pnl-percent="position.unrealized_pnl_percent"
+          :budget-utilization="position.budget_utilization"
+          :plan-deviation="position.plan_deviation"
           :overall-score="position.overall_score"
           :technical-score="position.technical_score"
           :fundamental-score="position.fundamental_score"

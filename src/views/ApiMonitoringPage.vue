@@ -50,7 +50,7 @@
         <h3 class="section-title">API 提供商状态</h3>
         <div class="providers-grid">
           <ApiProviderCard
-            v-for="stats in report.daily_stats"
+            v-for="stats in providerStats?.length ? providerStats : report.daily_stats"
             :key="stats.provider"
             :stats="stats"
             :policy="report.rate_limit_policies[stats.provider] || {}"
@@ -91,7 +91,13 @@ import HealthStatusBar from '../components/HealthStatusBar.vue';
 import ApiProviderCard from '../components/ApiProviderCard.vue';
 import AlertsPanel from '../components/AlertsPanel.vue';
 import MonitoringGuideline from '../components/MonitoringGuideline.vue';
-import { fetchMonitoringReport, fetchMonitoringHealth, type MonitoringReport } from '../api/client';
+import { 
+  fetchMonitoringReport, 
+  fetchMonitoringHealth, 
+  fetchMonitoringStats, 
+  type MonitoringReport,
+  type ApiStats
+} from '../api/client';
 
 const loading = ref(false);
 const errorMsg = ref('');
@@ -99,6 +105,7 @@ const successMsg = ref('');
 const report = ref<MonitoringReport | null>(null);
 const timeRange = ref<'day' | 'hour' | 'minute'>('day');
 const monitoringEnabled = ref(true);
+const providerStats = ref<ApiStats[] | null>(null);
 
 onMounted(() => {
   loadMonitoringData();
@@ -112,6 +119,7 @@ async function loadMonitoringData() {
   try {
     const data = await fetchMonitoringReport();
     report.value = data;
+    await loadStats();
   } catch (e: any) {
     console.error('获取监控数据失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
@@ -126,10 +134,19 @@ async function loadMonitoringData() {
   }
 }
 
+async function loadStats() {
+  try {
+    providerStats.value = await fetchMonitoringStats(timeRange.value);
+  } catch (e) {
+    console.error('获取统计数据失败:', e);
+    providerStats.value = null;
+  }
+}
+
 async function checkHealth() {
   try {
     const health = await fetchMonitoringHealth();
-    monitoringEnabled.value = health.monitoring_enabled && health.redis_enabled;
+    monitoringEnabled.value = !!(health.monitoring_active ?? health.monitoring_enabled ?? health.redis_enabled);
   } catch (e) {
     console.error('健康检查失败:', e);
     monitoringEnabled.value = false;
@@ -148,10 +165,8 @@ async function onRefresh() {
 }
 
 async function onTimeRangeChange() {
-  // 注意：当前后端只支持 /report 端点，不支持按时间范围筛选
-  // 这里保留接口以便后续扩展
   console.log('时间范围切换为:', timeRange.value);
-  // await loadMonitoringData();
+  await loadStats();
 }
 </script>
 

@@ -3,8 +3,8 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
         <div>
-          <h2>💡 潜在机会</h2>
-          <p>动态扫描科技股票池，发现高评分建仓机会</p>
+          <h2>📌 执行列表</h2>
+          <p>基于计划与评分筛选可执行标的</p>
         </div>
         
         <!-- 扫描参数控制区 -->
@@ -64,6 +64,13 @@
       </div>
     </section>
 
+    <ExecutionListHeader
+      :universe-name="scanParams.universe_name || 'US_LARGE_MID_TECH'"
+      :min-score="scanParams.min_score || 0"
+      :max-results="scanParams.max_results || 0"
+      :force-refresh="!!scanParams.force_refresh"
+    />
+
     <!-- 状态栏 -->
     <section v-if="latestRun" class="status-bar">
       <div class="status-item">
@@ -94,7 +101,7 @@
 
     <!-- 宏观风险调整提示 -->
     <div 
-      v-if="latestRun && latestRun.macro_risk?.risk_level && ['HIGH', 'EXTREME'].includes(latestRun.macro_risk.risk_level)" 
+      v-if="latestRun && latestRun.macro_risk?.risk_level && ['HIGH', 'EXTREME', 'CRITICAL'].includes(latestRun.macro_risk.risk_level)" 
       class="macro-adjustment-alert"
     >
       <span class="alert-icon">🚨</span>
@@ -260,6 +267,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import OpportunityCard from '../components/OpportunityCard.vue';
+import ExecutionListHeader from '../components/ExecutionListHeader.vue';
 import OpportunitiesGuideline from '../components/OpportunitiesGuideline.vue';
 import SchedulerConfig from '../components/SchedulerConfig.vue';
 import {
@@ -612,7 +620,8 @@ onMounted(() => {
   border: 1px solid rgba(249, 115, 22, 0.4);
 }
 
-.macro-badge.risk-extreme {
+.macro-badge.risk-extreme,
+.macro-badge.risk-critical {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.4);
@@ -844,7 +853,8 @@ onMounted(() => {
   color: #fdba74;
 }
 
-.macro-badge-small.risk-extreme {
+.macro-badge-small.risk-extreme,
+.macro-badge-small.risk-critical {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
 }
