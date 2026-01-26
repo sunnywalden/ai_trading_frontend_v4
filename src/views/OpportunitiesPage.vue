@@ -376,11 +376,17 @@ async function onScanOpportunities() {
 
 // 轮询查询扫描结果
 async function pollScanResult(runId: number, maxAttempts = 30, intervalMs = 2000) {
+  let consecutiveErrors = 0;
+  const maxConsecutiveErrors = 3;
+  
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       await new Promise(resolve => setTimeout(resolve, intervalMs));
       
       const runDetail = await fetchOpportunityRunDetail(runId);
+      
+      // 重置连续错误计数
+      consecutiveErrors = 0;
       
       if (runDetail.status === 'SUCCESS') {
         // 扫描成功
@@ -395,7 +401,24 @@ async function pollScanResult(runId: number, maxAttempts = 30, intervalMs = 2000
       // 状态为 SCHEDULED 或 RUNNING，继续轮询
       
     } catch (e: any) {
-      console.error('查询扫描结果失败:', e);
+      consecutiveErrors++;
+      
+      // 如果是404错误或连续错误超过阈值，立即停止轮询
+      if (e.response?.status === 404) {
+        console.error(`查询扫描结果失败: run_id ${runId} 不存在 (404)`);
+        errorMsg.value = '❌ 扫描任务不存在或已过期，请重新扫描';
+        return;
+      }
+      
+      if (consecutiveErrors >= maxConsecutiveErrors) {
+        console.error(`连续 ${consecutiveErrors} 次查询失败，停止轮询`);
+        errorMsg.value = '❌ 查询扫描结果失败次数过多，请检查网络或稍后重试';
+        return;
+      }
+      
+      console.warn(`查询扫描结果失败 (尝试 ${attempt + 1}/${maxAttempts}):`, e.message);
+      
+      // 最后一次尝试时设置错误消息
       if (attempt >= maxAttempts - 1) {
         errorMsg.value = '⏱️ 扫描任务超时，请稍后手动刷新查看结果';
       }
