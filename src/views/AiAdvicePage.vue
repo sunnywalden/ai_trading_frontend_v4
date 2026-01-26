@@ -22,7 +22,31 @@
         rows="10"
         placeholder="请输入 AI 建议请求 JSON"
       ></textarea>
-      <p class="hint">示例：{ "symbol": "AAPL", "intent": "adjust_position" }</p>
+      <div class="hint-section">
+        <p class="hint">必填字段：goal (目标描述)</p>
+        <p class="hint">可选字段：account_id, time_horizon ("INTRADAY"|"SWING"|"POSITION"), risk_preference, notes</p>
+        <details class="example-details">
+          <summary>查看完整示例</summary>
+          <pre class="example-code">{
+  "goal": "调整 META 仓位",
+  "time_horizon": "SWING",
+  "notes": "当前持仓 META，考虑调整"
+}
+
+或更详细的：
+{
+  "account_id": "demo-account",
+  "goal": "持仓 META 待合结果出调整建议",
+  "time_horizon": "POSITION",
+  "risk_preference": {
+    "level": "MEDIUM",
+    "max_drawdown_pct": 0.2,
+    "target_vol_pct": 0.25
+  },
+  "notes": "持仓 META，需要根据当前市场情况决定是否合并、减仓或卖出"
+}</pre>
+        </details>
+      </div>
     </section>
 
     <section class="panel" v-if="responseText">
@@ -64,6 +88,9 @@ async function onSend() {
       errorMsg.value = '⏱️ 请求超时，请稍后再试！';
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
       errorMsg.value = '🌐 网络连接失败，请检查网络或后端服务状态';
+    } else if (e.response?.status === 422) {
+      const detail = e.response?.data?.detail || '请求参数验证失败';
+      errorMsg.value = `❌ 请求格式错误 (422): ${typeof detail === 'string' ? detail : JSON.stringify(detail)}\n\n必填字段：goal (字符串)`;
     } else {
       errorMsg.value = '❌ 获取 AI 建议失败';
     }
@@ -135,10 +162,44 @@ async function onSend() {
   white-space: pre-wrap;
 }
 
+.hint-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .hint {
   margin: 0;
   font-size: 0.78rem;
   color: #9ca3af;
+}
+
+.example-details {
+  margin-top: 4px;
+}
+
+.example-details summary {
+  cursor: pointer;
+  color: #38bdf8;
+  font-size: 0.8rem;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.example-details summary:hover {
+  color: #7dd3fc;
+}
+
+.example-code {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+  color: #a5b4fc;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .send-button {

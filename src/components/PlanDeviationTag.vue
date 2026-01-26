@@ -7,13 +7,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-const props = defineProps<{ deviation: number }>();
+const props = withDefaults(
+  defineProps<{ deviation?: number | null }>(),
+  { deviation: 0 }
+);
 
-const displayValue = computed(() => `${Math.round(props.deviation)}%`);
+const safeDeviation = computed(() => props.deviation ?? 0);
+
+const displayValue = computed(() => `${Math.round(safeDeviation.value)}%`);
 
 const tagClass = computed(() => {
-  if (props.deviation <= 10) return 'ok';
-  if (props.deviation <= 30) return 'warn';
+  if (safeDeviation.value <= 10) return 'ok';
+  if (safeDeviation.value <= 30) return 'warn';
   return 'danger';
 });
 </script>
