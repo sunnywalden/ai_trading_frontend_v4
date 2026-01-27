@@ -59,9 +59,152 @@ systemApi.interceptors.response.use(
   (err) => {
     // eslint-disable-next-line no-console
     console.error('[System API Error]', err?.config?.url, err?.message || err);
+    // 如果后端返回 401，清除本地 token 并派发登出事件（由前端决定如何导航）
+    if (err?.response?.status === 401) {
+      try {
+        setAuthToken(null);
+      } catch (e) {}
+      // 由前端应用监听并执行适当的导航（避免硬刷新）
+      if (typeof window !== 'undefined') {
+        try { window.dispatchEvent(new CustomEvent('auth-logout')); } catch (e) {}
+      }
+    }
     return Promise.reject(err);
   }
 );
+
+// ====== Auth helpers: token storage + auto-inject Authorization header ======
+export function setAuthToken(token: string | null, remember: boolean = true) {
+  try {
+    if (token) {
+      if (remember) {
+        localStorage.setItem('auth_token', token);
+      } else {
+        sessionStorage.setItem('auth_token', token);
+      }
+    } else {
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+    }
+  } catch (e) {}
+}
+
+export function getAuthToken(): string | null {
+  try {
+    // 优先使用 sessionStorage（短期会话），其次是 localStorage（记住登录）
+    return sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+  } catch (e) {
+    return null;
+  }
+}
+
+export function isLoggedIn(): boolean {
+  try {
+    return !!getAuthToken();
+  } catch (e) {
+    return false;
+  }
+}
+
+// 轻量的 JWT 解码（仅在前端展示用途，不验证签名）
+export function decodeJwt(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const b = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    try {
+      return JSON.parse(decodeURIComponent(escape(b)));
+    } catch {
+      return JSON.parse(b);
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
+export function getTokenPayload() {
+  const t = getAuthToken();
+  if (!t) return null;
+  return decodeJwt(t) as any | null;
+}
+
+export function getCurrentUsername(): string | null {
+  const p = getTokenPayload();
+  return (p && p.sub) || null;
+}
+
+export function getTokenExpiryMs(): number | null {
+  const p = getTokenPayload();
+  if (!p || !p.exp) return null;
+  return Number(p.exp) * 1000;
+}
+
+export function getTokenExpiryRelative(): string | null {
+  const exp = getTokenExpiryMs();
+  if (!exp) return null;
+  const diff = exp - Date.now();
+  if (diff <= 0) return '已过期';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} 分钟`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时`;
+  const days = Math.floor(hours / 24);
+  return `${days} 天`;
+}
+
+export function isTokenExpired(): boolean {
+  // If there is no token, don't consider it 'expired' — callers should check token presence separately.
+  const token = getAuthToken();
+  if (!token) return false;
+  const exp = getTokenExpiryMs();
+  if (!exp) return false;
+  return Date.now() > exp;
+}
+
+export async function loginUser(username: string, password: string, remember: boolean = true) {
+  const params = new URLSearchParams();
+  params.append('username', username);
+  params.append('password', password);
+  // OAuth2 Password grant returns { access_token, token_type }
+  const { data } = await systemApi.post('/api/v1/login', params, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  const token = data && data.access_token;
+  if (token) {
+    setAuthToken(token, remember);
+  }
+  return data;
+}
+
+export function logout() {
+  setAuthToken(null);
+  try { sessionStorage.removeItem('auth_token'); } catch (e) {}
+  try { localStorage.removeItem('auth_token'); } catch (e) {}
+  if (typeof window !== 'undefined') {
+    // Dispatch an event and let the app handle navigation to avoid full page reloads
+    try { window.dispatchEvent(new CustomEvent('auth-logout')); } catch (e) {}
+  }
+}
+
+// 把 token 自动注入到请求头中（适用于 api 与 systemApi）
+api.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+systemApi.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export interface HealthResponse {
   status: string;
