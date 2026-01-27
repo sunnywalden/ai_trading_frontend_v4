@@ -35,10 +35,10 @@
 cd /path/to/ai_trading_frontend_v4
 
 # 构建 Docker 镜像
-docker build -f deploy/Dockerfile -t ai-trading-frontend:latest .
+docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:latest .
 
 # 或使用特定版本标签
-docker build -f deploy/Dockerfile -t ai-trading-frontend:v1.0.0 .
+docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:v1.0.0 .
 ```
 
 ### 2. 运行容器
@@ -55,6 +55,14 @@ docker run -d \
 
 #### 方式二：使用 Docker Compose
 
+创建.env 文件：
+
+```bash
+cp .env.example ._env
+# 编辑 .frontend_env，按需修改 BACKEND_URL 等配置
+```
+
+
 创建 `docker-compose.yml`：
 
 ```yaml
@@ -62,10 +70,12 @@ version: '3.8'
 
 services:
   frontend:
-    image: ai-trading-frontend:latest
+    image: sunnywalden/ai-trading-frontend:latest
     container_name: ai-trading-frontend
     ports:
       - "8080:80"
+    env_file:
+      - ./.env
     environment:
       - BACKEND_URL=http://backend:8088
     restart: unless-stopped
@@ -109,16 +119,8 @@ open http://localhost:8080
 
 ```bash
 # Docker Hub
-docker tag ai-trading-frontend:latest your-dockerhub-username/ai-trading-frontend:latest
-docker push your-dockerhub-username/ai-trading-frontend:latest
-
-# 私有镜像仓库
-docker tag ai-trading-frontend:latest registry.example.com/ai-trading-frontend:latest
-docker push registry.example.com/ai-trading-frontend:latest
-
-# 阿里云容器镜像服务
-docker tag ai-trading-frontend:latest registry.cn-hangzhou.aliyuncs.com/your-namespace/ai-trading-frontend:latest
-docker push registry.cn-hangzhou.aliyuncs.com/your-namespace/ai-trading-frontend:latest
+docker tag sunnywalden/ai-trading-frontend:latest sunnywalden/ai-trading-frontend:latest
+docker push sunnywalden/ai-trading-frontend:latest
 ```
 
 ---
@@ -235,7 +237,7 @@ open http://localhost:8080
 ```bash
 # 更新镜像版本
 kubectl set image deployment/ai-trading-frontend \
-  frontend=ai-trading-frontend:v1.0.1 \
+  frontend=sunnywalden/ai-trading-frontend:v1.0.1 \
   -n ai-trading
 
 # 或者编辑 Deployment
