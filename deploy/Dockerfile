@@ -38,6 +38,11 @@ COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 # 确保 nginx 用户对配置文件有写权限（entrypoint 需要写入 tmp 文件并覆盖原文件）
 RUN chown -R nginx:nginx /etc/nginx/conf.d && chmod 644 /etc/nginx/conf.d/default.conf
 
+# 创建并设置 nginx 运行时需要的缓存和运行目录的属主与权限，确保以非 root 用户运行时也能写入
+RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx \
+    && chown -R nginx:nginx /var/cache/nginx /var/run/nginx /usr/share/nginx/html \
+    && chmod -R 755 /var/cache/nginx /var/run/nginx
+
 # 从构建阶段复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -51,9 +56,6 @@ EXPOSE 80
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/ || exit 1
-
-# 设置用户（安全性）
-USER nginx
 
 # 启动脚本
 ENTRYPOINT ["/docker-entrypoint.sh"]

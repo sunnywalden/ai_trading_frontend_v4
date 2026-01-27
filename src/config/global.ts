@@ -5,7 +5,7 @@ export const globalConfig = {
   
   // API配置
   api: {
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND_URL || 'http://localhost:8088'),
+    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND_URL ?? ''),
     timeout: 30000
   },
   
