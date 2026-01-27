@@ -52,6 +52,12 @@ const routes: RouteRecordRaw[] = [
     name: 'TradingPlans',
     component: () => import('../views/TradingPlanPage.vue'),
     meta: { title: '交易计划' }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/LoginPage.vue'),
+    meta: { title: '登录' }
   }
 ];
 
@@ -60,11 +66,25 @@ const router = createRouter({
   routes
 });
 
-// 路由守卫 - 更新页面标题
+// 路由守卫 - 更新页面标题并强制认证（默认后端已启用认证）
+import { isLoggedIn } from '../api/client';
+
 router.beforeEach((to, from, next) => {
   if (to.meta.title) {
     document.title = `${to.meta.title} - AI Trading 控制塔`;
   }
+
+  // 允许匿名访问的页面
+  const publicPaths = ['/login', '/monitoring'];
+  if (publicPaths.includes(to.path)) {
+    return next();
+  }
+
+  // 如果未登录，跳转到登录页
+  if (!isLoggedIn()) {
+    return next({ path: '/login' });
+  }
+
   next();
 });
 
