@@ -1,11 +1,11 @@
 import axios from "axios";
 
 // 后端基础 URL
-const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088");
+const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL ?? "");
 
 // 业务 API（/api/v1/*）
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL || "http://localhost:8088") + "/api",
+  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL ?? "") + "/api",
   timeout: 30000
 });
 
