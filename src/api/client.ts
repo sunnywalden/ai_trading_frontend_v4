@@ -853,6 +853,181 @@ export async function fetchOpportunityRunDetail(runId: number): Promise<Opportun
   return data;
 }
 
+// ========== 策略管理 API ==========
+
+export interface StrategySummaryView {
+  id: string;
+  name: string;
+  style?: string | null;
+  description?: string | null;
+  is_builtin: boolean;
+  is_active: boolean;
+  tags: string[];
+  last_run_status?: string | null;
+  last_run_at?: string | null;
+}
+
+export interface StrategyDetailView extends StrategySummaryView {
+  version: number;
+  default_params: Record<string, any>;
+  signal_sources: Record<string, any>;
+  risk_profile: Record<string, any>;
+}
+
+export interface StrategyListResponse {
+  status: string;
+  strategies: StrategySummaryView[];
+}
+
+export interface StrategyDetailResponse {
+  status: string;
+  strategy: StrategyDetailView;
+}
+
+export interface StrategyRunRequest {
+  account_id: string;
+  budget?: number | null;
+  direction?: string | null;
+  param_overrides?: Record<string, any>;
+  notify_channels?: string[];
+  target_universe?: string | null;
+  priority?: number | null;
+}
+
+export interface StrategyRunResponse {
+  status: string;
+  run_id: string;
+  celery_task_id?: string | null;
+}
+
+export interface StrategyTimelineEntry {
+  start?: string;
+  end?: string;
+}
+
+export type StrategyTimeline = Record<string, StrategyTimelineEntry>;
+
+export interface StrategyRunStatusView {
+  run_id: string;
+  status: string;
+  phase?: string | null;
+  progress: number;
+  attempt: number;
+  error_message?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  timeline?: StrategyTimeline | null;
+}
+
+export interface StrategyRunLatestResponse {
+  status: string;
+  run: StrategyRunStatusView | null;
+}
+
+export interface StrategyRunHistoryItem {
+  run_id: string;
+  strategy_id: string;
+  status: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  hits?: number | null;
+  hit_rate?: number | null;
+  avg_signal_strength?: number | null;
+}
+
+export interface StrategyRunHistoryResponse {
+  status: string;
+  runs: StrategyRunHistoryItem[];
+}
+
+export interface StrategyRunAssetView {
+  symbol: string;
+  signal_strength?: number | null;
+  weight?: number | null;
+  risk_flags: string[];
+  notes?: string | null;
+  signal_dimensions: Record<string, any>;
+}
+
+export interface StrategyRunResultsResponse {
+  status: string;
+  run_id: string;
+  strategy_id: string;
+  assets: StrategyRunAssetView[];
+}
+
+export interface StrategyExportResponse {
+  status: string;
+  run_id: string;
+  download_url: string;
+  file_path: string;
+}
+
+export interface StrategyListParams {
+  style?: string;
+  is_builtin?: boolean;
+  limit?: number;
+  offset?: number;
+  search?: string;
+}
+
+export interface StrategyRunListParams {
+  limit?: number;
+  offset?: number;
+  strategy_id?: string;
+  account_id?: string;
+  status?: string;
+}
+
+export async function fetchStrategies(params?: StrategyListParams): Promise<StrategyListResponse> {
+  const { data } = await api.get<StrategyListResponse>('/v1/strategies', {
+    params: params ? { ...params } : undefined
+  });
+  return data;
+}
+
+export async function fetchStrategyDetail(strategyId: string): Promise<StrategyDetailResponse> {
+  const { data } = await api.get<StrategyDetailResponse>(`/v1/strategies/${strategyId}`);
+  return data;
+}
+
+export async function runStrategy(strategyId: string, request: StrategyRunRequest): Promise<StrategyRunResponse> {
+  const { data } = await api.post<StrategyRunResponse>(`/v1/strategies/${strategyId}/run`, request);
+  return data;
+}
+
+export async function fetchStrategyRunStatus(runId: string): Promise<StrategyRunStatusView> {
+  const { data } = await api.get<StrategyRunStatusView>(`/v1/strategy-runs/${runId}/status`);
+  return data;
+}
+
+export async function fetchLatestStrategyRun(accountId?: string, strategyId?: string): Promise<StrategyRunLatestResponse> {
+  const params: Record<string, any> = {};
+  if (accountId) params.account_id = accountId;
+  if (strategyId) params.strategy_id = strategyId;
+  const { data } = await api.get<StrategyRunLatestResponse>('/v1/strategy-runs/latest', {
+    params: Object.keys(params).length ? params : undefined
+  });
+  return data;
+}
+
+export async function fetchStrategyRuns(params?: StrategyRunListParams): Promise<StrategyRunHistoryResponse> {
+  const { data } = await api.get<StrategyRunHistoryResponse>('/v1/strategy-runs', {
+    params: params ? { ...params } : undefined
+  });
+  return data;
+}
+
+export async function fetchStrategyRunResults(runId: string): Promise<StrategyRunResultsResponse> {
+  const { data } = await api.get<StrategyRunResultsResponse>(`/v1/strategy-runs/${runId}/results`);
+  return data;
+}
+
+export async function exportStrategyRun(runId: string): Promise<StrategyExportResponse> {
+  const { data } = await api.post<StrategyExportResponse>(`/v1/strategy-runs/${runId}/export`);
+  return data;
+}
+
 // ========== 定时任务管理 API ==========
 
 export interface SchedulerJobDetail {
