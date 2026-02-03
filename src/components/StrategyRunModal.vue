@@ -10,16 +10,7 @@
       </div>
 
       <div class="modal-content">
-        <div class="field-group">
-          <label>账户 ID</label>
-          <input v-model="form.account_id" type="text" placeholder="请输入账户 ID" />
-        </div>
-
         <div class="field-grid">
-          <div class="field-group">
-            <label>预算（USD）</label>
-            <input v-model.number="form.budget" type="number" min="0" step="0.01" placeholder="可选" />
-          </div>
           <div class="field-group">
             <label>方向</label>
             <select v-model="form.direction">
@@ -28,31 +19,39 @@
               <option value="SHORT">SHORT</option>
             </select>
           </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field-group">
-            <label>目标股票池</label>
-            <input v-model="form.target_universe" type="text" placeholder="例如 US_LARGE_MID_TECH" />
-          </div>
           <div class="field-group">
             <label>优先级</label>
             <input v-model.number="form.priority" type="number" min="0" placeholder="可选" />
           </div>
         </div>
 
-        <div class="field-group">
-          <label>通知频道（逗号分隔）</label>
-          <input v-model="notifyChannelsInput" type="text" placeholder="例如 slack-strategy|email-trading" />
+        <div class="field-grid">
+          <div class="field-group">
+            <label>目标股票池</label>
+            <select v-model="form.target_universe">
+              <option value="US_LARGE_MID_TECH">美股中大型科技</option>
+              <option value="PRECIOUS_METALS">黄金白银贵金属</option>
+              <option value="US_SMALL_TECH">美股科技潜力股</option>
+              <option value="TRADITIONAL_QUALITY">传统行业优质资产</option>
+              <option value="EMERGING_QUALITY">新兴行业优质资产</option>
+              <option value="BLOCKCHAIN_CRYPTO">区块链/加密相关</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>最低评分</label>
+            <input v-model.number="form.min_score" type="number" min="0" max="100" />
+          </div>
         </div>
 
-        <div class="field-group">
-          <label>参数快照（JSON，可选）</label>
-          <textarea
-            v-model="paramOverridesText"
-            rows="5"
-            spellcheck="false"
-          ></textarea>
+        <div class="field-grid">
+          <div class="field-group">
+            <label>最多展示</label>
+            <input v-model.number="form.max_results" type="number" min="1" max="50" />
+          </div>
+          <div class="field-group">
+            <label>通知频道（逗号分隔）</label>
+            <input v-model="notifyChannelsInput" type="text" placeholder="例如 slack-strategy|email-trading" />
+          </div>
         </div>
 
         <p v-if="errorMsg" class="error-text">{{ errorMsg }}</p>
@@ -77,37 +76,26 @@ const props = defineProps<{ show: boolean; strategy: StrategyDetailView | null }
 const emit = defineEmits<{ (e: 'close'): void; (e: 'submit', payload: StrategyRunRequest): void }>();
 
 const form = reactive<StrategyRunRequest>({
-  account_id: '',
-  budget: undefined,
   direction: undefined,
-  param_overrides: {}
+  target_universe: 'US_LARGE_MID_TECH',
+  min_score: 75,
+  max_results: 3
 });
 
 const notifyChannelsInput = ref('');
-const paramOverridesText = ref('{}');
 const errorMsg = ref('');
 const loading = ref(false);
-
-watch(
-  () => props.strategy,
-  (strategy) => {
-    if (!strategy) return;
-    paramOverridesText.value = JSON.stringify(strategy.default_params || {}, null, 2);
-  },
-  { immediate: true }
-);
 
 watch(
   () => props.show,
   (show) => {
     if (show && props.strategy) {
-      form.account_id = '';
-      form.budget = undefined;
       form.direction = undefined;
-      form.target_universe = props.strategy.default_params?.universe || '';
+      form.target_universe = props.strategy.default_params?.universe || 'US_LARGE_MID_TECH';
+      form.min_score = 75;
+      form.max_results = 3;
       form.priority = undefined;
       notifyChannelsInput.value = '';
-      paramOverridesText.value = JSON.stringify(props.strategy.default_params || {}, null, 2);
       errorMsg.value = '';
     }
   }
@@ -122,28 +110,22 @@ async function submit() {
   errorMsg.value = '';
   loading.value = true;
   try {
-    let overrides: Record<string, any> = {};
-    if (paramOverridesText.value.trim()) {
-      overrides = JSON.parse(paramOverridesText.value);
-    }
-
     const payload: StrategyRunRequest = {
-      account_id: form.account_id,
-      budget: form.budget,
       direction: form.direction || undefined,
-      param_overrides: overrides,
       notify_channels: notifyChannelsInput.value
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean),
       target_universe: form.target_universe || undefined,
+      min_score: form.min_score,
+      max_results: form.max_results,
       priority: form.priority || undefined
     };
 
     emit('submit', payload);
   } catch (error: any) {
-    console.error('解析参数失败：', error);
-    errorMsg.value = '参数格式错误，请检查 JSON';
+    console.error('提交失败：', error);
+    errorMsg.value = '提交失败，请重试';
   } finally {
     loading.value = false;
   }
@@ -221,6 +203,16 @@ async function submit() {
 label {
   font-size: 0.75rem;
   color: #9ca3af;
+}
+
+.read-only-field {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  color: #9ca3af;
+  font-size: 0.9rem;
+  cursor: not-allowed;
 }
 
 input,

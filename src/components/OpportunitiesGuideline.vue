@@ -3,24 +3,24 @@
     <h3 class="guideline-title">📖 机会发现说明</h3>
     
     <div class="guideline-grid">
-      <!-- 扫描机制 -->
+      <!-- 策略执行机制 -->
       <div class="guideline-section">
-        <h4>🔍 扫描机制</h4>
+        <h4>⚙️ 策略执行机制</h4>
         <ul class="guideline-list">
           <li>
-            <strong>股票池:</strong> 从预定义股票池（如美股中大型科技）中筛选机会，动态更新
+            <strong>自选股票池:</strong> 运行策略时可自由选择目标股票池（美股科技、香港蓝筹等）
           </li>
           <li>
-            <strong>自动扫描:</strong> 每日北京时间 20:30 自动执行扫描任务，无需手动触发
+            <strong>异步执行:</strong> 策略任务提交后会在后台异步运行，可以随时离开页面或查看历史记录
           </li>
           <li>
-            <strong>幂等性:</strong> 同一天内首次扫描触发计算，后续请求返回缓存结果（除非强制刷新）
+            <strong>参数定制:</strong> 支持二次输入最低评分阈值及最多展示结果个数，满足不同风险偏好
           </li>
           <li>
-            <strong>强制刷新:</strong> 实时调用外部API，可能耗时 30-90 秒，且有限流风险
+            <strong>实时监控:</strong> 支持实时查看策略执行状态、进度及最终命中的资产详情
           </li>
           <li>
-            <strong>数据时效:</strong> 每日北京时间 00:00 重置缓存，确保数据新鲜度
+            <strong>结果导出:</strong> 策略执行完成后可导出详细的分析报告。
           </li>
         </ul>
       </div>

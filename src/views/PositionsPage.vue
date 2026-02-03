@@ -46,6 +46,13 @@
         </div>
       </section>
 
+      <!-- 组合分析仪表盘 -->
+      <PortfolioDashboard 
+        v-if="positionsData.portfolio_analysis"
+        :analysis="positionsData.portfolio_analysis"
+        :recommendations="positionsData.ai_recommendations || []"
+      />
+
       <!-- 持仓列表 -->
       <section class="positions-grid">
         <PositionScoreCard
@@ -81,6 +88,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import PositionScoreCard from '../components/PositionScoreCard.vue';
+import PortfolioDashboard from '../components/PortfolioDashboard.vue';
 import PositionsGuideline from '../components/PositionsGuideline.vue';
 import { 
   fetchPositionsAssessment, 
