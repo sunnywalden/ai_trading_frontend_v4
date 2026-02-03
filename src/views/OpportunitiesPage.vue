@@ -3,7 +3,7 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
         <div>
-          <h2>📌 执行列表</h2>
+          <h2>� 机会挖掘</h2>
           <p>基于计划与评分筛选可执行标的</p>
         </div>
         

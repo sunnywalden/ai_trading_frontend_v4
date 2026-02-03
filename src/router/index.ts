@@ -27,7 +27,7 @@ const routes: RouteRecordRaw[] = [
     path: '/opportunities',
     name: 'Opportunities',
     component: () => import('../views/OpportunitiesPage.vue'),
-    meta: { title: '执行列表' }
+    meta: { title: '机会挖掘' }
   },
   {
     path: '/advice',
