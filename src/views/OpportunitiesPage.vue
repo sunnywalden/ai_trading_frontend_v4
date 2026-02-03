@@ -177,10 +177,11 @@ function closeStrategyModal() {
 
 async function handleStrategyRun(payload: StrategyRunRequest) {
   if (!modalStrategy.value) return;
+  const strategyId = modalStrategy.value.id;
   closeStrategyModal();
   strategyActionMessage.value = '策略已提交，正在等待执行';
   try {
-    const result = await runStrategy(modalStrategy.value.id, payload);
+    const result = await runStrategy(strategyId, payload);
     await pollStrategyStatus(result.run_id);
     await loadStrategyRunHistory();
     await loadLatestStrategyRun();
