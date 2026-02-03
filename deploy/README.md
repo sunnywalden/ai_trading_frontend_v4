@@ -37,6 +37,8 @@ cd /path/to/ai_trading_frontend_v4
 # 构建 Docker 镜像
 docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:latest .
 
+docker tag sunnywalden/ai-trading-frontend:latest sunnywalden/ai-trading-frontend:v1.0.0
+
 # 或使用特定版本标签
 docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:v1.0.0 .
 ```
