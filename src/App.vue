@@ -96,7 +96,7 @@ const routes = [
   { path: '/behavior', label: '行为评分', icon: '🎯' },
   { path: '/positions', label: '持仓评估', icon: '📊' },
   { path: '/macro', label: '宏观提醒', icon: '🌍' },
-  { path: '/opportunities', label: '执行列表', icon: '📌' },
+  { path: '/opportunities', label: '机会挖掘', icon: '🔍' },
   { path: '/advice', label: 'AI 建议', icon: '🤖' },
   { path: '/plans', label: '交易计划', icon: '🧭' },
   { path: '/api-monitoring', label: 'API 监控', icon: '📡' },
