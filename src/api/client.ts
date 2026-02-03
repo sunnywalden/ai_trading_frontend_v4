@@ -832,6 +832,8 @@ export interface StrategyRunAssetView {
   symbol: string;
   signal_strength?: number | null;
   weight?: number | null;
+  action?: string | null;
+  direction?: string | null;
   risk_flags: string[];
   notes?: string | null;
   signal_dimensions: Record<string, any>;

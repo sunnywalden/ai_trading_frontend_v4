@@ -95,6 +95,13 @@
       @submit="handleStrategyRun"
     />
 
+    <StrategyResultsModal
+      :show="showResultsModal"
+      :run-id="selectedRunId"
+      :assets="modalAssets"
+      @close="showResultsModal = false"
+    />
+
     <!-- 说明指南 -->
     <OpportunitiesGuideline />
   </div>
@@ -106,6 +113,7 @@ import OpportunitiesGuideline from '../components/OpportunitiesGuideline.vue';
 import StrategyCard from '../components/StrategyCard.vue';
 import StrategyRunModal from '../components/StrategyRunModal.vue';
 import StrategyRecentRunCard from '../components/StrategyRecentRunCard.vue';
+import StrategyResultsModal from '../components/StrategyResultsModal.vue';
 import {
   fetchStrategies,
   fetchStrategyDetail,
@@ -136,6 +144,9 @@ const strategyRunAssets = ref<StrategyRunAssetView[]>([]);
 const strategyPollTimer = ref<number | null>(null);
 const strategyExporting = ref(false);
 const strategyActionMessage = ref('');
+const showResultsModal = ref(false);
+const selectedRunId = ref('');
+const modalAssets = ref<StrategyRunAssetView[]>([]);
 
 function formatDateTime(isoString: string): string {
   const date = new Date(isoString);
@@ -256,13 +267,22 @@ async function loadStrategyRunResults(runId: string) {
   }
 }
 
+async function loadStrategyModalResults(runId: string) {
+  try {
+    const response = await fetchStrategyRunResults(runId);
+    modalAssets.value = response.assets || [];
+  } catch (err) {
+    console.warn('加载详细结果失败:', err);
+  }
+}
+
 async function handleExportStrategyRun(runId: string) {
   if (strategyExporting.value) return;
   strategyExporting.value = true;
   try {
     const response = await exportStrategyRun(runId);
-    const prefix = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND_URL ?? '');
-    window.open(`${prefix}${response.download_url}`, '_blank');
+    // 直接打开返回的 URL。Vite Proxy 已配置转发 /exports 路径到后端端口
+    window.open(response.download_url, '_blank');
   } catch (err) {
     console.error('导出失败:', err);
     strategyError.value = '导出失败，请稍后重试';
@@ -272,7 +292,10 @@ async function handleExportStrategyRun(runId: string) {
 }
 
 function handleViewStrategyResults(runId: string) {
-  loadStrategyRunResults(runId);
+  selectedRunId.value = runId;
+  modalAssets.value = [];
+  showResultsModal.value = true;
+  loadStrategyModalResults(runId);
 }
 
 onMounted(() => {
