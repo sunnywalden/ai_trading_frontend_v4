@@ -2,7 +2,7 @@
   <div class="page-container">
     <section class="section-header">
       <div>
-        <h2>🧭 交易计划</h2>
+        <h2>🧭 交易助手</h2>
         <p>维护你的入场/止损/止盈与目标仓位，计划驱动执行纪律</p>
       </div>
       <button class="refresh-button" @click="loadPlans" :disabled="loading">

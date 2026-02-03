@@ -275,15 +275,56 @@ export async function fetchAiState(window_days?: number): Promise<AiStateRespons
 }
 
 export interface AiAdviceRequest {
-  [key: string]: any;
+  goal: string;
+  account_id?: string;
+  time_horizon?: 'INTRADAY' | 'SWING' | 'POSITION';
+  risk_preference?: any;
+  notes?: string;
 }
 
 export interface AiAdviceResponse {
-  [key: string]: any;
+  summary: string;
+  reasoning: string;
+  suggested_orders: any[];
+}
+
+export interface StockSymbol {
+  symbol: string;
+  name: string;
+  market: 'US' | 'HK';
+}
+
+export interface SymbolSearchResponse {
+  items: StockSymbol[];
+}
+
+export interface KlineAnalysisRequest {
+  symbol: string;
+}
+
+export interface KlineAnalysisResponse {
+  symbol: string;
+  prediction: string;
+  suggestion: string;
+  direction: 'LONG' | 'SHORT' | 'NEUTRAL';
+  action: 'BUY' | 'SELL' | 'HOLD' | 'EMPTY' | 'INCREASE';
+  details: string;
 }
 
 export async function fetchAiAdvice(request: AiAdviceRequest): Promise<AiAdviceResponse> {
   const { data } = await api.post<AiAdviceResponse>("/v1/ai/advice", request);
+  return data;
+}
+
+export async function fetchAiSymbols(q?: string): Promise<SymbolSearchResponse> {
+  const { data } = await api.get<SymbolSearchResponse>("/v1/ai/symbols", {
+    params: q ? { q } : undefined
+  });
+  return data;
+}
+
+export async function analyzeStockKline(symbol: string): Promise<KlineAnalysisResponse> {
+  const { data } = await api.post<KlineAnalysisResponse>("/v1/ai/analyze-stock", { symbol });
   return data;
 }
 

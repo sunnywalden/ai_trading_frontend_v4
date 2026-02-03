@@ -3,7 +3,7 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h2>🌍 宏观提醒</h2>
+          <h2>🌍 宏观分析</h2>
           <p>只展示摘要与等级，详细内容可展开</p>
         </div>
         <button class="refresh-button" @click="onRefreshMacro" :disabled="loading">

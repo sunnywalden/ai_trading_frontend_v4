@@ -3,8 +3,7 @@
     <aside class="sidebar">
       <h1>AI Trading · 控制塔</h1>
       <p class="desc">
-        后端：风险因子 + 行为评分 + 自动对冲引擎<br>
-        前端：实时状态总览 + 标的行为画像 + Greeks 风险水位（Vue3）
+        市场快讯 + 宏观/标的/持仓分析 + 策略机会 + 行为评分 + 交易助手<br>
       </p>
       
       <nav class="nav-menu">
@@ -95,10 +94,10 @@
 const routes = [
   { path: '/behavior', label: '行为评分', icon: '🎯' },
   { path: '/positions', label: '持仓评估', icon: '📊' },
-  { path: '/macro', label: '宏观提醒', icon: '🌍' },
-  { path: '/opportunities', label: '机会挖掘', icon: '🔍' },
-  { path: '/advice', label: 'AI 建议', icon: '🤖' },
-  { path: '/plans', label: '交易计划', icon: '🧭' },
+  { path: '/macro', label: '宏观分析', icon: '🌍' },
+  { path: '/opportunities', label: '策略筛选', icon: '🔍' },
+  { path: '/advice', label: '股票分析', icon: '🤖' },
+  { path: '/plans', label: '交易助手', icon: '🧭' },
   { path: '/api-monitoring', label: 'API 监控', icon: '📡' },
   { path: '/monitoring', label: '系统健康', icon: '🩺' }
 ];
