@@ -1130,3 +1130,36 @@ export async function fetchMonitoringHealth(): Promise<MonitoringHealthResponse>
   return data;
 }
 
+// ========== 市场热点 API ==========
+
+export interface Hotspot {
+  id?: number;
+  title: string;
+  description: string;
+  event_date: string;
+  category: string;
+  severity: string;
+  market_impact_score: number;
+  sentiment?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  related_symbols?: string[];
+  source: string;
+  url: string;
+}
+
+export interface Category {
+  id: string;
+  label: string;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const { data } = await api.get<Category[]>('/v1/hotspots/categories');
+  return data;
+}
+
+export async function fetchLatestHotspots(force_refresh: boolean = false): Promise<Hotspot[]> {
+  const { data } = await api.get<Hotspot[]>('/v1/hotspots/latest', {
+    params: { force_refresh }
+  });
+  return data;
+}
+

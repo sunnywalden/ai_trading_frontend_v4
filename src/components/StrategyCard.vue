@@ -29,10 +29,7 @@
     </div>
 
     <div class="actions">
-      <button class="ghost-btn" @click="$emit('view', strategy)">查看详情</button>
-      <button class="primary-btn" @click="$emit('run', strategy)">
-        运行策略
-      </button>
+      <button class="ghost-btn" @click="$emit('view', strategy)">策略逻辑详情</button>
     </div>
   </div>
 </template>

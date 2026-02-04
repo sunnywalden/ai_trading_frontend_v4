@@ -26,16 +26,20 @@
         <strong>Top 标的</strong>
         <button class="ghost-btn" @click="$emit('view-results', run.run_id)">查看完整结果</button>
       </div>
-      <div class="asset-list">
-        <span
+        <div
           v-for="asset in topAssets"
           :key="asset.symbol"
-          class="asset-pill"
+          class="asset-item"
         >
-          <span class="symbol">{{ asset.symbol }}</span>
-          <span class="value">{{ asset.signal_strength?.toFixed(2) ?? '--' }}</span>
-        </span>
-      </div>
+          <div class="asset-main">
+            <span class="symbol">{{ asset.symbol }}</span>
+            <span class="strength">强度: {{ asset.signal_strength?.toFixed(1) }}</span>
+            <div class="risk-flags">
+              <span v-for="flag in asset.risk_flags" :key="flag" class="risk-tag">{{ flag }}</span>
+            </div>
+          </div>
+          <p class="asset-notes">{{ asset.notes }}</p>
+        </div>
     </div>
   </div>
 </template>
@@ -183,27 +187,56 @@ h3 {
 
 .asset-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-.asset-pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  background: rgba(59, 130, 246, 0.1);
-  font-size: 0.8rem;
+.asset-item {
+  background: rgba(30, 41, 59, 0.4);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.asset-main {
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
-.asset-pill .symbol {
-  font-weight: 600;
+.asset-main .symbol {
+  font-weight: 700;
   color: #38bdf8;
+  font-size: 1.05rem;
 }
 
-.asset-pill .value {
-  color: #d1d5db;
+.strength {
+  font-size: 0.8rem;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.risk-flags {
+  display: flex;
+  gap: 4px;
+}
+
+.risk-tag {
+  font-size: 0.7rem;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.asset-notes {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
 }
 </style>
