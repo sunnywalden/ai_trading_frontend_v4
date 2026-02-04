@@ -91,8 +91,7 @@
 
 <script setup lang="ts">
 
-const routes = [
-  { path: '/behavior', label: '行为评分', icon: '🎯' },
+const routes = [  { path: '/hotspots', label: '市场热点', icon: '🔥' },  { path: '/behavior', label: '行为评分', icon: '🎯' },
   { path: '/positions', label: '持仓评估', icon: '📊' },
   { path: '/macro', label: '宏观分析', icon: '🌍' },
   { path: '/opportunities', label: '策略筛选', icon: '🔍' },

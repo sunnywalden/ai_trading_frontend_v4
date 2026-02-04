@@ -3,7 +3,13 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/behavior'
+    redirect: '/hotspots'
+  },
+  {
+    path: '/hotspots',
+    name: 'MarketHotspots',
+    component: () => import('../views/MarketHotspotsPage.vue'),
+    meta: { title: '市场热点' }
   },
   {
     path: '/behavior',
@@ -27,7 +33,7 @@ const routes: RouteRecordRaw[] = [
     path: '/opportunities',
     name: 'Opportunities',
     component: () => import('../views/OpportunitiesPage.vue'),
-    meta: { title: '机会挖掘' }
+    meta: { title: '策略筛选' }
   },
   {
     path: '/advice',
