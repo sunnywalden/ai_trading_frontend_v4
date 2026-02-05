@@ -36,7 +36,7 @@
         <span class="info-value" :class="(unrealizedPnl ?? 0) >= 0 ? 'profit' : 'loss'">
           ${{ (unrealizedPnl ?? 0).toLocaleString() }}
           <span v-if="unrealizedPnlPercent !== undefined" class="pnl-percent">
-            ({{ (unrealizedPnlPercent * 100).toFixed(1) }}%)
+            ({{ (unrealizedPnlPercent || 0).toFixed(1) }}%)
           </span>
         </span>
       </div>

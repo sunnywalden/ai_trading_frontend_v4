@@ -59,9 +59,152 @@ systemApi.interceptors.response.use(
   (err) => {
     // eslint-disable-next-line no-console
     console.error('[System API Error]', err?.config?.url, err?.message || err);
+    // 如果后端返回 401，清除本地 token 并派发登出事件（由前端决定如何导航）
+    if (err?.response?.status === 401) {
+      try {
+        setAuthToken(null);
+      } catch (e) {}
+      // 由前端应用监听并执行适当的导航（避免硬刷新）
+      if (typeof window !== 'undefined') {
+        try { window.dispatchEvent(new CustomEvent('auth-logout')); } catch (e) {}
+      }
+    }
     return Promise.reject(err);
   }
 );
+
+// ====== Auth helpers: token storage + auto-inject Authorization header ======
+export function setAuthToken(token: string | null, remember: boolean = true) {
+  try {
+    if (token) {
+      if (remember) {
+        localStorage.setItem('auth_token', token);
+      } else {
+        sessionStorage.setItem('auth_token', token);
+      }
+    } else {
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+    }
+  } catch (e) {}
+}
+
+export function getAuthToken(): string | null {
+  try {
+    // 优先使用 sessionStorage（短期会话），其次是 localStorage（记住登录）
+    return sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+  } catch (e) {
+    return null;
+  }
+}
+
+export function isLoggedIn(): boolean {
+  try {
+    return !!getAuthToken();
+  } catch (e) {
+    return false;
+  }
+}
+
+// 轻量的 JWT 解码（仅在前端展示用途，不验证签名）
+export function decodeJwt(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const b = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    try {
+      return JSON.parse(decodeURIComponent(escape(b)));
+    } catch {
+      return JSON.parse(b);
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
+export function getTokenPayload() {
+  const t = getAuthToken();
+  if (!t) return null;
+  return decodeJwt(t) as any | null;
+}
+
+export function getCurrentUsername(): string | null {
+  const p = getTokenPayload();
+  return (p && p.sub) || null;
+}
+
+export function getTokenExpiryMs(): number | null {
+  const p = getTokenPayload();
+  if (!p || !p.exp) return null;
+  return Number(p.exp) * 1000;
+}
+
+export function getTokenExpiryRelative(): string | null {
+  const exp = getTokenExpiryMs();
+  if (!exp) return null;
+  const diff = exp - Date.now();
+  if (diff <= 0) return '已过期';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} 分钟`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时`;
+  const days = Math.floor(hours / 24);
+  return `${days} 天`;
+}
+
+export function isTokenExpired(): boolean {
+  // If there is no token, don't consider it 'expired' — callers should check token presence separately.
+  const token = getAuthToken();
+  if (!token) return false;
+  const exp = getTokenExpiryMs();
+  if (!exp) return false;
+  return Date.now() > exp;
+}
+
+export async function loginUser(username: string, password: string, remember: boolean = true) {
+  const params = new URLSearchParams();
+  params.append('username', username);
+  params.append('password', password);
+  // OAuth2 Password grant returns { access_token, token_type }
+  const { data } = await systemApi.post('/api/v1/login', params, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  const token = data && data.access_token;
+  if (token) {
+    setAuthToken(token, remember);
+  }
+  return data;
+}
+
+export function logout() {
+  setAuthToken(null);
+  try { sessionStorage.removeItem('auth_token'); } catch (e) {}
+  try { localStorage.removeItem('auth_token'); } catch (e) {}
+  if (typeof window !== 'undefined') {
+    // Dispatch an event and let the app handle navigation to avoid full page reloads
+    try { window.dispatchEvent(new CustomEvent('auth-logout')); } catch (e) {}
+  }
+}
+
+// 把 token 自动注入到请求头中（适用于 api 与 systemApi）
+api.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+systemApi.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export interface HealthResponse {
   status: string;
@@ -132,15 +275,56 @@ export async function fetchAiState(window_days?: number): Promise<AiStateRespons
 }
 
 export interface AiAdviceRequest {
-  [key: string]: any;
+  goal: string;
+  account_id?: string;
+  time_horizon?: 'INTRADAY' | 'SWING' | 'POSITION';
+  risk_preference?: any;
+  notes?: string;
 }
 
 export interface AiAdviceResponse {
-  [key: string]: any;
+  summary: string;
+  reasoning: string;
+  suggested_orders: any[];
+}
+
+export interface StockSymbol {
+  symbol: string;
+  name: string;
+  market: 'US' | 'HK';
+}
+
+export interface SymbolSearchResponse {
+  items: StockSymbol[];
+}
+
+export interface KlineAnalysisRequest {
+  symbol: string;
+}
+
+export interface KlineAnalysisResponse {
+  symbol: string;
+  prediction: string;
+  suggestion: string;
+  direction: 'LONG' | 'SHORT' | 'NEUTRAL';
+  action: 'BUY' | 'SELL' | 'HOLD' | 'EMPTY' | 'INCREASE';
+  details: string;
 }
 
 export async function fetchAiAdvice(request: AiAdviceRequest): Promise<AiAdviceResponse> {
   const { data } = await api.post<AiAdviceResponse>("/v1/ai/advice", request);
+  return data;
+}
+
+export async function fetchAiSymbols(q?: string): Promise<SymbolSearchResponse> {
+  const { data } = await api.get<SymbolSearchResponse>("/v1/ai/symbols", {
+    params: q ? { q } : undefined
+  });
+  return data;
+}
+
+export async function analyzeStockKline(symbol: string): Promise<KlineAnalysisResponse> {
+  const { data } = await api.post<KlineAnalysisResponse>("/v1/ai/analyze-stock", { symbol });
   return data;
 }
 
@@ -298,6 +482,18 @@ export interface PositionsSummary {
 export interface PositionsAssessmentResponse {
   positions: PositionItem[];
   summary: PositionsSummary;
+  portfolio_analysis?: {
+    weighted_score: number;
+    total_beta: number;
+    sector_ratios: Record<string, number>;
+    industry_ratios: Record<string, number>;
+    ai_summary?: string;
+  };
+  ai_recommendations?: Array<{
+    type: string;
+    action: string;
+    reason: string;
+  }>;
   timestamp: string;
 }
 
@@ -586,127 +782,180 @@ export async function resumeScheduler(): Promise<{ status: string; message: stri
   return data;
 }
 
-// ========== 潜在机会 API ==========
+// ========== 策略管理 API ==========
 
-export interface OpportunityItem {
-  rank: number;
-  symbol: string;
-  current_price: number;
-  technical_score: number;
-  fundamental_score: number;
-  sentiment_score: number;
-  overall_score: number;
-  recommendation: string;
-  reason: string;
-  plan_match_score?: number;
-  plan_match_reason?: string;
+export interface StrategySummaryView {
+  id: string;
+  name: string;
+  style?: string | null;
+  description?: string | null;
+  is_builtin: boolean;
+  is_active: boolean;
+  tags: string[];
+  last_run_status?: string | null;
+  last_run_at?: string | null;
 }
 
-export interface MacroRisk {
-  overall_score: number;
-  risk_level: string;
-  risk_summary: string;
+export interface StrategyDetailView extends StrategySummaryView {
+  version: number;
+  default_params: Record<string, any>;
+  signal_sources: Record<string, any>;
+  risk_profile: Record<string, any>;
 }
 
-export interface OpportunityRun {
-  run_id: number;
-  run_key: string;
-  status: 'SUCCESS' | 'FAILED' | 'SCHEDULED' | 'RUNNING';
-  as_of: string;
-  universe_name: string;
-  min_score: number;
-  max_results: number;
-  force_refresh: boolean;
-  macro_risk: MacroRisk;
-  total_symbols: number;
-  qualified_symbols: number;
-  elapsed_ms: number;
-  items: OpportunityItem[];
-  notes?: {
-    idempotent?: boolean;
-    macro_adjustment?: {
-      before_threshold: number;
-      after_threshold: number;
-    };
-    universe?: {
-      cache_hit?: boolean;
-      fallback_used?: boolean;
-    };
-  };
+export interface StrategyListResponse {
+  status: string;
+  strategies: StrategySummaryView[];
 }
 
-export interface OpportunityRunSummary {
-  run_id: number;
-  universe_name: string;
-  as_of: string;
-  qualified_symbols: number;
-  total_symbols: number;
-  elapsed_ms: number;
-  macro_risk_level: string;
+export interface StrategyDetailResponse {
+  status: string;
+  strategy: StrategyDetailView;
 }
 
-export interface ScanOpportunitiesRequest {
-  universe_name?: string;
+export interface StrategyRunRequest {
+  account_id?: string | null;
+  direction?: string | null;
+  notify_channels?: string[];
+  target_universe?: string | null;
   min_score?: number;
   max_results?: number;
-  force_refresh?: boolean;
-  schedule_cron?: string;
-  schedule_timezone?: string;
+  priority?: number | null;
 }
 
-export interface ScanOpportunitiesResponse {
+export interface StrategyRunResponse {
   status: string;
-  run: OpportunityRun;
-  notes?: {
-    scheduled_job_id?: string;
-    scheduled_run_id?: number;
-    idempotent?: boolean;
-    macro_adjustment?: {
-      before_threshold: number;
-      after_threshold: number;
-    };
-    universe?: {
-      cache_hit?: boolean;
-      fallback_used?: boolean;
-    };
-  };
+  run_id: string;
+  celery_task_id?: string | null;
 }
 
-export interface LatestOpportunitiesResponse {
+export interface StrategyTimelineEntry {
+  start?: string;
+  end?: string;
+}
+
+export type StrategyTimeline = Record<string, StrategyTimelineEntry>;
+
+export interface StrategyRunStatusView {
+  run_id: string;
   status: string;
-  latest: OpportunityRun | null;
+  phase?: string | null;
+  progress: number;
+  attempt: number;
+  error_message?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  timeline?: StrategyTimeline | null;
 }
 
-export interface RunHistoryResponse {
+export interface StrategyRunLatestResponse {
+  status: string;
+  run: StrategyRunStatusView | null;
+}
+
+export interface StrategyRunHistoryItem {
+  run_id: string;
+  strategy_id: string;
+  status: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  hits?: number | null;
+  hit_rate?: number | null;
+  avg_signal_strength?: number | null;
+}
+
+export interface StrategyRunHistoryResponse {
+  status: string;
+  runs: StrategyRunHistoryItem[];
+}
+
+export interface StrategyRunAssetView {
+  symbol: string;
+  signal_strength?: number | null;
+  weight?: number | null;
+  action?: string | null;
+  direction?: string | null;
+  risk_flags: string[];
+  notes?: string | null;
+  signal_dimensions: Record<string, any>;
+}
+
+export interface StrategyRunResultsResponse {
+  status: string;
+  run_id: string;
+  strategy_id: string;
+  assets: StrategyRunAssetView[];
+}
+
+export interface StrategyExportResponse {
+  status: string;
+  run_id: string;
+  download_url: string;
+  file_path: string;
+}
+
+export interface StrategyListParams {
+  style?: string;
+  is_builtin?: boolean;
+  limit?: number;
+  offset?: number;
+  search?: string;
+}
+
+export interface StrategyRunListParams {
+  limit?: number;
+  offset?: number;
+  strategy_id?: string;
+  account_id?: string;
   status?: string;
-  total_runs: number;
-  runs: OpportunityRunSummary[];
 }
 
-export async function fetchLatestOpportunities(universeName?: string): Promise<LatestOpportunitiesResponse> {
-  const { data } = await api.get<LatestOpportunitiesResponse>("/v1/opportunities/latest", {
-    params: universeName ? { universe_name: universeName } : undefined
+export async function fetchStrategies(params?: StrategyListParams): Promise<StrategyListResponse> {
+  const { data } = await api.get<StrategyListResponse>('/v1/strategies', {
+    params: params ? { ...params } : undefined
   });
   return data;
 }
 
-export async function scanOpportunities(request: ScanOpportunitiesRequest): Promise<ScanOpportunitiesResponse> {
-  const { data } = await api.post<ScanOpportunitiesResponse>("/v1/opportunities/scan", request);
+export async function fetchStrategyDetail(strategyId: string): Promise<StrategyDetailResponse> {
+  const { data } = await api.get<StrategyDetailResponse>(`/v1/strategies/${strategyId}`);
   return data;
 }
 
-export async function fetchOpportunityRuns(limit?: number, universeName?: string): Promise<RunHistoryResponse> {
-  const { data } = await api.get<RunHistoryResponse>("/v1/opportunities/runs", {
-    params: {
-      limit: limit || 20,
-      universe_name: universeName
-    }
+export async function runStrategy(strategyId: string, request: StrategyRunRequest): Promise<StrategyRunResponse> {
+  const { data } = await api.post<StrategyRunResponse>(`/v1/strategies/${strategyId}/run`, request);
+  return data;
+}
+
+export async function fetchStrategyRunStatus(runId: string): Promise<StrategyRunStatusView> {
+  const { data } = await api.get<StrategyRunStatusView>(`/v1/strategy-runs/${runId}/status`);
+  return data;
+}
+
+export async function fetchLatestStrategyRun(accountId?: string, strategyId?: string): Promise<StrategyRunLatestResponse> {
+  const params: Record<string, any> = {};
+  if (accountId) params.account_id = accountId;
+  if (strategyId) params.strategy_id = strategyId;
+  const { data } = await api.get<StrategyRunLatestResponse>('/v1/strategy-runs/latest', {
+    params: Object.keys(params).length ? params : undefined
   });
   return data;
 }
 
-export async function fetchOpportunityRunDetail(runId: number): Promise<OpportunityRun> {
-  const { data } = await api.get<OpportunityRun>(`/v1/opportunities/runs/${runId}`);
+export async function fetchStrategyRuns(params?: StrategyRunListParams): Promise<StrategyRunHistoryResponse> {
+  const { data } = await api.get<StrategyRunHistoryResponse>('/v1/strategy-runs', {
+    params: params ? { ...params } : undefined
+  });
+  return data;
+}
+
+export async function fetchStrategyRunResults(runId: string): Promise<StrategyRunResultsResponse> {
+  const { data } = await api.get<StrategyRunResultsResponse>(`/v1/strategy-runs/${runId}/results`);
+  return data;
+}
+
+export async function exportStrategyRun(runId: string): Promise<StrategyExportResponse> {
+  const { data } = await api.post<StrategyExportResponse>(`/v1/strategy-runs/${runId}/export`);
   return data;
 }
 
@@ -878,6 +1127,39 @@ export async function fetchRateLimitPolicy(provider: string): Promise<RateLimitP
 
 export async function fetchMonitoringHealth(): Promise<MonitoringHealthResponse> {
   const { data } = await api.get<MonitoringHealthResponse>('/v1/monitoring/health');
+  return data;
+}
+
+// ========== 市场热点 API ==========
+
+export interface Hotspot {
+  id?: number;
+  title: string;
+  description: string;
+  event_date: string;
+  category: string;
+  severity: string;
+  market_impact_score: number;
+  sentiment?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  related_symbols?: string[];
+  source: string;
+  url: string;
+}
+
+export interface Category {
+  id: string;
+  label: string;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const { data } = await api.get<Category[]>('/v1/hotspots/categories');
+  return data;
+}
+
+export async function fetchLatestHotspots(force_refresh: boolean = false): Promise<Hotspot[]> {
+  const { data } = await api.get<Hotspot[]>('/v1/hotspots/latest', {
+    params: { force_refresh }
+  });
   return data;
 }
 

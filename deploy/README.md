@@ -37,6 +37,8 @@ cd /path/to/ai_trading_frontend_v4
 # 构建 Docker 镜像
 docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:latest .
 
+docker tag sunnywalden/ai-trading-frontend:latest sunnywalden/ai-trading-frontend:v1.0.0
+
 # 或使用特定版本标签
 docker build -f deploy/Dockerfile -t sunnywalden/ai-trading-frontend:v1.0.0 .
 ```
@@ -122,6 +124,42 @@ open http://localhost:8080
 docker tag sunnywalden/ai-trading-frontend:latest sunnywalden/ai-trading-frontend:latest
 docker push sunnywalden/ai-trading-frontend:latest
 ```
+
+---
+
+## 🌐 线上环境部署 (SSL/Traefik v3)
+
+针对最新的分体式部署方案，我们使用 **Traefik v3** 作为反向代理，并通过 Let's Encrypt (DNS Challenge via Google Cloud DNS) 自动管理 SSL 证书。
+
+### 1. 配置 Traefik 标签
+
+在统一的 `docker-compose.yml` 中，前端服务应配置如下标签以接入 Traefik：
+
+```yaml
+  frontend:
+    image: sunnywalden/ai-trading-frontend:latest
+    container_name: frontend-app
+    restart: unless-stopped
+    networks:
+      - ai-trading-network
+    environment:
+      - BACKEND_URL=http://backend:8088
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN:-sunnywalden.com}`) || Host(`www.${FRONTEND_DOMAIN:-sunnywalden.com}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+```
+
+### 2. Nginx 代理配置优化
+
+前端镜像内部的 Nginx 已配置为信任并透传 `X-Forwarded-*` 请求头。这意味着后端 API 能够正确识别真实的客户端 IP 及 HTTPS 协议。
+
+### 3. 部署执行
+
+请参考后端项目中的统一部署入口：
+[ai-trading-backend/deploy/README.md](../../ai_trading_backend_v8/deploy/README.md)
 
 ---
 
