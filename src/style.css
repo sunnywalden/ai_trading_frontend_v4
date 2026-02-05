@@ -1,12 +1,31 @@
 :root {
-  color-scheme: dark;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Default (dark) theme variables */
+  --bg-main: radial-gradient(circle at top, #0f172a 0, #020617 60%);
+  --sidebar-bg: radial-gradient(circle at top left, #111827 0, #020617 70%);
+  --card-bg: rgba(17, 24, 39, 0.65);
+  --text-color: #e5e7eb;
+  --muted-color: #9ca3af;
+  --accent1: #38bdf8;
+  --accent2: #2563eb;
+}
+
+/* Light theme overrides */
+.theme-light {
+  --bg-main: linear-gradient(180deg,#f8fafc 0%, #eef2ff 100%);
+  --sidebar-bg: linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);
+  --card-bg: rgba(255,255,255,0.96);
+  --text-color: #0f172a;
+  --muted-color: #475569;
+  --accent1: #0284c7;
+  --accent2: #2563eb;
 }
 
 body {
   margin: 0;
-  background: #020617;
-  color: #e5e7eb;
+  background: var(--bg-main);
+  color: var(--text-color);
 }
 
 * {

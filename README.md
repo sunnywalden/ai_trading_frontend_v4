@@ -12,9 +12,9 @@
 - 🚀 **一键自动对冲**：直接触发后端自动对冲引擎执行对冲策略
 - 🔄 **行为评分重算**：支持动态调整统计窗口天数并重新计算行为评分
 - 📌 **执行列表**：基于计划与评分筛选机会标的
-- 🌍 **宏观提醒**：宏观风险摘要与告警
+- 🌍 **宏观分析**：宏观风险摘要与告警
 - 🧭 **交易计划**：入场/止损/止盈与目标仓位管理
-- 🤖 **AI 建议**：结构化请求生成建议与订单草案
+- 🤖 **股票分析**：结构化请求生成建议与订单草案
 
 ## 🛠 技术栈
 
@@ -72,6 +72,30 @@ npm run dev
 ```bash
 npm run build
 ```
+
+### 身份认证（登录）
+
+自 v8 后端默认启用认证，前端已适配登录流程：
+
+- 登录页：`/login`（输入管理员 `username` 与 `password`）
+- 登录接口：`POST /api/v1/login`（表单提交，返回 `access_token`）
+- 前端会把 token 存入 `localStorage` 或 `sessionStorage`（取决于是否勾选“记住我”）并自动把 `Authorization: Bearer <token>` 注入到后续的 API 请求中
+- 在侧边栏会显示当前登录用户名与 token 的剩余有效期（从 JWT 解码得到，仅做展示），当 token 小于 5 分钟时会出现即将过期警示，过期后会自动登出。
+- 点击侧边栏的用户名/头像可打开“管理员信息”弹窗，查看 token payload、复制 raw token、登出等操作（仅用于调试与内部运维）。
+- 支持主题切换（深色/浅色），用户设置会保存在浏览器并在页面应用
+- 若后端返回 401，前端会清除 token 并跳转到 `/login`
+
+### 测试（单元 + E2E）
+
+- 单元测试（Vitest）
+  - 安装依赖：`npm install`
+  - 运行：`npm run test:unit` 或 `npm run test`
+- E2E（Cypress）
+  - 启动前端：`npm run dev`（保持在 `http://localhost:5173`）
+  - 打开 Cypress：`npm run cypress:open` 或 在 CI 中运行 `npm run test:e2e`
+  - 已包含示例测试：登录流与 token 即将过期横幅验证
+
+在开发模式下，默认后端用户名/密码为 `admin`/`admin`（请在生产环境使用 `.env` 覆盖后端配置，且使用 HTTPS）。
 
 构建产物将输出到 `dist/` 目录。
 
