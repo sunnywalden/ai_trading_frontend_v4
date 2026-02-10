@@ -2,21 +2,35 @@
   <div class="layout">
     <aside class="sidebar">
       <h1>AI Trading · 控制塔</h1>
-      <p class="desc">
-        市场快讯 + 宏观/标的/持仓分析 + 策略机会 + 行为评分 + 交易助手<br>
-      </p>
-      
+
       <nav class="nav-menu">
-        <router-link
-          v-for="route in routes"
-          :key="route.path"
-          :to="route.path"
-          class="nav-button"
-          active-class="active"
-        >
-          <span class="nav-icon">{{ route.icon }}</span>
-          <span class="nav-label">{{ route.label }}</span>
+        <!-- Dashboard 独立入口 -->
+        <router-link to="/dashboard" class="nav-button" active-class="active">
+          <span class="nav-icon">📈</span>
+          <span class="nav-label">Dashboard</span>
         </router-link>
+
+        <!-- 分组导航 -->
+        <div v-for="group in navGroups" :key="group.title" class="nav-group">
+          <button class="group-header" @click="toggleGroup(group.title)">
+            <span class="group-title">{{ group.title }}</span>
+            <span class="group-arrow" :class="{ open: openGroups[group.title] }">▸</span>
+          </button>
+          <transition name="slide">
+            <div v-show="openGroups[group.title]" class="group-items">
+              <router-link
+                v-for="item in group.items"
+                :key="item.path"
+                :to="item.path"
+                class="nav-button sub"
+                active-class="active"
+              >
+                <span class="nav-icon">{{ item.icon }}</span>
+                <span class="nav-label">{{ item.label }}</span>
+              </router-link>
+            </div>
+          </transition>
+        </div>
       </nav>
 
       <div v-if="showExpiryBanner" class="expiry-banner">
@@ -55,7 +69,7 @@
           <router-link to="/login" class="small-btn">登录</router-link>
         </div>
 
-        <!-- Token / User modal (reusable component) -->
+        <!-- Token / User modal -->
         <AdminInfoModal
           :show="showTokenModal"
           :username="username || undefined"
@@ -69,7 +83,6 @@
           @copy="copyToken"
           @toggle-raw="toggleShowRawToken"
         />
-
       </div>
     </aside>
     <main class="main">
@@ -91,19 +104,68 @@
 
 <script setup lang="ts">
 
-const routes = [  { path: '/hotspots', label: '市场热点', icon: '🔥' },  { path: '/behavior', label: '行为评分', icon: '🎯' },
-  { path: '/positions', label: '持仓评估', icon: '📊' },
-  { path: '/macro', label: '宏观分析', icon: '🌍' },
-  { path: '/opportunities', label: '策略筛选', icon: '🔍' },
-  { path: '/advice', label: '股票分析', icon: '🤖' },
-  { path: '/plans', label: '交易助手', icon: '🧭' },
-  { path: '/api-monitoring', label: 'API 监控', icon: '📡' },
-  { path: '/monitoring', label: '系统健康', icon: '🩺' }
-];
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+interface NavItem { path: string; label: string; icon: string }
+interface NavGroup { title: string; items: NavItem[] }
+
+const navGroups: NavGroup[] = [
+  {
+    title: '交易',
+    items: [
+      { path: '/positions', label: '持仓评估', icon: '📊' },
+      { path: '/plans', label: '交易助手', icon: '🧭' },
+      { path: '/journal', label: '交易日志', icon: '📓' },
+      { path: '/equity', label: '资金曲线', icon: '💰' },
+      { path: '/alerts', label: '价格告警', icon: '🔔' },
+      { path: '/quant-loop', label: '量化闭环', icon: '🔄' },
+    ],
+  },
+  {
+    title: '研究',
+    items: [
+      { path: '/hotspots', label: '市场热点', icon: '🔥' },
+      { path: '/macro', label: '宏观分析', icon: '🌍' },
+      { path: '/advice', label: '股票分析', icon: '🤖' },
+      { path: '/opportunities', label: '策略筛选', icon: '🔍' },
+      { path: '/behavior', label: '行为评分', icon: '🎯' },
+    ],
+  },
+  {
+    title: '系统',
+    items: [
+      { path: '/system', label: '系统监控', icon: '🩺' },
+    ],
+  },
+]
+
+import { computed, ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 import router from './router';
+import { useRoute } from 'vue-router';
 import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken, getTokenPayload, isTokenExpired } from './api/client';
 import AdminInfoModal from './components/AdminInfoModal.vue';
+
+const route = useRoute()
+
+// --- Collapsible nav groups ---
+const openGroups = reactive<Record<string, boolean>>({
+  '交易': true,
+  '研究': false,
+  '系统': false,
+})
+
+function toggleGroup(title: string) {
+  openGroups[title] = !openGroups[title]
+}
+
+// Auto-expand the group containing the current route
+function autoExpandGroup() {
+  const currentPath = route.path
+  for (const group of navGroups) {
+    if (group.items.some(item => currentPath.startsWith(item.path))) {
+      openGroups[group.title] = true
+    }
+  }
+}
+watch(() => route.path, autoExpandGroup, { immediate: true })
 
 const loggedIn = computed(() => isLoggedIn());
 const username = ref(getCurrentUsername());
@@ -230,51 +292,85 @@ function applyTheme() {
 <style scoped>
 .layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--bg-main);
   color: var(--text-color);
 }
 
 .sidebar {
-  padding: 24px 20px;
+  padding: 20px 14px;
   border-right: 1px solid rgba(30, 64, 175, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow-y: auto;
   background: var(--sidebar-bg);
   flex-shrink: 0;
 }
 
-.desc {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  line-height: 1.4;
-  margin: 0;
-  flex-shrink: 0;
-}
+.sidebar h1 { font-size: 1.05rem; margin: 0 0 4px; }
 
 .nav-menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 12px 0;
+  gap: 4px;
+  margin: 4px 0;
 }
 
+/* --- Group header --- */
+.nav-group { margin-top: 4px; }
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.group-header:hover { color: #9ca3af; }
+.group-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.group-arrow.open { transform: rotate(90deg); }
+
+.group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+/* --- Nav buttons --- */
 .nav-button {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: rgba(31, 41, 55, 0.5);
-  border: 1px solid rgba(55, 65, 81, 0.8);
-  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(31, 41, 55, 0.4);
+  border: 1px solid rgba(55, 65, 81, 0.6);
+  border-radius: 8px;
   color: #9ca3af;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
+}
+.nav-button.sub {
+  padding: 8px 14px 8px 20px;
+  font-size: 0.82rem;
+  background: rgba(31, 41, 55, 0.25);
+  border-color: rgba(55, 65, 81, 0.4);
 }
 
 .nav-button:hover {
@@ -290,18 +386,18 @@ function applyTheme() {
   font-weight: 600;
 }
 
-.nav-icon {
-  font-size: 1.2rem;
-}
+.nav-icon { font-size: 1rem; }
+.nav-label { flex: 1; }
 
-.nav-label {
-  flex: 1;
+/* --- Slide transition --- */
+.slide-enter-active, .slide-leave-active {
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  max-height: 400px;
+  opacity: 1;
 }
-
-.guideline {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+.slide-enter-from, .slide-leave-to {
+  max-height: 0;
+  opacity: 0;
 }
 
 .footer {
@@ -313,7 +409,7 @@ function applyTheme() {
 }
 
 .auth-block {
-  margin-top: 8px;
+  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid rgba(31, 41, 55, 0.06);
   display: flex;
@@ -326,8 +422,8 @@ function applyTheme() {
   gap: 10px;
 }
 .avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -341,34 +437,21 @@ function applyTheme() {
   0%,100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
-.user-meta {
-  flex: 1;
-  min-width: 0;
-}
-.user-name {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 0.95rem;
-}
-.token-expiry {
-  color: var(--muted-color);
-  font-size: 0.8rem;
-}
-.user-actions {
-  display: flex;
-  gap: 8px;
-}
+.user-meta { flex: 1; min-width: 0; }
+.user-name { font-weight: 600; color: var(--text-color); font-size: 0.9rem; }
+.token-expiry { color: var(--muted-color); font-size: 0.75rem; }
+.user-actions { display: flex; gap: 6px; }
 .small-btn {
   display: inline-block;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
   background: rgba(56,189,248,0.08);
   color: var(--accent1);
   border: 1px solid rgba(56,189,248,0.12);
   text-decoration: none;
+  font-size: 0.78rem;
 }
 .expiry-banner {
-  margin-top: 12px;
   background: linear-gradient(90deg, rgba(255, 236, 179, 0.06), rgba(255, 236, 179, 0.03));
   border: 1px solid rgba(255, 205, 54, 0.12);
   color: #ffcd34;
@@ -377,59 +460,18 @@ function applyTheme() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.8rem;
 }
-.expiry-actions { display: flex; gap: 8px; }
-
-.expiry-badge {
-  margin-left: 8px;
-  color: #ffcd34;
-  font-weight: 700;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(2,6,23,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1200;
-}
-.modal {
-  width: 480px;
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 12px 40px rgba(2,6,23,0.6);
-}
-.modal h3 { margin: 0 0 8px 0; }
-.modal-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
-.modal-row strong { width: 110px; color: var(--muted-color); }
-.modal-row span { flex: 1; color: var(--text-color); }
-.payload { background: rgba(0,0,0,0.08); padding: 8px; border-radius: 6px; max-height: 160px; overflow: auto; }
-.raw-token { display: flex; gap: 8px; align-items: center; }
-.raw-input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); background: rgba(8,12,20,0.3); color: var(--text-color); }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
-
+.expiry-actions { display: flex; gap: 6px; }
+.expiry-badge { margin-left: 8px; color: #ffcd34; font-weight: 700; }
 
 .fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
+.fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.fade-leave-to { opacity: 0; }
 
 @media (max-width: 900px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .sidebar {
-    border-right: none;
-    border-bottom: 1px solid rgba(30, 64, 175, 0.6);
-  }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { border-right: none; border-bottom: 1px solid rgba(30, 64, 175, 0.6); }
 }
 </style>
