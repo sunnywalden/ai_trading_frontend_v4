@@ -3,7 +3,31 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/hotspots'
+    redirect: '/dashboard'
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('../views/DashboardPage.vue'),
+    meta: { title: 'Dashboard' }
+  },
+  {
+    path: '/equity',
+    name: 'Equity',
+    component: () => import('../views/EquityPage.vue'),
+    meta: { title: '资金曲线' }
+  },
+  {
+    path: '/journal',
+    name: 'Journal',
+    component: () => import('../views/JournalPage.vue'),
+    meta: { title: '交易日志' }
+  },
+  {
+    path: '/alerts',
+    name: 'Alerts',
+    component: () => import('../views/AlertsPage.vue'),
+    meta: { title: '价格告警' }
   },
   {
     path: '/hotspots',
@@ -43,21 +67,29 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/api-monitoring',
-    name: 'ApiMonitoring',
-    component: () => import('../views/ApiMonitoringPage.vue'),
-    meta: { title: 'API 监控' }
+    redirect: '/system'
   },
   {
     path: '/monitoring',
-    name: 'Monitoring',
-    component: () => import('../views/SystemHealthPage.vue'),
-    meta: { title: '系统健康' }
+    redirect: '/system'
+  },
+  {
+    path: '/system',
+    name: 'SystemMonitor',
+    component: () => import('../views/SystemMonitorPage.vue'),
+    meta: { title: '系统监控' }
   },
   {
     path: '/plans',
     name: 'TradingPlans',
     component: () => import('../views/TradingPlanPage.vue'),
     meta: { title: '交易计划' }
+  },
+  {
+    path: '/quant-loop',
+    name: 'QuantLoop',
+    component: () => import('../views/QuantLoopDashboard.vue'),
+    meta: { title: '量化交易闭环' }
   },
   {
     path: '/login',
@@ -81,7 +113,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // 允许匿名访问的页面
-  const publicPaths = ['/login', '/monitoring'];
+  const publicPaths = ['/login', '/system', '/monitoring'];
   if (publicPaths.includes(to.path)) {
     return next();
   }

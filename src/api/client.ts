@@ -1163,3 +1163,240 @@ export async function fetchLatestHotspots(force_refresh: boolean = false): Promi
   return data;
 }
 
+
+// =====================================================================
+// V9: Dashboard / Equity / Journal / Alerts / Orders API
+// =====================================================================
+
+// ---------- Dashboard ----------
+export interface DashboardExposure {
+  delta_pct: number;
+  gamma_pct: number;
+  vega_pct: number;
+  theta_pct: number;
+}
+export interface DashboardSignal {
+  symbol: string;
+  signal_type: string;
+  message: string;
+  timestamp: string;
+  severity: string;
+}
+export interface DashboardAction {
+  action_type: string;
+  message: string;
+  link: string;
+}
+export interface DashboardSummary {
+  account_id: string;
+  total_equity: number;
+  cash: number;
+  market_value: number;
+  daily_pnl: number;
+  daily_return_pct: number;
+  mtd_return_pct: number;
+  ytd_return_pct: number;
+  plan_execution_rate: number;
+  active_plans_count: number;
+  risk_level: string;
+  exposure: DashboardExposure;
+  recent_signals: DashboardSignal[];
+  pending_actions: DashboardAction[];
+}
+export async function fetchDashboardSummary(): Promise<DashboardSummary> {
+  const { data } = await api.get<DashboardSummary>('/v1/dashboard/summary');
+  return data;
+}
+
+// ---------- Equity ----------
+export interface EquitySnapshot {
+  snapshot_date: string;
+  total_equity: number;
+  cash: number;
+  market_value: number;
+  daily_return: number | null;
+  cumulative_return: number | null;
+  max_drawdown_pct: number | null;
+  benchmark_return: number | null;
+}
+export interface EquitySnapshotsResponse {
+  account_id: string;
+  snapshots: EquitySnapshot[];
+}
+export async function fetchEquitySnapshots(days: number = 30): Promise<EquitySnapshotsResponse> {
+  const { data } = await api.get<EquitySnapshotsResponse>('/v1/equity/snapshots', { params: { days } });
+  return data;
+}
+
+export interface PnlAttributionItem {
+  label: string;
+  pnl: number;
+  pct: number;
+  trade_count: number;
+}
+export interface PnlAttributionResponse {
+  account_id: string;
+  group_by: string;
+  total_pnl: number;
+  items: PnlAttributionItem[];
+}
+export async function fetchPnlAttribution(group_by: string = 'symbol', start_date?: string, end_date?: string): Promise<PnlAttributionResponse> {
+  const { data } = await api.get<PnlAttributionResponse>('/v1/equity/pnl-attribution', {
+    params: { group_by, start_date, end_date }
+  });
+  return data;
+}
+
+export async function createEquitySnapshot(): Promise<any> {
+  const { data } = await api.post('/v1/equity/snapshot');
+  return data;
+}
+
+// ---------- Journal ----------
+export interface JournalEntry {
+  id: number;
+  account_id: string;
+  symbol: string;
+  direction: string;
+  entry_date: string | null;
+  exit_date: string | null;
+  entry_price: number | null;
+  exit_price: number | null;
+  quantity: number | null;
+  realized_pnl: number | null;
+  plan_id: number | null;
+  execution_quality: number | null;
+  emotion_state: string | null;
+  mistake_tags: string[];
+  lesson_learned: string | null;
+  ai_review: string | null;
+  journal_status: string;
+  created_at: string;
+  updated_at: string;
+}
+export interface JournalListResponse {
+  items: JournalEntry[];
+  total: number;
+  page: number;
+  size: number;
+}
+export async function fetchJournals(page: number = 1, size: number = 20, symbol?: string, status?: string): Promise<JournalListResponse> {
+  const { data } = await api.get<JournalListResponse>('/v1/journal', {
+    params: { page, size, symbol, status }
+  });
+  return data;
+}
+export async function createJournal(payload: Partial<JournalEntry>): Promise<JournalEntry> {
+  const { data } = await api.post<JournalEntry>('/v1/journal', payload);
+  return data;
+}
+export async function updateJournal(id: number, payload: Partial<JournalEntry>): Promise<JournalEntry> {
+  const { data } = await api.put<JournalEntry>(`/v1/journal/${id}`, payload);
+  return data;
+}
+export async function requestAiReview(journalId: number): Promise<{ journal_id: number; ai_review: string }> {
+  const { data } = await api.post<{ journal_id: number; ai_review: string }>(`/v1/journal/${journalId}/ai-review`);
+  return data;
+}
+export async function fetchWeeklyReport(week_date?: string): Promise<any> {
+  const { data } = await api.get('/v1/journal/weekly-report', { params: { week_date } });
+  return data;
+}
+
+// ---------- Alerts ----------
+export interface AlertRule {
+  id: number;
+  account_id: string;
+  symbol: string;
+  condition_type: string;
+  threshold: number;
+  action: string;
+  linked_plan_id: number | null;
+  alert_status: string;
+  triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export interface AlertListResponse {
+  items: AlertRule[];
+  total: number;
+}
+export async function fetchAlerts(status?: string): Promise<AlertListResponse> {
+  const { data } = await api.get<AlertListResponse>('/v1/alerts', { params: { status } });
+  return data;
+}
+export async function createAlert(payload: Partial<AlertRule>): Promise<AlertRule> {
+  const { data } = await api.post<AlertRule>('/v1/alerts', payload);
+  return data;
+}
+export async function updateAlert(id: number, payload: Partial<AlertRule>): Promise<AlertRule> {
+  const { data } = await api.put<AlertRule>(`/v1/alerts/${id}`, payload);
+  return data;
+}
+export async function deleteAlert(id: number): Promise<void> {
+  await api.delete(`/v1/alerts/${id}`);
+}
+
+export interface AlertHistoryEntry {
+  id: number;
+  alert_id: number;
+  account_id: string;
+  symbol: string;
+  trigger_price: number;
+  trigger_time: string;
+  notification_sent: boolean;
+  action_taken: string | null;
+  created_at: string;
+}
+export interface AlertHistoryResponse {
+  items: AlertHistoryEntry[];
+  total: number;
+}
+export async function fetchAlertHistory(limit: number = 20): Promise<AlertHistoryResponse> {
+  const { data } = await api.get<AlertHistoryResponse>('/v1/alerts/history', { params: { limit } });
+  return data;
+}
+
+// ---------- Orders ----------
+export interface OrderInfo {
+  order_id: string;
+  symbol: string;
+  direction: string;
+  quantity: number;
+  order_type: string;
+  limit_price: number | null;
+  status: string;
+  filled_quantity: number;
+  filled_price: number | null;
+  plan_id: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+export async function submitOrder(payload: {
+  symbol: string;
+  direction: string;
+  quantity: number;
+  order_type?: string;
+  limit_price?: number;
+  plan_id?: number;
+}): Promise<{ status: string; order: OrderInfo }> {
+  const { data } = await api.post<{ status: string; order: OrderInfo }>('/v1/orders/submit', payload);
+  return data;
+}
+export async function getOrderStatus(orderId: string): Promise<{ order: OrderInfo }> {
+  const { data } = await api.get<{ order: OrderInfo }>(`/v1/orders/${orderId}/status`);
+  return data;
+}
+export async function cancelOrder(orderId: string): Promise<void> {
+  await api.post(`/v1/orders/${orderId}/cancel`);
+}
+
+// ---------- WebSocket 工具 ----------
+export function createWsUrl(): string {
+  const token = getAuthToken();
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const base = import.meta.env.DEV
+    ? `${wsProtocol}//${window.location.hostname}:8000`
+    : `${wsProtocol}//${window.location.host}`;
+  return `${base}/api/v1/ws?token=${token}`;
+}
