@@ -171,17 +171,20 @@ class QuantLoopService {
   }
   
   // 获取仪表盘概览
-  async getDashboardOverview(): Promise<DashboardOverview> {
-    const response = await this.client.get('/quant-loop/dashboard/overview')
+  async getDashboardOverview(accountId?: string): Promise<DashboardOverview> {
+    const response = await this.client.get('/quant-loop/dashboard/overview', {
+      params: { account_id: accountId }
+    })
     return response.data.data
   }
   
   // 获取待执行信号
-  async getPendingSignals(limit: number = 20, filterByPosition: boolean = false): Promise<TradingSignal[]> {
+  async getPendingSignals(limit: number = 20, filterByPosition: boolean = false, accountId?: string): Promise<TradingSignal[]> {
     const response = await this.client.get('/quant-loop/signals/pending', {
       params: { 
         limit,
-        filter_by_position: filterByPosition
+        filter_by_position: filterByPosition,
+        account_id: accountId
       }
     })
     return response.data.data

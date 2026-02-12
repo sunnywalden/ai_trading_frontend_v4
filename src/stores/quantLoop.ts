@@ -34,7 +34,8 @@ export const useQuantLoopStore = defineStore('quantLoop', () => {
     try {
       loading.value = true
       error.value = null
-      dashboardOverview.value = await QuantLoopService.getInstance().getDashboardOverview()
+      const accountId = systemStatus.value?.account_id
+      dashboardOverview.value = await QuantLoopService.getInstance().getDashboardOverview(accountId)
       lastUpdate.value = new Date()
     } catch (e: any) {
       error.value = e.message || '获取仪表盘数据失败'
@@ -48,7 +49,9 @@ export const useQuantLoopStore = defineStore('quantLoop', () => {
     try {
       loading.value = true
       error.value = null
-      pendingSignals.value = await QuantLoopService.getInstance().getPendingSignals(limit, filterByPosition)
+      // 使用当前状态中的 account_id，如果有的话
+      const accountId = systemStatus.value?.account_id
+      pendingSignals.value = await QuantLoopService.getInstance().getPendingSignals(limit, filterByPosition, accountId)
       lastUpdate.value = new Date()
     } catch (e: any) {
       error.value = e.message || '获取待执行信号失败'
@@ -79,11 +82,14 @@ export const useQuantLoopStore = defineStore('quantLoop', () => {
     }
   }
 
-  async function executeSignals(signalIds: string[]) {
+  async function executeSignals(signalIds: string[], dryRun: boolean = true) {
     try {
       loading.value = true
       error.value = null
-      const result = await QuantLoopService.getInstance().executeSignals({ signal_ids: signalIds })
+      const result = await QuantLoopService.getInstance().executeSignals({ 
+        signal_ids: signalIds,
+        dry_run: dryRun
+      })
       // 执行后刷新信号列表
       await fetchPendingSignals()
       return result

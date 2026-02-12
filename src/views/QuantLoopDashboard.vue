@@ -91,6 +91,47 @@
       </div>
     </div>
     
+    <!-- 执行结果模态框 -->
+    <div v-if="executionResult" class="modal-overlay" @click="executionResult = null">
+      <div class="modal-content execution-result-modal" @click.stop>
+        <div class="modal-header" :class="executionResult.type">
+          <div class="header-icon">
+            <span v-if="executionResult.type === 'success'">✓</span>
+            <span v-else-if="executionResult.type === 'error'">✕</span>
+            <span v-else>ℹ</span>
+          </div>
+          <h3>{{ executionResult.title }}</h3>
+          <button @click="executionResult = null" class="btn-close">✕</button>
+        </div>
+        <div class="modal-body execution-body">
+          <div class="summary-stats" v-if="executionResult.stats">
+            <div class="stat-item success">
+              <div class="stat-label">成功</div>
+              <div class="stat-value">{{ executionResult.stats.success }}</div>
+            </div>
+            <div class="stat-item failed" v-if="executionResult.stats.failed > 0">
+              <div class="stat-label">失败</div>
+              <div class="stat-value">{{ executionResult.stats.failed }}</div>
+            </div>
+          </div>
+          
+          <div class="execution-message">{{ executionResult.message }}</div>
+          
+          <div v-if="executionResult.details && executionResult.details.length > 0" class="failure-details">
+            <h4>失败详情</h4>
+            <div v-for="(detail, index) in executionResult.details" :key="index" class="detail-item">
+              <div class="detail-symbol">{{ detail.symbol }}</div>
+              <div class="detail-message">{{ detail.message }}</div>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button @click="executionResult = null" class="btn-primary">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- 信号详情模态框 -->
     <div v-if="selectedSignal" class="modal-overlay" @click="selectedSignal = null">
       <div class="modal-content" @click.stop>
@@ -170,6 +211,13 @@ const lastCycleResult = ref<CycleResult | null>(null)
 const selectedSignal = ref<TradingSignal | null>(null)
 const aiSignalSummary = ref('')
 const filterByPosition = ref(false) // 持仓过滤开关
+const executionResult = ref<{
+  type: 'success' | 'error' | 'warning',
+  title: string,
+  message: string,
+  stats?: { success: number, failed: number },
+  details?: Array<{ symbol: string, message: string }>
+} | null>(null)
 let autoRefreshInterval: number | null = null
 
 onMounted(() => {
@@ -183,8 +231,10 @@ onUnmounted(() => {
 
 async function loadAllData() {
   try {
+    // 优先获取系统状态以获得 account_id
+    await quantLoopStore.fetchSystemStatus()
+    
     await Promise.all([
-      quantLoopStore.fetchSystemStatus(),
       quantLoopStore.fetchDashboardOverview(),
       quantLoopStore.fetchPendingSignals(20, filterByPosition.value)
     ])
@@ -248,45 +298,95 @@ async function handleRunOptimization() {
   }
 }
 
-async function handleBatchExecute(signals: TradingSignal[]) {
+async function handleBatchExecute(data: { signals: TradingSignal[], dryRun: boolean }) {
+  const { signals, dryRun } = data
   if (signals.length === 0) {
-    alert('请至少选择一个信号')
-    return
-  }
-  
-  if (!confirm(`确认执行 ${signals.length} 个信号?`)) {
+    executionResult.value = {
+      type: 'warning',
+      title: '提示',
+      message: '请至少选择一个信号'
+    }
     return
   }
   
   try {
     const signalIds = signals.map(s => s.signal_id)
-    const result = await quantLoopStore.executeSignals(signalIds)
+    const result = await quantLoopStore.executeSignals(signalIds, dryRun)
     
     // 刷新数据
     await loadAllData()
     
-    alert(`执行结果:\n成功: ${result.success_count}\n失败: ${result.failed_count}`)
+    // 构建失败详情
+    const failedDetails = result.failed_count > 0 && result.results
+      ? result.results
+          .filter((r: any) => !r.success)
+          .map((r: any) => ({
+            symbol: signals.find(s => s.signal_id === r.signal_id)?.symbol || r.signal_id.substring(0, 8),
+            message: r.message || r.error || '未知错误'
+          }))
+      : []
+    
+    // 显示执行结果模态框
+    executionResult.value = {
+      type: result.failed_count === 0 ? 'success' : (result.success_count > 0 ? 'warning' : 'error'),
+      title: `执行结果 (${dryRun ? 'DRY RUN' : '真实交易'})`,
+      message: result.failed_count === 0 
+        ? `成功执行 ${result.success_count} 个信号` 
+        : `执行完成，部分信号失败`,
+      stats: {
+        success: result.success_count,
+        failed: result.failed_count
+      },
+      details: failedDetails.length > 0 ? failedDetails : undefined
+    }
   } catch (error: any) {
     console.error('批量执行失败:', error)
-    alert(`执行失败: ${error.message || '未知错误'}`)
+    executionResult.value = {
+      type: 'error',
+      title: '执行失败',
+      message: error.message || '未知错误'
+    }
   }
 }
 
-async function handleExecuteSingle(signal: TradingSignal) {
-  if (!confirm('确认执行此信号?')) {
-    return
-  }
-  
+async function handleExecuteSingle(data: { signal: TradingSignal, dryRun: boolean }) {
+  const { signal, dryRun } = data
   try {
-    const result = await quantLoopStore.executeSignals([signal.signal_id])
+    const result = await quantLoopStore.executeSignals([signal.signal_id], dryRun)
     
     // 刷新数据
     await loadAllData()
     
-    alert(`执行${result.success_count > 0 ? '成功' : '失败'}`)
+    // 显示详细的执行结果
+    if (result.success_count > 0) {
+      executionResult.value = {
+        type: 'success',
+        title: `执行成功 (${dryRun ? 'DRY RUN' : '真实交易'})`,
+        message: `${signal.symbol} 信号已成功执行`
+      }
+    } else if (result.results && result.results.length > 0) {
+      const failedResult = result.results[0]
+      const errorMsg = failedResult.message || failedResult.error || '未知错误'
+      executionResult.value = {
+        type: 'error',
+        title: `执行失败 (${dryRun ? 'DRY RUN' : '真实交易'})`,
+        message: errorMsg,
+        details: [{ symbol: signal.symbol, message: errorMsg }]
+      }
+    } else {
+      executionResult.value = {
+        type: 'error',
+        title: `执行失败 (${dryRun ? 'DRY RUN' : '真实交易'})`,
+        message: '执行失败，未返回详细信息'
+      }
+    }
   } catch (error: any) {
     console.error('执行失败:', error)
-    alert(`执行失败: ${error.message || '未知错误'}`)
+    executionResult.value = {
+      type: 'error',
+      title: '执行失败',
+      message: error.message || '未知错误'
+    }
   }
 }
 
@@ -539,21 +639,215 @@ function formatFactorName(name: string): string {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 8px;
+  border-radius: 12px;
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 执行结果模态框样式 */
+.execution-result-modal {
+  max-width: 600px;
+}
+
+.execution-result-modal .modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  border-bottom: 1px solid #334155;
+  border-radius: 12px 12px 0 0;
+}
+
+.execution-result-modal .modal-header.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.execution-result-modal .modal-header.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.execution-result-modal .modal-header.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.execution-result-modal .header-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: white;
+}
+
+.execution-result-modal .modal-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+}
+
+.execution-result-modal .btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  transition: background 0.2s;
+}
+
+.execution-result-modal .btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.execution-body {
+  padding: 24px;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-item.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.stat-item.failed {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.execution-message {
+  font-size: 16px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.failure-details {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+}
+
+.failure-details h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 12px;
+}
+
+.detail-item {
+  background: #0f172a;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 3px solid #ef4444;
+}
+
+.detail-symbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.detail-message {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.btn-primary {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
 }
 
 .modal-header {

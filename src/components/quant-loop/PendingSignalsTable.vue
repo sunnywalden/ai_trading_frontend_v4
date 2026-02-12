@@ -3,13 +3,17 @@
     <div class="table-header">
       <h3>待执行信号 ({{ signals.length }})</h3>
       <div class="header-actions">
+        <label class="action-toggle">
+          <input type="checkbox" v-model="executeRealTrades" />
+          <span>执行真实交易</span>
+        </label>
         <button 
           class="btn-execute"
-          :class="{ disabled: selectedSignals.size === 0 }"
+          :class="{ disabled: selectedSignals.size === 0, danger: executeRealTrades }"
           :disabled="selectedSignals.size === 0"
           @click="executeSelected"
         >
-          执行选中信号 ({{ selectedSignals.size }})
+          {{ executeRealTrades ? '⚠️ 确认执行 (真实)' : '执行选中信号' }} ({{ selectedSignals.size }})
         </button>
         <button 
           class="btn-reject"
@@ -135,14 +139,15 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'execute': [signals: TradingSignal[]]
-  'execute-single': [signal: TradingSignal]
+  'execute': [{ signals: TradingSignal[], dryRun: boolean }]
+  'execute-single': [{ signal: TradingSignal, dryRun: boolean }]
   'reject': [signal: TradingSignal]
   'reject-batch': [signals: TradingSignal[]]
   'view-details': [signal: TradingSignal]
 }>()
 
 const selectedSignals = ref<Set<string>>(new Set())
+const executeRealTrades = ref(false)
 
 const allSelected = computed(() => {
   return props.signals.length > 0 && selectedSignals.value.size === props.signals.length
@@ -173,8 +178,16 @@ function toggleSelectAll() {
 }
 
 function executeSelected() {
-  const signals = props.signals.filter(s => selectedSignals.value.has(s.signal_id))
-  emit('execute', signals)
+  const selected = props.signals.filter(s => selectedSignals.value.has(s.signal_id))
+  if (executeRealTrades.value) {
+    if (!confirm(`⚠️ 警告：确认对选中的 ${selected.length} 个标的执行【真实交易】？\n此操作将提交订单到券商，请确保账户状态和风控设置无误。`)) {
+      return
+    }
+  }
+  emit('execute', { 
+    signals: selected, 
+    dryRun: !executeRealTrades.value 
+  })
   selectedSignals.value.clear()
 }
 
@@ -185,7 +198,15 @@ function rejectSelected() {
 }
 
 function executeSingle(signal: TradingSignal) {
-  emit('execute-single', signal)
+  if (executeRealTrades.value) {
+    if (!confirm(`⚠️ 警告：确认对 ${signal.symbol} 执行【真实交易】？`)) {
+      return
+    }
+  }
+  emit('execute-single', { 
+    signal, 
+    dryRun: !executeRealTrades.value 
+  })
 }
 
 function rejectSingle(signal: TradingSignal) {
@@ -276,6 +297,31 @@ function formatDirection(direction: string) {
 .header-actions {
   display: flex;
   gap: 12px;
+  align-items: center;
+}
+
+.action-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.action-toggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.btn-execute.danger {
+  background: #ef4444;
+}
+
+.btn-execute.danger:hover {
+  background: #dc2626;
 }
 
 h3 {

@@ -1280,9 +1280,15 @@ export interface JournalListResponse {
   page: number;
   size: number;
 }
-export async function fetchJournals(page: number = 1, size: number = 20, symbol?: string, status?: string): Promise<JournalListResponse> {
+export async function fetchJournals(
+  page: number = 1,
+  size: number = 20,
+  symbol?: string,
+  status?: string,
+  account_id?: string
+): Promise<JournalListResponse> {
   const { data } = await api.get<JournalListResponse>('/v1/journal', {
-    params: { page, size, symbol, status }
+    params: { page, size, symbol, status, account_id }
   });
   return data;
 }
