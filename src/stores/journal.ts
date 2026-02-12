@@ -14,10 +14,10 @@ export const useJournalStore = defineStore('journal', () => {
   const page = ref(1)
   const loading = ref(false)
 
-  async function load(p: number = 1, size: number = 20, symbol?: string, status?: string) {
+  async function load(p: number = 1, size: number = 20, symbol?: string, status?: string, account_id?: string) {
     loading.value = true
     try {
-      const resp = await fetchJournals(p, size, symbol, status)
+      const resp = await fetchJournals(p, size, symbol, status, account_id)
       journals.value = resp?.items || []
       total.value = resp?.total || 0
       page.value = resp?.page || 1

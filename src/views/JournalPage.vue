@@ -20,7 +20,7 @@
       <div v-for="j in (journals || [])" :key="j.id" class="journal-card" @click="selectJournal(j)">
         <div class="j-header">
           <span class="j-symbol">{{ j.symbol }}</span>
-          <span class="j-dir" :class="j.direction === 'BUY' ? 'dir-buy' : 'dir-sell'">{{ j.direction }}</span>
+          <span class="j-dir" :class="['BUY', 'LONG'].includes(j.direction) ? 'dir-buy' : 'dir-sell'">{{ j.direction }}</span>
           <span class="j-status" :class="'s-' + (j.journal_status || '').toLowerCase()">{{ j.journal_status }}</span>
         </div>
         <div class="j-body">
@@ -33,7 +33,10 @@
         <div class="j-footer">
           <span v-if="j.emotion_state" class="j-emotion">{{ j.emotion_state }}</span>
           <span v-if="j.execution_quality" class="j-quality">执行质量: {{ j.execution_quality }}/5</span>
-          <button v-if="j.journal_status !== 'REVIEWED'" class="btn-small" @click.stop="doAiReview(j.id)">AI 复盘</button>
+          <button v-if="j.journal_status !== 'REVIEWED' && j.journal_status !== 'FAILED'" class="btn-small" @click.stop="doAiReview(j.id)">AI 复盘</button>
+        </div>
+        <div v-if="j.journal_status === 'FAILED' && j.lesson_learned" class="j-error-msg">
+          <strong>失败原因：</strong>{{ j.lesson_learned }}
         </div>
         <div v-if="j.ai_review" class="j-review">
           <strong>AI 复盘：</strong>
@@ -79,12 +82,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useJournalStore } from '@/stores/journal'
+import { useQuantLoopStore } from '@/stores/quantLoop'
 
 const store = useJournalStore()
+const quantLoopStore = useQuantLoopStore()
 const { journals, total, page, loading } = storeToRefs(store)
+const { systemStatus } = storeToRefs(quantLoopStore)
 
 const filterStatus = ref('')
 const showCreate = ref(false)
@@ -96,8 +102,19 @@ const form = reactive({
   execution_quality: null as number | null, emotion_state: '', lesson_learned: '',
 })
 
-async function reload() { await store.load(1, 20, undefined, filterStatus.value || undefined) }
-async function goPage(p: number) { await store.load(p, 20, undefined, filterStatus.value || undefined) }
+async function reload() { 
+  const accountId = systemStatus.value?.account_id
+  await store.load(1, 20, undefined, filterStatus.value || undefined, accountId) 
+}
+async function goPage(p: number) { 
+  const accountId = systemStatus.value?.account_id
+  await store.load(p, 20, undefined, filterStatus.value || undefined, accountId) 
+}
+
+// 监听账户变化
+watch(() => systemStatus.value?.account_id, (newId) => {
+  if (newId) reload()
+})
 async function submitCreate() {
   await store.add({ ...form } as any)
   showCreate.value = false
@@ -133,6 +150,8 @@ onMounted(reload)
 .s-draft { background: #e5e7eb; color: #374151; }
 .s-completed { background: #dbeafe; color: #1e40af; }
 .s-reviewed { background: #d1fae5; color: #065f46; }
+.s-failed { background: #fee2e2; color: #b91c1c; }
+.j-error-msg { margin-top: 8px; padding: 8px 12px; background: #fff1f2; color: #991b1b; border-radius: 8px; font-size: 0.8rem; border: 1px solid #fecaca; }
 .j-body { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-secondary, #666); margin-bottom: 4px; flex-wrap: wrap; }
 .j-pnl { font-weight: 700; }
 .pnl-pos { color: #10b981; }
