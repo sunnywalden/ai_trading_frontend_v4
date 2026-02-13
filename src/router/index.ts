@@ -8,8 +8,14 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('../views/DashboardPage.vue'),
+    component: () => import('../views/DashboardV2Page.vue'),
     meta: { title: 'Dashboard' }
+  },
+  {
+    path: '/dashboard-v1',
+    name: 'DashboardV1',
+    component: () => import('../views/DashboardPage.vue'),
+    meta: { title: 'Dashboard V1 (旧版)' }
   },
   {
     path: '/equity',
@@ -80,10 +86,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '系统监控' }
   },
   {
+    path: '/ai-advisor',
+    name: 'AIAdvisor',
+    component: () => import('../views/AIAdvisorPage.vue'),
+    meta: { title: 'AI 交易决策' }
+  },
+  {
     path: '/plans',
-    name: 'TradingPlans',
-    component: () => import('../views/TradingPlanPage.vue'),
-    meta: { title: '交易计划' }
+    redirect: '/ai-advisor'
+  },
+  {
+    path: '/execution-center',
+    redirect: '/ai-advisor'
   },
   {
     path: '/quant-loop',

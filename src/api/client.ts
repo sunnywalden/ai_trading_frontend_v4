@@ -1,27 +1,30 @@
 import axios from "axios";
+import { logger } from "@/utils/logger";
 
 // 后端基础 URL
 const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL ?? "");
 
 // 业务 API（/api/v1/*）
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL ?? "") + "/api",
-  timeout: 30000
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 60000
 });
 
 // 系统 API（无前缀，如 /health）
 const systemApi = axios.create({
   baseURL: BACKEND_URL,
-  timeout: 30000
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 60000
 });
+
+// 导出 client 别名以保持兼容性
+export const client = api;
 
 // 临时请求/响应拦截器：打印请求信息，便于调试为什么请求被取消或未发出
 api.interceptors.request.use((config) => {
   try {
     // 打印最终请求 URL（包含 baseURL + url）和 params
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-    // eslint-disable-next-line no-console
-    console.debug('[API Request]', fullUrl, config.method, config.params || config.data || {});
+    logger.info(`API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
   } catch (e) {
     // ignore
   }
@@ -30,13 +33,11 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (resp) => {
-    // eslint-disable-next-line no-console
-    console.debug('[API Response]', resp.config?.url, resp.status);
+    logger.info(`API Response: ${resp.status} ${resp.config?.url}`);
     return resp;
   },
   (err) => {
-    // eslint-disable-next-line no-console
-    console.error('[API Error]', err?.config?.url, err?.message || err);
+    logger.error(`API Error: ${err?.config?.url} | ${err?.message || err}`);
     return Promise.reject(err);
   }
 );
@@ -44,21 +45,18 @@ api.interceptors.response.use(
 systemApi.interceptors.request.use((config) => {
   try {
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-    // eslint-disable-next-line no-console
-    console.debug('[System API Request]', fullUrl, config.method, config.params || config.data || {});
+    logger.info(`System API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
   } catch (e) {}
   return config;
 });
 
 systemApi.interceptors.response.use(
   (resp) => {
-    // eslint-disable-next-line no-console
-    console.debug('[System API Response]', resp.config?.url, resp.status);
+    logger.info(`System API Response: ${resp.status} ${resp.config?.url}`);
     return resp;
   },
   (err) => {
-    // eslint-disable-next-line no-console
-    console.error('[System API Error]', err?.config?.url, err?.message || err);
+    logger.error(`System API Error: ${err?.config?.url} | ${err?.message || err}`);
     // 如果后端返回 401，清除本地 token 并派发登出事件（由前端决定如何导航）
     if (err?.response?.status === 401) {
       try {
@@ -959,6 +957,102 @@ export async function exportStrategyRun(runId: string): Promise<StrategyExportRe
   return data;
 }
 
+// ========== 快捷交易 API ==========
+
+export interface QuickTradePreview {
+  symbol: string;
+  current_price?: number;
+  suggested_direction: string;
+  suggested_action: string;
+  signal_strength: number;
+  suggested_weight: number;
+  calculated_quantity: number;
+  calculated_stop_loss?: number;
+  calculated_take_profit?: number;
+  estimated_position_value: number;
+  estimated_position_ratio: number;
+  risk_score: number;
+  risk_flags: string[];
+  signal_dimensions: Record<string, any>;
+}
+
+export interface QuickTradeResponse {
+  status: string;
+  signal_id?: string;
+  order_id?: string;
+  message: string;
+  preview?: QuickTradePreview;
+}
+
+export interface QuickTradeRequest {
+  execution_mode?: 'IMMEDIATE' | 'LIMIT' | 'PLAN';
+  override_direction?: string;
+  override_quantity?: number;
+  override_price?: number;
+  override_stop_loss?: number;
+  override_take_profit?: number;
+  risk_budget?: number;
+  notes?: string;
+}
+
+export interface BatchQuickTradeRequest {
+  asset_symbols: string[];
+  execution_mode?: 'IMMEDIATE' | 'LIMIT' | 'PLAN';
+  position_sizing_method?: 'WEIGHT' | 'EQUAL' | 'CUSTOM' | 'RISK_BASED';
+  custom_weights?: Record<string, number>;
+  total_risk_budget?: number;
+  notes?: string;
+}
+
+export interface BatchQuickTradeResponse {
+  status: string;
+  total_signals: number;
+  success_count: number;
+  failed_count: number;
+  signal_ids: string[];
+  failures: Array<{ symbol: string; error: string }>;
+  message: string;
+}
+
+export async function previewQuickTrade(
+  runId: string,
+  symbol: string,
+  riskBudget?: number
+): Promise<QuickTradeResponse> {
+  const params: any = {};
+  if (riskBudget !== undefined) {
+    params.risk_budget = riskBudget;
+  }
+  const { data } = await api.get<QuickTradeResponse>(
+    `/v1/strategy-runs/${runId}/assets/${symbol}/preview`,
+    { params }
+  );
+  return data;
+}
+
+export async function executeQuickTrade(
+  runId: string,
+  symbol: string,
+  request: QuickTradeRequest
+): Promise<QuickTradeResponse> {
+  const { data } = await api.post<QuickTradeResponse>(
+    `/v1/strategy-runs/${runId}/assets/${symbol}/quick-trade`,
+    request
+  );
+  return data;
+}
+
+export async function executeBatchQuickTrade(
+  runId: string,
+  request: BatchQuickTradeRequest
+): Promise<BatchQuickTradeResponse> {
+  const { data } = await api.post<BatchQuickTradeResponse>(
+    `/v1/strategy-runs/${runId}/batch-quick-trade`,
+    request
+  );
+  return data;
+}
+
 // ========== 定时任务管理 API ==========
 
 export interface SchedulerJobDetail {
@@ -1205,6 +1299,227 @@ export interface DashboardSummary {
 }
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const { data } = await api.get<DashboardSummary>('/v1/dashboard/summary');
+  return data;
+}
+
+// ---------- Dashboard V2 (全新重构) ----------
+export interface AccountOverview {
+  total_equity: number;
+  cash: number;
+  market_value: number;
+  buying_power: number;
+  margin_used: number;
+  margin_available: number;
+}
+
+export interface PnLMetrics {
+  daily_pnl: number;
+  daily_return_pct: number;
+  weekly_pnl: number;
+  weekly_return_pct: number;
+  mtd_pnl: number;
+  mtd_return_pct: number;
+  ytd_pnl: number;
+  ytd_return_pct: number;
+  trend: 'UP' | 'DOWN' | 'FLAT';
+}
+
+export interface PnLAttribution {
+  symbol: string;
+  contribution: number;
+  contribution_pct: number;
+  position_size: number;
+}
+
+export interface GreeksExposure {
+  delta: number;
+  delta_pct: number;
+  gamma: number;
+  gamma_pct: number;
+  vega: number;
+  vega_pct: number;
+  theta: number;
+  theta_pct: number;
+}
+
+export interface RiskMetrics {
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
+  var_1d: number;
+  var_5d: number;
+  max_drawdown: number;
+  sharpe_ratio: number;
+  beta: number;
+  concentration_risk: number;
+  greeks: GreeksExposure;
+}
+
+export interface MacroRiskAlert {
+  event_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  impact_score: number;
+  timestamp: string;
+}
+
+export interface SignalSummary {
+  signal_id: string;
+  symbol: string;
+  signal_type: string;
+  direction: string;
+  confidence: number;
+  expected_return: number;
+  risk_score: number;
+  timestamp: string;
+  ai_insight?: string;
+}
+
+export interface SignalPipeline {
+  generated_count: number;
+  validated_count: number;
+  executed_count: number;
+  rejected_count: number;
+  success_rate: number;
+}
+
+export interface PositionSummary {
+  symbol: string;
+  name: string;
+  quantity: number;
+  avg_cost: number;
+  current_price: number;
+  market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  weight: number;
+  risk_score: number;
+  technical_score: number;
+  fundamental_score: number;
+}
+
+export interface TradingPlanSummary {
+  plan_id: string;
+  symbol: string;
+  plan_type: string;
+  status: string;
+  target_price?: number;
+  quantity: number;
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface ExecutionStats {
+  active_plans: number;
+  executed_today: number;
+  cancelled_today: number;
+  execution_rate: number;
+  avg_slippage: number;
+}
+
+export interface AIInsight {
+  insight_type: string;
+  priority: string;
+  title: string;
+  content: string;
+  action_items: string[];
+  related_symbol?: string;
+  created_at: string;
+}
+
+export interface StrategyPerformance {
+  strategy_id: string;
+  strategy_name: string;
+  total_runs: number;
+  win_rate: number;
+  avg_return: number;
+  sharpe: number;
+  last_run_at?: string;
+  status: string;
+}
+
+export interface APIHealth {
+  provider: string;
+  status: string;
+  success_rate: number;
+  avg_latency_ms: number;
+  rate_limit_remaining: number;
+  rate_limit_reset_at?: string;
+}
+
+export interface MarketHotspot {
+  category: string;
+  topic: string;
+  heat_score: number;
+  related_symbols: string[];
+  opportunities_count: number;
+}
+
+export interface TodoItem {
+  todo_type: string;
+  priority: string;
+  title: string;
+  description: string;
+  action_link: string;
+  due_at?: string;
+  created_at: string;
+}
+
+export interface PerformanceTrend {
+  date: string;
+  equity: number;
+  pnl: number;
+  return_pct: number;
+}
+
+export interface DashboardV2Response {
+  account_id: string;
+  timestamp: string;
+  account: AccountOverview;
+  pnl: PnLMetrics;
+  top_performers: PnLAttribution[];
+  top_losers: PnLAttribution[];
+  risk: RiskMetrics;
+  macro_risks: MacroRiskAlert[];
+  signal_pipeline: SignalPipeline;
+  pending_signals: SignalSummary[];
+  signal_notifications: number;
+  positions_count: number;
+  positions_summary: PositionSummary[];
+  concentration_top5: number;
+  execution_stats: ExecutionStats;
+  active_plans: TradingPlanSummary[];
+  ai_insights: AIInsight[];
+  insights_unread: number;
+  top_strategies: StrategyPerformance[];
+  api_health: APIHealth[];
+  system_alerts: number;
+  market_hotspots: MarketHotspot[];
+  todos: TodoItem[];
+  todos_high_priority: number;
+  performance_trend: PerformanceTrend[];
+  refresh_interval_seconds: number;
+  last_refresh_at: string;
+}
+
+export interface DashboardQuickUpdate {
+  account_id: string;
+  timestamp: string;
+  total_equity: number;
+  daily_pnl: number;
+  daily_return_pct: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'EXTREME';
+  pending_signals_count: number;
+  todos_count: number;
+  system_alerts_count: number;
+}
+
+export async function fetchDashboardV2Full(): Promise<DashboardV2Response> {
+  const { data } = await api.get<DashboardV2Response>('/v1/dashboard/v2/full');
+  return data;
+}
+
+export async function fetchDashboardV2Quick(): Promise<DashboardQuickUpdate> {
+  const { data } = await api.get<DashboardQuickUpdate>('/v1/dashboard/v2/quick');
   return data;
 }
 

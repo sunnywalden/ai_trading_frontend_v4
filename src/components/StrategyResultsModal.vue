@@ -9,11 +9,44 @@
         <button class="close-btn" @click="close">✕</button>
       </div>
 
+      <!-- 批量操作工具栏 -->
+      <div v-if="assets.length" class="batch-toolbar">
+        <div class="toolbar-left">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              :checked="isAllSelected"
+              @change="toggleSelectAll"
+              class="checkbox-input"
+            />
+            <span>全选</span>
+          </label>
+          <span class="selected-count">已选择 {{ selectedAssets.size }} 个标的</span>
+        </div>
+        <div class="toolbar-right">
+          <button 
+            v-if="selectedAssets.size > 0" 
+            class="batch-trade-btn"
+            @click="showBatchTrade = true"
+          >
+            🎯 批量交易 ({{ selectedAssets.size }})
+          </button>
+        </div>
+      </div>
+
       <div class="modal-content">
         <div v-if="assets.length" class="results-table-container">
           <table class="results-table">
             <thead>
               <tr>
+                <th class="checkbox-col">
+                  <input 
+                    type="checkbox" 
+                    :checked="isAllSelected"
+                    @change="toggleSelectAll"
+                    class="checkbox-input"
+                  />
+                </th>
                 <th>标的</th>
                 <th>建议操作</th>
                 <th>建议方向</th>
@@ -22,10 +55,19 @@
                 <th>维度分析</th>
                 <th>风险标记</th>
                 <th>备注</th>
+                <th>快捷交易</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="asset in assets" :key="asset.symbol">
+              <tr v-for="asset in assets" :key="asset.symbol" :class="{ 'selected-row': selectedAssets.has(asset.symbol) }">
+                <td class="checkbox-col">
+                  <input 
+                    type="checkbox" 
+                    :checked="selectedAssets.has(asset.symbol)"
+                    @change="toggleAssetSelection(asset.symbol)"
+                    class="checkbox-input"
+                  />
+                </td>
                 <td><span class="symbol-tag">{{ asset.symbol }}</span></td>
                 <td>
                   <span :class="['action-tag', (asset.action || '').toLowerCase()]">
@@ -60,6 +102,11 @@
                   </div>
                 </td>
                 <td class="notes">{{ translateNotes(asset.notes) }}</td>
+                <td class="trade-actions">
+                  <button class="trade-btn" @click="handleQuickTrade(asset.symbol)" title="快捷交易">
+                    ⚡ 交易
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -72,14 +119,36 @@
       <div class="modal-actions">
         <button class="primary-btn" @click="close">关闭</button>
       </div>
+
+      <!-- 快捷交易对话框 -->
+      <QuickTradeDialog
+        :show="showQuickTrade"
+        :run-id="runId"
+        :symbol="selectedSymbol"
+        @close="showQuickTrade = false"
+        @success="handleTradeSuccess"
+      />
+
+      <!-- 批量交易对话框 -->
+      <BatchQuickTradeDialog
+        :show="showBatchTrade"
+        :run-id="runId"
+        :selected-symbols="Array.from(selectedAssets)"
+        :assets="getSelectedAssetDetails()"
+        @close="showBatchTrade = false"
+        @success="handleBatchTradeSuccess"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import type { StrategyRunAssetView } from '../api/client';
+import QuickTradeDialog from './QuickTradeDialog.vue';
+import BatchQuickTradeDialog from './BatchQuickTradeDialog.vue';
 
-defineProps<{
+const props = defineProps<{
   show: boolean;
   runId: string;
   assets: StrategyRunAssetView[];
@@ -88,6 +157,54 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
 }>();
+
+const showQuickTrade = ref(false);
+const showBatchTrade = ref(false);
+const selectedSymbol = ref('');
+const selectedAssets = ref<Set<string>>(new Set());
+
+const isAllSelected = computed(() => {
+  return props.assets.length > 0 && selectedAssets.value.size === props.assets.length;
+});
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedAssets.value.clear();
+  } else {
+    selectedAssets.value = new Set(props.assets.map(a => a.symbol));
+  }
+}
+
+function toggleAssetSelection(symbol: string) {
+  if (selectedAssets.value.has(symbol)) {
+    selectedAssets.value.delete(symbol);
+  } else {
+    selectedAssets.value.add(symbol);
+  }
+  // 触发响应式更新
+  selectedAssets.value = new Set(selectedAssets.value);
+}
+
+function getSelectedAssetDetails(): StrategyRunAssetView[] {
+  return props.assets.filter(asset => selectedAssets.value.has(asset.symbol));
+}
+
+function handleQuickTrade(symbol: string) {
+  selectedSymbol.value = symbol;
+  showQuickTrade.value = true;
+}
+
+function handleTradeSuccess(result: any) {
+  console.log('Trade executed:', result);
+  alert(`交易信号已创建: ${result.message}`);
+}
+
+function handleBatchTradeSuccess(result: any) {
+  console.log('Batch trade executed:', result);
+  alert(`批量交易完成: ${result.message}`);
+  // 清空选择
+  selectedAssets.value.clear();
+}
 
 function translateDimension(key: string): string {
   const map: Record<string, string> = {
@@ -356,5 +473,105 @@ h3 {
 .primary-btn:hover {
   background: #0ea5e9;
   transform: translateY(-1px);
+}
+
+.trade-actions {
+  text-align: center;
+}
+
+.trade-btn {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.trade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.trade-btn:active {
+  transform: translateY(0);
+}
+
+/* 批量操作工具栏样式 */
+.batch-toolbar {
+  padding: 16px 24px;
+  background: rgba(59, 130, 246, 0.05);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.checkbox-col {
+  width: 50px;
+  text-align: center;
+}
+
+.selected-count {
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+}
+
+.batch-trade-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.batch-trade-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.selected-row {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-left: 3px solid #3b82f6;
 }
 </style>
