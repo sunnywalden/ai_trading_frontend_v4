@@ -273,6 +273,36 @@ class QuantLoopService {
     })
     return response.data.data
   }
+
+  // --- 性能与风险分析 (Alpha/Beta/VaR) ---
+
+  // 获取Alpha/Beta性能指标
+  async getAlphaBetaMetrics(accountId: string, periodDays: number = 90, benchmark: string = 'SPY') {
+    const response = await this.client.get(`/performance/alpha-beta/${accountId}`, {
+      params: { period_days: periodDays, benchmark }
+    })
+    return response.data.data
+  }
+
+  // 获取信号质量指标
+  async getSignalQualityMetrics(accountId: string, periodDays: number = 30) {
+    const response = await this.client.get(`/performance/signal-quality/${accountId}`, {
+      params: { period_days: periodDays }
+    })
+    return response.data.data
+  }
+
+  // 获取VaR风险指标
+  async getVaRRiskMetrics(accountId: string) {
+    const response = await this.client.get(`/performance/var-risk/${accountId}`)
+    return response.data.data
+  }
+
+  // 获取压力测试结果
+  async getStressTestResults(accountId: string) {
+    const response = await this.client.get(`/performance/stress-test/${accountId}`)
+    return response.data.data
+  }
 }
 
 export default QuantLoopService
