@@ -8,7 +8,7 @@
       </h1>
       <div class="header-actions">
         <button @click="handleRefresh" class="btn-refresh" :disabled="store.loading">
-          <span class="icon">🔄</span>
+          <svg :class="{ 'spinning': store.loading }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
           {{ store.loading ? '刷新中...' : '刷新' }}
         </button>
         <span class="last-update" v-if="store.lastFullUpdate">
@@ -39,6 +39,8 @@
           label="总权益"
           :value="formatCurrency(store.totalEquity)"
           icon="💰"
+          @refresh="handleModuleRefresh('kpi')"
+          :loading="moduleLoading['kpi']"
         />
         <KPICard
           label="今日盈亏"
@@ -47,23 +49,31 @@
           :trend="store.dailyPnl >= 0 ? 'up' : 'down'"
           icon="📈"
           @click="scrollToAttribution"
+          @refresh="handleModuleRefresh('kpi')"
+          :loading="moduleLoading['kpi']"
           class="clickable-kpi"
         />
         <KPICard
           label="本周收益"
           :value="`${store.fullData.pnl.weekly_return_pct >= 0 ? '+' : ''}${store.fullData.pnl.weekly_return_pct.toFixed(2)}%`"
           icon="📅"
+          @refresh="handleModuleRefresh('kpi')"
+          :loading="moduleLoading['kpi']"
         />
         <KPICard
           label="本月收益"
           :value="`${store.fullData.pnl.mtd_return_pct >= 0 ? '+' : ''}${store.fullData.pnl.mtd_return_pct.toFixed(2)}%`"
           icon="📆"
+          @refresh="handleModuleRefresh('kpi')"
+          :loading="moduleLoading['kpi']"
         />
         <KPICard
           label="风险等级"
           :value="riskLevelLabel(store.riskLevel)"
           :class="['risk-badge', `risk-${store.riskLevel.toLowerCase()}`]"
           icon="⚠️"
+          @refresh="handleModuleRefresh('kpi')"
+          :loading="moduleLoading['kpi']"
         />
       </section>
 
@@ -71,12 +81,22 @@
       <div class="section-charts-dual">
         <!-- 左侧: 性能趋势 -->
         <div class="card chart-container">
-          <h3><span class="icon">📊</span> 权益曲线 (30天)</h3>
+          <div class="card-header">
+            <h3><span class="icon">📊</span> 权益曲线 (30天)</h3>
+            <button @click="handleModuleRefresh('trend')" class="btn-icon" :class="{ spinning: moduleLoading['trend'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <PerformanceTrendChart :data="store.fullData.performance_trend" />
         </div>
         <!-- 右侧: 盈亏归因 -->
         <div class="card attribution-container" id="pnl-attribution">
-          <h3><span class="icon">🔍</span> 盈亏归因</h3>
+          <div class="card-header">
+            <h3><span class="icon">🔍</span> 盈亏归因</h3>
+            <button @click="handleModuleRefresh('attribution')" class="btn-icon" :class="{ spinning: moduleLoading['attribution'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <PnLAttributionPanel 
             :performers="store.fullData.top_performers"
             :losers="store.fullData.top_losers"
@@ -88,11 +108,21 @@
       <!-- Section 3: 风险与Greeks -->
       <div class="section-risk">
         <div class="risk-card">
-          <h3><span class="icon">🎯</span> Greeks 敞口</h3>
+          <div class="card-header">
+            <h3><span class="icon">🎯</span> Greeks 敞口</h3>
+            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <GreeksGauges :greeks="store.fullData.risk.greeks" />
         </div>
         <div class="risk-card">
-          <h3><span class="icon">📉</span> 风险指标</h3>
+          <div class="card-header">
+            <h3><span class="icon">📉</span> 风险指标</h3>
+            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <RiskMetricsPanel :metrics="store.fullData.risk" />
         </div>
       </div>
@@ -101,10 +131,15 @@
       <div class="section-signals">
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">🔔</span> 信号管道</h3>
-            <span class="badge" v-if="store.pendingSignalsCount > 0">
-              {{ store.pendingSignalsCount }} 待执行
-            </span>
+            <div class="title-with-badge">
+              <h3><span class="icon">🔔</span> 信号管道</h3>
+              <span class="badge" v-if="store.pendingSignalsCount > 0">
+                {{ store.pendingSignalsCount }} 待执行
+              </span>
+            </div>
+            <button @click="handleModuleRefresh('signals')" class="btn-icon" :class="{ spinning: moduleLoading['signals'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
           </div>
           <SignalPipelineFlow :pipeline="store.fullData.signal_pipeline" />
           
@@ -131,10 +166,15 @@
         <!-- 左: AI洞察 -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">🤖</span> AI 洞察</h3>
-            <span class="badge" v-if="store.fullData.insights_unread > 0">
-              {{ store.fullData.insights_unread }} 条新洞察
-            </span>
+            <div class="title-with-badge">
+              <h3><span class="icon">🤖</span> AI 洞察</h3>
+              <span class="badge" v-if="store.fullData.insights_unread > 0">
+                {{ store.fullData.insights_unread }} 条新洞察
+              </span>
+            </div>
+            <button @click="handleModuleRefresh('insights')" class="btn-icon" :class="{ spinning: moduleLoading['insights'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
           </div>
           <div v-if="store.fullData.ai_insights.length > 0" class="insights-list">
             <AIInsightCard
@@ -151,10 +191,15 @@
         <!-- 右: 待办事项 -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">✅</span> 待办事项</h3>
-            <span class="badge badge-danger" v-if="store.fullData.todos_high_priority > 0">
-              {{ store.fullData.todos_high_priority }} 高优先级
-            </span>
+            <div class="title-with-badge">
+              <h3><span class="icon">✅</span> 待办事项</h3>
+              <span class="badge badge-danger" v-if="store.fullData.todos_high_priority > 0">
+                {{ store.fullData.todos_high_priority }} 高优先级
+              </span>
+            </div>
+            <button @click="handleModuleRefresh('todos')" class="btn-icon" :class="{ spinning: moduleLoading['todos'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
           </div>
           <div v-if="store.fullData.todos.length > 0" class="todos-list">
             <TodoCard
@@ -174,7 +219,12 @@
       <div class="section-dual">
         <!-- 左: Top持仓 -->
         <div class="card">
-          <h3><span class="icon">📦</span> Top 持仓</h3>
+          <div class="card-header">
+            <h3><span class="icon">📦</span> Top 持仓</h3>
+            <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <div v-if="store.fullData.positions_summary.length > 0" class="positions-list">
             <PositionCard
               v-for="position in store.fullData.positions_summary.slice(0, 5)"
@@ -190,8 +240,13 @@
         <!-- 右: 活跃计划 -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">📋</span> 活跃计划</h3>
-            <span class="badge">{{ store.fullData.execution_stats.active_plans }} 个</span>
+            <div class="title-with-badge">
+              <h3><span class="icon">📋</span> 活跃计划</h3>
+              <span class="badge">{{ store.fullData.execution_stats.active_plans }} 个</span>
+            </div>
+            <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
           </div>
           <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
             <PlanCard
@@ -209,7 +264,12 @@
       <!-- Section 7: 市场热点 -->
       <div class="section-hotspots" v-if="store.fullData.market_hotspots.length > 0">
         <div class="card">
-          <h3><span class="icon">🔥</span> 市场热点</h3>
+          <div class="card-header">
+            <h3><span class="icon">🔥</span> 市场热点</h3>
+            <button @click="handleModuleRefresh('hotspots')" class="btn-icon" :class="{ spinning: moduleLoading['hotspots'] }" title="刷新数据">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+          </div>
           <div class="hotspots-grid">
             <HotspotCard
               v-for="(hotspot, idx) in store.fullData.market_hotspots"
@@ -224,7 +284,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import KPICard from '@/components/dashboard/KPICard.vue'
@@ -243,6 +303,8 @@ import HotspotCard from '@/components/dashboard/HotspotCard.vue'
 const store = useDashboardV2Store()
 const router = useRouter()
 
+const moduleLoading = reactive<Record<string, boolean>>({})
+
 onMounted(async () => {
   await store.loadFull()
   store.startAutoRefresh()
@@ -254,6 +316,15 @@ onUnmounted(() => {
 
 function handleRefresh() {
   store.loadFull()
+}
+
+async function handleModuleRefresh(module: string) {
+  moduleLoading[module] = true
+  try {
+    await store.loadFull()
+  } finally {
+    moduleLoading[module] = false
+  }
 }
 
 function scrollToAttribution() {
@@ -566,6 +637,46 @@ function riskLevelLabel(level: string): string {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
+}
+
+/* Base Styles */
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: #94a3b8; /* Slate 400 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #6366f1; /* Indigo 500 */
+  transform: scale(1.1);
+}
+
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
 }
 
 /* Responsive */
