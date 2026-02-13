@@ -46,6 +46,8 @@
           :sub-value="`${store.dailyReturnPct >= 0 ? '+' : ''}${store.dailyReturnPct.toFixed(2)}%`"
           :trend="store.dailyPnl >= 0 ? 'up' : 'down'"
           icon="📈"
+          @click="scrollToAttribution"
+          class="clickable-kpi"
         />
         <KPICard
           label="本周收益"
@@ -66,11 +68,20 @@
       </section>
 
       <!-- Section 2: 主要图表区 -->
-      <div class="section-charts">
+      <div class="section-charts-dual">
         <!-- 左侧: 性能趋势 -->
-        <div class="chart-card chart-full">
+        <div class="card chart-container">
           <h3><span class="icon">📊</span> 权益曲线 (30天)</h3>
           <PerformanceTrendChart :data="store.fullData.performance_trend" />
+        </div>
+        <!-- 右侧: 盈亏归因 -->
+        <div class="card attribution-container" id="pnl-attribution">
+          <h3><span class="icon">🔍</span> 盈亏归因</h3>
+          <PnLAttributionPanel 
+            :performers="store.fullData.top_performers"
+            :losers="store.fullData.top_losers"
+            :strategies="store.fullData.top_strategies"
+          />
         </div>
       </div>
 
@@ -220,6 +231,7 @@ import KPICard from '@/components/dashboard/KPICard.vue'
 import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
 import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
+import PnLAttributionPanel from '@/components/dashboard/PnLAttributionPanel.vue'
 import SignalPipelineFlow from '@/components/dashboard/SignalPipelineFlow.vue'
 import SignalCard from '@/components/dashboard/SignalCard.vue'
 import AIInsightCard from '@/components/dashboard/AIInsightCard.vue'
@@ -242,6 +254,13 @@ onUnmounted(() => {
 
 function handleRefresh() {
   store.loadFull()
+}
+
+function scrollToAttribution() {
+  const el = document.getElementById('pnl-attribution')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
 }
 
 function handleViewSignal(signal: any) {
@@ -297,6 +316,10 @@ function riskLevelLabel(level: string): string {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.clickable-kpi {
+  cursor: pointer;
 }
 
 .page-header .icon {
@@ -411,6 +434,19 @@ function riskLevelLabel(level: string): string {
   align-items: center;
   gap: 8px;
 }
+
+.section-charts-dual {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .section-charts-dual {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* Risk Section */
 .section-risk {
