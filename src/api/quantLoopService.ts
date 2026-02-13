@@ -2,6 +2,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { globalConfig } from '@/config/global'
 import { getAuthToken } from './client'
+import { logger } from '@/utils/logger'
 
 export interface SystemStatus {
   account_id: string
@@ -142,13 +143,21 @@ class QuantLoopService {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
+      
+      const fullUrl = `${config.baseURL || ''}${config.url || ''}`
+      logger.info(`QuantLoop API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {})
+      
       return config
     })
 
     // 响应拦截器 - 处理401自动跳转  
     this.client.interceptors.response.use(
-      response => response,
+      response => {
+        logger.info(`QuantLoop API Response: ${response.status} ${response.config?.url}`)
+        return response
+      },
       error => {
+        logger.error(`QuantLoop API Error: ${error?.config?.url} | ${error?.message || error}`)
         if (error.response?.status === 401) {
           window.location.href = '/login'
         }
