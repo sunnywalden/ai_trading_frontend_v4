@@ -114,7 +114,6 @@ const navGroups: NavGroup[] = [
       { path: '/positions', label: '持仓评估', icon: '📊' },
       { path: '/ai-advisor', label: 'AI交易决策', icon: '🧠' },
       { path: '/journal', label: '交易日志', icon: '📓' },
-      { path: '/equity', label: '资金曲线', icon: '💰' },
       { path: '/alerts', label: '价格告警', icon: '🔔' },
       { path: '/quant-loop', label: '量化闭环', icon: '🔄' },
     ],
