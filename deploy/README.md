@@ -3,6 +3,13 @@
 > 部署要点已合并到 `docs/CONSOLIDATED_DOCS.md` 的“部署要点（精简）”节。
 > 完整历史版本已迁移到 `docs/archived/deploy_README.md`。
 
+说明：`/Users/admin/IdeaProjects/ai_trading_frontend_v4/.env.example` 已同步并与后端 `.env.example` 对齐。请复制该示例文件为 `.env` 并填写 `VITE_BACKEND_URL` 等运行时值（示例中不包含任何真实密钥）。
+
+```bash
+cp .env.example .env
+# 编辑 .env，至少设置 VITE_BACKEND_URL=http://your-backend:8088
+```
+
 如需查看完整部署步骤、Dockerfile、Kubernetes manifests，请查阅归档文件。
 
 ---

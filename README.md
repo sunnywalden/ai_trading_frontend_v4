@@ -65,7 +65,18 @@ npm install
 npm run dev
 ```
 
-应用将启动在 `http://localhost:5173`，并自动代理 `/api` 请求到后端服务 `http://127.0.0.1:8088`。
+应用将启动在 `http://localhost:5173`。
+
+- 开发时请先确保后端服务已启动（推荐：`http://127.0.0.1:8088` 或 `.env` 中的 `VITE_BACKEND_URL` 指定的地址）。
+- 示例 `.env.example` 已更新为与后端 `.env` 同步（但不包含敏感信息）。如需覆盖后端地址，请在项目根创建 `.env` 并设置 `VITE_BACKEND_URL`。
+
+```bash
+# 覆盖后端地址（本地开发）
+cp .env.example .env
+# 编辑 .env，设置 VITE_BACKEND_URL=http://127.0.0.1:8088
+```
+
+开发代理说明：Vite 的 proxy 会把 `/api` 转发到后端（详见 `vite.config.ts`）。如果你把后端放在其他地址，请在 `.env` 中同步并重启 dev server。
 
 ### 构建生产版本
 
