@@ -6,12 +6,15 @@
           <h2>🎯 策略筛选</h2>
           <p>浏览平台内置私募精选策略、触发异步运行并同步进度</p>
         </div>
+        <el-button type="primary" @click="$router.push('/strategies')">
+          查看所有策略 →
+        </el-button>
       </div>
       <ExecutionListHeader 
-        v-if="recentStrategyRun"
-        :universe-name="recentStrategyRun.target_universe || '全市场'"
-        :min-score="recentStrategyRun.min_score || 0"
-        :max-results="recentStrategyRun.max_results || 50"
+        v-if="false"
+        universe-name="全市场"
+        :min-score="0"
+        :max-results="50"
         :force-refresh="false"
       />
     </section>
@@ -35,7 +38,7 @@
             :key="strategy.id"
             :strategy="strategy"
             @run="openStrategyRunModal"
-            @view="openStrategyRunModal"
+            @view="viewStrategyDetail"
           />
         </div>
         <div v-else class="strategy-empty">
@@ -115,6 +118,7 @@
 </template>
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import OpportunitiesGuideline from '../components/OpportunitiesGuideline.vue';
 import ExecutionListHeader from '../components/ExecutionListHeader.vue';
 import StrategyCard from '../components/StrategyCard.vue';
@@ -137,6 +141,8 @@ import {
   type StrategyRunRequest,
   type StrategyRunHistoryItem,
 } from '../api/client';
+
+const router = useRouter();
 
 const strategies = ref<StrategySummaryView[]>([]);
 const strategyLoading = ref(false);
@@ -164,7 +170,7 @@ async function loadStrategies() {
   strategyLoading.value = true;
   strategyError.value = '';
   try {
-    const response = await fetchStrategies({ limit: 6 });
+    const response = await fetchStrategies({ limit: 100 });
     strategies.value = response.strategies || [];
   } catch (err) {
     console.error('加载策略失败:', err);
@@ -174,7 +180,11 @@ async function loadStrategies() {
   }
 }
 
-async function openStrategyRunModal(strategy: StrategySummaryView) {
+function viewStrategyDetail(strategy: StrategySummaryView | any) {
+  router.push(`/strategies/${strategy.id}`);
+}
+
+async function openStrategyRunModal(strategy: StrategySummaryView | any) {
   try {
     strategyLoading.value = true;
     const response = await fetchStrategyDetail(strategy.id);

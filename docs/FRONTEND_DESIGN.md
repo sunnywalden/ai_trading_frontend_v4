@@ -50,7 +50,8 @@
 │   ├── 市场热点 (Hotspots)
 │   ├── 持仓评估 (Positions)
 │   ├── 宏观分析 (Macro)
-│   └── 策略筛选 (Opportunities)
+│   ├── 策略筛选 (Opportunities)
+│   └── 策略库管理 (Strategy Library)
 ├── 风险管理
 │   ├── 行为评分 (Behavior)
 │   ├── 资金曲线 (Equity)
@@ -68,6 +69,8 @@
 | AI 评估 | `/ai-advisor` | 需登录 | AI 交易决策助手 |
 | 交易计划 | `/plans` | 需登录 | 计划管理（创建/执行/监控） |
 | 交易日志 | `/journal` | 需登录 | 交易复盘与自我评价 |
+| 策略库管理 | `/strategies` | 需登录 | 策略库管理（查看/启用/配置） |
+| 策略详情 | `/strategies/:id` | 需登录 | 策略参数配置与运行 |
 | 市场热点 | `/hotspots` | 需登录 | 热门赛道与个股 |
 | 持仓评估 | `/positions` | 需登录 | 技术+基本面评估 |
 | 宏观分析 | `/macro` | 需登录 | 地缘政治+经济指标 |
@@ -355,6 +358,99 @@
 
 ---
 
+### 4.8 策略库管理 (Strategy Library)
+
+**功能**：管理和配置12大类量化策略
+
+**列表视图**：
+
+```
+┌─────────────────────────────────────────────┐
+│ 📚 策略库                           [批量运行] │
+├────────┬──────┬──────┬──────┬──────────────┤
+│筛选： │全部 │均值回归│趋势跟踪│多因子│防御│波动率│宏观对冲│
+├─────────────────────────────────────────────┤
+│ 📈 均值回归 (Mean Reversion)                   │
+├─────────────────────────────────────────────┤
+│ ● 布林带均值回归 - 已启用           [运行]   │
+│   价格偏离 > 2σ 时回归交易                  │
+│   最近运行: 2h ago  信号数: 3            │
+│   [详情] [禁用] [编辑参数]                   │
+├─────────────────────────────────────────────┤
+│ ○ 配对交易 - 已禁用                   [启用]   │
+│   协整股票对价差交易                        │
+│   最近运行: 1d ago  信号数: 0            │
+│   [详情] [编辑参数]                           │
+├─────────────────────────────────────────────┤
+│ 📈 趋势跟踪 (Trend Following)                  │
+├─────────────────────────────────────────────┤
+│ ● 突破动量 - 已启用                   [运行]   │
+│   突破关键阻力/支撑位加仓                  │
+│   最近运行: 30m ago  信号数: 5           │
+│   [详情] [禁用] [编辑参数]                   │
+├─────────────────────────────────────────────┤
+│ ... (其他策略)                                   │
+└─────────────────────────────────────────────┘
+```
+
+**策略详情页**：
+
+```
+┌───────────────────────────────────────────┐
+│ 📊 布林带均值回归                             │
+│ 状态: 已启用 🟢                    [禁用] [运行] │
+├───────────────────────────────────────────┤
+│ 📝 策略描述                                      │
+│ 基于布林带指标，当价格偏离中轨超逾2倍标准差时 │
+│ 触发均值回归交易信号。适用于震荡市。           │
+├───────────────────────────────────────────┤
+│ ⚙️ 策略参数                                      │
+├───────────────────────────────────────────┤
+│ 时间窗口:    [20] 天                            │
+│ 标准差倍数:  [2.0]                              │
+│ 止损比例:    [2.0] %                            │
+│ 止盈比例:    [3.0] %                            │
+│ 最大仓位:    [15] %                             │
+│                                                   │
+│                           [保存] [重置默认]  │
+├───────────────────────────────────────────┤
+│ 📈 历史表现                                      │
+├───────────────────────────────────────────┤
+│ 胜率: 58%     盈亏比: 1.8      Sharpe: 1.2      │
+│ 总信号数: 127    平均持仓: 8天                │
+│                                                   │
+│ ECharts 折线图: 策略收益曲线 vs 基准          │
+├───────────────────────────────────────────┤
+│ 📦 最近信号 (Top 10)                            │
+├───────────────────────────────────────────┤
+│ AAPL  买入  $178.50  2h ago  已执行  PnL: +$230  │
+│ TSLA  卖出  $248.20  1d ago  已执行  PnL: -$45   │
+│ NVDA  买入  $520.30  2d ago  已取消  PnL: N/A    │
+└───────────────────────────────────────────┘
+```
+
+**交互规范**：
+- 策略分类筛选：按类型分组展示
+- 启用/禁用切换：即时生效
+- 参数编辑：表单验证 + 实时预览
+- 批量运行：选中多个策略并行执行
+- 历史表现：图表展示 + 指标统计
+
+**API 调用**：
+- GET `/api/v1/strategies` - 获取策略列表
+- GET `/api/v1/strategies/{id}` - 获取策略详情
+- POST `/api/v1/strategies/{id}/run` - 运行策略
+- PUT `/api/v1/strategies/{id}/params` - 更新参数
+- PUT `/api/v1/strategies/{id}/toggle` - 启用/禁用
+- GET `/api/v1/strategies/{id}/performance` - 历史表现
+- GET `/api/v1/strategies/{id}/signals` - 最近信号
+
+---
+
+### 4.9 行为评分 (Behavior)
+
+---
+
 ## 5. 组件设计
 
 ### 5.1 通用组件
@@ -430,6 +526,206 @@ import * as echarts from 'echarts';
 #### PlanCard - 计划卡片
 #### JournalEditor - 日志编辑器
 #### DecisionMatrix - AI 决策矩阵
+#### StrategyCard - 策略卡片
+
+```vue
+<template>
+  <div class="strategy-card" :class="strategyStatus">
+    <div class="strategy-header">
+      <span class="category-badge">{{ strategy.category }}</span>
+      <span class="strategy-name">{{ strategy.name }}</span>
+      <span class="status-indicator" :class="strategy.status">
+        {{ statusLabel(strategy.status) }}
+      </span>
+    </div>
+    <div class="strategy-description">
+      {{ strategy.description }}
+    </div>
+    <div class="strategy-metrics">
+      <div class="metric">
+        <span class="label">胜率</span>
+        <span class="value">{{ strategy.winRate }}%</span>
+      </div>
+      <div class="metric">
+        <span class="label">Sharpe</span>
+        <span class="value">{{ strategy.sharpeRatio }}</span>
+      </div>
+      <div class="metric">
+        <span class="label">信号数</span>
+        <span class="value">{{ strategy.signalCount }}</span>
+      </div>
+    </div>
+    <div class="strategy-actions">
+      <button @click="toggleStrategy">
+        {{ strategy.enabled ? '禁用' : '启用' }}
+      </button>
+      <button @click="runStrategy">运行</button>
+      <button @click="editParams">编辑参数</button>
+      <button @click="viewDetail">详情</button>
+    </div>
+  </div>
+</template>
+```
+
+#### StrategyParamsEditor - 策略参数编辑器
+
+```vue
+<template>
+  <div class="params-editor">
+    <div v-for="param in strategy.params" :key="param.key" class="param-field">
+      <label>{{ param.label }}</label>
+      <input 
+        v-if="param.type === 'number'"
+        type="number" 
+        v-model="param.value"
+        :min="param.min"
+        :max="param.max"
+        :step="param.step"
+      />
+      <select v-else-if="param.type === 'select'" v-model="param.value">
+        <option v-for="opt in param.options" :key="opt.value" :value="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+      <div class="param-hint">{{ param.hint }}</div>
+    </div>
+    <div class="editor-actions">
+      <button @click="saveParams">保存</button>
+      <button @click="resetDefaults">重置默认</button>
+      <button @click="cancel">取消</button>
+    </div>
+  </div>
+</template>
+```
+
+---
+
+## 6. 状态管理 (Pinia)
+
+### 6.1 Store 设计
+
+```typescript
+// stores/dashboardV2.ts
+export const useDashboardV2Store = defineStore('dashboardV2', () => {
+  const fullData = ref<DashboardV2Response | null>(null);
+  const quickData = ref<QuickUpdateData | null>(null);
+  const loading = ref(false);
+  
+  // 计算属性
+  const totalEquity = computed(() => fullData.value?.account.total_equity);
+  const todayPnL = computed(() => fullData.value?.pnl.today_pnl);
+  
+  // 操作
+  async function loadFull() {
+    loading.value = true;
+    const { data } = await fetchDashboardV2Full();
+    fullData.value = data;
+    loading.value = false;
+  }
+  
+  async function loadQuick() {
+    const { data } = await fetchDashboardV2Quick();
+    quickData.value = data;
+  }
+  
+  // 自动刷新
+  let refreshTimer: NodeJS.Timeout | null = null;
+  function startAutoRefresh() {
+    loadFull();
+    loadQuick();
+    refreshTimer = setInterval(() => {
+      loadQuick();
+    }, 15000); // 15s 快速更新
+  }
+  
+  return {
+    fullData,
+    quickData,
+    loading,
+    totalEquity,
+    todayPnL,
+    loadFull,
+    loadQuick,
+    startAutoRefresh
+  };
+});
+```
+
+```typescript
+// stores/strategyStore.ts
+export const useStrategyStore = defineStore('strategy', () => {
+  const strategies = ref<Strategy[]>([]);
+  const currentStrategy = ref<Strategy | null>(null);
+  const loading = ref(false);
+  
+  // 计算属性
+  const enabledStrategies = computed(() => 
+    strategies.value.filter(s => s.enabled)
+  );
+  
+  const strategiesByCategory = computed(() => {
+    const grouped = new Map<string, Strategy[]>();
+    strategies.value.forEach(s => {
+      if (!grouped.has(s.category)) {
+        grouped.set(s.category, []);
+      }
+      grouped.get(s.category)!.push(s);
+    });
+    return grouped;
+  });
+  
+  // 操作
+  async function loadStrategies() {
+    loading.value = true;
+    const { data } = await fetchStrategies();
+    strategies.value = data;
+    loading.value = false;
+  }
+  
+  async function loadStrategyDetail(id: number) {
+    const { data } = await fetchStrategyDetail(id);
+    currentStrategy.value = data;
+  }
+  
+  async function runStrategy(id: number) {
+    await runStrategyAPI(id);
+    // 刷新策略状态
+    await loadStrategyDetail(id);
+  }
+  
+  async function updateParams(id: number, params: Record<string, any>) {
+    await updateStrategyParams(id, params);
+    await loadStrategyDetail(id);
+  }
+  
+  async function toggleStrategy(id: number) {
+    await toggleStrategyAPI(id);
+    await loadStrategies();
+  }
+  
+  return {
+    strategies,
+    currentStrategy,
+    loading,
+    enabledStrategies,
+    strategiesByCategory,
+    loadStrategies,
+    loadStrategyDetail,
+    runStrategy,
+    updateParams,
+    toggleStrategy
+  };
+});
+```
+
+### 6.2 其他 Store
+
+- `useAuthStore` - 用户认证
+- `usePlansStore` - 交易计划
+- `usePositionsStore` - 持仓数据
+- `useJournalStore` - 交易日志
+- `useNotificationStore` - 通知推送
+- `useStrategyStore` - 策略库管理
 
 ---
 
@@ -526,6 +822,18 @@ const routes = [
     name: 'Journal',
     component: () => import('@/views/JournalPage.vue'),
     meta: { requiresAuth: true, title: '交易日志' }
+  },
+  {
+    path: '/strategies',
+    name: 'Strategies',
+    component: () => import('@/views/StrategiesPage.vue'),
+    meta: { requiresAuth: true, title: '策略库管理' }
+  },
+  {
+    path: '/strategies/:id',
+    name: 'StrategyDetail',
+    component: () => import('@/views/StrategyDetailPage.vue'),
+    meta: { requiresAuth: true, title: '策略详情' }
   },
   // ... 其他路由
 ];

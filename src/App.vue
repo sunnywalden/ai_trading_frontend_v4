@@ -124,6 +124,7 @@ const navGroups: NavGroup[] = [
       { path: '/hotspots', label: '市场热点', icon: '🔥' },
       { path: '/macro', label: '宏观分析', icon: '🌍' },
       { path: '/advice', label: '股票分析', icon: '🤖' },
+      { path: '/strategies', label: '策略库管理', icon: '📚' },
       { path: '/opportunities', label: '策略筛选', icon: '🔍' },
       { path: '/behavior', label: '行为评分', icon: '🎯' },
     ],
