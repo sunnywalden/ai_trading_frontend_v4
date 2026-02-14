@@ -3,8 +3,8 @@
     <!-- Header Area -->
     <div class="flex justify-between items-center">
       <div>
-        <h2 class="text-2xl font-bold text-gray-100 italic tracking-wider">市场热点 <span class="text-blue-400 font-normal">MARKET HOTSPOTS</span></h2>
-        <p class="text-gray-400 text-sm mt-1">聚合美股、全球宏观及重大财经动态的实时资讯</p>
+        <h2 class="text-2xl font-bold text-gray-100 italic tracking-wider">{{ $t('hotspots.title') }} <span class="text-blue-400 font-normal">MARKET HOTSPOTS</span></h2>
+        <p class="text-gray-400 text-sm mt-1">{{ $t('hotspots.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-4">
         <!-- View Mode Toggle -->
@@ -33,7 +33,7 @@
           :disabled="loading"
         >
           <span v-if="loading" class="animate-spin text-lg">↻</span>
-          <span>强制刷新</span>
+          <span>{{ $t('hotspots.force_refresh') }}</span>
         </button>
         <div class="text-xs text-gray-500 font-mono">
           Update: {{ lastUpdateTime }}
@@ -44,25 +44,25 @@
     <!-- Summary Bar -->
     <div v-if="hotspots.length > 0" class="summary-bar">
       <div class="summary-item">
-        <span class="summary-label">资讯总数</span>
+        <span class="summary-label">{{ $t('hotspots.info_count') }}</span>
         <span class="summary-value">{{ hotspots.length }}</span>
       </div>
       <div class="summary-item">
-        <span class="summary-label">BULLISH</span>
+        <span class="summary-label">{{ $t('hotspots.bullish') }}</span>
         <span class="summary-value profit">{{ sentimentSummary.bullish }}</span>
       </div>
       <div class="summary-item">
-        <span class="summary-label">BEARISH</span>
+        <span class="summary-label">{{ $t('hotspots.bearish') }}</span>
         <span class="summary-value loss">{{ sentimentSummary.bearish }}</span>
       </div>
       <div class="summary-item">
-        <span class="summary-label">平均影响</span>
+        <span class="summary-label">{{ $t('hotspots.avg_impact') }}</span>
         <span class="summary-value" :class="sentimentSummary.avgImpact > 60 ? 'warning' : 'info'">
           {{ sentimentSummary.avgImpact.toFixed(1) }}%
         </span>
       </div>
       <div class="summary-item">
-        <span class="summary-label">涉及标的</span>
+        <span class="summary-label">{{ $t('hotspots.unique_symbols') }}</span>
         <span class="summary-value buy">{{ sentimentSummary.uniqueSymbols }}</span>
       </div>
     </div>
@@ -80,7 +80,7 @@
             : 'bg-gray-800/40 border-gray-700 text-gray-400 hover:border-gray-500'
         ]"
       >
-        {{ cat.label }}
+        {{ $t('hotspots.categories.' + cat.id.toLowerCase()) }}
       </button>
     </div>
 
@@ -148,14 +148,15 @@
 
     <!-- Empty State -->
     <div v-else class="flex flex-col items-center justify-center py-24 text-gray-500">
-      <div class="text-6xl mb-4 text-gray-700 italic">No News Found</div>
-      <p>今日暂无符合条件的热点资讯</p>
+      <div class="text-6xl mb-4 text-gray-700 italic">{{ $t('hotspots.no_news_title') }}</div>
+      <p>{{ $t('hotspots.no_news_desc') }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import HotspotCard from '../components/HotspotCard.vue';
 import { 
   fetchCategories, 
@@ -164,8 +165,9 @@ import {
   type Category 
 } from '../api/client';
 
+const { t, locale } = useI18n();
 const hotspots = ref<Hotspot[]>([]);
-const categories = ref<Category[]>([{ id: 'ALL', label: '全部动态' }]);
+const categories = ref<Category[]>([{ id: 'ALL', label: t('hotspots.categories.all') }]);
 const loading = ref(false);
 const filterCategory = ref('ALL');
 const viewMode = ref<'grid' | 'list'>('grid');
@@ -196,12 +198,12 @@ const fetchHotspots = async (force: boolean = false) => {
   try {
     // Fetch Categories
     const catData = await fetchCategories();
-    categories.value = [{ id: 'ALL', label: '全部动态' }, ...catData];
+    categories.value = [{ id: 'ALL', label: t('hotspots.categories.all') }, ...catData];
 
     // Fetch Latest Hotspots
     const data = await fetchLatestHotspots(force);
     hotspots.value = data;
-    lastUpdateTime.value = new Date().toLocaleTimeString();
+    lastUpdateTime.value = new Date().toLocaleTimeString(locale.value);
   } catch (e: any) {
     console.error('Failed to fetch hotspots', e);
   } finally {
@@ -244,9 +246,9 @@ const formatTime = (dateStr: string) => {
     const now = new Date();
     const diff = now.getTime() - d.getTime();
     
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    if (diff < 3600000) return t('quant_loop.minutes_ago', { n: Math.floor(diff / 60000) });
+    if (diff < 86400000) return t('quant_loop.hours_ago', { n: Math.floor(diff / 3600000) });
+    return d.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' });
   } catch (e) {
     return dateStr;
   }

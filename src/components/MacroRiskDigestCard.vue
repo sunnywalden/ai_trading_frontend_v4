@@ -1,11 +1,11 @@
 <template>
   <div class="digest-card">
     <div class="header">
-      <h3>宏观风险摘要</h3>
-      <span class="level" :class="levelClass">{{ level }}</span>
+      <h3>{{ $t('macro.digest_title') }}</h3>
+      <span class="level" :class="levelClass">{{ $t(`macro.levels.${level.toLowerCase()}`) }}</span>
     </div>
     <div class="score-row">
-      <span class="score-label">综合评分</span>
+      <span class="score-label">{{ $t('macro.overall_score') }}</span>
       <span class="score-value">{{ score }}</span>
     </div>
     <p class="summary">{{ summary }}</p>
@@ -14,19 +14,21 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { MacroRiskOverviewResponse } from '../api/client';
 
+const { t } = useI18n();
 const props = defineProps<{ data: MacroRiskOverviewResponse }>();
 
 const level = computed(() => props.data.overall_risk?.level || 'UNKNOWN');
 const score = computed(() => props.data.overall_risk?.score ?? 0);
-const summary = computed(() => props.data.overall_risk?.summary || '暂无摘要');
+const summary = computed(() => props.data.overall_risk?.summary || t('macro.no_summary'));
 
 const levelClass = computed(() => {
   const lv = level.value.toLowerCase();
   if (lv === 'low') return 'low';
   if (lv === 'medium') return 'medium';
-  if (lv === 'high') return 'high';
+  if (lv === 'high' || lv === 'extreme') return 'high';
   if (lv === 'critical') return 'critical';
   return 'unknown';
 });

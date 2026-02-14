@@ -4,15 +4,15 @@
     <div class="page-header">
       <h1>
         <span class="icon">📊</span>
-        交易控制台
+        {{ $t('dashboard.title_v2') }}
       </h1>
       <div class="header-actions">
         <button @click="handleRefresh" class="btn-refresh" :disabled="store.loading">
           <svg :class="{ 'spinning': store.loading }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-          {{ store.loading ? '刷新中...' : '刷新' }}
+          {{ store.loading ? $t('common.refreshing') : $t('common.refresh') }}
         </button>
         <span class="last-update" v-if="store.lastFullUpdate">
-          最后更新: {{ formatTime(store.lastFullUpdate) }}
+          {{ $t('dashboard.last_update') }}: {{ formatTime(store.lastFullUpdate) }}
         </span>
       </div>
     </div>
@@ -20,15 +20,15 @@
     <!-- 加载状态 -->
     <div v-if="store.loading && !store.fullData" class="loading-container">
       <div class="spinner"></div>
-      <p>加载Dashboard数据中...</p>
+      <p>{{ $t('dashboard.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="store.error && !store.fullData" class="error-container">
       <div class="error-icon">⚠️</div>
-      <h3>加载失败</h3>
+      <h3>{{ $t('common.error_load') }}</h3>
       <p>{{ store.error }}</p>
-      <button @click="handleRefresh" class="btn-retry">重试</button>
+      <button @click="handleRefresh" class="btn-retry">{{ $t('common.retry') }}</button>
     </div>
 
     <!-- 主内容 -->
@@ -36,14 +36,14 @@
       <!-- Section 1: 核心KPI -->
       <section class="section-kpi">
         <KPICard
-          label="总权益"
+          :label="$t('dashboard.total_equity')"
           :value="formatCurrency(store.totalEquity)"
           icon="💰"
           @refresh="handleModuleRefresh('kpi')"
           :loading="moduleLoading['kpi']"
         />
         <KPICard
-          label="今日盈亏"
+          :label="$t('dashboard.daily_pnl')"
           :value="formatPnL(store.dailyPnl)"
           :sub-value="`${store.dailyReturnPct >= 0 ? '+' : ''}${store.dailyReturnPct.toFixed(2)}%`"
           :trend="store.dailyPnl >= 0 ? 'up' : 'down'"
@@ -54,21 +54,21 @@
           class="clickable-kpi"
         />
         <KPICard
-          label="本周收益"
+          :label="$t('dashboard.weekly_return')"
           :value="`${store.fullData.pnl.weekly_return_pct >= 0 ? '+' : ''}${store.fullData.pnl.weekly_return_pct.toFixed(2)}%`"
           icon="📅"
           @refresh="handleModuleRefresh('kpi')"
           :loading="moduleLoading['kpi']"
         />
         <KPICard
-          label="本月收益"
+          :label="$t('dashboard.monthly_return')"
           :value="`${store.fullData.pnl.mtd_return_pct >= 0 ? '+' : ''}${store.fullData.pnl.mtd_return_pct.toFixed(2)}%`"
           icon="📆"
           @refresh="handleModuleRefresh('kpi')"
           :loading="moduleLoading['kpi']"
         />
         <KPICard
-          label="风险等级"
+          :label="$t('dashboard.risk_level')"
           :value="riskLevelLabel(store.riskLevel)"
           :class="['risk-badge', `risk-${store.riskLevel.toLowerCase()}`]"
           icon="⚠️"
@@ -82,8 +82,8 @@
         <!-- 左侧: 性能趋势 -->
         <div class="card chart-container">
           <div class="card-header">
-            <h3><span class="icon">📊</span> 权益曲线 (30天)</h3>
-            <button @click="handleModuleRefresh('trend')" class="btn-icon" :class="{ spinning: moduleLoading['trend'] }" title="刷新数据">
+            <h3><span class="icon">📊</span> {{ $t('dashboard.equity_curve') }}</h3>
+            <button @click="handleModuleRefresh('trend')" class="btn-icon" :class="{ spinning: moduleLoading['trend'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -92,8 +92,8 @@
         <!-- 右侧: 盈亏归因 -->
         <div class="card attribution-container" id="pnl-attribution">
           <div class="card-header">
-            <h3><span class="icon">🔍</span> 盈亏归因</h3>
-            <button @click="handleModuleRefresh('attribution')" class="btn-icon" :class="{ spinning: moduleLoading['attribution'] }" title="刷新数据">
+            <h3><span class="icon">🔍</span> {{ $t('dashboard.pnl_attribution') }}</h3>
+            <button @click="handleModuleRefresh('attribution')" class="btn-icon" :class="{ spinning: moduleLoading['attribution'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -109,8 +109,8 @@
       <div class="section-risk">
         <div class="risk-card">
           <div class="card-header">
-            <h3><span class="icon">🎯</span> Greeks 敞口</h3>
-            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" title="刷新数据">
+            <h3><span class="icon">🎯</span> {{ $t('dashboard.greeks_exposure') }}</h3>
+            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -118,8 +118,8 @@
         </div>
         <div class="risk-card">
           <div class="card-header">
-            <h3><span class="icon">📉</span> 风险指标</h3>
-            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" title="刷新数据">
+            <h3><span class="icon">📉</span> {{ $t('dashboard.risk_metrics') }}</h3>
+            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -132,19 +132,19 @@
         <div class="card">
           <div class="card-header">
             <div class="title-with-badge">
-              <h3><span class="icon">🔔</span> 信号管道</h3>
+              <h3><span class="icon">🔔</span> {{ $t('dashboard.signal_pipeline') }}</h3>
               <span class="badge" v-if="store.pendingSignalsCount > 0">
-                {{ store.pendingSignalsCount }} 待执行
+                {{ $t('dashboard.pending_execution', { n: store.pendingSignalsCount }) }}
               </span>
             </div>
-            <button @click="handleModuleRefresh('signals')" class="btn-icon" :class="{ spinning: moduleLoading['signals'] }" title="刷新数据">
+            <button @click="handleModuleRefresh('signals')" class="btn-icon" :class="{ spinning: moduleLoading['signals'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
           <SignalPipelineFlow :pipeline="store.fullData.signal_pipeline" />
           
           <div v-if="store.fullData.pending_signals.length > 0" class="signals-list">
-            <h4>待执行信号</h4>
+            <h4>{{ $t('dashboard.pending_signals') }}</h4>
             <SignalCard
               v-for="signal in store.fullData.pending_signals.slice(0, 5)"
               :key="signal.signal_id"
@@ -152,11 +152,11 @@
               @click="handleViewSignal(signal)"
             />
             <router-link to="/quant-loop" class="link-more" v-if="store.fullData.pending_signals.length > 5">
-              查看全部 {{ store.fullData.pending_signals.length }} 个信号 →
+              {{ $t('dashboard.view_all_signals', { n: store.fullData.pending_signals.length }) }}
             </router-link>
           </div>
           <div v-else class="empty-state">
-            <p>暂无待执行信号</p>
+            <p>{{ $t('dashboard.no_pending_signals') }}</p>
           </div>
         </div>
       </div>
@@ -167,12 +167,12 @@
         <div class="card">
           <div class="card-header">
             <div class="title-with-badge">
-              <h3><span class="icon">🤖</span> AI 洞察</h3>
+              <h3><span class="icon">🤖</span> {{ $t('dashboard.ai_insights') }}</h3>
               <span class="badge" v-if="store.fullData.insights_unread > 0">
-                {{ store.fullData.insights_unread }} 条新洞察
+                {{ $t('dashboard.new_insights', { n: store.fullData.insights_unread }) }}
               </span>
             </div>
-            <button @click="handleModuleRefresh('insights')" class="btn-icon" :class="{ spinning: moduleLoading['insights'] }" title="刷新数据">
+            <button @click="handleModuleRefresh('insights')" class="btn-icon" :class="{ spinning: moduleLoading['insights'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -184,7 +184,7 @@
             />
           </div>
           <div v-else class="empty-state">
-            <p>暂无AI洞察</p>
+            <p>{{ $t('dashboard.no_insights') }}</p>
           </div>
         </div>
 
@@ -192,12 +192,12 @@
         <div class="card">
           <div class="card-header">
             <div class="title-with-badge">
-              <h3><span class="icon">✅</span> 待办事项</h3>
+              <h3><span class="icon">✅</span> {{ $t('dashboard.todo_list') }}</h3>
               <span class="badge badge-danger" v-if="store.fullData.todos_high_priority > 0">
-                {{ store.fullData.todos_high_priority }} 高优先级
+                {{ $t('dashboard.high_priority', { n: store.fullData.todos_high_priority }) }}
               </span>
             </div>
-            <button @click="handleModuleRefresh('todos')" class="btn-icon" :class="{ spinning: moduleLoading['todos'] }" title="刷新数据">
+            <button @click="handleModuleRefresh('todos')" class="btn-icon" :class="{ spinning: moduleLoading['todos'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -210,7 +210,7 @@
             />
           </div>
           <div v-else class="empty-state">
-            <p>✨ 太棒了！暂无待办事项</p>
+            <p>{{ $t('dashboard.no_todos') }}</p>
           </div>
         </div>
       </div>
@@ -220,8 +220,8 @@
         <!-- 左: Top持仓 -->
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">📦</span> Top 持仓</h3>
-            <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" title="刷新数据">
+            <h3><span class="icon">📦</span> {{ $t('dashboard.top_positions') }}</h3>
+            <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -233,7 +233,7 @@
             />
           </div>
           <div v-else class="empty-state">
-            <p>暂无持仓</p>
+            <p>{{ $t('dashboard.no_positions') }}</p>
           </div>
         </div>
 
@@ -241,10 +241,10 @@
         <div class="card">
           <div class="card-header">
             <div class="title-with-badge">
-              <h3><span class="icon">📋</span> 活跃计划</h3>
-              <span class="badge">{{ store.fullData.execution_stats.active_plans }} 个</span>
+              <h3><span class="icon">📋</span> {{ $t('dashboard.active_plans') }}</h3>
+              <span class="badge">{{ $t('dashboard.active_plans_count', { n: store.fullData.execution_stats.active_plans }) }}</span>
             </div>
-            <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" title="刷新数据">
+            <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -256,7 +256,7 @@
             />
           </div>
           <div v-else class="empty-state">
-            <p>暂无活跃计划</p>
+            <p>{{ $t('dashboard.no_plans') }}</p>
           </div>
         </div>
       </div>
@@ -265,8 +265,8 @@
       <div class="section-hotspots" v-if="store.fullData.market_hotspots.length > 0">
         <div class="card">
           <div class="card-header">
-            <h3><span class="icon">🔥</span> 市场热点</h3>
-            <button @click="handleModuleRefresh('hotspots')" class="btn-icon" :class="{ spinning: moduleLoading['hotspots'] }" title="刷新数据">
+            <h3><span class="icon">🔥</span> {{ $t('dashboard.market_hotspots') }}</h3>
+            <button @click="handleModuleRefresh('hotspots')" class="btn-icon" :class="{ spinning: moduleLoading['hotspots'] }" :title="$t('common.refresh')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             </button>
           </div>
@@ -284,8 +284,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive } from 'vue'
+import { onMounted, onUnmounted, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import KPICard from '@/components/dashboard/KPICard.vue'
 import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
@@ -302,6 +303,7 @@ import HotspotCard from '@/components/dashboard/HotspotCard.vue'
 
 const store = useDashboardV2Store()
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const moduleLoading = reactive<Record<string, boolean>>({})
 
@@ -352,15 +354,15 @@ function formatPnL(value: number): string {
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return date.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 function riskLevelLabel(level: string): string {
   const labels: Record<string, string> = {
-    'LOW': '低风险',
-    'MEDIUM': '中风险',
-    'HIGH': '高风险',
-    'EXTREME': '极高风险',
+    'LOW': t('dashboard.risk_labels.low'),
+    'MEDIUM': t('dashboard.risk_labels.medium'),
+    'HIGH': t('dashboard.risk_labels.high'),
+    'EXTREME': t('dashboard.risk_labels.extreme'),
   }
   return labels[level] || level
 }

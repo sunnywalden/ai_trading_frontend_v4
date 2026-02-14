@@ -1,0 +1,1287 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "confirm": "确定",
+    "loading": "加载中...",
+    "error_load": "加载失败",
+    "retry": "重试",
+    "no_data": "暂无数据",
+    "search": "搜索",
+    "failed": "失败",
+    "unknown_error": "未知错误",
+    "enabled": "已启用",
+    "disabled": "未启用",
+    "status": "状态",
+    "last_updated": "最后更新",
+    "execute": "执行",
+    "timeout": "⏱️ 请求超时，请稍后再试！",
+    "network_error": "🌐 网络连接失败，请检查网络或后端服务状态"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "risk": "风险监控",
+    "behavior": "行为分析",
+    "strategy": "策略库",
+    "settings": "设置",
+    "control_tower": "控制塔",
+    "group_realtime": "实时看板",
+    "group_analysis": "行为与分析",
+    "group_config": "配置及监控",
+    "positions": "持仓评估",
+    "ai_advisor": "AI交易决策",
+    "journal": "交易日志",
+    "alerts": "价格告警",
+    "quant_loop": "量化闭环",
+    "hotspots": "市场热点",
+    "macro": "宏观分析",
+    "advice": "股票分析",
+    "strategies": "策略库管理",
+    "opportunities": "策略筛选",
+    "behavior": "行为评分",
+    "system": "系统监控"
+  },
+  "auth": {
+    "logged_in_as": "登录用户",
+    "logout": "登出",
+    "login": "登录",
+    "token_expiry": "Token 到期",
+    "token_expiring_soon": "Token 即将过期",
+    "admin": "管理员",
+    "switch_theme": "切换主题",
+    "dark_mode": "深色",
+    "light_mode": "浅色",
+    "switch_language": "切换语言",
+    "info_modal": {
+      "title": "管理员信息",
+      "username": "用户名",
+      "token_expiry": "Token 到期",
+      "payload": "Payload",
+      "raw_token": "Raw Token",
+      "hide": "隐藏",
+      "show": "显示",
+      "copy": "复制",
+      "logout": "登出",
+      "close": "关闭"
+    }
+  },
+  "expiry": {
+    "expired": "已过期",
+    "mins_left": "{n} 分钟后到期",
+    "hours_left": "{n} 小时后到期",
+    "days_left": "{n} 天后到期",
+    "banner_title": "Token 快到期",
+    "banner_body": "Token 将在 {time} 到期，建议尽快续期",
+    "banner_text": "⚠️ Token 将在 {time} 到期"
+  },
+  "dashboard": {
+    "title": "量化闭环控制台",
+    "subtitle": "实时风险监控与交易执行引擎",
+    "system_status": "系统状态",
+    "title_v2": "交易控制台",
+    "last_update": "最后更新",
+    "loading": "加载Dashboard数据中...",
+    "total_equity": "总权益",
+    "daily_pnl": "今日盈亏",
+    "weekly_return": "本周收益",
+    "monthly_return": "本月收益",
+    "risk_level": "风险等级",
+    "equity_curve": "权益曲线 (30天)",
+    "pnl_attribution": "盈亏归因",
+    "greeks_exposure": "Greeks 敞口",
+    "risk_metrics": "风险指标",
+    "signal_pipeline": "信号管道",
+    "pending_execution": "{n} 待执行",
+    "ai_insights": "AI 洞察",
+    "new_insights": "{n} 条新洞察",
+    "no_insights": "暂无AI洞察",
+    "todo_list": "待办事项",
+    "high_priority": "{n} 高优先级",
+    "no_todos": "暂无待办事项",
+    "active_positions": "活跃持仓",
+    "no_positions": "暂无活跃持仓",
+    "active_plans": "活跃计划",
+    "no_plans": "暂无活跃计划",
+    "market_hotspots": "市场热点",
+    "view_all_signals": "查看全部 {n} 个信号 →",
+    "no_pending_signals": "暂无待执行信号",
+    "risk_labels": {
+      "low": "低风险",
+      "medium": "中风险",
+      "high": "高风险",
+      "extreme": "极高风险"
+    },
+    "account": "账户",
+    "last": "上次运行",
+    "next": "预计下次运行",
+    "run_cycle": "运行完整周期",
+    "run_optimization": "仅运行优化",
+    "execute_real_trade": "执行真实交易",
+    "pending_signals": "待执行信号",
+    "manual_control": "手动运行控制",
+    "execute_real_trade_desc": "执行真实交易",
+    "irrevocable_warning": "⚠️ 此操作不可撤销",
+    "run_optimization_desc": "运行参数优化",
+    "optimization_hint": "推荐开启以提升策略效果",
+    "running": "运行中...",
+    "last_result": "上次运行结果",
+    "cycle_id": "周期ID",
+    "run_time": "运行时间",
+    "account_id": "账户ID",
+    "confirm_execute_warning": "确认要执行真实交易吗？此操作不可撤销！",
+    "show_json": "查看完整JSON",
+    "optimizations": "优化建议",
+    "opt_empty": "🎯 系统运行良好",
+    "impact": "影响",
+    "pipeline_status": "管道状态",
+    "total": "总计",
+    "pass": "通过",
+    "execution_rate": "执行率",
+    "pipeline_stages": {
+      "generated": "生成",
+      "validated": "验证",
+      "queued": "队列",
+      "executing": "执行中",
+      "executed": "完成"
+    },
+    "pattern_stats": "模式统计",
+    "patterns": {
+      "confidence": "过度自信",
+      "risk": "高风险",
+      "execution": "执行问题",
+      "timing": "时机问题"
+    },
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "phases": {
+      "data_ingestion": "数据注入",
+      "signal_generation": "信号生成",
+      "signal_validation": "信号验证",
+      "risk_assessment": "风险评估",
+      "adaptive_optimization": "自适应优化",
+      "order_staging": "订单筹备",
+      "execution": "执行记录"
+    },
+    "phase_details": {
+      "gen_signals": "生成信号",
+      "proc_strategies": "处理策略",
+      "val_rate": "验证率",
+      "passed": "通过"
+    }
+  },
+  "quant_loop": {
+    "signal_summary": "信号摘要",
+    "generating": "生成中...",
+    "symbol": "标的",
+    "direction": "方向",
+    "long": "做多",
+    "short": "做空",
+    "strength": "强度",
+    "confidence": "置信度",
+    "scores": "评分",
+    "raw_data": "原始数据",
+    "cycle_complete": "周期完成",
+    "optimization_complete": "优化完成",
+    "execution_result": "执行结果",
+    "batch_execute": "批量执行",
+    "reject": "拒绝",
+    "details": "详情",
+    "view_details": "查看详情",
+    "execute_real": "真实执行",
+    "execute_sim": "模拟执行",
+    "execute_batch": "批量执行",
+    "reject_batch": "批量拒绝",
+    "signals_selected": "已选择 {n} 个信号",
+    "real_trade": "真实交易",
+    "long": "看多",
+    "short": "看空",
+    "confirm_batch_execute": "⚠️ 警告：确认对选中的 {n} 个标的执行【真实交易】？\n此操作将提交订单到券商，请确保账户状态和风控设置无误。",
+    "confirm_single_execute": "⚠️ 警告：确认对 {symbol} 执行【真实交易】？",
+    "confirm_batch_reject": "确认拒绝选中的 {n} 个信号？",
+    "position_filter": "持仓过滤",
+    "execute_selected": "执行选中",
+    "reject_selected": "拒绝选中",
+    "no_position": "无持仓",
+    "generated_at": "生成时间",
+    "headers": {
+      "symbol": "标的",
+      "type": "类型",
+      "direction": "方向",
+      "position": "持仓",
+      "strength": "强度",
+      "confidence": "置信度",
+      "expected_return": "预期收益",
+      "risk_score": "风险评分",
+      "qty": "建议数量",
+      "time": "时间",
+      "actions": "操作"
+    },
+    "shares": "股",
+    "confirm_execute": "确定要执行选中信号吗？",
+    "just_now": "刚刚",
+    "minutes_ago": "{n}分钟前",
+    "hours_ago": "{n}小时前",
+    "reject_confirm": "确定要拒绝此信号吗？",
+    "reject_selected_confirm": "确定要拒绝选中信号吗？",
+    "types": {
+      "trend": "趋势跟踪",
+      "reversion": "均值回归",
+      "breakout": "波幅突破",
+      "arbitrage": "套利",
+      "entry": "开仓",
+      "exit": "平仓",
+      "add": "加仓",
+      "reduce": "减仓",
+      "hedge": "对冲"
+    }
+  },
+  "hotspots": {
+    "title": "市场热点",
+    "subtitle": "聚合美股、全球宏观及重大财经动态的实时资讯",
+    "force_refresh": "强制刷新",
+    "info_count": "资讯总数",
+    "avg_impact": "平均影响",
+    "unique_symbols": "涉及标的",
+    "bullish": "看多",
+    "bearish": "看空",
+    "neutral": "中性",
+    "impact": "影响力",
+    "severity": "严重程度",
+    "view_insight": "查看深度资讯",
+    "no_news_title": "今日暂无热点",
+    "no_news_desc": "今日暂无符合条件的热点资讯",
+    "categories": {
+      "all": "全部动态",
+      "war": "冲突",
+      "economy": "宏观经济",
+      "finance": "金融市场",
+      "politics": "地缘政治",
+      "company": "公司财报",
+      "tech": "科技创新"
+    }
+  },
+  "macro": {
+    "title": "宏观分析",
+    "subtitle": "只展示摘要与等级，详细内容可展开",
+    "refresh": "刷新数据",
+    "refreshing": "刷新中...",
+    "loading": "正在加载宏观风险数据...",
+    "expand": "展开宏观详情",
+    "empty": "暂无宏观风险数据",
+    "digest_title": "宏观风险摘要",
+    "overall_score": "综合评分",
+    "no_summary": "暂无摘要",
+    "error_load": "❌ 获取宏观风险数据失败",
+    "error_refresh": "❌ 刷新宏观数据失败",
+    "ai_analysis": "AI 综合分析",
+    "risk_alerts": "风险警报",
+    "monetary_policy": "货币政策",
+    "geopolitical": "地缘政治",
+    "sector_bubble": "行业泡沫",
+    "economic_cycle": "经济周期",
+    "market_sentiment": "市场情绪",
+    "key_concerns": "主要关注点",
+    "overall_recommendations": "总体建议",
+    "levels": {
+      "extreme": "极端",
+      "critical": "严重",
+      "high": "高",
+      "medium": "中",
+      "stable": "稳定",
+      "unknown": "未知"
+    },
+    "guideline": {
+      "title": "🌍 宏观风险评估说明",
+      "five_dim_model": "五维风险模型",
+      "five_dim_desc": "从政治、经济、市场、金融、技术五个维度全面评估系统性风险",
+      "political": {
+        "name": "📊 政治风险 (Political Risk)",
+        "desc": "评估政治不稳定、政策变化、地缘冲突等因素",
+        "policy": "政策变化：货币政策、财政政策、监管政策调整",
+        "geopolitical": "地缘冲突：国际冲突、贸易摩擦、制裁措施",
+        "events": "政治事件：选举、领导人更迭、政局不稳",
+        "regulations": "法规监管：行业监管加强、合规要求提升",
+        "low": "0-30：低风险",
+        "medium": "30-60：中等风险",
+        "high": "60-100：高风险"
+      },
+      "economic": {
+        "name": "💰 经济风险 (Economic Risk)",
+        "desc": "评估经济基本面恶化、增长放缓、通胀压力",
+        "growth": "经济增长：GDP增速、失业率、消费者信心",
+        "inflation": "通胀压力：CPI、PPI、核心通胀率变化",
+        "rates": "利率环境：央行政策、国债收益率走势",
+        "business": "商业景气：PMI、零售数据、企业盈利",
+        "health": "0-30：经济健康",
+        "slowdown": "30-60：温和放缓",
+        "recession": "60-100：衰退风险"
+      },
+      "market": {
+        "name": "📈 市场风险 (Market Risk)",
+        "desc": "评估市场波动、流动性、估值泡沫风险",
+        "volatility": "波动率：VIX指数、市场恐慌情绪",
+        "valuation": "估值水平：市盈率、席勒PE、市净率",
+        "liquidity": "流动性：交易量、买卖价差、市场深度",
+        "technical": "技术面：趋势强度、超买超卖、支撑阻力",
+        "stable": "0-30：市场稳定",
+        "vol_high": "30-60：波动加大",
+        "extreme": "60-100：极端波动"
+      },
+      "financial": {
+        "name": "🏦 金融风险 (Financial Risk)",
+        "desc": "评估金融系统脆弱性、信用风险、流动性危机",
+        "credit": "信用风险：违约率、信用利差、债券评级",
+        "health": "银行健康：银行资本充足率、不良贷款率",
+        "liquidity": "流动性：货币市场利率、回购利率",
+        "leverage": "杠杆水平：保证金债务、企业杠杆率",
+        "solid": "0-30：金融稳健",
+        "stress": "30-60：压力显现",
+        "systemic": "60-100：系统性风险"
+      },
+      "technical": {
+        "name": "🔬 技术风险 (Technical Risk)",
+        "desc": "评估技术创新、行业颠覆、网络安全风险",
+        "disruption": "技术颠覆：新技术对传统行业的冲击",
+        "innovation": "创新风险：研发投入、专利布局、竞争力",
+        "cybersecurity": "网络安全：数据泄露、黑客攻击、系统故障",
+        "transformation": "数字化转型：企业适应能力、技术债务",
+        "leading": "0-30：技术领先",
+        "investment_needed": "30-60：需要投入",
+        "disrupt_risk": "60-100：颠覆风险"
+      },
+      "levels_title": "综合风险等级说明",
+      "levels": {
+        "low_desc": "环境良好，可积极配置",
+        "low_action": "✓ 可适度加仓",
+        "medium_desc": "存在不确定性，谨慎观望",
+        "medium_action": "⚠ 保持中性仓位",
+        "high_desc": "风险显著，建议减仓",
+        "high_action": "⚠ 降低仓位，加强对冲",
+        "critical_desc": "极高风险，考虑空仓",
+        "critical_action": "🚨 大幅减仓或清仓观望"
+      },
+      "strategies_title": "风险应对策略",
+      "defense": {
+        "title": "🛡️ 防御策略",
+        "assets": "增加防御性资产（黄金、国债）",
+        "beta": "降低高贝塔股票配置",
+        "cash": "提高现金比例"
+      },
+      "hedge": {
+        "title": "⚖️ 对冲策略",
+        "put": "使用Put期权对冲下跌风险",
+        "etf": "反向ETF部分对冲",
+        "rotation": "行业轮动，避开高风险板块"
+      },
+      "diversify": {
+        "title": "🎯 分散策略",
+        "assets": "跨资产类别分散（股债平衡）",
+        "market": "跨市场分散（国内外配置）",
+        "sector": "跨行业分散（避免集中风险）"
+      },
+      "timing": {
+        "title": "⏰ 时机策略",
+        "signals": "关注风险信号，及时调整",
+        "calm": "危机时刻保持冷静",
+        "entry": "等待风险释放后再入场"
+      },
+      "indicators_title": "关键监测指标",
+      "indicators": {
+        "vix": "VIX波动率指数",
+        "vix_threshold": ">30 高风险",
+        "yield": "美债收益率曲线",
+        "yield_threshold": "倒挂=衰退预警",
+        "spread": "高收益债利差",
+        "spread_threshold": ">600bp 信用风险",
+        "dxy": "美元指数",
+        "dxy_threshold": "强势=风险偏好低",
+        "pmi": "PMI指数",
+        "pmi_threshold": "<50 经济收缩",
+        "unemployment": "失业率",
+        "unemployment_threshold": "快速上升=衰退"
+      },
+      "notes": {
+        "title": "⚠️ 重要提示",
+        "ai": "宏观风险评估基于多源数据 and AI 模型分析",
+        "periodic": "系统性风险难以预测，建议定期监测",
+        "interact": "不同风险维度可能相互影响，需综合判断",
+        "blackswan": "极端事件（黑天鹅）可能突然改变风险格局",
+        "capacity": "建议结合自身投资期限 and 风险承受能力调整策略"
+      }
+    }
+  },
+  "behavior": {
+    "title": "行为评分",
+    "subtitle": "基于最近 {n} 天的历史成交 & 盈亏",
+    "window_days": "窗口天数",
+    "recalculate": "重新计算行为评分",
+    "recalculating": "正在重算...",
+    "loading": "正在加载行为评分...",
+    "fetch_failed": "❌ 获取 AI 风控/行为状态失败",
+    "rebuild_success_with_count": "✅ 已重算 {count} 个标的的行为评分",
+    "rebuild_failed_general": "❌ 行为评分重算失败，请稍后重试",
+    "summary": {
+      "title": "计划偏离概览",
+      "total_symbols": "监控标的",
+      "overtrade": "过度交易偏离",
+      "revenge": "报复交易偏离",
+      "status_ok": "良好",
+      "status_warn": "注意",
+      "status_danger": "警戒",
+      "hint": "偏离过多时建议降低频率并复盘计划执行。"
+    },
+    "card": {
+      "profile": "行为画像（基于历史交易数据实时计算）",
+      "score": "评分",
+      "sell_fly": "卖飞评分",
+      "discipline": "执行纪律",
+      "overtrade": "过度交易",
+      "revenge": "报复性交易",
+      "trade_count": "交易次数",
+      "trades_in_window": "统计窗口成交笔数",
+      "recent_sell_fly": "最近卖飞次数",
+      "sell_fly_ratio": "卖飞成本占比",
+      "overtrade_index": "过度交易指数",
+      "recent_revenge": "报复性交易次数",
+      "hint": "行为越“躁动”，该标的的 ShockPolicy / EarningsPolicy 就越收紧。"
+    },
+    "guideline": {
+      "title": "🧠 行为评分说明",
+      "score_0_100": "行为评分 (0-100)",
+      "desc": "综合评估交易行为的健康度和纪律性",
+      "tiers": {
+        "t1": "优秀",
+        "t1_desc": "纪律性强，执行力佳",
+        "t2": "良好",
+        "t2_desc": "基本合规，可持续改进",
+        "t3": "警惕",
+        "t3_desc": "存在风险，需要调整",
+        "t4": "危险",
+        "t4_desc": "严重偏离，立即改善"
+      },
+      "sell_fly": {
+        "title": "蝇营狗苟评分 (Sell-Fly Score)",
+        "desc": "评估短期波动操作和追涨杀跌行为",
+        "impact": "💡 分数越高，操作越理性，避免频繁短炒",
+        "s1": "极少追涨杀跌，心态稳定",
+        "s2": "偶有追高，整体可控",
+        "s3": "频繁短炒，风险增加",
+        "s4": "追涨杀跌严重，易亏损",
+        "example_title": "典型表现：",
+        "e1": "看到股票大涨就追高买入",
+        "e2": "股价回调时恐慌性卖出",
+        "e3": "一天内多次买卖同一标的",
+        "e4": "FOMO（错失恐惧）驱动的交易"
+      },
+      "overtrading": {
+        "title": "过度交易评分 (Overtrading Score)",
+        "desc": "评估交易频率和仓位管理的合理性",
+        "impact": "💡 分数越高，交易越克制，手续费成本越低",
+        "s1": "交易节制，不过度频繁",
+        "s2": "偶有频繁，需注意成本",
+        "s3": "交易过度，成本侵蚀利润",
+        "s4": "严重过度交易，高风险",
+        "example_title": "典型表现：",
+        "e1": "每天交易次数过多（>5次）",
+        "e2": "频繁切换持仓标的",
+        "e3": "无明确策略的随机交易",
+        "e4": "手续费占比过高（>2%）"
+      },
+      "revenge": {
+        "title": "报复性交易评分 (Revenge Trading Score)",
+        "desc": "评估亏损后的情绪化交易行为",
+        "impact": "💡 分数越高，情绪管理越好，避免亏损扩大",
+        "s1": "亏损后冷静应对，不急于翻本",
+        "s2": "偶有冲动，但能自控",
+        "s3": "亏损后易冲动，风险加大",
+        "s4": "严重报复性交易，恶性循环",
+        "example_title": "典型表现：",
+        "e1": "亏损后立即加仓试图翻本",
+        "e2": "连续亏损后重仓单个标的",
+        "e3": "情绪化下单，不遵守止损",
+        "e4": "连续亏损导致仓位失控"
+      },
+      "greeks": {
+        "title": "希腊字母指标说明",
+        "impact": "💡 希腊值的\"水位\"代表风险敞口大小，越高表示该维度风险越大",
+        "delta": "标的价格变动1单位，期权价格变动量",
+        "gamma": "标的价格变动1单位，Delta的变化量",
+        "theta": "时间流逝1天，期权价值的衰减量",
+        "vega": "波动率变化1%，期权价格变动量"
+      },
+      "action_title": "操作建议",
+      "actions": {
+        "s1": "保持良好习惯，可适度增加仓位",
+        "s2": "继续保持，注意小问题的改善",
+        "s3": "警惕信号，调整交易策略",
+        "s4": "立即停止交易，重新审视策略"
+      },
+      "note": {
+        "title": "⚠️ 重要提示",
+        "n1": "行为评分基于历史交易数据，反映您的交易习惯",
+        "n2": "低分不代表技术不行，而是行为需要改善",
+        "n3": "建议定期回顾评分，持续优化交易行为",
+        "n4": "情绪管理是交易成功的关键，保持冷静和纪律"
+      }
+    }
+  },
+  "health": {
+    "title": "系统健康",
+    "subtitle": "仅展示服务状态与最近更新时间",
+    "refresh": "刷新状态",
+    "refreshing": "刷新中...",
+    "error_timeout": "⏱️ 请求超时，请稍后再试！",
+    "error_network": "🌐 网络连接失败，请检查网络或后端服务状态",
+    "error_generic": "❌ 获取系统健康失败"
+  },
+  "positions": {
+    "title": "持仓评估",
+    "subtitle": "技术面、基本面、情绪面三维度综合评分",
+    "refresh": "刷新数据",
+    "refreshing": "刷新中...",
+    "loading": "正在加载持仓数据...",
+    "empty": "暂无持仓数据",
+    "error_timeout": "⏱️ 请求超时，请稍后再试！",
+    "error_network": "🌐 网络连接失败，请检查网络或后端服务状态",
+    "error_generic": "❌ 获取持仓评估数据失败",
+    "refresh_error_timeout": "⏱️ 刷新请求超时，请稍后再试！",
+    "refresh_error_network": "🌐 网络连接失败，无法刷新数据",
+    "refresh_error_generic": "❌ 刷新持仓数据失败",
+    "single_refresh_timeout": "⏱️ 刷新 {symbol} 超时，请稍后再试！",
+    "single_refresh_error": "❌ 刷新 {symbol} 失败",
+    "summary": {
+      "total_positions": "总持仓",
+      "total_value": "总市值",
+      "total_pnl": "总盈亏",
+      "avg_score": "平均评分",
+      "high_risk": "高风险",
+      "buy_recommendation": "BUY推荐"
+    },
+    "overall_score": "综合评分",
+    "quantity": "持仓数量",
+    "avg_cost": "平均成本",
+    "current_price": "当前价格",
+    "unrealized_pnl": "未实现盈亏",
+    "technical": "技术面",
+    "fundamental": "基本面",
+    "sentiment": "情绪面",
+    "ai_advice": "AI 建议",
+    "refresh_snapshot": "刷新快照",
+    "recommendations": {
+      "strong_buy": "强烈买入",
+      "buy": "买入",
+      "hold": "持有",
+      "reduce": "减仓",
+      "sell": "卖出",
+      "strong_sell": "强力卖出"
+    },
+    "risk_levels": {
+      "low": "低风险",
+      "medium": "中风险",
+      "high": "高风险",
+      "extreme": "极高风险"
+    },
+    "snapshot": {
+      "empty_title": "尚未生成今日快照",
+      "refresh_eval": "刷新评估",
+      "title": "日线趋势快照",
+      "strength_label": "趋势强度",
+      "rsi": "RSI",
+      "macd": "MACD",
+      "bollinger": "布林带",
+      "volume": "量能",
+      "support": "支撑位",
+      "resistance": "阻力位",
+      "trader_summary": "交易员摘要",
+      "rule_notice": "已使用规则摘要",
+      "directions": {
+        "bullish": "看涨",
+        "bearish": "看跌",
+        "sideways": "横盘"
+      },
+      "rsi_status": {
+        "oversold": "超卖",
+        "overbought": "超买",
+        "neutral": "中性"
+      },
+      "macd_status": {
+        "bullish_crossover": "金叉",
+        "bearish_crossover": "死叉"
+      },
+      "volume_status": {
+        "up": "放量",
+        "down": "缩量"
+      }
+    },
+    "guideline": {
+      "title": "持仓评估说明",
+      "composite": {
+        "title": "综合评分 (0-100)",
+        "desc": "技术面、基本面、情绪面加权综合评分",
+        "excellent": "优秀 - 强烈推荐配置",
+        "good": "良好 - 适合持有或增持",
+        "neutral": "中性 - 观望或持有",
+        "poor": "较差 - 建议减仓",
+        "bad": "差 - 强烈建议清仓"
+      },
+      "technical": {
+        "title": "技术面评分 (0-100)",
+        "desc": "基于趋势、动量、支撑阻力等技术指标",
+        "items": [
+          "趋势方向与强度（BULLISH/BEARISH/SIDEWAYS）",
+          "RSI相对强弱指标（超买/超卖）",
+          "MACD动量指标",
+          "布林带位置",
+          "成交量比率",
+          "关键支撑位和阻力位"
+        ],
+        "impact": "💡 分数越高，技术面越强势"
+      },
+      "snapshot": {
+        "title": "日线趋势快照 (Wall Street视角)",
+        "desc": "每日每标的生成一次，持久化缓存，手动触发刷新",
+        "items": [
+          "趋势方向：BULLISH（看涨）/ BEARISH（看跌）/ SIDEWAYS（横盘）",
+          "趋势强度：0-100（算法强度打分，非置信度）",
+          "RSI状态：OVERSOLD（超卖）/ NEUTRAL（中性）/ OVERBOUGHT（超买）",
+          "MACD状态：BULLISH_CROSSOVER（金叉）/ BEARISH_CROSSOVER（死叉）",
+          "布林带位置：当前价格在布林带的相对位置",
+          "量能分析：volume_ratio > 1 放量（绿色），< 1 缩量（橙色）",
+          "关键价位：支撑位和阻力位（显示前2-3个）",
+          "AI摘要：OpenAI生成的交易员风格解读（失败降级为规则摘要）"
+        ],
+        "impact": "💡 快照为持久化缓存，可能为空，需手动刷新",
+        "warning": "⚠️ 宏观风险与日线趋势独立分析，不混合为一个信号源"
+      },
+      "fundamental": {
+        "title": "基本面评分 (0-100)",
+        "desc": "基于估值、盈利能力、成长性、财务健康度",
+        "items": [
+          "估值：PE、PB、PEG等估值指标",
+          "盈利能力：ROE、ROA、净利润率",
+          "成长性：营收增长、利润增长",
+          "财务健康：流动比率、负债权益比"
+        ],
+        "impact": "💡 分数越高，基本面越稳健"
+      },
+      "sentiment": {
+        "title": "情绪面评分 (0-100)",
+        "desc": "基于市场情绪、资金流向、投资者行为",
+        "items": [
+          "分析师评级和目标价",
+          "机构持仓变化",
+          "新闻舆情分析",
+          "期权Put/Call比率",
+          "社交媒体情绪"
+        ],
+        "impact": "💡 分数越高，市场情绪越乐观"
+      },
+      "recommendations": {
+        "title": "操作建议说明",
+        "strong_buy": "强烈买入 (85+)",
+        "buy": "买入 (75-85)",
+        "hold": "持有 (40-75)",
+        "reduce": "减仓 (30-40)",
+        "sell": "卖出 (<30)"
+      },
+      "risks": {
+        "title": "风险等级说明",
+        "low": "低风险 (80+)",
+        "medium": "中等风险 (60-80)",
+        "high": "高风险 (40-60)",
+        "extreme": "极高风险 (<40)"
+      },
+      "notes": {
+        "title": "重要提示",
+        "items": [
+          "评分仅供参考，不构成投资建议",
+          "趋势快照为持久化缓存，每日每标的只保留最新快照",
+          "快照可能为空（未生成/未刷新/无数据），需手动触发刷新",
+          "趋势强度为算法打分，不是置信度",
+          "宏观风险与持仓趋势独立分析，不混合信号",
+          "建议结合个人风险承受能力做决策",
+          "注意及时止损，控制仓位"
+        ]
+      }
+    }
+  },
+  "portfolio": {
+    "weighted_score": "加权综合分",
+    "beta_label": "组合 Beta (相对于 SPY)",
+    "ai_summary": "AI 组合综述",
+    "sector_exposure": "行业分布",
+    "optimization_title": "持仓优化建议",
+    "no_recommendations": "目前持仓配置合理，暂无优化建议。"
+  },
+  "journal": {
+    "title": "交易日志",
+    "new_journal": "新建日志",
+    "filter_all": "全部",
+    "status_draft": "草稿",
+    "status_completed": "已完成",
+    "status_reviewed": "已复盘",
+    "entry": "入场",
+    "exit": "出场",
+    "pnl": "PnL",
+    "execution_quality": "执行质量",
+    "ai_review_btn": "AI 复盘",
+    "fail_reason": "失败原因",
+    "ai_review_label": "AI 复盘",
+    "empty": "暂无交易日志",
+    "prev_page": "上一页",
+    "next_page": "下一页",
+    "modal_new_title": "新建交易日志",
+    "form": {
+      "symbol": "标的",
+      "direction": "方向",
+      "entry_date": "入场日期",
+      "entry_price": "入场价",
+      "exit_date": "出场日期",
+      "exit_price": "出场价",
+      "quantity": "数量",
+      "realized_pnl": "已实现盈亏",
+      "execution_quality_label": "执行质量(1-5)",
+      "emotion": "情绪",
+      "reflection": "反思"
+    }
+  },
+  "advisor": {
+    "title": "AI 智能投顾",
+    "subtitle": "多智能体协同评估，为您提供专业的定性与定量分析决策支持",
+    "step1": "输入标的",
+    "step2": "AI 评估结果",
+    "placeholder": "输入股票代码，如 AAPL, TSLA (支持逗号分隔)",
+    "evaluate": "开始评估",
+    "evaluating": "评估中...",
+    "hot_labels": "热门关注:",
+    "confidence": "置信度",
+    "execute_selected": "执行选中 ({n})",
+    "executing": "执行中...",
+    "holding_period": "持有期",
+    "scenario_analysis": "情景分析",
+    "metrics": {
+      "risk_reward": "盈亏比",
+      "entry_price": "入场价",
+      "stop_loss": "止损价",
+      "take_profit": "止盈价",
+      "suggested_position": "建议仓位",
+      "risk_level": "风险等级"
+    },
+    "scenarios": {
+      "bull": "牛市情景",
+      "bear": "熊市情景",
+      "neutral": "中性情景",
+      "target": "目标",
+      "upside": "上涨空间",
+      "support": "支撑",
+      "downside": "下跌风险",
+      "range": "区间"
+    },
+    "catalysts": {
+      "title": "催化剂与驱动因素",
+      "short_term": "短期 (1-2周)",
+      "mid_term": "中长期 (1-6月)"
+    },
+    "dimensions": {
+      "technical": "技术面",
+      "fundamental": "基本面",
+      "kline": "K线趋势"
+    },
+    "actions": {
+      "buy": "买入",
+      "sell": "卖出",
+      "hold": "观望",
+      "avoid": "回避",
+      "execute_now": "立即执行",
+      "save_plan": "存为计划"
+    },
+    "directions": {
+      "long": "做多",
+      "short": "做空",
+      "neutral": "中性"
+    },
+    "plans": {
+      "title": "交易计划",
+      "empty": "暂无交易计划。通过 AI 评估后可一键创建。",
+      "confirm_execute": "确认执行该交易计划？",
+      "confirm_cancel": "确认取消该交易计划？",
+      "execute_success": "计划执行成功",
+      "cancel_success": "计划已取消",
+      "table": {
+        "symbol": "标的",
+        "entry": "入场价",
+        "stop_loss": "止损",
+        "take_profit": "止盈",
+        "position": "仓位",
+        "status": "状态",
+        "notes": "备注",
+        "actions": "操作"
+      },
+      "status": {
+        "active": "待执行",
+        "executed": "已执行",
+        "cancelled": "已取消",
+        "failed": "失败",
+        "expired": "已过期"
+      }
+    },
+    "history": {
+      "title": "评估历史",
+      "empty": "暂无评估历史。完成 AI 评估后会自动保存。",
+      "delete_confirm": "确认删除该评估记录？",
+      "refresh": "刷新",
+      "loading": "加载中...",
+      "time": {
+        "just_now": "刚刚",
+        "minutes_ago": "{n} 分钟前",
+        "hours_ago": "{n} 小时前",
+        "days_ago": "{n} 天前"
+      }
+    },
+    "alerts": {
+      "evaluate_failed": "AI 评估失败",
+      "execute_confirm_single": "确认执行 {symbol} 的 AI 交易决策？\n方向: {direction}\n仓位: {pos}%",
+      "execute_confirm_batch": "确认执行 {n} 个标的的 AI 决策？",
+      "execute_success": "执行完成",
+      "execute_failed": "执行失败",
+      "batch_execute_success": "执行完成！成功: {success}, 失败: {failed}, 跳过: {skipped}",
+      "batch_execute_failed": "批量执行失败",
+      "plan_created": "计划已创建",
+      "plan_create_failed": "创建计划失败",
+      "delete_failed": "删除失败",
+      "delete_confirm_permanent": "确认删除？不可恢复。"
+    }
+  },
+  "execution": {
+    "title": "⚡ 执行中心",
+    "subtitle": "集中管理所有待执行的交易计划",
+    "stats": {
+      "total": "总计划",
+      "active": "待执行",
+      "executed": "已执行",
+      "failed": "已失败"
+    },
+    "filters": {
+      "all_status": "全部状态",
+      "active": "待执行",
+      "paused": "已暂停",
+      "executed": "已执行",
+      "cancelled": "已取消",
+      "failed": "已失败",
+      "search_symbol": "搜索标的..."
+    },
+    "actions": {
+      "batch_execute": "批量执行",
+      "batch_cancel": "批量取消",
+      "create_plan": "+ 新建计划",
+      "execute": "执行",
+      "edit": "编辑",
+      "delete": "删除"
+    },
+    "empty_state": {
+      "title": "暂无交易计划",
+      "subtitle": "点击\"新建计划\"创建第一个交易计划"
+    },
+    "table": {
+      "headers": {
+        "symbol": "标的",
+        "entry_price": "入场价",
+        "stop_loss": "止损价",
+        "take_profit": "止盈价",
+        "target_position": "目标仓位",
+        "status": "状态",
+        "created_at": "创建时间",
+        "actions": "操作"
+      }
+    },
+    "pagination": {
+      "prev": "上一页",
+      "next": "下一页",
+      "info": "第 {current} 页 / 共 {total} 页"
+    },
+    "confirm": {
+      "execute_single": "确认执行该交易计划？",
+      "execute_batch": "确认执行选中的 {n} 个计划？",
+      "cancel_batch": "确认取消选中的 {n} 个计划？\n请输入取消原因（可选）:",
+      "delete_single": "确认删除该计划？此操作不可恢复。"
+    },
+    "messages": {
+      "execute_success": "计划执行成功！",
+      "execute_failed": "计划执行失败: {error}",
+      "batch_execute_result": "执行完成！成功: {success}, 失败: {failed}",
+      "delete_success": "删除成功",
+      "load_failed": "加载计划列表失败",
+      "stats_failed": "加载统计数据失败",
+      "batch_cancel_failed": "批量取消失败",
+      "delete_failed": "删除失败",
+      "plan_updated": "计划更新成功！",
+      "plan_created": "计划创建成功！",
+      "save_failed": "保存计划失败"
+    },
+    "dialog": {
+      "create_title": "新建交易计划",
+      "edit_title": "编辑交易计划",
+      "symbol": "交易标的 *",
+      "entry_price": "入场价格 *",
+      "stop_loss": "止损价格 *",
+      "take_profit": "止盈价格 *",
+      "target_position": "目标仓位 * (%)",
+      "status": "计划状态",
+      "notes": "备注",
+      "placeholder_symbol": "如: AAPL, META, TSLA",
+      "placeholder_notes": "交易备注...",
+      "risk_preview": "风险预览",
+      "stop_loss_range": "止损幅度",
+      "take_profit_range": "止盈幅度",
+      "risk_reward_ratio": "盈亏比",
+      "errors": {
+        "stop_loss": "止损价必须低于入场价",
+        "take_profit": "止盈价必须高于入场价"
+      },
+      "actions": {
+        "save": "保存计划",
+        "creating": "正在创建...",
+        "saving": "正在同步..."
+      }
+    }
+  },
+  "execution_list": {
+    "title": "⚡ 执行列表",
+    "subtitle": "集合信号、策略与计划的核心操作中心",
+    "header": {
+      "universe": "股票池：{name}",
+      "min_score": "最低评分：{score}",
+      "max_results": "最多展示：{count}",
+      "force_refresh": "强制刷新",
+      "hint": "执行列表优先匹配计划与风险约束"
+    },
+    "strategy_mgmt": {
+      "title": "⚙️ 策略管理",
+      "subtitle": "浏览平台内置私募精选策略、触发异步运行并同步进度",
+      "loading": "策略加载中...",
+      "empty": "暂无可用策略，稍后刷新页面看看",
+      "error_load": "策略列表暂时不可用",
+      "error_detail": "无法获取策略详情",
+      "error_run": "策略执行失败，请稍后重试",
+      "run_submitted": "策略已提交，正在等待执行"
+    },
+    "strategy_card": {
+      "builtin": "内置策略",
+      "no_desc": "暂无描述",
+      "not_run": "未运行",
+      "last_run": "最近运行",
+      "tags": "标签",
+      "details": "策略逻辑详情",
+      "relative": {
+        "just_now": "刚刚",
+        "min_ago": "{n} 分钟前",
+        "hour_ago": "{n} 小时前",
+        "day_ago": "{n} 天前",
+        "week_ago": "{n} 周前",
+        "month_ago": "{n} 个月前",
+        "year_ago": "{n} 年前",
+        "unknown": "未知"
+      }
+    },
+    "recent_run": {
+      "title": "最近策略运行",
+      "status_info": "状态：{status} · 尝试次数 {attempt}",
+      "export_csv": "导出 CSV",
+      "progress": "进度：{progress}%",
+      "in_progress": "进行中",
+      "top_assets": "Top 标的",
+      "view_full": "查看完整结果",
+      "strength": "强度: {val}"
+    },
+    "run_modal": {
+      "title": "策略执行",
+      "select_strategy": "选择策略",
+      "direction": "方向",
+      "auto": "自动",
+      "priority": "优先级",
+      "optional": "可选",
+      "target_universe": "目标股票池",
+      "min_score": "最低评分",
+      "max_results": "最多展示",
+      "notify_channels": "通知频道（逗号分隔）",
+      "placeholder_channels": "例如 slack-strategy|email-trading",
+      "cancel": "取消",
+      "confirm": "确认运行",
+      "submitting": "提交中...",
+      "error_submit": "提交失败，请稍后重试",
+      "universes": {
+        "US_LARGE_MID_TECH": "美股中大型科技",
+        "PRECIOUS_METALS": "黄金白银贵金属",
+        "US_SMALL_TECH": "美股科技潜力股",
+        "TRADITIONAL_QUALITY": "传统行业优质资产",
+        "EMERGING_QUALITY": "新兴行业优质资产",
+        "BLOCKCHAIN_CRYPTO": "区块链/加密相关"
+      }
+    },
+    "results_modal": {
+      "title": "策略运行结果",
+      "run_id": "运行 ID: {id}",
+      "select_all": "全选",
+      "selected_count": "已选择 {n} 个标的",
+      "batch_trade": "🎯 批量交易 ({n})",
+      "table": {
+        "symbol": "标的",
+        "action": "建议操作",
+        "direction": "建议方向",
+        "strength": "信号强度",
+        "weight": "建议权重",
+        "dimensions": "维度分析",
+        "risk_flags": "风险标记",
+        "notes": "备注",
+        "quick_trade": "快捷交易"
+      },
+      "messages": {
+        "trade_created": "交易信号已创建: {msg}",
+        "batch_trade_complete": "批量交易完成: {msg}",
+        "auto_generated": "策略引擎自动生成"
+      },
+      "enums": {
+        "actions": {
+          "buy": "买入",
+          "sell": "卖出",
+          "hold": "持有",
+          "increase": "加仓",
+          "decrease": "减仓"
+        },
+        "directions": {
+          "long": "做多",
+          "short": "做空",
+          "neutral": "中性"
+        },
+        "dimensions": {
+          "volume": "成交量分析",
+          "momentum": "价格动量",
+          "sentiment": "市场情绪",
+          "volatility": "波动率",
+          "growth": "增长潜力"
+        },
+        "risk_flags": {
+          "volatile": "波动巨大",
+          "high_risk": "高风险",
+          "suspicious": "异常波动",
+          "normal": "正常"
+        }
+      }
+    },
+    "history": {
+      "title": "🧾 策略运行历史（最近 {n} 次）",
+      "refresh": "刷新策略历史",
+      "empty": "暂无策略运行记录",
+      "loading": "加载中...",
+      "table": {
+        "run_id": "Run ID",
+        "strategy_id": "策略 ID",
+        "status": "状态",
+        "hits": "命中 / 命中率",
+        "avg_strength": "平均强度",
+        "time": "时间",
+        "actions": "操作",
+        "view_results": "查看结果",
+        "export": "导出"
+      }
+    },
+    "messages": {
+      "run_started": "策略 {id} 已触发运行",
+      "run_failed": "运行策略失败",
+      "export_started": "正在导出策略运行结果...",
+      "export_success": "策略结果已导出",
+      "export_failed": "导出失败"
+    }
+  },
+  "trading_plan": {
+    "title": "交易助手",
+    "subtitle": "维护你的入场/止损/止盈与目标仓位，计划驱动执行纪律",
+    "refresh": "刷新计划",
+    "refreshing": "刷新中...",
+    "new_plan": "新增计划",
+    "symbol": "标的",
+    "entry_price": "入场价",
+    "stop_loss": "止损价",
+    "take_profit": "止盈价",
+    "target_position": "目标仓位(0~1)",
+    "valid_until": "有效至",
+    "notes": "备注",
+    "notes_placeholder": "例如：等待回踩确认",
+    "create": "创建计划",
+    "creating": "创建中...",
+    "list_title": "计划列表",
+    "total_count": "共 {n} 条",
+    "empty": "暂无计划",
+    "execute": "标记已执行",
+    "cancel": "取消",
+    "delete": "删除",
+    "error_load": "❌ 获取交易计划失败",
+    "error_symbol": "请输入标的代码",
+    "error_price_required": "请填写入场/止损/止盈价",
+    "success_created": "✅ 计划已创建",
+    "error_create_failed": "❌ 创建计划失败",
+    "error_update_failed": "❌ 更新计划状态失败",
+    "error_delete_failed": "❌ 删除计划失败",
+    "statuses": {
+      "active": "进行中",
+      "executed": "已执行",
+      "expired": "已过期",
+      "cancelled": "已取消"
+    }
+  },
+  "system": {
+    "title": "系统健康度",
+    "status": "系统状态",
+    "subtitle": "AI 风控 + 自动对冲引擎（后端 DRY_RUN / REAL 模式可切换）",
+    "refresh": "刷新状态",
+    "refreshing": "刷新中...",
+    "run_hedge": "执行一次自动对冲",
+    "running": "执行中...",
+    "run_success": "✅ 自动对冲指令已下达",
+    "run_result": "自动对冲结果：{detail}",
+    "run_failed": "❌ 对冲指令失败: {error}",
+    "run_failed_simple": "执行自动对冲失败",
+    "mode": {
+      "DRY_RUN": "演习 (DRY_RUN)",
+      "REAL": "实弹 (REAL)",
+      "UNKNOWN": "未知"
+    }
+  },
+  "login": {
+    "subtitle": "风险控制 · 持仓评估 · 自动对冲",
+    "username": "用户名",
+    "password": "密码",
+    "username_placeholder": "管理员用户名",
+    "password_placeholder": "管理员密码",
+    "remember_me": "记住我",
+    "forgot_password": "忘记密码？",
+    "login_btn": "登录",
+    "dev_hint": "开发模式默认：{auth}",
+    "login_failed": "登录失败，请检查用户名/密码",
+    "login_error": "登录出错",
+    "help_msg": "请在后端 .env 中重置 ADMIN_PASSWORD 或联系运维（仅限内部管理员）。",
+    "hide_password": "隐藏密码",
+    "show_password": "显示密码"
+  },
+  "opportunities_guideline": {
+    "title": "📖 机会发现说明",
+    "mechanism": {
+      "title": "⚙️ 策略执行机制",
+      "pool": "自选股票池: 运行策略时可自由选择目标股票池（美股科技、香港蓝筹等）",
+      "async": "异步执行: 策略任务提交后会在后台异步运行，可以随时离开页面或查看历史记录",
+      "custom": "参数定制: 支持二次输入最低评分阈值及最多展示结果个数，满足不同风险偏好",
+      "monitor": "实时监控: 支持实时查看策略执行状态、进度及最终命中的资产详情",
+      "export": "结果导出: 策略执行完成后可导出详细的分析报告。"
+    },
+    "score": {
+      "title": "📊 三维评分体系",
+      "tech": "技术面 (0-100)",
+      "tech_desc": "MA 趋势、MACD 动量、RSI 超卖、布林通道、成交量等技术指标综合评估",
+      "fund": "基本面 (0-100)",
+      "fund_desc": "市盈率、市净率、ROE、营收增长率、毛利率、负债率等财务健康度评估",
+      "sent": "情绪面 (0-100)",
+      "sent_desc": "社交媒体热度、新闻情绪、看涨期权活跃度、做空比率等市场情绪指标",
+      "formula": "综合评分 = 技术面 × 40% + 基本面 × 35% + 情绪面 × 25%"
+    },
+    "macro": {
+      "title": "🌍 宏观风险联动",
+      "th_level": "宏观风险等级",
+      "th_threshold": "筛选阈值",
+      "th_adj": "策略调整",
+      "low_med": "常规筛选，推荐 1-3 个机会",
+      "high": "提高阈值，优先防御性标的",
+      "extreme": "严格筛选，可能无推荐",
+      "hint": "💡 宏观风险偏高时，系统自动提高筛选门槛，降低激进建仓风险"
+    },
+    "recommend": {
+      "title": "🎯 推荐等级",
+      "strong_buy": "强力建仓",
+      "strong_buy_desc": "三维评分均优秀，宏观环境友好，建议积极建仓",
+      "buy": "建议建仓",
+      "buy_desc": "综合评分良好，可适度建仓，关注风险控制",
+      "hold": "持有观望",
+      "hold_desc": "部分指标欠佳，建议观望或仓位控制在 10% 以下",
+      "no_recommend": "不推荐",
+      "no_recommend_desc": "不符合筛选条件，不会出现在机会列表中"
+    },
+    "data": {
+      "title": "🗂️ 数据来源与更新",
+      "tech": "技术数据: Yahoo Finance、Alpha Vantage，实时/延迟 15 分钟",
+      "fund": "基本面数据: Financial Modeling Prep、IEX Cloud，季度更新",
+      "sent": "情绪数据: StockTwits、Reddit、Twitter API，小时级更新",
+      "fallback": "兜底机制: 数据源限流时，使用本地维护的静态股票池（结果偏保守）"
+    },
+    "tips": {
+      "title": "💡 使用建议",
+      "daily": "日常使用: 系统每日 20:30 自动扫描并生成推荐，次日查看即可，无需手动触发",
+      "realtime": "实时扫描: 如需获取最新数据，可点击「立即扫描」手动触发（注意耗时较长）",
+      "events": "重要事件: 重大财报、政策发布后，可强制刷新获取最新评估",
+      "risk": "风险控制: 宏观风险 HIGH/EXTREME 时，即使有推荐也应降低仓位",
+      "history": "历史回溯: 查看历史扫描记录，分析推荐准确率和市场变化趋势",
+      "diversify": "分散投资: 不要仅依赖单一机会，结合持仓评估模块综合决策"
+    },
+    "disclaimer": "⚠️ 风险提示: 本模块仅提供决策参考，不构成投资建议。所有投资决策需自行承担风险，建议结合宏观风险、持仓状况和个人风险承受能力综合判断。"
+  },
+  "score_guideline": {
+    "title": "📊 评分标准说明",
+    "behavior": {
+      "title": "行为评分 (0-100)",
+      "desc": "综合行为指标，评估交易行为的理性程度",
+      "r1": "极度理性，严格遵守纪律",
+      "r2": "较为理性，偶有情绪波动",
+      "r3": "较为躁动，频繁情绪化交易",
+      "r4": "高度躁动，风险控制失效",
+      "impact": "📈 分数越高 → ShockPolicy / EarningsPolicy 越保守"
+    },
+    "sell_fly": {
+      "title": "卖飞评分 (0-100)",
+      "desc": "评估提前获利了结导致的机会成本损失",
+      "r1": "极少卖飞，持仓稳定",
+      "r2": "偶有卖飞，影响较小",
+      "r3": "频繁卖飞，损失较多潜在收益",
+      "r4": "严重卖飞，机会成本巨大",
+      "impact": "💡 通过\"卖飞成本占比\"和\"卖飞次数\"综合计算"
+    },
+    "overtrading": {
+      "title": "过度交易 (0-100)",
+      "desc": "交易频率与合理水平的偏离程度",
+      "r1": "交易频率正常",
+      "r2": "交易较为频繁",
+      "r3": "明显过度交易",
+      "r4": "极度频繁，交易成本高企",
+      "impact": "⚡ 根据\"过度交易指数\"计算，指数 > 1.5 视为过度"
+    },
+    "revenge": {
+      "title": "报复性交易 (0-100)",
+      "desc": "亏损后立即加仓的情绪化交易行为",
+      "r1": "无报复性交易",
+      "r2": "偶有情绪化加仓",
+      "r3": "频繁报复性交易",
+      "r4": "严重失控，连续情绪化加仓",
+      "impact": "🔥 基于\"报复性交易次数\"计算，次数越多分数越高"
+    },
+    "tier": {
+      "title": "风险等级 (Tier)",
+      "t1": "核心标的，流动性好",
+      "t2": "主流标的，风险可控",
+      "t3": "边缘标的，波动较大",
+      "t4": "高风险标的，谨慎交易"
+    },
+    "impact_note": {
+      "title": "⚠️ 决策影响：行为评分越高，自动对冲引擎会：",
+      "i1": "减少裸暴露（Delta 对冲更积极）",
+      "i2": "增加保护性对冲（买入 Put 保护）",
+      "i3": "收紧震荡政策（ShockPolicy）",
+      "i4": "提高财报政策保守度（EarningsPolicy）"
+    }
+  },
+  "footer": {
+    "version": "当前版本：前后端物理分离 · REST 调用",
+    "description": "行为评分与卖飞评分驱动每个标的的 ShockPolicy / EarningsPolicy；Greeks 暴露通过水位条形图展示与限额的相对关系。"
+  }
+}

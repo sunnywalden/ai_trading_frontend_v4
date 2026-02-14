@@ -2,12 +2,12 @@
   <div class="page-container">
     <section class="admin-bar">
       <div class="admin-left">
-        <span class="admin-title">行为评分</span>
-        <span class="admin-sub">基于最近 N 天的老虎历史成交 & 盈亏</span>
+        <span class="admin-title">{{ $t('behavior.title') }}</span>
+        <span class="admin-sub">{{ $t('behavior.subtitle', { n: windowDays }) }}</span>
       </div>
       <div class="admin-right">
         <label class="admin-label">
-          窗口天数
+          {{ $t('behavior.window_days') }}
           <input
             v-model.number="windowDays"
             type="number"
@@ -21,8 +21,8 @@
           :disabled="rebuilding"
           @click="onRebuildBehavior"
         >
-          <span v-if="!rebuilding">重新计算行为评分</span>
-          <span v-else>正在重算...</span>
+          <span v-if="!rebuilding">{{ $t('behavior.recalculate') }}</span>
+          <span v-else>{{ $t('behavior.recalculating') }}</span>
         </button>
       </div>
     </section>
@@ -31,7 +31,7 @@
     </p>
 
     <p v-if="errorMsg" class="state-message error">{{ errorMsg }}</p>
-    <p v-else-if="loading" class="state-message loading">正在加载行为评分...</p>
+    <p v-else-if="loading" class="state-message loading">{{ $t('behavior.loading') }}</p>
 
     <PlanDeviationSummaryCard
       v-if="aiState"
@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import PlanDeviationSummaryCard from '../components/PlanDeviationSummaryCard.vue';
 import SymbolBehaviorCard from '../components/SymbolBehaviorCard.vue';
 import BehaviorGuideline from '../components/BehaviorGuideline.vue';
@@ -76,6 +77,7 @@ import {
 } from '../api/client';
 import { appConfig, updateWindowDays } from '../config/global';
 
+const { t } = useI18n();
 const aiState = ref<AiStateResponse | null>(null);
 const loading = ref(false);
 const errorMsg = ref('');
@@ -104,11 +106,11 @@ async function loadAiState() {
   } catch (e: any) {
     console.error(e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-      errorMsg.value = '⏱️ 请求超时，请稍后再试！';
+      errorMsg.value = t('common.timeout');
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
-      errorMsg.value = '🌐 网络连接失败，请检查网络或后端服务状态';
+      errorMsg.value = t('common.network_error');
     } else {
-      errorMsg.value = '❌ 获取 AI 风控/行为状态失败';
+      errorMsg.value = t('behavior.fetch_failed');
     }
   } finally {
     loading.value = false;
@@ -121,16 +123,16 @@ async function onRebuildBehavior() {
   rebuildMsg.value = '';
   try {
     const resp: BehaviorRebuildResponse = await rebuildBehavior(windowDays.value);
-    rebuildMsg.value = `✅ 已重算 ${resp.symbols_processed.length} 个标的的行为评分`;
+    rebuildMsg.value = t('behavior.rebuild_success_with_count', { count: resp.symbols_processed.length });
     await loadAiState();
   } catch (e: any) {
     console.error(e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-      rebuildMsg.value = '⏱️ 请求超时，请稍后重试！';
+      rebuildMsg.value = t('common.timeout');
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
-      rebuildMsg.value = '🌐 网络连接失败，请检查后端服务';
+      rebuildMsg.value = t('common.network_error');
     } else {
-      rebuildMsg.value = '❌ 行为评分重算失败，请稍后重试';
+      rebuildMsg.value = t('behavior.rebuild_failed_general');
     }
   } finally {
     rebuilding.value = false;

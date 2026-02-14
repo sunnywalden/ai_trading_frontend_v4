@@ -1,6 +1,6 @@
 <template>
   <div class="cycle-control-panel">
-    <h3>手动运行控制</h3>
+    <h3>{{ $t('dashboard.manual_control') }}</h3>
     
     <div class="control-form">
       <div class="form-item">
@@ -10,7 +10,10 @@
             v-model="config.execute_trades"
             class="form-checkbox"
           />
-          <span>执行真实交易</span>
+          <span class="checkbox-text">
+            <span class="checkbox-label">{{ $t('dashboard.execute_real_trade_desc') }}</span>
+            <span class="checkbox-hint">{{ $t('dashboard.irrevocable_warning') }}</span>
+          </span>
         </label>
       </div>
       
@@ -21,7 +24,10 @@
             v-model="config.optimize"
             class="form-checkbox"
           />
-          <span>运行参数优化</span>
+          <span class="checkbox-text">
+            <span class="checkbox-label">{{ $t('dashboard.run_optimization_desc') }}</span>
+            <span class="checkbox-hint">{{ $t('dashboard.optimization_hint') }}</span>
+          </span>
         </label>
       </div>
       
@@ -34,10 +40,10 @@
         >
           <span v-if="isRunning">
             <span class="spinner"></span>
-            运行中...
+            {{ $t('dashboard.running') }}
           </span>
           <span v-else>
-            {{ config.execute_trades ? '执行真实交易' : '运行完整周期' }}
+            {{ config.execute_trades ? $t('dashboard.execute_real_trade') : $t('dashboard.run_cycle') }}
           </span>
         </button>
         
@@ -46,29 +52,29 @@
           :disabled="isRunning"
           @click="$emit('run-optimization')"
         >
-          仅运行优化
+          {{ $t('dashboard.run_optimization') }}
         </button>
       </div>
     </div>
     
     <div v-if="lastResult" class="result-section">
       <div class="result-header" @click="resultExpanded = !resultExpanded">
-        <h4>上次运行结果</h4>
+        <h4>{{ $t('dashboard.last_result') }}</h4>
         <span class="toggle-icon">{{ resultExpanded ? '▼' : '▶' }}</span>
       </div>
       
       <div v-if="resultExpanded" class="result-body">
         <div class="result-summary">
           <div class="summary-item">
-            <span class="label">周期ID:</span>
+            <span class="label">{{ $t('dashboard.cycle_id') }}:</span>
             <span class="value">{{ lastResult.cycle_id }}</span>
           </div>
           <div class="summary-item">
-            <span class="label">运行时间:</span>
+            <span class="label">{{ $t('dashboard.run_time') }}:</span>
             <span class="value">{{ formatTime(lastResult.timestamp) }}</span>
           </div>
           <div class="summary-item">
-            <span class="label">账户ID:</span>
+            <span class="label">{{ $t('dashboard.account_id') }}:</span>
             <span class="value">{{ lastResult.account_id }}</span>
           </div>
         </div>
@@ -79,26 +85,26 @@
             :key="key"
             class="phase-card"
           >
-            <div class="phase-name">{{ getPhaseNameZh(key as string) }}</div>
+            <div class="phase-name">{{ $t(`dashboard.phases.${key}`) }}</div>
             <div v-if="phase" class="phase-status" :class="phase.status?.toLowerCase()">
               {{ phase.status }}
             </div>
             <div v-if="key === 'signal_generation' && phase && 'total_signals_generated' in phase" class="phase-details">
-              <div>生成信号: {{ phase.total_signals_generated }}</div>
-              <div>处理策略: {{ phase.strategy_runs_processed }}</div>
+              <div>{{ $t('dashboard.phase_details.gen_signals') }}: {{ (phase as any).total_signals_generated }}</div>
+              <div>{{ $t('dashboard.phase_details.proc_strategies') }}: {{ (phase as any).strategy_runs_processed }}</div>
             </div>
             <div v-if="key === 'signal_validation' && phase && 'validation_rate' in phase" class="phase-details">
-              <div>验证率: {{ (phase.validation_rate * 100).toFixed(1) }}%</div>
-              <div>通过: {{ phase.validated_signals }} / {{ phase.total_signals_checked }}</div>
+              <div>{{ $t('dashboard.phase_details.val_rate') }}: {{ ((phase as any).validation_rate * 100).toFixed(1) }}%</div>
+              <div>{{ $t('dashboard.phase_details.passed') }}: {{ (phase as any).validated_signals }} / {{ (phase as any).total_signals_checked }}</div>
             </div>
             <div v-if="key === 'adaptive_optimization' && phase && 'optimizations_count' in phase" class="phase-details">
-              <div>优化项: {{ phase.optimizations_count }}</div>
+              <div>{{ $t('dashboard.optimizations') }}: {{ (phase as any).optimizations_count }}</div>
             </div>
           </div>
         </div>
         
         <details class="result-json">
-          <summary>查看完整JSON</summary>
+          <summary>{{ $t('dashboard.show_json') }}</summary>
           <pre>{{ JSON.stringify(lastResult, null, 2) }}</pre>
         </details>
       </div>
@@ -108,8 +114,10 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CycleConfig, CycleResult } from '@/api/quantLoopService'
 
+const { t, locale } = useI18n()
 defineProps<{
   isRunning: boolean
   lastResult?: CycleResult | null
@@ -129,7 +137,7 @@ const resultExpanded = ref(true)
 
 function handleRunCycle() {
   if (config.execute_trades) {
-    if (!confirm('确认要执行真实交易吗？此操作不可撤销！')) {
+    if (!confirm(t('dashboard.confirm_execute_warning'))) {
       return
     }
   }
@@ -137,17 +145,7 @@ function handleRunCycle() {
 }
 
 function formatTime(time: string) {
-  return new Date(time).toLocaleString('zh-CN')
-}
-
-function getPhaseNameZh(key: string) {
-  const names: Record<string, string> = {
-    signal_generation: '信号生成',
-    signal_validation: '信号验证',
-    performance_evaluation: '性能评估',
-    adaptive_optimization: '自适应优化'
-  }
-  return names[key] || key
+  return new Date(time).toLocaleString(locale.value)
 }
 </script>
 
@@ -202,27 +200,61 @@ h4 {
 
 .form-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   color: #f1f5f9;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
   transition: all 0.2s;
+  background: rgba(139, 92, 246, 0.08);
+  border: 2px solid rgba(139, 92, 246, 0.2);
+  min-height: 56px; /* 移动端触摸友好 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .form-label:hover {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.form-label:active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  transform: scale(0.98);
 }
 
 .form-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
   cursor: pointer;
   accent-color: #8b5cf6;
   border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkbox-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.4;
+}
+
+.checkbox-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.3;
 }
 
 .form-tip {
@@ -241,16 +273,37 @@ h4 {
   margin-top: 8px;
 }
 
+/* 移动端：按钮纵向堆叠 */
+@media (max-width: 767px) {
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 .btn-run,
 .btn-secondary {
   padding: 14px 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-height: 52px; /* 移动端触摸友好 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 移动端：按钮全宽 */
+@media (max-width: 767px) {
+  .btn-run,
+  .btn-secondary {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
 }
 
 .btn-run {
@@ -263,6 +316,11 @@ h4 {
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
   transform: translateY(-2px);
+}
+
+.btn-run:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .btn-run.danger {
@@ -280,6 +338,7 @@ h4 {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .btn-run.loading {
@@ -295,6 +354,11 @@ h4 {
   background: linear-gradient(135deg, #64748b 0%, #475569 100%);
   box-shadow: 0 6px 16px rgba(71, 85, 105, 0.4);
   transform: translateY(-2px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.3);
 }
 
 .spinner {
@@ -389,6 +453,14 @@ h4 {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+}
+
+/* 移动端：单列显示 */
+@media (max-width: 767px) {
+  .phases-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .phase-card {

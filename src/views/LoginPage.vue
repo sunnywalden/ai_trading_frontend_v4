@@ -24,34 +24,34 @@
           </g>
         </svg>
         <h1>AI Trading</h1>
-        <p class="subtitle">风险控制 · 持仓评估 · 自动对冲</p>
+        <p class="subtitle">{{ t('login.subtitle') }}</p>
       </div>
 
       <form @submit.prevent="onSubmit" class="login-form" novalidate>
         <div class="field">
-          <label class="label">用户名</label>
-          <input v-model="username" type="text" class="input" placeholder="管理员用户名" autocomplete="username" required />
+          <label class="label">{{ t('login.username') }}</label>
+          <input v-model="username" type="text" class="input" :placeholder="t('login.username_placeholder')" autocomplete="username" required />
         </div>
 
         <div class="field">
-          <label class="label">密码</label>
+          <label class="label">{{ t('login.password') }}</label>
           <div class="password-wrapper">
-            <input :type="showPassword ? 'text' : 'password'" v-model="password" class="input" placeholder="管理员密码" autocomplete="current-password" required />
-            <button type="button" class="toggle" @click="showPassword = !showPassword" :aria-pressed="showPassword" :title="showPassword ? '隐藏密码' : '显示密码'">{{ showPassword ? '🙈' : '👁️' }}</button>
+            <input :type="showPassword ? 'text' : 'password'" v-model="password" class="input" :placeholder="t('login.password_placeholder')" autocomplete="current-password" required />
+            <button type="button" class="toggle" @click="showPassword = !showPassword" :aria-pressed="showPassword" :title="showPassword ? t('login.hide_password') : t('login.show_password')">{{ showPassword ? '🙈' : '👁️' }}</button>
           </div>
         </div>
 
         <div class="extras">
-          <label class="remember"><input type="checkbox" v-model="remember" /> 记住我</label>
-          <a class="help" href="#" @click.prevent="onHelp">忘记密码？</a>
+          <label class="remember"><input type="checkbox" v-model="remember" /> {{ t('login.remember_me') }}</label>
+          <a class="help" href="#" @click.prevent="onHelp">{{ t('login.forgot_password') }}</a>
         </div>
 
         <button class="btn" :class="{loading: loading}" :disabled="loading">
           <span v-if="loading" class="spinner" aria-hidden="true"></span>
-          <span class="btn-text">登录</span>
+          <span class="btn-text">{{ t('login.login_btn') }}</span>
         </button>
 
-        <p class="hint">登录口令由运行环境配置，不在页面展示。</p>
+        <p class="hint">{{ t('login.help_msg') }}</p>
 
         <p v-if="error" class="error">{{ error }}</p>
       </form>
@@ -62,8 +62,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { loginUser } from '../api/client';
 
+const { t } = useI18n();
 const username = ref('admin');
 const password = ref('');
 const error = ref('');
@@ -81,17 +83,18 @@ async function onSubmit() {
       // 登录成功，跳转到首页
       router.push({ path: '/' });
     } else {
-      error.value = '登录失败，请检查用户名/密码';
+      error.value = t('login.login_failed');
     }
   } catch (e: any) {
-    error.value = e?.response?.data?.detail || e?.message || '登录出错';
+    const detail = e?.response?.data?.detail || e?.message;
+    error.value = detail ? t('login.run_result', { detail }) : t('login.login_error');
   } finally {
     loading.value = false;
   }
 }
 
 function onHelp() {
-  alert('请在后端 .env 中重置 ADMIN_PASSWORD 或联系运维（仅限内部管理员）。');
+  alert(t('login.help_msg'));
 }
 </script>
 

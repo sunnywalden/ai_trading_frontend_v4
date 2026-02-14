@@ -3,8 +3,8 @@
     <div class="modal-body">
       <div class="modal-header">
         <div>
-          <p class="modal-label">策略运行结果</p>
-          <h3>运行 ID: {{ runId }}</h3>
+          <p class="modal-label">{{ $t('execution_list.results_modal.title') }}</p>
+          <h3>{{ $t('execution_list.results_modal.run_id', { id: runId }) }}</h3>
         </div>
         <button class="close-btn" @click="close">✕</button>
       </div>
@@ -19,9 +19,9 @@
               @change="toggleSelectAll"
               class="checkbox-input"
             />
-            <span>全选</span>
+            <span>{{ $t('execution_list.results_modal.select_all') }}</span>
           </label>
-          <span class="selected-count">已选择 {{ selectedAssets.size }} 个标的</span>
+          <span class="selected-count">{{ $t('execution_list.results_modal.selected_count', { n: selectedAssets.size }) }}</span>
         </div>
         <div class="toolbar-right">
           <button 
@@ -29,7 +29,7 @@
             class="batch-trade-btn"
             @click="showBatchTrade = true"
           >
-            🎯 批量交易 ({{ selectedAssets.size }})
+            {{ $t('execution_list.results_modal.batch_trade', { n: selectedAssets.size }) }}
           </button>
         </div>
       </div>
@@ -47,15 +47,15 @@
                     class="checkbox-input"
                   />
                 </th>
-                <th>标的</th>
-                <th>建议操作</th>
-                <th>建议方向</th>
-                <th>信号强度</th>
-                <th>建议权重</th>
-                <th>维度分析</th>
-                <th>风险标记</th>
-                <th>备注</th>
-                <th>快捷交易</th>
+                <th>{{ $t('execution_list.results_modal.table.symbol') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.action') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.direction') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.strength') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.weight') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.dimensions') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.risk_flags') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.notes') }}</th>
+                <th>{{ $t('execution_list.results_modal.table.quick_trade') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -144,9 +144,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { StrategyRunAssetView } from '../api/client';
 import QuickTradeDialog from './QuickTradeDialog.vue';
 import BatchQuickTradeDialog from './BatchQuickTradeDialog.vue';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   show: boolean;
@@ -196,63 +199,42 @@ function handleQuickTrade(symbol: string) {
 
 function handleTradeSuccess(result: any) {
   console.log('Trade executed:', result);
-  alert(`交易信号已创建: ${result.message}`);
+  alert(t('execution_list.results_modal.messages.trade_created', { msg: result.message }));
 }
 
 function handleBatchTradeSuccess(result: any) {
   console.log('Batch trade executed:', result);
-  alert(`批量交易完成: ${result.message}`);
+  alert(t('execution_list.results_modal.messages.batch_trade_complete', { msg: result.message }));
   // 清空选择
   selectedAssets.value.clear();
 }
 
 function translateDimension(key: string): string {
-  const map: Record<string, string> = {
-    'volume': '成交量分析',
-    'momentum': '价格动量',
-    'sentiment': '市场情绪',
-    'volatility': '波动率',
-    'growth': '增长潜力'
-  };
-  return map[key.toLowerCase()] || key;
+  const k = key.toLowerCase();
+  return t(`execution_list.results_modal.enums.dimensions.${k}`, k);
 }
 
 function translateRiskFlag(flag: string): string {
-  const map: Record<string, string> = {
-    'volatile': '波动巨大',
-    'high_risk': '高风险',
-    'suspicious': '异常波动',
-    'normal': '正常'
-  };
-  return map[flag.toLowerCase()] || flag;
+  const f = flag.toLowerCase();
+  return t(`execution_list.results_modal.enums.risk_flags.${f}`, f);
 }
 
 function translateAction(action: string | null | undefined): string {
   if (!action) return '--';
-  const map: Record<string, string> = {
-    'buy': '买入',
-    'sell': '卖出',
-    'hold': '持有',
-    'increase': '加仓',
-    'decrease': '减仓'
-  };
-  return map[action.toLowerCase()] || action;
+  const a = action.toLowerCase();
+  return t(`execution_list.results_modal.enums.actions.${a}`, a);
 }
 
 function translateDirection(direction: string | null | undefined): string {
   if (!direction) return '--';
-  const map: Record<string, string> = {
-    'long': '做多',
-    'short': '做空',
-    'neutral': '中性'
-  };
-  return map[direction.toLowerCase()] || direction;
+  const d = direction.toLowerCase();
+  return t(`execution_list.results_modal.enums.directions.${d}`, d);
 }
 
 function translateNotes(note: string | null | undefined): string {
   if (!note) return '--';
   if (note.toLowerCase().includes('generated by strategy engine')) {
-    return '策略引擎自动生成';
+    return t('execution_list.results_modal.messages.auto_generated');
   }
   return note;
 }

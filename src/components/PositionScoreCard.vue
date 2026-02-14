@@ -3,9 +3,9 @@
     <div class="card-header">
       <div class="symbol-info">
         <h3>{{ symbol }}</h3>
-        <span class="recommendation" :class="recommendationClass">{{ displayRecommendation }}</span>
+        <span class="recommendation" :class="recommendationClass">{{ $t(`positions.recommendations.${recommendation.toLowerCase()}`) }}</span>
         <span v-if="riskLevel" class="risk-badge" :class="'risk-' + riskLevel.toLowerCase()">
-          {{ riskLevel }}
+          {{ $t(`positions.risk_levels.${riskLevel.toLowerCase()}`) }}
         </span>
       </div>
       <div class="status-tags">
@@ -14,25 +14,25 @@
       </div>
       <div class="overall-score">
         <div class="score-value" :class="scoreClass">{{ overallScore.toFixed(1) }}</div>
-        <div class="score-label">综合评分</div>
+        <div class="score-label">{{ $t('positions.overall_score') }}</div>
       </div>
     </div>
 
     <div v-if="quantity !== undefined" class="position-info">
       <div class="info-row">
-        <span class="info-label">持仓数量</span>
+        <span class="info-label">{{ $t('positions.quantity') }}</span>
         <span class="info-value">{{ quantity }}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">平均成本</span>
+        <span class="info-label">{{ $t('positions.avg_cost') }}</span>
         <span class="info-value">${{ (avgCost ?? 0).toFixed(2) }}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">当前价格</span>
+        <span class="info-label">{{ $t('positions.current_price') }}</span>
         <span class="info-value">${{ (currentPrice ?? 0).toFixed(2) }}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">未实现盈亏</span>
+        <span class="info-label">{{ $t('positions.unrealized_pnl') }}</span>
         <span class="info-value" :class="(unrealizedPnl ?? 0) >= 0 ? 'profit' : 'loss'">
           ${{ (unrealizedPnl ?? 0).toLocaleString() }}
           <span v-if="unrealizedPnlPercent !== undefined" class="pnl-percent">
@@ -45,7 +45,7 @@
     <div class="score-breakdown">
       <div class="score-item">
         <div class="score-header">
-          <span class="label">技术面</span>
+          <span class="label">{{ $t('positions.technical') }}</span>
           <span class="value">{{ technicalScore.toFixed(1) }}</span>
         </div>
         <div class="progress-bar">
@@ -55,7 +55,7 @@
 
       <div class="score-item">
         <div class="score-header">
-          <span class="label">基本面</span>
+          <span class="label">{{ $t('positions.fundamental') }}</span>
           <span class="value">{{ fundamentalScore.toFixed(1) }}</span>
         </div>
         <div class="progress-bar">
@@ -65,7 +65,7 @@
 
       <div class="score-item">
         <div class="score-header">
-          <span class="label">情绪面</span>
+          <span class="label">{{ $t('positions.sentiment') }}</span>
           <span class="value">{{ sentimentScore.toFixed(1) }}</span>
         </div>
         <div class="progress-bar">

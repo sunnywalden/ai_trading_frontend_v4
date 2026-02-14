@@ -1,12 +1,12 @@
 <template>
   <div class="header">
     <div class="filters">
-      <span class="pill">股票池：{{ universeName }}</span>
-      <span class="pill">最低评分：{{ minScore }}</span>
-      <span class="pill">最多展示：{{ maxResults }}</span>
-      <span v-if="forceRefresh" class="pill warning">强制刷新</span>
+      <span class="pill">{{ $t('execution_list.header.universe', { name: universeName }) }}</span>
+      <span class="pill">{{ $t('execution_list.header.min_score', { score: minScore }) }}</span>
+      <span class="pill">{{ $t('execution_list.header.max_results', { count: maxResults }) }}</span>
+      <span v-if="forceRefresh" class="pill warning">{{ $t('execution_list.header.force_refresh') }}</span>
     </div>
-    <span class="hint">执行列表优先匹配计划与风险约束</span>
+    <span class="hint">{{ $t('execution_list.header.hint') }}</span>
   </div>
 </template>
 

@@ -10,10 +10,10 @@
       <div class="impact-section">
         <div class="score-circle" :style="circleStyle">
           <div class="score-value">{{ impactScore }}</div>
-          <div class="score-label">Impact</div>
+          <div class="score-label">{{ $t('hotspots.impact') }}</div>
         </div>
         <div class="sentiment-badge" :class="sentiment?.toLowerCase()">
-          {{ sentimentIcon }} {{ sentiment || 'NEUTRAL' }}
+          {{ sentimentIcon }} {{ sentiment ? $t(`hotspots.${sentiment.toLowerCase()}`) : $t('hotspots.neutral') }}
         </div>
       </div>
 
@@ -21,7 +21,7 @@
       <div class="content-section">
         <div class="meta-header">
           <span class="category-tag" :class="categoryClass">
-            {{ categoryIcon }} {{ category }}
+            {{ categoryIcon }} {{ $t(`hotspots.categories.${category.toLowerCase()}`) }}
           </span>
           <span class="source-info">{{ source }} • {{ formattedTime }}</span>
         </div>
@@ -43,11 +43,11 @@
     <!-- Footer: Link -->
     <div class="card-footer">
       <div class="severity-info">
-        <span class="label">Severity:</span>
+        <span class="label">{{ $t('hotspots.severity') }}:</span>
         <span class="value">{{ severity }}</span>
       </div>
       <a :href="url" target="_blank" class="insight-link">
-        VIEW INSIGHT
+        {{ $t('hotspots.view_insight') }}
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>

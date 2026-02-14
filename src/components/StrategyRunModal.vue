@@ -3,8 +3,8 @@
     <div class="modal-body">
       <div class="modal-header">
         <div>
-          <p class="modal-label">策略执行</p>
-          <h3>{{ strategy?.name || '选择策略' }}</h3>
+          <p class="modal-label">{{ $t('execution_list.run_modal.title') }}</p>
+          <h3>{{ strategy?.name || $t('execution_list.run_modal.select_strategy') }}</h3>
         </div>
         <button class="close-btn" @click="close">✕</button>
       </div>
@@ -12,45 +12,45 @@
       <div class="modal-content">
         <div class="field-grid">
           <div class="field-group">
-            <label>方向</label>
+            <label>{{ $t('execution_list.run_modal.direction') }}</label>
             <select v-model="form.direction">
-              <option value="">自动</option>
+              <option value="">{{ $t('execution_list.run_modal.auto') }}</option>
               <option value="LONG">LONG</option>
               <option value="SHORT">SHORT</option>
             </select>
           </div>
           <div class="field-group">
-            <label>优先级</label>
-            <input v-model.number="form.priority" type="number" min="0" placeholder="可选" />
+            <label>{{ $t('execution_list.run_modal.priority') }}</label>
+            <input v-model.number="form.priority" type="number" min="0" :placeholder="$t('execution_list.run_modal.optional')" />
           </div>
         </div>
 
         <div class="field-grid">
           <div class="field-group">
-            <label>目标股票池</label>
+            <label>{{ $t('execution_list.run_modal.target_universe') }}</label>
             <select v-model="form.target_universe">
-              <option value="US_LARGE_MID_TECH">美股中大型科技</option>
-              <option value="PRECIOUS_METALS">黄金白银贵金属</option>
-              <option value="US_SMALL_TECH">美股科技潜力股</option>
-              <option value="TRADITIONAL_QUALITY">传统行业优质资产</option>
-              <option value="EMERGING_QUALITY">新兴行业优质资产</option>
-              <option value="BLOCKCHAIN_CRYPTO">区块链/加密相关</option>
+              <option value="US_LARGE_MID_TECH">{{ $t('execution_list.run_modal.universes.US_LARGE_MID_TECH') }}</option>
+              <option value="PRECIOUS_METALS">{{ $t('execution_list.run_modal.universes.PRECIOUS_METALS') }}</option>
+              <option value="US_SMALL_TECH">{{ $t('execution_list.run_modal.universes.US_SMALL_TECH') }}</option>
+              <option value="TRADITIONAL_QUALITY">{{ $t('execution_list.run_modal.universes.TRADITIONAL_QUALITY') }}</option>
+              <option value="EMERGING_QUALITY">{{ $t('execution_list.run_modal.universes.EMERGING_QUALITY') }}</option>
+              <option value="BLOCKCHAIN_CRYPTO">{{ $t('execution_list.run_modal.universes.BLOCKCHAIN_CRYPTO') }}</option>
             </select>
           </div>
           <div class="field-group">
-            <label>最低评分</label>
+            <label>{{ $t('execution_list.run_modal.min_score') }}</label>
             <input v-model.number="form.min_score" type="number" min="0" max="100" />
           </div>
         </div>
 
         <div class="field-grid">
           <div class="field-group">
-            <label>最多展示</label>
+            <label>{{ $t('execution_list.run_modal.max_results') }}</label>
             <input v-model.number="form.max_results" type="number" min="1" max="50" />
           </div>
           <div class="field-group">
-            <label>通知频道（逗号分隔）</label>
-            <input v-model="notifyChannelsInput" type="text" placeholder="例如 slack-strategy|email-trading" />
+            <label>{{ $t('execution_list.run_modal.notify_channels') }}</label>
+            <input v-model="notifyChannelsInput" type="text" :placeholder="$t('execution_list.run_modal.placeholder_channels')" />
           </div>
         </div>
 
@@ -58,10 +58,10 @@
       </div>
 
       <div class="modal-actions">
-        <button class="ghost-btn" @click="close" :disabled="loading">取消</button>
+        <button class="ghost-btn" @click="close" :disabled="loading">{{ $t('execution_list.run_modal.cancel') }}</button>
         <button class="primary-btn" @click="submit" :disabled="loading">
-          <span v-if="!loading">确认运行</span>
-          <span v-else>提交中...</span>
+          <span v-if="!loading">{{ $t('execution_list.run_modal.confirm') }}</span>
+          <span v-else>{{ $t('execution_list.run_modal.submitting') }}</span>
         </button>
       </div>
     </div>
@@ -71,6 +71,9 @@
 <script setup lang="ts">
 import type { StrategyDetailView, StrategyRunRequest } from '../api/client';
 import { PropType, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{ show: boolean; strategy: StrategyDetailView | null }>();
 const emit = defineEmits<{ (e: 'close'): void; (e: 'submit', payload: StrategyRunRequest): void }>();
@@ -124,8 +127,8 @@ async function submit() {
 
     emit('submit', payload);
   } catch (error: any) {
-    console.error('提交失败：', error);
-    errorMsg.value = '提交失败，请重试';
+    console.error('Submit strategy run failed:', error);
+    errorMsg.value = t('execution_list.run_modal.error_submit');
   } finally {
     loading.value = false;
   }

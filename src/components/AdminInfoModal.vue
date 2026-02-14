@@ -1,23 +1,23 @@
 <template>
   <div v-if="show" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal">
-      <h3>管理员信息</h3>
-      <div class="modal-row"><strong>用户名</strong><span>{{ username || '-' }}</span></div>
-      <div class="modal-row"><strong>Token 到期</strong><span>{{ expiryText || '-' }}</span></div>
-      <div class="modal-row"><strong>Payload</strong>
+      <h3>{{ $t('auth.info_modal.title') }}</h3>
+      <div class="modal-row"><strong>{{ $t('auth.info_modal.username') }}</strong><span>{{ username || '-' }}</span></div>
+      <div class="modal-row"><strong>{{ $t('auth.info_modal.token_expiry') }}</strong><span>{{ expiryText || '-' }}</span></div>
+      <div class="modal-row"><strong>{{ $t('auth.info_modal.payload') }}</strong>
         <pre class="payload">{{ tokenPayload ? JSON.stringify(tokenPayload, null, 2) : '-' }}</pre>
       </div>
       <div class="modal-row">
-        <strong>Raw Token</strong>
+        <strong>{{ $t('auth.info_modal.raw_token') }}</strong>
         <div class="raw-token">
           <input readonly :value="showRaw ? rawToken : maskedToken" class="raw-input" />
-          <button class="small-btn" @click="$emit('toggle-raw')">{{ showRaw ? '隐藏' : '显示' }}</button>
-          <button class="small-btn" @click="$emit('copy')">复制</button>
+          <button class="small-btn" @click="$emit('toggle-raw')">{{ showRaw ? $t('auth.info_modal.hide') : $t('auth.info_modal.show') }}</button>
+          <button class="small-btn" @click="$emit('copy')">{{ $t('auth.info_modal.copy') }}</button>
         </div>
       </div>
       <div class="modal-actions">
-        <button class="small-btn" @click="$emit('logout')">登出</button>
-        <button class="small-btn" @click="$emit('close')">关闭</button>
+        <button class="small-btn" @click="$emit('logout')">{{ $t('auth.info_modal.logout') }}</button>
+        <button class="small-btn" @click="$emit('close')">{{ $t('auth.info_modal.close') }}</button>
       </div>
     </div>
   </div>

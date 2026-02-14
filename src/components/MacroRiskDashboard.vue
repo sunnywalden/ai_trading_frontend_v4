@@ -1,12 +1,12 @@
 <template>
   <div class="macro-dashboard">
     <div class="dashboard-header">
-      <h2>宏观风险分析</h2>
+      <h2>{{ $t('macro.title') }}</h2>
       <div class="overall-risk">
         <div class="risk-score" :class="overallRiskClass">{{ data.overall_risk.score }}</div>
         <div class="risk-label">
-          <div class="label-text">综合评分</div>
-          <div class="risk-level" :class="overallRiskClass">{{ data.overall_risk.level }}</div>
+          <div class="label-text">{{ $t('macro.overall_score') }}</div>
+          <div class="risk-level" :class="overallRiskClass">{{ formatLevel(data.overall_risk.level) }}</div>
         </div>
       </div>
     </div>
@@ -15,18 +15,18 @@
     <div class="ai-summary-section" v-if="data.ai_analysis">
       <div class="summary-header">
         <span class="summary-icon">🤖</span>
-        <h3>AI 综合分析</h3>
+        <h3>{{ $t('macro.ai_analysis') }}</h3>
       </div>
       <p class="summary-content">{{ data.ai_analysis }}</p>
     </div>
 
     <!-- 风险警报 -->
     <div class="alerts-section" v-if="data.alerts && data.alerts.length > 0">
-      <h3>⚠️ 风险警报</h3>
+      <h3>⚠️ {{ $t('macro.risk_alerts') }}</h3>
       <div class="alerts-list">
         <div v-for="(alert, index) in data.alerts" :key="index" class="alert-item" :class="'alert-' + alert.level.toLowerCase()">
           <div class="alert-header">
-            <span class="alert-level">{{ alert.level }}</span>
+            <span class="alert-level">{{ formatLevel(alert.level) }}</span>
             <span class="alert-dimension">{{ alert.dimension }}</span>
           </div>
           <p class="alert-message">{{ alert.message }}</p>
@@ -42,7 +42,7 @@
         <div class="risk-header">
           <div class="risk-icon">💰</div>
           <div class="risk-info">
-            <h3>货币政策</h3>
+            <h3>{{ $t('macro.monetary_policy') }}</h3>
             <p class="risk-status">{{ data.risk_breakdown.monetary_policy.description }}</p>
           </div>
           <div class="risk-score-badge" :class="getScoreClass(data.risk_breakdown.monetary_policy.score)">
@@ -56,7 +56,7 @@
         <div class="risk-header">
           <div class="risk-icon">🌍</div>
           <div class="risk-info">
-            <h3>地缘政治</h3>
+            <h3>{{ $t('macro.geopolitical') }}</h3>
             <p class="risk-status">{{ data.risk_breakdown.geopolitical.description }}</p>
           </div>
           <div class="risk-score-badge" :class="getScoreClass(data.risk_breakdown.geopolitical.score)">
@@ -70,7 +70,7 @@
         <div class="risk-header">
           <div class="risk-icon">📈</div>
           <div class="risk-info">
-            <h3>行业泡沫</h3>
+            <h3>{{ $t('macro.sector_bubble') }}</h3>
             <p class="risk-status">{{ data.risk_breakdown.sector_bubble.description }}</p>
           </div>
           <div class="risk-score-badge" :class="getScoreClass(data.risk_breakdown.sector_bubble.score)">
@@ -84,7 +84,7 @@
         <div class="risk-header">
           <div class="risk-icon">📊</div>
           <div class="risk-info">
-            <h3>经济周期</h3>
+            <h3>{{ $t('macro.economic_cycle') }}</h3>
             <p class="risk-status">{{ data.risk_breakdown.economic_cycle.description }}</p>
           </div>
           <div class="risk-score-badge" :class="getScoreClass(data.risk_breakdown.economic_cycle.score)">
@@ -98,7 +98,7 @@
         <div class="risk-header">
           <div class="risk-icon">😱</div>
           <div class="risk-info">
-            <h3>市场情绪</h3>
+            <h3>{{ $t('macro.market_sentiment') }}</h3>
             <p class="risk-status">{{ data.risk_breakdown.market_sentiment.description }}</p>
           </div>
           <div class="risk-score-badge" :class="getScoreClass(data.risk_breakdown.market_sentiment.score)">
@@ -110,7 +110,7 @@
 
     <!-- 主要关注点 -->
     <div class="key-concerns" v-if="data.key_concerns && data.key_concerns.length > 0">
-      <h3>🔍 主要关注点</h3>
+      <h3>🔍 {{ $t('macro.key_concerns') }}</h3>
       <ul class="concerns-list">
         <li v-for="(concern, index) in data.key_concerns" :key="index">{{ concern }}</li>
       </ul>
@@ -118,7 +118,7 @@
 
     <!-- 总体建议 -->
     <div class="recommendations-section" v-if="recommendationsList.length">
-      <h3>💡 总体建议</h3>
+      <h3>💡 {{ $t('macro.overall_recommendations') }}</h3>
       <ul v-if="recommendationsList.length > 1" class="recommendations-list">
         <li v-for="(item, index) in recommendationsList" :key="index">{{ item }}</li>
       </ul>
@@ -129,7 +129,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { MacroRiskOverviewResponse } from '../api/client';
+
+const { t } = useI18n();
 
 interface Props {
   data: MacroRiskOverviewResponse;
@@ -150,6 +153,10 @@ const recommendationsList = computed(() => {
   if (!raw) return [] as string[];
   return Array.isArray(raw) ? raw : [raw];
 });
+
+function formatLevel(level: string) {
+  return t(`macro.levels.${(level || 'unknown').toLowerCase()}`);
+}
 
 function getScoreClass(score: number): string {
   if (score >= 70) return 'score-safe';

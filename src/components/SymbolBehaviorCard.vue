@@ -4,57 +4,56 @@
       <h3>{{ symbol }}</h3>
       <span class="tier" :class="'tier-' + tier.toLowerCase()">{{ tier }}</span>
     </div>
-    <p class="label">行为画像（基于历史交易数据实时计算）</p>
+    <p class="label">{{ $t('behavior.card.profile') }}</p>
 
     <div class="grid">
       <div class="metric">
-        <span class="name">行为评分</span>
+        <span class="name">{{ $t('behavior.card.score') }}</span>
         <span class="value">{{ behaviorScore }}</span>
       </div>
       <div class="metric">
-        <span class="name">卖飞评分</span>
+        <span class="name">{{ $t('behavior.card.sell_fly') }}</span>
         <span class="value">{{ sellFlyScore }}</span>
       </div>
       <div class="metric">
-        <span class="name">执行纪律</span>
+        <span class="name">{{ $t('behavior.card.discipline') }}</span>
         <span class="value">{{ typeof disciplineScore === 'number' ? disciplineScore : '-' }}</span>
       </div>
       <div class="metric">
-        <span class="name">过度交易</span>
+        <span class="name">{{ $t('behavior.card.overtrade') }}</span>
         <span class="value">{{ overtradeScore }}</span>
       </div>
       <div class="metric">
-        <span class="name">报复性交易</span>
+        <span class="name">{{ $t('behavior.card.revenge') }}</span>
         <span class="value">{{ revengeScore }}</span>
       </div>
     </div>
 
     <div class="grid grid-secondary">
       <div class="metric small">
-        <span class="name">统计窗口成交笔数</span>
+        <span class="name">{{ $t('behavior.card.trades_in_window') }}</span>
         <span class="value">{{ tradeCount }}</span>
       </div>
       <div class="metric small">
-        <span class="name">最近卖飞次数</span>
+        <span class="name">{{ $t('behavior.card.recent_sell_fly') }}</span>
         <span class="value">{{ sellFlyEvents }}</span>
       </div>
       <div class="metric small">
-        <span class="name">卖飞成本占比</span>
+        <span class="name">{{ $t('behavior.card.sell_fly_ratio') }}</span>
         <span class="value">{{ (sellFlyExtraCostRatio * 100).toFixed(1) }}%</span>
       </div>
       <div class="metric small">
-        <span class="name">过度交易指数</span>
+        <span class="name">{{ $t('behavior.card.overtrade_index') }}</span>
         <span class="value">{{ overtradeIndex.toFixed(2) }}</span>
       </div>
       <div class="metric small">
-        <span class="name">报复性交易次数</span>
+        <span class="name">{{ $t('behavior.card.recent_revenge') }}</span>
         <span class="value">{{ revengeEvents }}</span>
       </div>
     </div>
 
     <p class="hint">
-      行为越“躁动”，该标的的 ShockPolicy / EarningsPolicy 就越收紧，
-      自动对冲更倾向于减少裸暴露、增加保护性对冲。
+      {{ $t('behavior.card.hint') }}
     </p>
   </div>
 </template>

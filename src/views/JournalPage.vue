@@ -1,19 +1,19 @@
 <template>
   <div class="journal-page">
-    <h1 class="page-title">交易日志</h1>
+    <h1 class="page-title">{{ $t('journal.title') }}</h1>
 
     <!-- 操作栏 -->
     <div class="toolbar">
-      <button class="btn-primary" @click="showCreate = true">+ 新建日志</button>
+      <button class="btn-primary" @click="showCreate = true">+ {{ $t('journal.new_journal') }}</button>
       <select v-model="filterStatus" @change="reload">
-        <option value="">全部</option>
-        <option value="DRAFT">草稿</option>
-        <option value="COMPLETED">已完成</option>
-        <option value="REVIEWED">已复盘</option>
+        <option value="">{{ $t('journal.filter_all') }}</option>
+        <option value="DRAFT">{{ $t('journal.status_draft') }}</option>
+        <option value="COMPLETED">{{ $t('journal.status_completed') }}</option>
+        <option value="REVIEWED">{{ $t('journal.status_reviewed') }}</option>
       </select>
     </div>
 
-    <div v-if="loading" class="loading">加载中...</div>
+    <div v-if="loading" class="loading">{{ $t('common.loading') }}</div>
 
     <!-- 列表 -->
     <div class="journal-list">
@@ -24,57 +24,57 @@
           <span class="j-status" :class="'s-' + (j.journal_status || '').toLowerCase()">{{ j.journal_status }}</span>
         </div>
         <div class="j-body">
-          <span>入场 {{ j.entry_date || '-' }} @ ${{ j.entry_price || '-' }}</span>
-          <span>出场 {{ j.exit_date || '-' }} @ ${{ j.exit_price || '-' }}</span>
+          <span>{{ $t('journal.entry') }} {{ j.entry_date || '-' }} @ ${{ j.entry_price || '-' }}</span>
+          <span>{{ $t('journal.exit') }} {{ j.exit_date || '-' }} @ ${{ j.exit_price || '-' }}</span>
           <span class="j-pnl" :class="(j.realized_pnl ?? 0) >= 0 ? 'pnl-pos' : 'pnl-neg'">
-            PnL: ${{ (j.realized_pnl ?? 0).toFixed(2) }}
+            {{ $t('journal.pnl') }}: ${{ (j.realized_pnl ?? 0).toFixed(2) }}
           </span>
         </div>
         <div class="j-footer">
           <span v-if="j.emotion_state" class="j-emotion">{{ j.emotion_state }}</span>
-          <span v-if="j.execution_quality" class="j-quality">执行质量: {{ j.execution_quality }}/5</span>
-          <button v-if="j.journal_status !== 'REVIEWED' && j.journal_status !== 'FAILED'" class="btn-small" @click.stop="doAiReview(j.id)">AI 复盘</button>
+          <span v-if="j.execution_quality" class="j-quality">{{ $t('journal.execution_quality') }}: {{ j.execution_quality }}/5</span>
+          <button v-if="j.journal_status !== 'REVIEWED' && j.journal_status !== 'FAILED'" class="btn-small" @click.stop="doAiReview(j.id)">{{ $t('journal.ai_review_btn') }}</button>
         </div>
         <div v-if="j.journal_status === 'FAILED' && j.lesson_learned" class="j-error-msg">
-          <strong>失败原因：</strong>{{ j.lesson_learned }}
+          <strong>{{ $t('journal.fail_reason') }}：</strong>{{ j.lesson_learned }}
         </div>
         <div v-if="j.ai_review" class="j-review">
-          <strong>AI 复盘：</strong>
+          <strong>{{ $t('journal.ai_review_label') }}：</strong>
           <p>{{ j.ai_review }}</p>
         </div>
       </div>
-      <div v-if="(!journals || journals.length === 0) && !loading" class="empty">暂无交易日志</div>
+      <div v-if="(!journals || journals.length === 0) && !loading" class="empty">{{ $t('journal.empty') }}</div>
     </div>
 
     <!-- 分页 -->
     <div v-if="total > 20" class="pagination">
-      <button :disabled="page <= 1" @click="goPage(page - 1)">上一页</button>
+      <button :disabled="page <= 1" @click="goPage(page - 1)">{{ $t('journal.prev_page') }}</button>
       <span>{{ page }} / {{ Math.ceil(total / 20) }}</span>
-      <button :disabled="page >= Math.ceil(total / 20)" @click="goPage(page + 1)">下一页</button>
+      <button :disabled="page >= Math.ceil(total / 20)" @click="goPage(page + 1)">{{ $t('journal.next_page') }}</button>
     </div>
 
     <!-- 创建弹窗 -->
     <div v-if="showCreate" class="modal-overlay" @click.self="showCreate = false">
       <div class="modal">
-        <h3>新建交易日志</h3>
+        <h3>{{ $t('journal.modal_new_title') }}</h3>
         <div class="form-grid">
-          <label>标的 <input v-model="form.symbol" placeholder="AAPL" /></label>
-          <label>方向
+          <label>{{ $t('journal.form.symbol') }} <input v-model="form.symbol" placeholder="AAPL" /></label>
+          <label>{{ $t('journal.form.direction') }}
             <select v-model="form.direction"><option value="BUY">BUY</option><option value="SELL">SELL</option></select>
           </label>
-          <label>入场日期 <input v-model="form.entry_date" type="date" /></label>
-          <label>入场价 <input v-model.number="form.entry_price" type="number" step="0.01" /></label>
-          <label>出场日期 <input v-model="form.exit_date" type="date" /></label>
-          <label>出场价 <input v-model.number="form.exit_price" type="number" step="0.01" /></label>
-          <label>数量 <input v-model.number="form.quantity" type="number" /></label>
-          <label>已实现盈亏 <input v-model.number="form.realized_pnl" type="number" step="0.01" /></label>
-          <label>执行质量(1-5) <input v-model.number="form.execution_quality" type="number" min="1" max="5" /></label>
-          <label>情绪 <input v-model="form.emotion_state" placeholder="calm / fomo / revenge" /></label>
-          <label class="full">反思 <textarea v-model="form.lesson_learned" rows="3"></textarea></label>
+          <label>{{ $t('journal.form.entry_date') }} <input v-model="form.entry_date" type="date" /></label>
+          <label>{{ $t('journal.form.entry_price') }} <input v-model.number="form.entry_price" type="number" step="0.01" /></label>
+          <label>{{ $t('journal.form.exit_date') }} <input v-model="form.exit_date" type="date" /></label>
+          <label>{{ $t('journal.form.exit_price') }} <input v-model.number="form.exit_price" type="number" step="0.01" /></label>
+          <label>{{ $t('journal.form.quantity') }} <input v-model.number="form.quantity" type="number" /></label>
+          <label>{{ $t('journal.form.realized_pnl') }} <input v-model.number="form.realized_pnl" type="number" step="0.01" /></label>
+          <label>{{ $t('journal.form.execution_quality_label') }} <input v-model.number="form.execution_quality" type="number" min="1" max="5" /></label>
+          <label>{{ $t('journal.form.emotion') }} <input v-model="form.emotion_state" placeholder="calm / fomo / revenge" /></label>
+          <label class="full">{{ $t('journal.form.reflection') }} <textarea v-model="form.lesson_learned" rows="3"></textarea></label>
         </div>
         <div class="modal-actions">
-          <button class="btn-secondary" @click="showCreate = false">取消</button>
-          <button class="btn-primary" @click="submitCreate">创建</button>
+          <button class="btn-secondary" @click="showCreate = false">{{ $t('common.cancel') }}</button>
+          <button class="btn-primary" @click="submitCreate">{{ $t('common.confirm') }}</button>
         </div>
       </div>
     </div>

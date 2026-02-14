@@ -3,13 +3,13 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
         <div>
-          <h2>⚡ 执行列表</h2>
-          <p>集合信号、策略与计划的核心操作中心</p>
+          <h2>{{ $t('execution_list.title') }}</h2>
+          <p>{{ $t('execution_list.subtitle') }}</p>
         </div>
       </div>
       <ExecutionListHeader 
         v-if="recentStrategyRun"
-        :universe-name="recentStrategyRun.target_universe || '全市场'"
+        :universe-name="recentStrategyRun.target_universe || $t('common.all_market')"
         :min-score="recentStrategyRun.min_score || 0"
         :max-results="recentStrategyRun.max_results || 50"
         :force-refresh="false"
@@ -19,12 +19,12 @@
     <section class="strategy-management">
       <div class="strategy-management__head">
         <div>
-          <h3>⚙️ 策略管理</h3>
-          <p>浏览平台内置私募精选策略、触发异步运行并同步进度</p>
+          <h3>{{ $t('execution_list.strategy_mgmt.title') }}</h3>
+          <p>{{ $t('execution_list.strategy_mgmt.subtitle') }}</p>
         </div>
         <div class="strategy-status">
           <p v-if="strategyError" class="strategy-error">{{ strategyError }}</p>
-          <p v-else-if="strategyLoading" class="strategy-loading">策略加载中...</p>
+          <p v-else-if="strategyLoading" class="strategy-loading">{{ $t('execution_list.strategy_mgmt.loading') }}</p>
           <p v-else-if="strategyActionMessage" class="strategy-message">{{ strategyActionMessage }}</p>
         </div>
       </div>
@@ -39,7 +39,7 @@
           />
         </div>
         <div v-else class="strategy-empty">
-          <p class="strategy-empty-text">暂无可用策略，稍后刷新页面看看</p>
+          <p class="strategy-empty-text">{{ $t('execution_list.strategy_mgmt.empty') }}</p>
         </div>
         <StrategyRecentRunCard
           v-if="recentStrategyRun"
@@ -54,9 +54,9 @@
 
     <section class="strategy-history-section">
       <div class="strategy-history-header">
-        <h3>🧾 策略运行历史（最近 {{ strategyHistoryLimit }} 次）</h3>
+        <h3>{{ $t('execution_list.history.title', { n: strategyHistoryLimit }) }}</h3>
         <button class="refresh-history-btn" @click="loadStrategyRunHistory" :disabled="strategyHistoryLoading">
-          {{ strategyHistoryLoading ? '加载中...' : '刷新策略历史' }}
+          {{ strategyHistoryLoading ? $t('common.loading') : $t('execution_list.history.refresh') }}
         </button>
       </div>
 
@@ -64,13 +64,13 @@
         <table class="runs-table">
           <thead>
             <tr>
-              <th>Run ID</th>
-              <th>策略 ID</th>
-              <th>状态</th>
-              <th>命中 / 命中率</th>
-              <th>平均强度</th>
-              <th>时间</th>
-              <th>操作</th>
+              <th>{{ $t('execution_list.history.table.run_id') }}</th>
+              <th>{{ $t('execution_list.history.table.strategy_id') }}</th>
+              <th>{{ $t('execution_list.history.table.status') }}</th>
+              <th>{{ $t('execution_list.history.table.hits') }}</th>
+              <th>{{ $t('execution_list.history.table.avg_strength') }}</th>
+              <th>{{ $t('execution_list.history.table.time') }}</th>
+              <th>{{ $t('execution_list.history.table.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -85,14 +85,14 @@
                 <span v-if="run.finished_at">→ {{ formatDateTime(run.finished_at) }}</span>
               </td>
               <td>
-                <button class="view-detail-btn" @click.stop="handleViewStrategyResults(run.run_id)">查看结果</button>
-                <button class="view-detail-btn" @click.stop="handleExportStrategyRun(run.run_id)">导出</button>
+                <button class="view-detail-btn" @click.stop="handleViewStrategyResults(run.run_id)">{{ $t('execution_list.history.table.view_results') }}</button>
+                <button class="view-detail-btn" @click.stop="handleExportStrategyRun(run.run_id)">{{ $t('execution_list.history.table.export') }}</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p v-else class="info-message">暂无策略运行记录</p>
+      <p v-else class="info-message">{{ $t('execution_list.history.empty') }}</p>
     </section>
 
     <StrategyRunModal
@@ -116,8 +116,11 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import OpportunitiesGuideline from '../components/OpportunitiesGuideline.vue';
 import ExecutionListHeader from '../components/ExecutionListHeader.vue';
+
+const { t, locale } = useI18n();
 import StrategyCard from '../components/StrategyCard.vue';
 import StrategyRunModal from '../components/StrategyRunModal.vue';
 import StrategyRecentRunCard from '../components/StrategyRecentRunCard.vue';
@@ -157,8 +160,13 @@ const selectedRunId = ref('');
 const modalAssets = ref<StrategyRunAssetView[]>([]);
 
 function formatDateTime(isoString: string): string {
-  const date = new Date(isoString);
-  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  if (!isoString) return '--';
+  return new Date(isoString).toLocaleString(locale.value, {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 async function loadStrategies() {
@@ -168,8 +176,8 @@ async function loadStrategies() {
     const response = await fetchStrategies({ limit: 100 });
     strategies.value = response.strategies || [];
   } catch (err) {
-    console.error('加载策略失败:', err);
-    strategyError.value = '策略列表暂时不可用';
+    console.error('Failed to load strategies:', err);
+    strategyError.value = t('execution_list.strategy_mgmt.error_load');
   } finally {
     strategyLoading.value = false;
   }
@@ -182,8 +190,8 @@ async function openStrategyRunModal(strategy: StrategySummaryView) {
     modalStrategy.value = response.strategy;
     showStrategyModal.value = true;
   } catch (err) {
-    console.error('加载策略详情失败:', err);
-    strategyError.value = '无法获取策略详情';
+    console.error('Failed to load strategy details:', err);
+    strategyError.value = t('execution_list.strategy_mgmt.error_detail');
   } finally {
     strategyLoading.value = false;
   }
@@ -198,15 +206,15 @@ async function handleStrategyRun(payload: StrategyRunRequest) {
   if (!modalStrategy.value) return;
   const strategyId = modalStrategy.value.id;
   closeStrategyModal();
-  strategyActionMessage.value = '策略已提交，正在等待执行';
+  strategyActionMessage.value = t('execution_list.strategy_mgmt.run_submitted');
   try {
     const result = await runStrategy(strategyId, payload);
     await pollStrategyStatus(result.run_id);
     await loadStrategyRunHistory();
     await loadLatestStrategyRun();
   } catch (err) {
-    console.error('运行策略失败:', err);
-    strategyError.value = '策略执行失败，请稍后重试';
+    console.error('Failed to run strategy:', err);
+    strategyError.value = t('execution_list.strategy_mgmt.error_run');
   } finally {
     setTimeout(() => {
       strategyActionMessage.value = '';
@@ -249,7 +257,7 @@ async function pollStrategyStatus(runId: string) {
       return;
     }
   } catch (err) {
-    console.warn('查询策略状态失败，稍后重试:', err);
+    console.warn('Query strategy status failed, will retry later:', err);
   }
   scheduleStrategyPoll(runId);
 }
@@ -271,7 +279,7 @@ async function loadStrategyRunResults(runId: string) {
     const response = await fetchStrategyRunResults(runId);
     strategyRunAssets.value = response.assets || [];
   } catch (err) {
-    console.warn('加载策略运行结果失败:', err);
+    console.warn('Load strategy results failed:', err);
   }
 }
 
@@ -280,7 +288,7 @@ async function loadStrategyModalResults(runId: string) {
     const response = await fetchStrategyRunResults(runId);
     modalAssets.value = response.assets || [];
   } catch (err) {
-    console.warn('加载详细结果失败:', err);
+    console.warn('Load detail results failed:', err);
   }
 }
 
@@ -292,8 +300,8 @@ async function handleExportStrategyRun(runId: string) {
     // 直接打开返回的 URL。Vite Proxy 已配置转发 /exports 路径到后端端口
     window.open(response.download_url, '_blank');
   } catch (err) {
-    console.error('导出失败:', err);
-    strategyError.value = '导出失败，请稍后重试';
+    console.error('Export failed:', err);
+    strategyError.value = t('execution_list.messages.export_failed');
   } finally {
     strategyExporting.value = false;
   }

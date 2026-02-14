@@ -2,29 +2,29 @@
   <div v-if="run" class="recent-run-card">
     <div class="card-header">
       <div>
-        <p class="small-label">最近策略运行</p>
+        <p class="small-label">{{ $t('execution_list.recent_run.title') }}</p>
         <h3>{{ run.run_id }}</h3>
-        <p class="subtitle">状态：{{ run.status }} · 尝试次数 {{ run.attempt }}</p>
+        <p class="subtitle">{{ $t('execution_list.recent_run.status_info', { status: run.status, attempt: run.attempt }) }}</p>
       </div>
-      <button class="export-btn" @click="$emit('export', run.run_id)">导出 CSV</button>
+      <button class="export-btn" @click="$emit('export', run.run_id)">{{ $t('execution_list.recent_run.export_csv') }}</button>
     </div>
 
     <div class="progress-wrap">
       <div class="progress-bar" :style="{ width: `${run.progress}%` }"></div>
-      <span class="progress-label">进度：{{ run.progress }}%</span>
+      <span class="progress-label">{{ $t('execution_list.recent_run.progress', { progress: run.progress }) }}</span>
     </div>
 
     <div class="timeline" v-if="timelineEntries.length">
       <div v-for="entry in timelineEntries" :key="entry.phase" class="timeline-item">
         <span class="phase-name">{{ entry.phase }}</span>
-        <span class="phase-time">{{ entry.start }} → {{ entry.end || '进行中' }}</span>
+        <span class="phase-time">{{ entry.start }} → {{ entry.end || $t('execution_list.recent_run.in_progress') }}</span>
       </div>
     </div>
 
     <div v-if="assets && assets.length" class="assets-section">
       <div class="assets-header">
-        <strong>Top 标的</strong>
-        <button class="ghost-btn" @click="$emit('view-results', run.run_id)">查看完整结果</button>
+        <strong>{{ $t('execution_list.recent_run.top_assets') }}</strong>
+        <button class="ghost-btn" @click="$emit('view-results', run.run_id)">{{ $t('execution_list.recent_run.view_full') }}</button>
       </div>
         <div
           v-for="asset in topAssets"
@@ -33,7 +33,7 @@
         >
           <div class="asset-main">
             <span class="symbol">{{ asset.symbol }}</span>
-            <span class="strength">强度: {{ asset.signal_strength?.toFixed(1) }}</span>
+            <span class="strength">{{ $t('execution_list.recent_run.strength', { val: asset.signal_strength?.toFixed(1) }) }}</span>
             <div class="risk-flags">
               <span v-for="flag in asset.risk_flags" :key="flag" class="risk-tag">{{ flag }}</span>
             </div>
@@ -47,6 +47,9 @@
 <script setup lang="ts">
 import type { StrategyRunStatusView, StrategyRunAssetView } from '../api/client';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 const props = defineProps<{ run: StrategyRunStatusView | null; assets?: StrategyRunAssetView[] }>();
 const emit = defineEmits<{ (e: 'export', runId: string): void; (e: 'view-results', runId: string): void }>();
@@ -55,7 +58,7 @@ const timelineEntries = computed(() => {
   if (!props.run?.timeline) return [];
   return Object.entries(props.run.timeline).map(([phase, payload]) => ({
     phase,
-    start: payload?.start ? formatTime(payload.start) : '未知',
+    start: payload?.start ? formatTime(payload.start) : t('common.unknown'),
     end: payload?.end ? formatTime(payload.end) : '',
   }));
 });
@@ -68,7 +71,12 @@ const topAssets = computed(() => {
 function formatTime(value: string): string {
   try {
     const date = new Date(value);
-    return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    return date.toLocaleString(locale.value, {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   } catch (e) {
     return value;
   }
