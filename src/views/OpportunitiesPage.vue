@@ -3,11 +3,11 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
         <div>
-          <h2>🎯 策略筛选</h2>
-          <p>浏览平台内置私募精选策略、触发异步运行并同步进度</p>
+          <h2>{{ $t('opportunities.title') }}</h2>
+          <p>{{ $t('opportunities.subtitle') }}</p>
         </div>
         <el-button type="primary" @click="$router.push('/strategies')">
-          查看所有策略 →
+          {{ $t('opportunities.view_all_strategies') }}
         </el-button>
       </div>
       <ExecutionListHeader 
@@ -22,12 +22,12 @@
     <section class="strategy-management">
       <div class="strategy-management__head">
         <div>
-          <h3>⚙️ 可用策略</h3>
-          <p>点击“配置并运行”触发异步回测或实盘扫描</p>
+          <h3>{{ $t('opportunities.available_strategies') }}</h3>
+          <p>{{ $t('opportunities.hint') }}</p>
         </div>
         <div class="strategy-status">
           <p v-if="strategyError" class="strategy-error">{{ strategyError }}</p>
-          <p v-else-if="strategyLoading" class="strategy-loading">策略加载中...</p>
+          <p v-else-if="strategyLoading" class="strategy-loading">{{ $t('opportunities.loading') }}</p>
           <p v-else-if="strategyActionMessage" class="strategy-message">{{ strategyActionMessage }}</p>
         </div>
       </div>
@@ -42,7 +42,7 @@
           />
         </div>
         <div v-else class="strategy-empty">
-          <p class="strategy-empty-text">暂无可用策略，稍后刷新页面看看</p>
+          <p class="strategy-empty-text">{{ $t('opportunities.empty') }}</p>
         </div>
         <StrategyRecentRunCard
           v-if="recentStrategyRun"
@@ -57,9 +57,9 @@
 
     <section class="strategy-history-section">
       <div class="strategy-history-header">
-        <h3>🧾 策略运行历史（最近 {{ strategyHistoryLimit }} 次）</h3>
+        <h3>{{ $t('execution_list.history.title', { n: strategyHistoryLimit }) }}</h3>
         <button class="refresh-history-btn" @click="loadStrategyRunHistory" :disabled="strategyHistoryLoading">
-          {{ strategyHistoryLoading ? '加载中...' : '刷新策略历史' }}
+          {{ strategyHistoryLoading ? $t('common.loading') : $t('opportunities.refresh_history') }}
         </button>
       </div>
 
@@ -67,13 +67,13 @@
         <table class="runs-table">
           <thead>
             <tr>
-              <th>Run ID</th>
-              <th>策略 ID</th>
-              <th>状态</th>
-              <th>命中 / 命中率</th>
-              <th>平均强度</th>
-              <th>时间</th>
-              <th>操作</th>
+              <th>{{ $t('execution_list.history.table.run_id') }}</th>
+              <th>{{ $t('execution_list.history.table.strategy_id') }}</th>
+              <th>{{ $t('execution_list.history.table.status') }}</th>
+              <th>{{ $t('execution_list.history.table.hits') }}</th>
+              <th>{{ $t('execution_list.history.table.avg_strength') }}</th>
+              <th>{{ $t('execution_list.history.table.time') }}</th>
+              <th>{{ $t('execution_list.history.table.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,14 +88,14 @@
                 <span v-if="run.finished_at">→ {{ formatDateTime(run.finished_at) }}</span>
               </td>
               <td>
-                <button class="view-detail-btn" @click.stop="handleViewStrategyResults(run.run_id)">查看结果</button>
-                <button class="view-detail-btn" @click.stop="handleExportStrategyRun(run.run_id)">导出</button>
+                <button class="view-detail-btn" @click.stop="handleViewStrategyResults(run.run_id)">{{ $t('execution_list.recent_run.view_full') }}</button>
+                <button class="view-detail-btn" @click.stop="handleExportStrategyRun(run.run_id)">{{ $t('execution_list.recent_run.export_csv') }}</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p v-else class="info-message">暂无策略运行记录</p>
+      <p v-else class="info-message">{{ $t('execution_list.history.empty') }}</p>
     </section>
 
     <StrategyRunModal

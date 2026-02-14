@@ -11,11 +11,14 @@
     "no_data": "No Data",
     "search": "Search",
     "failed": "Failed",
+    "success": "Success",
     "unknown_error": "Unknown Error",
     "enabled": "Enabled",
     "disabled": "Disabled",
     "status": "Status",
     "last_updated": "Last Updated",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
     "execute": "Execute",
     "timeout": "⏱️ Request timeout, please try again later!",
     "network_error": "🌐 Network error, please check connection or backend status"
@@ -102,7 +105,9 @@
     "no_todos": "No tasks pending",
     "active_positions": "Active Positions",
     "no_positions": "No active positions",
+    "top_positions": "Top Positions",
     "active_plans": "Active Plans",
+    "active_plans_count": "{n} Active",
     "no_plans": "No active plans",
     "market_hotspots": "Market Hotspots",
     "view_all_signals": "View all {n} signals →",
@@ -185,6 +190,8 @@
     "confidence": "Confidence",
     "scores": "Scores",
     "raw_data": "Raw Data",
+    "failure_list": "Failure List",
+    "signal_details": "Signal Details",
     "cycle_complete": "Cycle Complete",
     "optimization_complete": "Optimization Complete",
     "execution_result": "Execution Result",
@@ -951,6 +958,67 @@
         "saving": "Saving..."
       }
     }
+  },
+  "strategies": {
+    "title": "Strategy Library",
+    "go_to_opportunities": "Go to Opportunities →",
+    "search_placeholder": "Search strategies...",
+    "no_strategies": "No strategies available",
+    "batch_run": "Batch Run ({n})",
+    "categories": {
+      "all": "All",
+      "mean_reversion": "Mean Reversion",
+      "trend_following": "Trend Following",
+      "multi_factor": "Multi-Factor",
+      "defense": "Defense",
+      "volatility": "Volatility",
+      "macro_hedge": "Macro Hedge"
+    },
+    "detail": {
+      "title": "Strategy Details",
+      "basic_info": "Basic Information",
+      "params": "Strategy Parameters",
+      "risk_config": "Risk Configuration",
+      "performance": "Performance Metrics",
+      "recent_signals": "Recent Signals",
+      "edit_params": "Edit Parameters",
+      "edit_params_title": "Edit Strategy Parameters",
+      "run_strategy": "Run Strategy",
+      "labels": {
+        "total_signals": "Total Signals",
+        "win_rate": "Win Rate",
+        "avg_pnl": "Avg Return",
+        "total_pnl": "Total PnL",
+        "stock_symbol": "Symbol",
+        "action": "Action",
+        "signal_strength": "Signal Strength",
+        "weight": "Weight",
+        "direction": "Direction",
+        "notes": "Notes",
+        "generated_at": "Generated At"
+      },
+      "messages": {
+        "enable_success": "Strategy enabled",
+        "disable_success": "Strategy disabled",
+        "enable_fail": "Operation failed",
+        "run_success": "Strategy run submitted",
+        "run_fail": "Run failed",
+        "save_success": "Parameters updated",
+        "save_fail": "Failed to update parameters"
+      }
+    }
+  },
+  "opportunities": {
+    "title": "Strategy Opportunities",
+    "subtitle": "Browse curated in-house strategies; trigger async runs and track progress",
+    "view_all_strategies": "View all strategies →",
+    "universe_all": "All Markets",
+    "available_strategies": "⚙️ Available Strategies",
+    "hint": "Click \"Configure & Run\" to trigger async backtests or live scans",
+    "loading": "Loading strategies...",
+    "empty": "No strategies available — try refreshing",
+    "refresh_history": "Refresh history",
+    "history_title": "🧾 Strategy run history (last {n} runs)"
   },
   "execution_list": {
     "title": "⚡ Execution List",

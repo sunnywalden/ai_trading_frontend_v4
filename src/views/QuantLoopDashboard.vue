@@ -114,11 +114,11 @@
         <div class="modal-body execution-body">
           <div class="summary-stats" v-if="executionResult.stats">
             <div class="stat-item success">
-              <div class="stat-label">成功</div>
+              <div class="stat-label">{{ $t('common.success') }}</div>
               <div class="stat-value">{{ executionResult.stats.success }}</div>
             </div>
             <div class="stat-item failed" v-if="executionResult.stats.failed > 0">
-              <div class="stat-label">失败</div>
+              <div class="stat-label">{{ $t('common.failed') }}</div>
               <div class="stat-value">{{ executionResult.stats.failed }}</div>
             </div>
           </div>
@@ -126,7 +126,7 @@
           <div class="execution-message">{{ executionResult.message }}</div>
           
           <div v-if="executionResult.details && executionResult.details.length > 0" class="failure-details">
-            <h4>失败列表</h4>
+            <h4>{{ $t('quant_loop.failure_list') }}</h4>
             <div v-for="(detail, index) in executionResult.details" :key="index" class="detail-item">
               <div class="detail-symbol">{{ detail.symbol }}</div>
               <div class="detail-message">{{ detail.message }}</div>
@@ -134,7 +134,7 @@
           </div>
           
           <div class="modal-actions">
-            <button @click="executionResult = null" class="btn-primary">确定</button>
+            <button @click="executionResult = null" class="btn-primary">{{ $t('common.confirm') }}</button>
           </div>
         </div>
       </div>
@@ -144,7 +144,7 @@
     <div v-if="selectedSignal" class="modal-overlay" @click="selectedSignal = null">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>信号详情</h3>
+          <h3>{{ $t('quant_loop.signal_details') }}</h3>
           <button @click="selectedSignal = null" class="btn-close">✕</button>
         </div>
         <div class="modal-body">

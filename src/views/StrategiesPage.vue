@@ -1,14 +1,14 @@
 <template>
   <div class="strategies-page">
     <div class="page-header">
-      <h1>策略库管理</h1>
+      <h1>{{ $t('strategies.title') }}</h1>
       <div class="header-actions">
         <el-button type="primary" @click="router.push('/opportunities')">
-          前往策略筛选 →
+          {{ $t('strategies.go_to_opportunities') }}
         </el-button>
         <el-input
           v-model="searchQuery"
-          placeholder="搜索策略..."
+          :placeholder="$t('strategies.search_placeholder')"
           style="width: 200px; margin-left: 12px;"
           clearable
           @input="handleSearch"
@@ -22,25 +22,25 @@
 
     <div class="filter-bar">
       <el-radio-group v-model="selectedCategory" @change="handleCategoryChange">
-        <el-radio-button label="">全部</el-radio-button>
-        <el-radio-button label="均值回归">均值回归</el-radio-button>
-        <el-radio-button label="趋势跟踪">趋势跟踪</el-radio-button>
-        <el-radio-button label="多因子">多因子</el-radio-button>
-        <el-radio-button label="防御">防御</el-radio-button>
-        <el-radio-button label="波动率">波动率</el-radio-button>
-        <el-radio-button label="宏观对冲">宏观对冲</el-radio-button>
+        <el-radio-button label="">{{ $t('strategies.categories.all') }}</el-radio-button>
+        <el-radio-button label="均值回归">{{ $t('strategies.categories.mean_reversion') }}</el-radio-button>
+        <el-radio-button label="趋势跟踪">{{ $t('strategies.categories.trend_following') }}</el-radio-button>
+        <el-radio-button label="多因子">{{ $t('strategies.categories.multi_factor') }}</el-radio-button>
+        <el-radio-button label="防御">{{ $t('strategies.categories.defense') }}</el-radio-button>
+        <el-radio-button label="波动率">{{ $t('strategies.categories.volatility') }}</el-radio-button>
+        <el-radio-button label="宏观对冲">{{ $t('strategies.categories.macro_hedge') }}</el-radio-button>
       </el-radio-group>
 
       <div class="batch-actions">
         <el-button @click="batchRun" :disabled="selectedStrategies.length === 0">
-          批量运行 ({{ selectedStrategies.length }})
+          {{ $t('strategies.batch_run', { n: selectedStrategies.length }) }}
         </el-button>
       </div>
     </div>
 
     <el-loading :loading="strategyStore.loading">
       <div v-if="filteredStrategies.length === 0" class="empty-state">
-        <p>暂无策略</p>
+        <p>{{ $t('strategies.no_strategies') }}</p>
       </div>
 
       <div v-else class="strategies-grid">
