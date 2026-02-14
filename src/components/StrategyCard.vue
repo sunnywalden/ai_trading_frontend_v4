@@ -23,7 +23,7 @@
       <div class="meta-item">
         <span class="meta-label">标签</span>
         <div class="tag-wrap">
-          <span v-for="tag in strategy.tags" :key="tag" class="tag-pill">{{ tag }}</span>
+          <span v-for="tag in (strategy.tags || [])" :key="tag" class="tag-pill">{{ tag }}</span>
         </div>
       </div>
     </div>
@@ -35,11 +35,16 @@
 </template>
 
 <script setup lang="ts">
-import type { StrategySummaryView } from '../api/client';
+import type { Strategy } from '@/types/strategy';
 import { computed } from 'vue';
 
-const props = defineProps<{ strategy: StrategySummaryView }>();
-const emit = defineEmits<{ (e: 'run', strategy: StrategySummaryView): void; (e: 'view', strategy: StrategySummaryView): void }>();
+type StrategyLike = Strategy | { id: string; name: string; style?: string | null; description?: string | null; is_builtin: boolean; is_active: boolean; tags: string[]; last_run_status?: string | null; last_run_at?: string | null; };
+
+const props = defineProps<{ 
+  strategy: StrategyLike;
+  performance?: { total_signals: number; win_rate: number; avg_pnl_pct: number; total_pnl: number }
+}>();
+const emit = defineEmits<{ (e: 'run', strategy: StrategyLike): void; (e: 'view', strategy: StrategyLike): void }>();
 
 const statusLabel = computed(() => {
   if (!props.strategy.last_run_status) return '未运行';

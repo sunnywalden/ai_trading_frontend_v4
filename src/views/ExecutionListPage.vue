@@ -165,7 +165,7 @@ async function loadStrategies() {
   strategyLoading.value = true;
   strategyError.value = '';
   try {
-    const response = await fetchStrategies({ limit: 6 });
+    const response = await fetchStrategies({ limit: 100 });
     strategies.value = response.strategies || [];
   } catch (err) {
     console.error('加载策略失败:', err);

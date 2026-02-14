@@ -100,6 +100,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '量化交易闭环' }
   },
   {
+    path: '/strategies',
+    name: 'Strategies',
+    component: () => import('../views/StrategiesPage.vue'),
+    meta: { title: '策略库管理' }
+  },
+  {
+    path: '/strategies/:id',
+    name: 'StrategyDetail',
+    component: () => import('../views/StrategyDetailPage.vue'),
+    meta: { title: '策略详情' }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('../views/LoginPage.vue'),
