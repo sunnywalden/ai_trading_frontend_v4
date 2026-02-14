@@ -7,13 +7,21 @@
           <input type="checkbox" v-model="executeRealTrades" />
           <span>执行真实交易</span>
         </label>
+        <label class="action-toggle filter-toggle">
+          <input 
+            type="checkbox" 
+            :checked="filterByPosition"
+            @change="$emit('update:filterByPosition', ($event.target as HTMLInputElement).checked)"
+          />
+          <span>持仓过滤</span>
+        </label>
         <button 
           class="btn-execute"
           :class="{ disabled: selectedSignals.size === 0, danger: executeRealTrades }"
           :disabled="selectedSignals.size === 0"
           @click="executeSelected"
         >
-          {{ executeRealTrades ? '⚠️ 确认执行 (真实)' : '执行选中信号' }} ({{ selectedSignals.size }})
+          {{ executeRealTrades ? '执行(真实)' : '执行选中' }} ({{ selectedSignals.size }})
         </button>
         <button 
           class="btn-reject"
@@ -21,13 +29,13 @@
           :disabled="selectedSignals.size === 0"
           @click="rejectSelected"
         >
-          拒绝选中信号 ({{ selectedSignals.size }})
+          拒绝选中 ({{ selectedSignals.size }})
         </button>
       </div>
     </div>
     
     <div v-if="signals.length === 0" class="empty-state">
-      <p>暂无待执行信号</p>
+      <p>暂无信号</p>
     </div>
     
     <div v-else class="table-container">
@@ -43,15 +51,15 @@
               />
             </th>
             <th>标的</th>
-            <th>信号类型</th>
+            <th>类型</th>
             <th>方向</th>
-            <th>当前持仓</th>
-            <th>信号强度</th>
+            <th>持仓</th>
+            <th>强度</th>
             <th>置信度</th>
             <th>预期收益</th>
             <th>风险评分</th>
             <th>建议数量</th>
-            <th>生成时间</th>
+            <th>时间</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -135,7 +143,8 @@ import { ref, computed } from 'vue'
 import { TradingSignal } from '@/api/quantLoopService'
 
 const props = defineProps<{
-  signals: TradingSignal[]
+  signals: TradingSignal[],
+  filterByPosition: boolean
 }>()
 
 const emit = defineEmits<{
@@ -143,7 +152,9 @@ const emit = defineEmits<{
   'execute-single': [{ signal: TradingSignal, dryRun: boolean }]
   'reject': [signal: TradingSignal]
   'reject-batch': [signals: TradingSignal[]]
+  // eslint-disable-next-line vue/no-unused-properties
   'view-details': [signal: TradingSignal]
+  'update:filterByPosition': [value: boolean]
 }>()
 
 const selectedSignals = ref<Set<string>>(new Set())
@@ -281,17 +292,20 @@ function formatDirection(direction: string) {
 
 <style scoped>
 .pending-signals-table {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 20px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .header-actions {
@@ -305,122 +319,164 @@ function formatDirection(direction: string) {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #94a3b8;
+  color: #cbd5e1;
   cursor: pointer;
   margin-right: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.action-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
 }
 
 .action-toggle input {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: #8b5cf6;
+}
+
+.action-toggle .hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-left: -4px;
 }
 
 .btn-execute.danger {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .btn-execute.danger:hover {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
 }
 
 h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   color: #f1f5f9;
+  font-weight: 600;
 }
 
 .btn-execute {
-  padding: 8px 16px;
-  background: #a78bfa;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .btn-execute:hover:not(.disabled) {
-  background: #8b5cf6;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-execute.disabled {
   background: #475569;
   cursor: not-allowed;
   opacity: 0.5;
+  box-shadow: none;
 }
 
 .btn-reject {
-  padding: 8px 16px;
-  background: #ef4444;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
 }
 
 .btn-reject:hover:not(.disabled) {
-  background: #dc2626;
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  box-shadow: 0 6px 16px rgba(100, 116, 139, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-reject.disabled {
   background: #475569;
   cursor: not-allowed;
   opacity: 0.5;
+  box-shadow: none;
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   color: #64748b;
+  font-size: 16px;
 }
 
 .table-container {
   overflow-x: auto;
+  padding: 0;
 }
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 thead {
-  background: #0f172a;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 th {
-  padding: 12px;
+  padding: 16px 14px;
   text-align: left;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 600;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 1px solid #334155;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
 }
 
 tbody tr {
-  border-bottom: 1px solid #334155;
-  transition: background 0.2s;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  transition: all 0.3s ease;
   cursor: pointer;
+  background: rgba(30, 41, 59, 0.3);
 }
 
 tbody tr:hover {
-  background: #0f172a;
+  background: rgba(139, 92, 246, 0.1);
+  transform: scale(1.01);
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.2);
 }
 
 tbody tr.selected {
-  background: #8b5cf620;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-left: 3px solid #8b5cf6;
+  box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.1);
 }
 
 td {
-  padding: 12px;
+  padding: 14px;
   color: #f1f5f9;
   font-size: 14px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
 }
 
 .checkbox-col {
@@ -433,52 +489,59 @@ td {
 }
 
 .direction-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 12px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .direction-badge.long {
-  background: #22c55e20;
-  color: #22c55e;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
 }
 
 .direction-badge.short {
-  background: #ef444420;
-  color: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
 }
 
 .signal-type-badge {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 12px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .signal-type-badge.entry {
-  background: #3b82f620;
-  color: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
 }
 
 .signal-type-badge.exit {
-  background: #f59e0b20;
-  color: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
 }
 
 .signal-type-badge.add {
-  background: #8b5cf620;
-  color: #8b5cf6;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
 }
 
 .signal-type-badge.reduce {
-  background: #06b6d420;
-  color: #06b6d4;
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
 }
 
 .signal-type-badge.hedge {
-  background: #6366f120;
-  color: #6366f1;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
 }
 
 .position-info {
@@ -573,33 +636,41 @@ td {
 }
 
 .btn-small {
-  padding: 4px 12px;
-  background: #334155;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .btn-small:hover {
-  background: #475569;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-small.btn-primary {
-  background: #a78bfa;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
 }
 
 .btn-small.btn-primary:hover {
-  background: #8b5cf6;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.4);
 }
 
 .btn-small.btn-danger {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
 .btn-small.btn-danger:hover {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
 }
 </style>

@@ -1,30 +1,30 @@
 <template>
   <div class="performance-chart">
-    <h3>性能曲线</h3>
+    <h3>性能</h3>
     
     <div ref="chartRef" class="chart-container"></div>
     
     <div class="metrics-summary">
       <div class="metric-card">
-        <div class="metric-label">今日PnL</div>
+        <div class="metric-label">当日PnL</div>
         <div class="metric-value" :class="(metrics?.daily_pnl || 0) >= 0 ? 'positive' : 'negative'">
           {{ (metrics?.daily_pnl || 0) >= 0 ? '+' : '' }}${{ (metrics?.daily_pnl || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
         </div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">今日收益率</div>
+        <div class="metric-label">当日收益</div>
         <div class="metric-value" :class="(metrics?.daily_return || 0) >= 0 ? 'positive' : 'negative'">
           {{ (metrics?.daily_return || 0) >= 0 ? '+' : '' }}{{ ((metrics?.daily_return || 0) * 100).toFixed(2) }}%
         </div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">累计收益率</div>
+        <div class="metric-label">累计收益</div>
         <div class="metric-value" :class="(metrics?.cumulative_return || 0) >= 0 ? 'positive' : 'negative'">
           {{ (metrics?.cumulative_return || 0) >= 0 ? '+' : '' }}{{ ((metrics?.cumulative_return || 0) * 100).toFixed(2) }}%
         </div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">总权益</div>
+        <div class="metric-label">权益</div>
         <div class="metric-value">
           ${{ (metrics?.total_equity || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
         </div>

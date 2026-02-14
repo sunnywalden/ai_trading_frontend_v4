@@ -1,8 +1,14 @@
 <template>
   <div class="quant-loop-dashboard">
     <div class="page-header">
-      <h1>量化交易闭环系统</h1>
-      <p class="subtitle">AI驱动的自动化交易决策与执行</p>
+      <div class="header-content">
+        <div class="header-icon">⚡</div>
+        <div class="header-text">
+          <h1>量化系统</h1>
+          <p class="subtitle">AI驱动的自动化交易</p>
+        </div>
+      </div>
+      <div class="header-decoration"></div>
     </div>
     
     <!-- 加载状态 -->
@@ -21,7 +27,7 @@
     
     <!-- 主内容 -->
     <div v-else class="dashboard-content">
-      <!-- 第一行: 系统状态 + 性能图表 -->
+      <!-- 第一行: 系统状态 + 周期控制 -->
       <div class="row-1">
         <div class="col-left">
           <SystemStatusCard 
@@ -30,10 +36,11 @@
           />
         </div>
         <div class="col-right">
-          <PerformanceChart 
-            v-if="quantLoopStore.dashboardOverview?.daily_performance"
-            :metrics="quantLoopStore.dashboardOverview.daily_performance"
-            :chart-data="quantLoopStore.dashboardOverview.daily_performance_history"
+          <CycleControlPanel 
+            :is-running="isCycleRunning"
+            :last-result="lastCycleResult"
+            @run-cycle="handleRunCycle"
+            @run-optimization="handleRunOptimization"
           />
         </div>
       </div>
@@ -48,22 +55,10 @@
       
       <!-- 第三行: 待执行信号 -->
       <div class="row-3">
-        <div class="signals-header">
-          <h2>待执行信号</h2>
-          <div class="signals-controls">
-            <label class="filter-toggle">
-              <input 
-                type="checkbox" 
-                v-model="filterByPosition"
-                @change="handleFilterToggle"
-              />
-              <span>持仓过滤</span>
-              <span class="filter-hint">（过滤冲突信号）</span>
-            </label>
-          </div>
-        </div>
         <PendingSignalsTable 
           :signals="quantLoopStore.pendingSignals"
+          :filter-by-position="filterByPosition"
+          @update:filter-by-position="handleFilterToggle"
           @execute="handleBatchExecute"
           @execute-single="handleExecuteSingle"
           @reject="handleReject"
@@ -72,7 +67,7 @@
         />
       </div>
       
-      <!-- 第四行: 优化建议 + 周期控制 -->
+      <!-- 第四行: 优化建议 + 性能图表 -->
       <div class="row-4">
         <div class="col-left">
           <OptimizationPanel 
@@ -81,11 +76,10 @@
           />
         </div>
         <div class="col-right">
-          <CycleControlPanel 
-            :is-running="isCycleRunning"
-            :last-result="lastCycleResult"
-            @run-cycle="handleRunCycle"
-            @run-optimization="handleRunOptimization"
+          <PerformanceChart 
+            v-if="quantLoopStore.dashboardOverview?.daily_performance"
+            :metrics="quantLoopStore.dashboardOverview.daily_performance"
+            :chart-data="quantLoopStore.dashboardOverview.daily_performance_history"
           />
         </div>
       </div>
@@ -118,7 +112,7 @@
           <div class="execution-message">{{ executionResult.message }}</div>
           
           <div v-if="executionResult.details && executionResult.details.length > 0" class="failure-details">
-            <h4>失败详情</h4>
+            <h4>失败列表</h4>
             <div v-for="(detail, index) in executionResult.details" :key="index" class="detail-item">
               <div class="detail-symbol">{{ detail.symbol }}</div>
               <div class="detail-message">{{ detail.message }}</div>
@@ -143,7 +137,7 @@
           <div v-if="selectedSignal" class="signal-details-content">
             <div class="summary-section">
               <h4>信号摘要</h4>
-              <p class="summary-text">{{ aiSignalSummary || '正在生成信号摘要...' }}</p>
+              <p class="summary-text">{{ aiSignalSummary || '生成中...' }}</p>
             </div>
             
             <div class="metrics-grid">
@@ -168,7 +162,7 @@
             </div>
 
             <div class="factor-scores" v-if="selectedSignal.factor_scores">
-              <h4>评分维度</h4>
+              <h4>评分</h4>
               <div class="scores-list">
                 <div v-for="(score, name) in selectedSignal.factor_scores" :key="name" class="score-row">
                   <span class="score-name">{{ formatFactorName(name) }}</span>
@@ -182,7 +176,7 @@
 
             <div class="raw-data-toggle">
               <details>
-                <summary>查看原始 JSON 数据</summary>
+                <summary>原始数据</summary>
                 <pre>{{ JSON.stringify(selectedSignal, null, 2) }}</pre>
               </details>
             </div>
@@ -243,8 +237,10 @@ async function loadAllData() {
   }
 }
 
-async function handleFilterToggle() {
-  await quantLoopStore.fetchPendingSignals(20, filterByPosition.value)
+async function handleFilterToggle(val: boolean) {
+  // val is the new value emitted from the child component
+  filterByPosition.value = val;
+  await quantLoopStore.fetchPendingSignals(20, val)
 }
 
 function startAutoRefresh() {
@@ -272,10 +268,10 @@ async function handleRunCycle(config: CycleConfig) {
     await loadAllData()
     
     // 显示通知
-    alert(`交易周期完成!\n周期ID: ${result.cycle_id}\n执行模式: ${config.execute_trades ? '真实交易' : 'DRY RUN'}`)
+    alert(`周期完成!\nID: ${result.cycle_id}`)
   } catch (error: any) {
     console.error('运行交易周期失败:', error)
-    alert(`运行失败: ${error.message || '未知错误'}`)
+    alert(`失败: ${error.message || '未知错误'}`)
   } finally {
     isCycleRunning.value = false
   }
@@ -291,10 +287,10 @@ async function handleRunOptimization() {
     // 刷新优化建议
     await quantLoopStore.fetchDashboardOverview()
     
-    alert('参数优化完成!')
+    alert('优化完成')
   } catch (error: any) {
     console.error('运行优化失败:', error)
-    alert(`优化失败: ${error.message || '未知错误'}`)
+    alert(`失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -466,26 +462,81 @@ function formatFactorName(name: string): string {
 
 <style scoped>
 .quant-loop-dashboard {
-  padding: 24px;
-  max-width: 1800px;
+  padding: 32px;
+  max-width: 1920px;
   margin: 0 auto;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
 }
 
 .page-header {
+  position: relative;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 16px;
+  padding: 32px;
   margin-bottom: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.header-decoration {
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.header-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.header-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 32px rgba(139, 92, 246, 0.6); }
+}
+
+.header-text {
+  flex: 1;
 }
 
 .page-header h1 {
   margin: 0 0 8px 0;
-  font-size: 28px;
-  color: #f1f5f9;
+  font-size: 32px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   margin: 0;
   color: #94a3b8;
   font-size: 16px;
+  font-weight: 400;
 }
 
 .loading-overlay {
@@ -559,7 +610,7 @@ function formatFactorName(name: string): string {
 .dashboard-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .row-1,
@@ -567,67 +618,109 @@ function formatFactorName(name: string): string {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  animation: fadeInUp 0.6s ease;
 }
 
 .row-2,
 .row-3 {
   display: grid;
   grid-template-columns: 1fr;
+  animation: fadeInUp 0.6s ease 0.1s both;
 }
 
-.signals-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 0 4px;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.signals-header h2 {
-  margin: 0;
-  color: #f1f5f9;
-  font-size: 20px;
+.row-1 .col-left,
+.row-1 .col-right,
+.row-4 .col-left,
+.row-4 .col-right {
+  background: #1e293b;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
-.signals-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.row-1 .col-left:hover,
+.row-1 .col-right:hover,
+.row-4 .col-left:hover,
+.row-4 .col-right:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-color: rgba(167, 139, 250, 0.3);
 }
 
-.filter-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.filter-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.filter-toggle span {
-  white-space: nowrap;
-}
-
-.filter-hint {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.filter-toggle:hover {
-  color: #f1f5f9;
+@media (max-width: 1400px) {
+  .quant-loop-dashboard {
+    padding: 24px;
+  }
+  
+  .page-header {
+    padding: 24px;
+  }
+  
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+  
+  .page-header h1 {
+    font-size: 28px;
+  }
 }
 
 @media (max-width: 1200px) {
   .row-1,
   .row-4 {
     grid-template-columns: 1fr;
+  }
+  
+  .dashboard-content {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quant-loop-dashboard {
+    padding: 16px;
+  }
+  
+  .page-header {
+    padding: 20px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  .page-header h1 {
+    font-size: 24px;
+  }
+  
+  .subtitle {
+    font-size: 14px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
