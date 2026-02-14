@@ -12,9 +12,6 @@
           />
           <span>执行真实交易</span>
         </label>
-        <div class="form-tip">
-          ⚠️ 关闭 = DRY_RUN模式 (不实际交易)
-        </div>
       </div>
       
       <div class="form-item">
@@ -26,9 +23,6 @@
           />
           <span>运行参数优化</span>
         </label>
-        <div class="form-tip">
-          💡 开启将在周期结束后运行参数优化
-        </div>
       </div>
       
       <div class="form-actions">
@@ -43,7 +37,7 @@
             运行中...
           </span>
           <span v-else>
-            {{ config.execute_trades ? '⚠️ 执行真实交易' : '▶️ 运行完整周期' }}
+            {{ config.execute_trades ? '执行真实交易' : '运行完整周期' }}
           </span>
         </button>
         
@@ -52,7 +46,7 @@
           :disabled="isRunning"
           @click="$emit('run-optimization')"
         >
-          🔧 仅运行优化
+          仅运行优化
         </button>
       </div>
     </div>
@@ -159,22 +153,39 @@ function getPhaseNameZh(key: string) {
 
 <style scoped>
 .cycle-control-panel {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 20px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.cycle-control-panel:hover {
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 24px 0;
+  font-size: 20px;
   color: #f1f5f9;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+h3::before {
+  content: '⚙️';
+  font-size: 24px;
 }
 
 h4 {
   margin: 0;
   font-size: 16px;
   color: #f1f5f9;
+  font-weight: 600;
 }
 
 .control-form {
@@ -197,18 +208,31 @@ h4 {
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.form-label:hover {
+  background: rgba(139, 92, 246, 0.1);
 }
 
 .form-checkbox {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
+  accent-color: #8b5cf6;
+  border-radius: 4px;
 }
 
 .form-tip {
   color: #94a3b8;
   font-size: 13px;
-  margin-left: 30px;
+  margin-left: 44px;
+  padding: 8px 12px;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #64748b;
 }
 
 .form-actions {
@@ -219,49 +243,58 @@ h4 {
 
 .btn-run,
 .btn-secondary {
-  padding: 12px 24px;
+  padding: 14px 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn-run {
   flex: 1;
-  background: #a78bfa;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
 }
 
 .btn-run:hover:not(:disabled) {
-  background: #8b5cf6;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-run.danger {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .btn-run.danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn-run:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-run.loading {
-  background: #64748b;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
 }
 
 .btn-secondary {
-  background: #334155;
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
   color: #f1f5f9;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #475569;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  box-shadow: 0 6px 16px rgba(71, 85, 105, 0.4);
+  transform: translateY(-2px);
 }
 
 .spinner {
@@ -280,9 +313,9 @@ h4 {
 }
 
 .result-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #334155;
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 2px solid rgba(139, 92, 246, 0.2);
 }
 
 .result-header {
@@ -290,16 +323,21 @@ h4 {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  padding: 8px 0;
+  padding: 12px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
 .result-header:hover {
+  background: rgba(139, 92, 246, 0.15);
   color: #a78bfa;
 }
 
 .toggle-icon {
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .result-body {
@@ -307,17 +345,27 @@ h4 {
 }
 
 .result-summary {
-  background: #0f172a;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 16px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #334155;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  transition: all 0.2s;
+}
+
+.summary-item:hover {
+  background: rgba(139, 92, 246, 0.05);
+  margin: 0 -8px;
+  padding: 12px 8px;
+  border-radius: 6px;
 }
 
 .summary-item:last-child {
@@ -327,45 +375,63 @@ h4 {
 .summary-item .label {
   color: #94a3b8;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .summary-item .value {
   color: #f1f5f9;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .phases-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .phase-card {
-  background: #0f172a;
-  border-radius: 6px;
-  padding: 12px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.phase-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .phase-name {
   color: #94a3b8;
-  font-size: 12px;
-  margin-bottom: 8px;
+  font-size: 13px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .phase-status {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .phase-status.completed {
   color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .phase-status.failed {
   color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .phase-details {
@@ -373,7 +439,8 @@ h4 {
   font-size: 13px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  line-height: 1.5;
 }
 
 .result-json {

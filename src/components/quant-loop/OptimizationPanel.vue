@@ -3,7 +3,7 @@
     <h3>优化建议</h3>
     
     <div v-if="opportunities?.recommendations?.length === 0" class="empty-state">
-      <p>🎯 暂无优化建议，系统运行良好</p>
+      <p>🎯 系统运行良好</p>
     </div>
     
     <div v-else class="recommendations-list">
@@ -22,25 +22,25 @@
         <h4 class="rec-title">{{ rec.title }}</h4>
         <p class="rec-description">{{ rec.description }}</p>
         <div v-if="rec.impact" class="rec-impact">
-          预期影响: {{ rec.impact }}
+          影响: {{ rec.impact }}
         </div>
       </div>
     </div>
     
     <div class="pattern-summary">
-      <h4>问题模式统计</h4>
+      <h4>模式统计</h4>
       <div class="pattern-grid">
         <div class="pattern-item">
           <div class="pattern-icon">🎯</div>
           <div class="pattern-info">
-            <div class="pattern-label">过度自信信号</div>
+            <div class="pattern-label">过度自信</div>
             <div class="pattern-count">{{ opportunities?.patterns?.overconfident_signals?.length || 0 }}</div>
           </div>
         </div>
         <div class="pattern-item">
           <div class="pattern-icon">⚠️</div>
           <div class="pattern-info">
-            <div class="pattern-label">高风险失败</div>
+            <div class="pattern-label">高风险</div>
             <div class="pattern-count">{{ opportunities?.patterns?.high_risk_failures?.length || 0 }}</div>
           </div>
         </div>
@@ -88,9 +88,9 @@ function getPriorityClass(priority: string) {
 
 function getPriorityLabel(priority: string) {
   const labels: Record<string, string> = {
-    HIGH: '高优先级',
-    MEDIUM: '中优先级',
-    LOW: '低优先级'
+    HIGH: '高',
+    MEDIUM: '中',
+    LOW: '低'
   }
   return labels[priority] || priority
 }
