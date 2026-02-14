@@ -11,11 +11,14 @@
     "no_data": "暂无数据",
     "search": "搜索",
     "failed": "失败",
+    "success": "成功",
     "unknown_error": "未知错误",
     "enabled": "已启用",
     "disabled": "未启用",
     "status": "状态",
     "last_updated": "最后更新",
+    "refresh": "刷新",
+    "refreshing": "刷新中...",
     "execute": "执行",
     "timeout": "⏱️ 请求超时，请稍后再试！",
     "network_error": "🌐 网络连接失败，请检查网络或后端服务状态"
@@ -102,7 +105,9 @@
     "no_todos": "暂无待办事项",
     "active_positions": "活跃持仓",
     "no_positions": "暂无活跃持仓",
+    "top_positions": "Top 持仓",
     "active_plans": "活跃计划",
+    "active_plans_count": "{n} 个活跃",
     "no_plans": "暂无活跃计划",
     "market_hotspots": "市场热点",
     "view_all_signals": "查看全部 {n} 个信号 →",
@@ -185,6 +190,8 @@
     "confidence": "置信度",
     "scores": "评分",
     "raw_data": "原始数据",
+    "failure_list": "失败列表",
+    "signal_details": "信号详情",
     "cycle_complete": "周期完成",
     "optimization_complete": "优化完成",
     "execution_result": "执行结果",
@@ -949,6 +956,67 @@
         "saving": "正在同步..."
       }
     }
+  },
+  "strategies": {
+    "title": "策略库管理",
+    "go_to_opportunities": "前往策略筛选 →",
+    "search_placeholder": "搜索策略...",
+    "no_strategies": "暂无策略",
+    "batch_run": "批量运行 ({n})",
+    "categories": {
+      "all": "全部",
+      "mean_reversion": "均值回归",
+      "trend_following": "趋势跟踪",
+      "multi_factor": "多因子",
+      "defense": "防御",
+      "volatility": "波动率",
+      "macro_hedge": "宏观对冲"
+    },
+    "detail": {
+      "title": "策略详情",
+      "basic_info": "基本信息",
+      "params": "策略参数",
+      "risk_config": "风险配置",
+      "performance": "性能指标",
+      "recent_signals": "最近信号",
+      "edit_params": "编辑参数",
+      "edit_params_title": "编辑策略参数",
+      "run_strategy": "运行策略",
+      "labels": {
+        "total_signals": "总信号数",
+        "win_rate": "胜率",
+        "avg_pnl": "平均收益率",
+        "total_pnl": "总盈亏",
+        "stock_symbol": "股票代码",
+        "action": "操作",
+        "signal_strength": "信号强度",
+        "weight": "权重",
+        "direction": "方向",
+        "notes": "备注",
+        "generated_at": "生成时间"
+      },
+      "messages": {
+        "enable_success": "策略已启用",
+        "disable_success": "策略已禁用",
+        "enable_fail": "操作失败",
+        "run_success": "策略运行成功",
+        "run_fail": "运行失败",
+        "save_success": "参数更新成功",
+        "save_fail": "参数更新失败"
+      }
+    }
+  },
+  "opportunities": {
+    "title": "策略筛选",
+    "subtitle": "浏览平台内置私募精选策略、触发异步运行并同步进度",
+    "view_all_strategies": "查看所有策略 →",
+    "universe_all": "全市场",
+    "available_strategies": "⚙️ 可用策略",
+    "hint": "点击“配置并运行”触发异步回测或实盘扫描",
+    "loading": "策略加载中...",
+    "empty": "暂无可用策略，稍后刷新页面看看",
+    "refresh_history": "刷新策略历史",
+    "history_title": "🧾 策略运行历史（最近 {n} 次）"
   },
   "execution_list": {
     "title": "⚡ 执行列表",

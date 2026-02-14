@@ -1,18 +1,18 @@
 <template>
   <div class="strategy-detail-page">
     <el-breadcrumb separator="/" style="margin-bottom: 16px;">
-      <el-breadcrumb-item :to="{ path: '/strategies' }">策略库管理</el-breadcrumb-item>
-      <el-breadcrumb-item>{{ strategy?.name || '策略详情' }}</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/strategies' }">{{ $t('strategies.title') }}</el-breadcrumb-item>
+      <el-breadcrumb-item>{{ strategy?.name || $t('strategies.detail.title') }}</el-breadcrumb-item>
     </el-breadcrumb>
     
-    <el-page-header @back="goBack" :content="strategy?.name || '策略详情'">
+    <el-page-header @back="goBack" :content="strategy?.name || $t('strategies.detail.title')">
       <template #extra>
         <el-switch
           v-if="strategy"
           v-model="strategy.is_active"
           :loading="loading"
-          active-text="已启用"
-          inactive-text="已禁用"
+          :active-text="$t('common.enabled')"
+          :inactive-text="$t('common.disabled')"
           @change="handleToggle"
         />
       </template>
@@ -21,7 +21,7 @@
     <el-card v-if="strategy" class="strategy-info" style="margin-top: 20px;">
       <template #header>
         <div class="card-header">
-          <span>基本信息</span>
+          <span>{{ $t('strategies.detail.basic_info') }}</span>
         </div>
       </template>
       
@@ -48,8 +48,8 @@
 
       <div class="params-section">
         <div class="section-header">
-          <span>策略参数</span>
-          <el-button size="small" @click="showEditDialog = true">编辑参数</el-button>
+          <span>{{ $t('strategies.detail.params') }}</span>
+          <el-button size="small" @click="showEditDialog = true">{{ $t('strategies.detail.edit_params') }}</el-button>
         </div>
         <el-descriptions :column="2" border style="margin-top: 16px;">
           <el-descriptions-item 
@@ -66,7 +66,7 @@
 
       <div class="risk-section">
         <div class="section-header">
-          <span>风险配置</span>
+          <span>{{ $t('strategies.detail.risk_config') }}</span>
         </div>
         <el-descriptions :column="2" border style="margin-top: 16px;">
           <el-descriptions-item 
@@ -83,26 +83,26 @@
     <el-card v-if="performance" class="performance-card" style="margin-top: 20px;">
       <template #header>
         <div class="card-header">
-          <span>性能指标</span>
+          <span>{{ $t('strategies.detail.performance') }}</span>
         </div>
       </template>
       
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="metric-box">
-            <div class="metric-label">总信号数</div>
+            <div class="metric-label">{{ $t('strategies.detail.labels.total_signals') }}</div>
             <div class="metric-value">{{ performance.total_signals }}</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="metric-box">
-            <div class="metric-label">胜率</div>
+            <div class="metric-label">{{ $t('strategies.detail.labels.win_rate') }}</div>
             <div class="metric-value">{{ (performance.win_rate * 100).toFixed(2) }}%</div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="metric-box">
-            <div class="metric-label">平均收益率</div>
+            <div class="metric-label">{{ $t('strategies.detail.labels.avg_pnl') }}</div>
             <div class="metric-value" :class="performance.avg_pnl_pct >= 0 ? 'positive' : 'negative'">
               {{ (performance.avg_pnl_pct * 100).toFixed(2) }}%
             </div>
@@ -110,7 +110,7 @@
         </el-col>
         <el-col :span="6">
           <div class="metric-box">
-            <div class="metric-label">总盈亏</div>
+            <div class="metric-label">{{ $t('strategies.detail.labels.total_pnl') }}</div>
             <div class="metric-value" :class="performance.total_pnl >= 0 ? 'positive' : 'negative'">
               ${{ performance.total_pnl.toFixed(2) }}
             </div>
@@ -122,35 +122,35 @@
     <el-card class="signals-card" style="margin-top: 20px;">
       <template #header>
         <div class="card-header">
-          <span>最近信号</span>
+          <span>{{ $t('strategies.detail.recent_signals') }}</span>
           <el-button type="primary" size="small" :loading="runLoading" @click="handleRun">
-            运行策略
+            {{ $t('strategies.detail.run_strategy') }}
           </el-button>
         </div>
       </template>
       
       <el-table :data="signals" style="width: 100%">
-        <el-table-column prop="symbol" label="股票代码" width="120" />
-        <el-table-column prop="action" label="操作" width="100">
+        <el-table-column prop="symbol" :label="$t('strategies.detail.labels.stock_symbol')" width="120" />
+        <el-table-column prop="action" :label="$t('strategies.detail.labels.action')" width="100">
           <template #default="{ row }">
             <el-tag :type="getActionType(row.action)" size="small">
               {{ row.action }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="signal_strength" label="信号强度" width="120">
+        <el-table-column prop="signal_strength" :label="$t('strategies.detail.labels.signal_strength')" width="120">
           <template #default="{ row }">
             {{ row.signal_strength?.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="weight" label="权重" width="100">
+        <el-table-column prop="weight" :label="$t('strategies.detail.labels.weight')" width="100">
           <template #default="{ row }">
             {{ (row.weight * 100).toFixed(1) }}%
           </template>
         </el-table-column>
-        <el-table-column prop="direction" label="方向" width="100" />
-        <el-table-column prop="notes" label="备注" />
-        <el-table-column prop="created_at" label="生成时间" width="180">
+        <el-table-column prop="direction" :label="$t('strategies.detail.labels.direction')" width="100" />
+        <el-table-column prop="notes" :label="$t('strategies.detail.labels.notes')" />
+        <el-table-column prop="created_at" :label="$t('strategies.detail.labels.generated_at')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.created_at) }}
           </template>
@@ -159,7 +159,7 @@
     </el-card>
 
     <!-- 编辑参数对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑策略参数" width="600px">
+    <el-dialog v-model="showEditDialog" :title="$t('strategies.detail.edit_params_title')" width="600px">
       <el-form :model="editForm" label-width="150px">
         <el-form-item 
           v-for="(value, key) in editForm.params" 
@@ -171,9 +171,9 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button @click="showEditDialog = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="saveLoading" @click="handleSaveParams">
-          保存
+          {{ $t('common.save') }}
         </el-button>
       </template>
     </el-dialog>
@@ -183,12 +183,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useStrategyStore } from '@/stores/strategyStore'
-import type { Strategy, StrategyPerformance, StrategySignal } from '@/types/strategy'
+import type { Strategy, StrategyPerformance, StrategySignal } from '@/types/strategy' 
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const strategyStore = useStrategyStore()
 
 const strategyId = computed(() => route.params.id as string)
@@ -213,9 +215,9 @@ const handleToggle = async (value: boolean) => {
   loading.value = true
   try {
     await strategyStore.toggleStrategy(strategyId.value, value)
-    ElMessage.success(value ? '策略已启用' : '策略已禁用')
+    ElMessage.success(value ? t('strategies.detail.messages.enable_success') : t('strategies.detail.messages.disable_success'))
   } catch (error) {
-    ElMessage.error('操作失败')
+    ElMessage.error(t('strategies.detail.messages.enable_fail'))
     // 回滚状态
     if (strategy.value) {
       strategy.value.is_active = !value
@@ -232,11 +234,11 @@ const handleRun = async () => {
       symbols: [],
       use_custom_params: false
     })
-    ElMessage.success('策略运行成功')
+    ElMessage.success(t('strategies.detail.messages.run_success'))
     // 刷新信号列表
     await loadSignals()
   } catch (error: any) {
-    ElMessage.error(error.message || '运行失败')
+    ElMessage.error(error.message || t('strategies.detail.messages.run_fail'))
   } finally {
     runLoading.value = false
   }
@@ -246,11 +248,11 @@ const handleSaveParams = async () => {
   saveLoading.value = true
   try {
     await strategyStore.updateParams(strategyId.value, editForm.value.params)
-    ElMessage.success('参数更新成功')
+    ElMessage.success(t('strategies.detail.messages.save_success'))
     showEditDialog.value = false
     await strategyStore.loadStrategy(strategyId.value)
   } catch (error) {
-    ElMessage.error('参数更新失败')
+    ElMessage.error(t('strategies.detail.messages.save_fail'))
   } finally {
     saveLoading.value = false
   }
@@ -269,7 +271,7 @@ const getActionType = (action: string) => {
 
 const formatDate = (date: string | Date | null) => {
   if (!date) return '-'
-  return new Date(date).toLocaleString('zh-CN')
+  return new Date(date).toLocaleString(locale.value)
 }
 
 const loadPerformance = async () => {

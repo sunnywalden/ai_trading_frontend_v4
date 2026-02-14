@@ -215,51 +215,51 @@
         </div>
       </div>
 
-      <!-- Section 6: 持仓与计划 -->
-      <div class="section-dual">
-        <!-- 左: Top持仓 -->
-        <div class="card">
-          <div class="card-header">
-            <h3><span class="icon">📦</span> {{ $t('dashboard.top_positions') }}</h3>
-            <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <div v-if="store.fullData.positions_summary.length > 0" class="positions-list">
-            <PositionCard
-              v-for="position in store.fullData.positions_summary.slice(0, 5)"
-              :key="position.symbol"
-              :position="position"
-            />
-          </div>
-          <div v-else class="empty-state">
-            <p>{{ $t('dashboard.no_positions') }}</p>
-          </div>
+    <!-- Section 6: 持仓与计划 -->
+    <div class="section-dual">
+      <!-- 左: Top持仓 -->
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📦</span> {{ $t('dashboard.top_positions') }}</h3>
+          <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" :title="$t('common.refresh')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+          </button>
         </div>
-
-        <!-- 右: 活跃计划 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="title-with-badge">
-              <h3><span class="icon">📋</span> {{ $t('dashboard.active_plans') }}</h3>
-              <span class="badge">{{ $t('dashboard.active_plans_count', { n: store.fullData.execution_stats.active_plans }) }}</span>
-            </div>
-            <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
-            <PlanCard
-              v-for="plan in store.fullData.active_plans.slice(0, 5)"
-              :key="plan.plan_id"
-              :plan="plan"
-            />
-          </div>
-          <div v-else class="empty-state">
-            <p>{{ $t('dashboard.no_plans') }}</p>
-          </div>
+        <div v-if="store.fullData.positions_summary.length > 0" class="positions-list">
+          <PositionCard
+            v-for="position in store.fullData.positions_summary.slice(0, 5)"
+            :key="position.symbol"
+            :position="position"
+          />
+        </div>
+        <div v-else class="empty-state">
+          <p>{{ $t('dashboard.no_positions') }}</p>
         </div>
       </div>
+
+      <!-- 右: 活跃计划 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="title-with-badge">
+            <h3><span class="icon">📋</span> {{ $t('dashboard.active_plans') }}</h3>
+            <span class="badge">{{ $t('dashboard.active_plans_count', { n: store.fullData.execution_stats.active_plans }) }}</span>
+          </div>
+          <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" :title="$t('common.refresh')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+          </button>
+        </div>
+        <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
+          <PlanCard
+            v-for="plan in store.fullData.active_plans.slice(0, 5)"
+            :key="plan.plan_id"
+            :plan="plan"
+          />
+        </div>
+        <div v-else class="empty-state">
+          <p>{{ $t('dashboard.no_plans') }}</p>
+        </div>
+      </div>
+    </div>
 
       <!-- Section 7: 市场热点 -->
       <div class="section-hotspots" v-if="store.fullData.market_hotspots.length > 0">
