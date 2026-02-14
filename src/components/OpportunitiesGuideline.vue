@@ -1,179 +1,183 @@
 <template>
   <div class="guideline-container">
-    <h3 class="guideline-title">📖 机会发现说明</h3>
+    <h3 class="guideline-title">{{ t('opportunities_guideline.title') }}</h3>
     
     <div class="guideline-grid">
       <!-- 策略执行机制 -->
       <div class="guideline-section">
-        <h4>⚙️ 策略执行机制</h4>
+        <h4>{{ t('opportunities_guideline.mechanism.title') }}</h4>
         <ul class="guideline-list">
           <li>
-            <strong>自选股票池:</strong> 运行策略时可自由选择目标股票池（美股科技、香港蓝筹等）
+            <strong>{{ t('opportunities_guideline.mechanism.pool').split(':')[0] }}:</strong> {{ t('opportunities_guideline.mechanism.pool').split(':')[1] }}
           </li>
           <li>
-            <strong>异步执行:</strong> 策略任务提交后会在后台异步运行，可以随时离开页面或查看历史记录
+            <strong>{{ t('opportunities_guideline.mechanism.async').split(':')[0] }}:</strong> {{ t('opportunities_guideline.mechanism.async').split(':')[1] }}
           </li>
           <li>
-            <strong>参数定制:</strong> 支持二次输入最低评分阈值及最多展示结果个数，满足不同风险偏好
+            <strong>{{ t('opportunities_guideline.mechanism.custom').split(':')[0] }}:</strong> {{ t('opportunities_guideline.mechanism.custom').split(':')[1] }}
           </li>
           <li>
-            <strong>实时监控:</strong> 支持实时查看策略执行状态、进度及最终命中的资产详情
+            <strong>{{ t('opportunities_guideline.mechanism.monitor').split(':')[0] }}:</strong> {{ t('opportunities_guideline.mechanism.monitor').split(':')[1] }}
           </li>
           <li>
-            <strong>结果导出:</strong> 策略执行完成后可导出详细的分析报告。
+            <strong>{{ t('opportunities_guideline.mechanism.export').split(':')[0] }}:</strong> {{ t('opportunities_guideline.mechanism.export').split(':')[1] }}
           </li>
         </ul>
       </div>
 
       <!-- 三维评分 -->
       <div class="guideline-section">
-        <h4>📊 三维评分体系</h4>
+        <h4>{{ t('opportunities_guideline.score.title') }}</h4>
         <div class="score-dimensions">
           <div class="dimension-item">
             <span class="dimension-icon">📈</span>
             <div class="dimension-detail">
-              <strong>技术面 (0-100)</strong>
-              <p>MA 趋势、MACD 动量、RSI 超卖、布林通道、成交量等技术指标综合评估</p>
+              <strong>{{ t('opportunities_guideline.score.tech') }}</strong>
+              <p>{{ t('opportunities_guideline.score.tech_desc') }}</p>
             </div>
           </div>
           
           <div class="dimension-item">
             <span class="dimension-icon">💼</span>
             <div class="dimension-detail">
-              <strong>基本面 (0-100)</strong>
-              <p>市盈率、市净率、ROE、营收增长率、毛利率、负债率等财务健康度评估</p>
+              <strong>{{ t('opportunities_guideline.score.fund') }}</strong>
+              <p>{{ t('opportunities_guideline.score.fund_desc') }}</p>
             </div>
           </div>
           
           <div class="dimension-item">
             <span class="dimension-icon">🌡️</span>
             <div class="dimension-detail">
-              <strong>情绪面 (0-100)</strong>
-              <p>社交媒体热度、新闻情绪、看涨期权活跃度、做空比率等市场情绪指标</p>
+              <strong>{{ t('opportunities_guideline.score.sent') }}</strong>
+              <p>{{ t('opportunities_guideline.score.sent_desc') }}</p>
             </div>
           </div>
         </div>
-        <p class="dimension-formula">
-          <strong>综合评分 =</strong> 技术面 × 40% + 基本面 × 35% + 情绪面 × 25%
-        </p>
+        <p class="dimension-formula" v-html="t('opportunities_guideline.score.formula', {
+          tech: '<strong>' + t('opportunities_guideline.score.tech') + '</strong>',
+          fund: '<strong>' + t('opportunities_guideline.score.fund') + '</strong>',
+          sent: '<strong>' + t('opportunities_guideline.score.sent') + '</strong>'
+        })"></p>
       </div>
 
       <!-- 宏观风险联动 -->
       <div class="guideline-section">
-        <h4>🌍 宏观风险联动</h4>
+        <h4>{{ t('opportunities_guideline.macro.title') }}</h4>
         <table class="macro-link-table">
           <thead>
             <tr>
-              <th>宏观风险等级</th>
-              <th>筛选阈值</th>
-              <th>策略调整</th>
+              <th>{{ t('opportunities_guideline.macro.th_level') }}</th>
+              <th>{{ t('opportunities_guideline.macro.th_threshold') }}</th>
+              <th>{{ t('opportunities_guideline.macro.th_adj') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr class="risk-low">
               <td>LOW / MEDIUM</td>
-              <td>≥ 75 分</td>
-              <td>常规筛选，推荐 1-3 个机会</td>
+              <td>≥ 75</td>
+              <td>{{ t('opportunities_guideline.macro.low_med') }}</td>
             </tr>
             <tr class="risk-high">
               <td>HIGH</td>
-              <td>≥ 80 分</td>
-              <td>提高阈值，优先防御性标的</td>
+              <td>≥ 80</td>
+              <td>{{ t('opportunities_guideline.macro.high') }}</td>
             </tr>
             <tr class="risk-extreme">
               <td>EXTREME</td>
-              <td>≥ 85 分</td>
-              <td>严格筛选，可能无推荐</td>
+              <td>≥ 85</td>
+              <td>{{ t('opportunities_guideline.macro.extreme') }}</td>
             </tr>
           </tbody>
         </table>
         <p class="macro-hint">
-          💡 宏观风险偏高时，系统自动提高筛选门槛，降低激进建仓风险
+          {{ t('opportunities_guideline.macro.hint') }}
         </p>
       </div>
 
       <!-- 推荐等级 -->
       <div class="guideline-section">
-        <h4>🎯 推荐等级</h4>
+        <h4>{{ t('opportunities_guideline.recommend.title') }}</h4>
         <div class="recommendation-levels">
           <div class="level-item level-strong-buy">
-            <span class="level-badge">强力建仓</span>
-            <span class="level-score">90-100分</span>
-            <p>三维评分均优秀，宏观环境友好，建议积极建仓</p>
+            <span class="level-badge">{{ t('opportunities_guideline.recommend.strong_buy') }}</span>
+            <span class="level-score">90-100</span>
+            <p>{{ t('opportunities_guideline.recommend.strong_buy_desc') }}</p>
           </div>
           
           <div class="level-item level-buy">
-            <span class="level-badge">建议建仓</span>
-            <span class="level-score">80-89分</span>
-            <p>综合评分良好，可适度建仓，关注风险控制</p>
+            <span class="level-badge">{{ t('opportunities_guideline.recommend.buy') }}</span>
+            <span class="level-score">80-89</span>
+            <p>{{ t('opportunities_guideline.recommend.buy_desc') }}</p>
           </div>
           
           <div class="level-item level-hold">
-            <span class="level-badge">持有观望</span>
-            <span class="level-score">70-79分</span>
-            <p>部分指标欠佳，建议观望或仓位控制在 10% 以下</p>
+            <span class="level-badge">{{ t('opportunities_guideline.recommend.hold') }}</span>
+            <span class="level-score">70-79</span>
+            <p>{{ t('opportunities_guideline.recommend.hold_desc') }}</p>
           </div>
           
           <div class="level-item level-no-recommend">
-            <span class="level-badge">不推荐</span>
-            <span class="level-score">&lt; 70分</span>
-            <p>不符合筛选条件，不会出现在机会列表中</p>
+            <span class="level-badge">{{ t('opportunities_guideline.recommend.no_recommend') }}</span>
+            <span class="level-score">&lt; 70</span>
+            <p>{{ t('opportunities_guideline.recommend.no_recommend_desc') }}</p>
           </div>
         </div>
       </div>
 
       <!-- 数据来源 -->
       <div class="guideline-section">
-        <h4>🗂️ 数据来源与更新</h4>
+        <h4>{{ t('opportunities_guideline.data.title') }}</h4>
         <ul class="guideline-list">
           <li>
-            <strong>技术数据:</strong> Yahoo Finance、Alpha Vantage，实时/延迟 15 分钟
+            <strong>{{ t('opportunities_guideline.data.tech').split(':')[0] }}:</strong> {{ t('opportunities_guideline.data.tech').split(':')[1] }}
           </li>
           <li>
-            <strong>基本面数据:</strong> Financial Modeling Prep、IEX Cloud，季度更新
+            <strong>{{ t('opportunities_guideline.data.fund').split(':')[0] }}:</strong> {{ t('opportunities_guideline.data.fund').split(':')[1] }}
           </li>
           <li>
-            <strong>情绪数据:</strong> StockTwits、Reddit、Twitter API，小时级更新
+            <strong>{{ t('opportunities_guideline.data.sent').split(':')[0] }}:</strong> {{ t('opportunities_guideline.data.sent').split(':')[1] }}
           </li>
           <li>
-            <strong>兜底机制:</strong> 数据源限流时，使用本地维护的静态股票池（结果偏保守）
+            <strong>{{ t('opportunities_guideline.data.fallback').split(':')[0] }}:</strong> {{ t('opportunities_guideline.data.fallback').split(':')[1] }}
           </li>
         </ul>
       </div>
 
       <!-- 使用建议 -->
       <div class="guideline-section">
-        <h4>💡 使用建议</h4>
+        <h4>{{ t('opportunities_guideline.tips.title') }}</h4>
         <ul class="guideline-list highlight-tips">
           <li>
-            <strong>日常使用:</strong> 系统每日 20:30 自动扫描并生成推荐，次日查看即可，无需手动触发
+            <strong>{{ t('opportunities_guideline.tips.daily').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.daily').split(':')[1] }}
           </li>
           <li>
-            <strong>实时扫描:</strong> 如需获取最新数据，可点击「立即扫描」手动触发（注意耗时较长）
+            <strong>{{ t('opportunities_guideline.tips.realtime').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.realtime').split(':')[1] }}
           </li>
           <li>
-            <strong>重要事件:</strong> 重大财报、政策发布后，可强制刷新获取最新评估
+            <strong>{{ t('opportunities_guideline.tips.events').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.events').split(':')[1] }}
           </li>
           <li>
-            <strong>风险控制:</strong> 宏观风险 HIGH/EXTREME 时，即使有推荐也应降低仓位
+            <strong>{{ t('opportunities_guideline.tips.risk').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.risk').split(':')[1] }}
           </li>
           <li>
-            <strong>历史回溯:</strong> 查看历史扫描记录，分析推荐准确率和市场变化趋势
+            <strong>{{ t('opportunities_guideline.tips.history').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.history').split(':')[1] }}
           </li>
           <li>
-            <strong>分散投资:</strong> 不要仅依赖单一机会，结合持仓评估模块综合决策
+            <strong>{{ t('opportunities_guideline.tips.diversify').split(':')[0] }}:</strong> {{ t('opportunities_guideline.tips.diversify').split(':')[1] }}
           </li>
         </ul>
       </div>
     </div>
 
     <div class="disclaimer">
-      ⚠️ <strong>风险提示:</strong> 本模块仅提供决策参考，不构成投资建议。所有投资决策需自行承担风险，建议结合宏观风险、持仓状况和个人风险承受能力综合判断。
+      {{ t('opportunities_guideline.disclaimer') }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 </script>
 
 <style scoped>

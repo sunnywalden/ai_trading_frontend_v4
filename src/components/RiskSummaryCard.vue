@@ -1,17 +1,17 @@
 <template>
   <div class="card">
     <div class="card-header">
-      <h2>系统状态</h2>
+      <h2>{{ $t('system.status') }}</h2>
       <span class="badge" :class="modeClass">{{ health?.mode ?? "..." }}</span>
     </div>
-    <p class="subtitle">AI 风控 + 自动对冲引擎（后端 DRY_RUN / REAL 模式可切换）</p>
+    <p class="subtitle">{{ $t('system.subtitle') }}</p>
 
     <div class="actions">
       <button @click="onRefresh" :disabled="loading">
-        {{ loading ? "刷新中..." : "刷新状态" }}
+        {{ loading ? $t('system.refreshing') : $t('system.refresh') }}
       </button>
       <button class="primary" @click="onRunHedge" :disabled="running">
-        {{ running ? "执行中..." : "执行一次自动对冲" }}
+        {{ running ? $t('system.running') : $t('system.run_hedge') }}
       </button>
     </div>
 
@@ -21,8 +21,10 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { fetchHealth, runAutoHedgeOnce, type HealthResponse } from "../api/client";
 
+const { t } = useI18n();
 const health = ref<HealthResponse | null>(null);
 const loading = ref(false);
 const running = ref(false);
@@ -48,7 +50,7 @@ async function load() {
     health.value = await fetchHealth();
   } catch (e: any) {
     console.error(e);
-    message.value = "获取状态失败";
+    message.value = t('common.error_load');
   } finally {
     loading.value = false;
   }
@@ -59,10 +61,10 @@ async function onRunHedge() {
   message.value = "";
   try {
     const res = await runAutoHedgeOnce();
-    message.value = `自动对冲结果：${res.detail}`;
+    message.value = t('system.run_result', { detail: res.detail });
   } catch (e: any) {
     console.error(e);
-    message.value = "执行自动对冲失败";
+    message.value = t('system.run_failed_simple');
   } finally {
     running.value = false;
   }

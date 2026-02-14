@@ -3,8 +3,8 @@
     <!-- 页面标题 -->
     <header class="page-header">
       <div class="title-row">
-        <h1><span class="icon">🧠</span> AI 交易决策</h1>
-        <p class="subtitle">输入标的 → AI 多维评估 → 智能下单</p>
+        <h1><span class="icon">🧠</span> {{ $t('advisor.title') }}</h1>
+        <p class="subtitle">{{ $t('advisor.subtitle') }}</p>
       </div>
     </header>
 
@@ -12,14 +12,14 @@
     <section class="input-section card">
       <div class="section-header">
         <span class="step-badge">1</span>
-        <h2>选择标的</h2>
+        <h2>{{ $t('advisor.step1') }}</h2>
       </div>
       <div class="input-row">
         <div class="symbol-input-wrap">
           <input
             v-model="symbolInput"
             type="text"
-            placeholder="输入股票代码，多个用逗号分隔，如: AAPL, TSLA, NVDA"
+            :placeholder="$t('advisor.placeholder')"
             class="symbol-input"
             @keydown.enter="startEvaluation"
           />
@@ -30,11 +30,11 @@
           :disabled="evaluating || !symbolInput.trim()"
         >
           <span v-if="evaluating" class="spinner"></span>
-          {{ evaluating ? 'AI 评估中...' : '🔍 AI 评估' }}
+          {{ evaluating ? $t('advisor.evaluating') : `🔍 ${$t('advisor.evaluate')}` }}
         </button>
       </div>
       <div class="quick-tags">
-        <span class="tag-label">热门:</span>
+        <span class="tag-label">{{ $t('advisor.hot_labels') }}</span>
         <button v-for="s in hotSymbols" :key="s" class="tag" @click="addSymbol(s)">{{ s }}</button>
       </div>
     </section>
@@ -43,14 +43,14 @@
     <section v-if="evaluations.length > 0" class="results-section">
       <div class="section-header">
         <span class="step-badge">2</span>
-        <h2>AI 评估结果</h2>
+        <h2>{{ $t('advisor.step2') }}</h2>
         <div class="header-actions">
           <button
             class="btn btn-sm btn-success"
             @click="executeSelected"
             :disabled="selectedSymbols.length === 0 || executing"
           >
-            {{ executing ? '执行中...' : `⚡ 执行选中 (${selectedSymbols.length})` }}
+            {{ executing ? $t('advisor.executing') : `⚡ ${$t('advisor.execute_selected', { n: selectedSymbols.length })}` }}
           </button>
         </div>
       </div>
@@ -89,33 +89,33 @@
           <div class="decision-core" v-if="ev.decision">
             <div class="confidence-bar">
               <div class="confidence-fill" :style="{ width: ev.decision.confidence + '%' }" :class="confidenceClass(ev.decision.confidence)"></div>
-              <span class="confidence-text">置信度 {{ ev.decision.confidence }}%</span>
+              <span class="confidence-text">{{ $t('advisor.confidence') }} {{ ev.decision.confidence }}%</span>
             </div>
             
             <!-- 专业指标矩阵 (类似 K线分析页) -->
             <div class="metrics-grid">
               <div class="metric-card" v-if="ev.decision.risk_reward_ratio">
-                <div class="metric-label">风险收益比</div>
+                <div class="metric-label">{{ $t('advisor.metrics.risk_reward') }}</div>
                 <div class="metric-value highlight">{{ ev.decision.risk_reward_ratio }}</div>
               </div>
               <div class="metric-card" v-if="ev.decision.entry_price">
-                <div class="metric-label">入场价</div>
+                <div class="metric-label">{{ $t('advisor.metrics.entry_price') }}</div>
                 <div class="metric-value">${{ Number(ev.decision.entry_price).toFixed(2) }}</div>
               </div>
               <div class="metric-card" v-if="ev.decision.stop_loss">
-                <div class="metric-label">止损</div>
+                <div class="metric-label">{{ $t('advisor.metrics.stop_loss') }}</div>
                 <div class="metric-value text-red">${{ Number(ev.decision.stop_loss).toFixed(2) }}</div>
               </div>
               <div class="metric-card" v-if="ev.decision.take_profit">
-                <div class="metric-label">止盈</div>
+                <div class="metric-label">{{ $t('advisor.metrics.take_profit') }}</div>
                 <div class="metric-value text-green">${{ Number(ev.decision.take_profit).toFixed(2) }}</div>
               </div>
               <div class="metric-card">
-                <div class="metric-label">建议仓位</div>
+                <div class="metric-label">{{ $t('advisor.metrics.suggested_position') }}</div>
                 <div class="metric-value">{{ ((ev.decision.position_pct || 0) * 100).toFixed(0) }}%</div>
               </div>
               <div class="metric-card">
-                <div class="metric-label">风险等级</div>
+                <div class="metric-label">{{ $t('advisor.metrics.risk_level') }}</div>
                 <div class="metric-value" :class="'risk-' + (ev.decision.risk_level || 'medium').toLowerCase()">
                   {{ riskLabel(ev.decision.risk_level) }}
                 </div>
@@ -128,7 +128,7 @@
                 {{ dirLabel(ev.decision.direction) }}
               </span>
               <span class="holding-period" v-if="ev.decision.holding_period">
-                📅 持有周期: {{ ev.decision.holding_period }}
+                📅 {{ $t('advisor.holding_period') }}: {{ ev.decision.holding_period }}
               </span>
             </div>
           </div>
@@ -140,38 +140,38 @@
 
           <!-- 情景分析 (Scenarios) -->
           <div class="scenarios-section" v-if="ev.decision?.scenarios">
-            <h4>📊 情景分析</h4>
+            <h4>📊 {{ $t('advisor.scenario_analysis') }}</h4>
             <div class="scenario-grid">
               <div class="scenario-card bullish" v-if="ev.decision.scenarios.bull">
                 <div class="scenario-header">
                   <span class="scenario-icon">🐂</span>
-                  <span class="scenario-title">牛市情景</span>
+                  <span class="scenario-title">{{ $t('advisor.scenarios.bull') }}</span>
                   <span class="scenario-prob">{{ ev.decision.scenarios.bull.probability }}%</span>
                 </div>
                 <div class="scenario-details">
-                  <div v-if="ev.decision.scenarios.bull.target">目标: ${{ Number(ev.decision.scenarios.bull.target).toFixed(2) }}</div>
-                  <div v-if="ev.decision.scenarios.bull.upside" class="text-green">上涨空间: {{ ev.decision.scenarios.bull.upside }}</div>
+                  <div v-if="ev.decision.scenarios.bull.target">{{ $t('advisor.scenarios.target') }}: ${{ Number(ev.decision.scenarios.bull.target).toFixed(2) }}</div>
+                  <div v-if="ev.decision.scenarios.bull.upside" class="text-green">{{ $t('advisor.scenarios.upside') }}: {{ ev.decision.scenarios.bull.upside }}</div>
                 </div>
               </div>
               <div class="scenario-card bearish" v-if="ev.decision.scenarios.bear">
                 <div class="scenario-header">
                   <span class="scenario-icon">🐻</span>
-                  <span class="scenario-title">熊市情景</span>
+                  <span class="scenario-title">{{ $t('advisor.scenarios.bear') }}</span>
                   <span class="scenario-prob">{{ ev.decision.scenarios.bear.probability }}%</span>
                 </div>
                 <div class="scenario-details">
-                  <div v-if="ev.decision.scenarios.bear.support">支撑: ${{ Number(ev.decision.scenarios.bear.support).toFixed(2) }}</div>
-                  <div v-if="ev.decision.scenarios.bear.downside" class="text-red">下跌风险: {{ ev.decision.scenarios.bear.downside }}</div>
+                  <div v-if="ev.decision.scenarios.bear.support">{{ $t('advisor.scenarios.support') }}: ${{ Number(ev.decision.scenarios.bear.support).toFixed(2) }}</div>
+                  <div v-if="ev.decision.scenarios.bear.downside" class="text-red">{{ $t('advisor.scenarios.downside') }}: {{ ev.decision.scenarios.bear.downside }}</div>
                 </div>
               </div>
               <div class="scenario-card neutral" v-if="ev.decision.scenarios.neutral">
                 <div class="scenario-header">
                   <span class="scenario-icon">⚖️</span>
-                  <span class="scenario-title">中性情景</span>
+                  <span class="scenario-title">{{ $t('advisor.scenarios.neutral') }}</span>
                   <span class="scenario-prob">{{ ev.decision.scenarios.neutral.probability }}%</span>
                 </div>
                 <div class="scenario-details">
-                  <div v-if="ev.decision.scenarios.neutral.range">{{ ev.decision.scenarios.neutral.range }}</div>
+                  <div v-if="ev.decision.scenarios.neutral.range">{{ $t('advisor.scenarios.range') }}: {{ ev.decision.scenarios.neutral.range }}</div>
                 </div>
               </div>
             </div>
@@ -179,13 +179,13 @@
 
           <!-- 催化剂 (Catalysts) -->
           <div class="catalysts-section" v-if="ev.decision?.catalysts">
-            <h4>🔥 催化剂与驱动因素</h4>
+            <h4>🔥 {{ $t('advisor.catalysts.title') }}</h4>
             <div class="catalyst-item" v-if="ev.decision.catalysts.short_term">
-              <span class="catalyst-label">短期 (1-2周)</span>
+              <span class="catalyst-label">{{ $t('advisor.catalysts.short_term') }}</span>
               <span class="catalyst-content">{{ ev.decision.catalysts.short_term }}</span>
             </div>
             <div class="catalyst-item" v-if="ev.decision.catalysts.mid_term">
-              <span class="catalyst-label">中长期 (1-6月)</span>
+              <span class="catalyst-label">{{ $t('advisor.catalysts.mid_term') }}</span>
               <span class="catalyst-content">{{ ev.decision.catalysts.mid_term }}</span>
             </div>
           </div>
@@ -198,21 +198,21 @@
           <!-- 多维评分 -->
           <div class="dimension-scores" v-if="ev.dimensions">
             <div class="dim" v-if="ev.dimensions.technical?.score != null">
-              <span class="dim-label">技术面</span>
+              <span class="dim-label">{{ $t('advisor.dimensions.technical') }}</span>
               <div class="dim-bar">
                 <div class="dim-fill" :style="{ width: ev.dimensions.technical.score + '%' }" :class="scoreClass(ev.dimensions.technical.score)"></div>
               </div>
               <span class="dim-val">{{ ev.dimensions.technical.score }}</span>
             </div>
             <div class="dim" v-if="ev.dimensions.fundamental?.score != null">
-              <span class="dim-label">基本面</span>
+              <span class="dim-label">{{ $t('advisor.dimensions.fundamental') }}</span>
               <div class="dim-bar">
                 <div class="dim-fill" :style="{ width: ev.dimensions.fundamental.score + '%' }" :class="scoreClass(ev.dimensions.fundamental.score)"></div>
               </div>
               <span class="dim-val">{{ ev.dimensions.fundamental.score }}</span>
             </div>
             <div class="dim" v-if="ev.dimensions.kline?.direction">
-              <span class="dim-label">K线趋势</span>
+              <span class="dim-label">{{ $t('advisor.dimensions.kline') }}</span>
               <span class="dim-val" :class="'dir-' + (ev.dimensions.kline.direction || '').toLowerCase()">
                 {{ dirLabel(ev.dimensions.kline.direction) }}
               </span>
@@ -227,14 +227,14 @@
               @click.stop="executeSingle(ev)"
               :disabled="executing"
             >
-              ⚡ 立即执行
+              ⚡ {{ $t('advisor.actions.execute_now') }}
             </button>
             <button
               v-if="ev.decision?.action !== 'AVOID'"
               class="btn btn-sm btn-plan"
               @click.stop="createPlanFromDecision(ev)"
             >
-              📋 存为计划
+              📋 {{ $t('advisor.actions.save_plan') }}
             </button>
           </div>
 
@@ -250,27 +250,27 @@
     <section class="plans-section card">
       <div class="section-header">
         <span class="step-badge">3</span>
-        <h2>交易计划</h2>
+        <h2>{{ $t('advisor.plans.title') }}</h2>
         <div class="header-actions">
-          <button class="btn btn-sm btn-outline" @click="loadPlans">🔄 刷新</button>
+          <button class="btn btn-sm btn-outline" @click="loadPlans">🔄 {{ $t('advisor.history.refresh') }}</button>
         </div>
       </div>
 
       <div v-if="plans.length === 0" class="empty-state">
-        <p>暂无交易计划。通过 AI 评估后可一键创建。</p>
+        <p>{{ $t('advisor.plans.empty') }}</p>
       </div>
 
       <table v-else class="plans-table">
         <thead>
           <tr>
-            <th>标的</th>
-            <th>入场价</th>
-            <th>止损</th>
-            <th>止盈</th>
-            <th>仓位</th>
-            <th>状态</th>
-            <th>备注</th>
-            <th>操作</th>
+            <th>{{ $t('advisor.plans.table.symbol') }}</th>
+            <th>{{ $t('advisor.plans.table.entry') }}</th>
+            <th>{{ $t('advisor.plans.table.stop_loss') }}</th>
+            <th>{{ $t('advisor.plans.table.take_profit') }}</th>
+            <th>{{ $t('advisor.plans.table.position') }}</th>
+            <th>{{ $t('advisor.plans.table.status') }}</th>
+            <th>{{ $t('advisor.plans.table.notes') }}</th>
+            <th>{{ $t('advisor.plans.table.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -291,16 +291,16 @@
                 v-if="plan.plan_status === 'ACTIVE'"
                 class="btn btn-xs btn-execute"
                 @click="executePlan(plan.id)"
-              >执行</button>
+              >{{ $t('common.execute') || '执行' }}</button>
               <button
                 v-if="plan.plan_status === 'ACTIVE'"
                 class="btn btn-xs btn-cancel"
                 @click="cancelPlan(plan.id)"
-              >取消</button>
+              >{{ $t('common.cancel') || '取消' }}</button>
               <button
                 class="btn btn-xs btn-danger"
                 @click="deletePlan(plan.id)"
-              >删除</button>
+              >{{ $t('common.delete') || '删除' }}</button>
             </td>
           </tr>
         </tbody>
@@ -311,19 +311,19 @@
     <section class="history-section card">
       <div class="section-header">
         <span class="step-badge">4</span>
-        <h2>评估历史</h2>
+        <h2>{{ $t('advisor.history.title') }}</h2>
         <div class="header-actions">
-          <button class="btn btn-sm btn-outline" @click="loadHistory">🔄 刷新</button>
+          <button class="btn btn-sm btn-outline" @click="loadHistory">🔄 {{ $t('advisor.history.refresh') }}</button>
         </div>
       </div>
 
       <div v-if="historyLoading" class="loading-placeholder">
         <div class="spinner"></div>
-        <span>加载中...</span>
+        <span>{{ $t('advisor.history.loading') }}</span>
       </div>
 
       <div v-else-if="evaluationHistory.length === 0" class="empty-state">
-        <p>暂无评估历史。完成 AI 评估后会自动保存。</p>
+        <p>{{ $t('advisor.history.empty') }}</p>
       </div>
 
       <div v-else class="history-grid">
@@ -340,7 +340,7 @@
             </div>
             <div class="history-actions">
               <span class="timestamp">{{ formatTime(record.created_at) }}</span>
-              <button class="btn-icon btn-delete" @click="deleteHistoryRecord(record.id)" title="删除">
+              <button class="btn-icon btn-delete" @click="deleteHistoryRecord(record.id)" :title="$t('common.delete')">
                 🗑️
               </button>
             </div>
@@ -351,25 +351,25 @@
               {{ actionLabel(record.action) }}
             </span>
             <span class="confidence-badge" :class="confidenceClass(record.confidence || 0)">
-              置信度 {{ record.confidence }}%
+              {{ $t('advisor.confidence') }} {{ record.confidence }}%
             </span>
           </div>
 
           <div class="history-metrics" v-if="record.entry_price">
             <div class="metric-item">
-              <span class="label">入场</span>
+              <span class="label">{{ $t('advisor.metrics.entry_price') }}</span>
               <span class="value">${{ record.entry_price.toFixed(2) }}</span>
             </div>
             <div class="metric-item" v-if="record.stop_loss">
-              <span class="label">止损</span>
+              <span class="label">{{ $t('advisor.metrics.stop_loss') }}</span>
               <span class="value text-red">${{ record.stop_loss.toFixed(2) }}</span>
             </div>
             <div class="metric-item" v-if="record.take_profit">
-              <span class="label">止盈</span>
+              <span class="label">{{ $t('advisor.metrics.take_profit') }}</span>
               <span class="value text-green">${{ record.take_profit.toFixed(2) }}</span>
             </div>
             <div class="metric-item" v-if="record.position_pct">
-              <span class="label">仓位</span>
+              <span class="label">{{ $t('advisor.metrics.suggested_position') }}</span>
               <span class="value">{{ (record.position_pct * 100).toFixed(0) }}%</span>
             </div>
           </div>
@@ -380,7 +380,7 @@
 
           <div class="history-extras" v-if="record.risk_reward_ratio || record.holding_period">
             <span class="extra-tag" v-if="record.risk_reward_ratio">
-              R:R {{ record.risk_reward_ratio }}
+              R/R {{ record.risk_reward_ratio }}
             </span>
             <span class="extra-tag" v-if="record.holding_period">
               📅 {{ record.holding_period }}
@@ -394,7 +394,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { client } from '../api/client';
+
+const { t, locale } = useI18n();
 
 // === State ===
 const symbolInput = ref('');
@@ -443,7 +446,7 @@ async function startEvaluation() {
     // 评估成功后刷新历史记录
     await loadHistory();
   } catch (err: any) {
-    alert('AI 评估失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.evaluate_failed') + ': ' + (err.response?.data?.detail || err.message));
   } finally {
     evaluating.value = false;
   }
@@ -466,7 +469,11 @@ function toggleSelect(sym: string) {
 }
 
 async function executeSingle(ev: any) {
-  if (!confirm(`确认执行 ${ev.symbol} 的 AI 交易决策？\n方向: ${ev.decision.direction}\n仓位: ${((ev.decision.position_pct || 0) * 100).toFixed(0)}%`)) return;
+  if (!confirm(t('advisor.alerts.execute_confirm_single', { 
+    symbol: ev.symbol, 
+    direction: ev.decision.direction, 
+    pos: ((ev.decision.position_pct || 0) * 100).toFixed(0) 
+  }))) return;
 
   executing.value = true;
   try {
@@ -475,10 +482,10 @@ async function executeSingle(ev: any) {
       execution_mode: 'LIMIT',
     });
     const r = data.results?.[0];
-    alert(r?.message || '执行完成');
+    alert(r?.message || t('advisor.alerts.execute_success'));
     await loadPlans();
   } catch (err: any) {
-    alert('执行失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.execute_failed') + ': ' + (err.response?.data?.detail || err.message));
   } finally {
     executing.value = false;
   }
@@ -486,7 +493,7 @@ async function executeSingle(ev: any) {
 
 async function executeSelected() {
   if (selectedSymbols.value.length === 0) return;
-  if (!confirm(`确认执行 ${selectedSymbols.value.length} 个标的的 AI 决策？`)) return;
+  if (!confirm(t('advisor.alerts.execute_confirm_batch', { n: selectedSymbols.value.length }))) return;
 
   executing.value = true;
   try {
@@ -499,11 +506,15 @@ async function executeSelected() {
       items,
       execution_mode: 'LIMIT',
     });
-    alert(`执行完成！成功: ${data.success}, 失败: ${data.failed}, 跳过: ${data.skipped}`);
+    alert(t('advisor.alerts.batch_execute_success', { 
+      success: data.success, 
+      failed: data.failed, 
+      skipped: data.skipped 
+    }));
     selectedSymbols.value = [];
     await loadPlans();
   } catch (err: any) {
-    alert('批量执行失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.batch_execute_failed') + ': ' + (err.response?.data?.detail || err.message));
   } finally {
     executing.value = false;
   }
@@ -518,10 +529,10 @@ async function createPlanFromDecision(ev: any) {
       execution_mode: 'PLAN',
     });
     const r = data.results?.[0];
-    alert(r?.message || '计划已创建');
+    alert(r?.message || t('advisor.alerts.plan_created'));
     await loadPlans();
   } catch (err: any) {
-    alert('创建计划失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.plan_create_failed') + ': ' + (err.response?.data?.detail || err.message));
   } finally {
     executing.value = false;
   }
@@ -537,49 +548,51 @@ async function loadPlans() {
 }
 
 async function executePlan(planId: number) {
-  if (!confirm('确认执行该交易计划？')) return;
+  if (!confirm(t('advisor.plans.confirm_execute'))) return;
   try {
     await client.post(`/v1/ai-advisor/plans/${planId}/execute`);
-    alert('计划执行成功');
+    alert(t('advisor.plans.execute_success'));
     await loadPlans();
   } catch (err: any) {
-    alert('执行失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.execute_failed') + ': ' + (err.response?.data?.detail || err.message));
   }
 }
 
 async function cancelPlan(planId: number) {
-  if (!confirm('确认取消该交易计划？')) return;
+  if (!confirm(t('advisor.plans.confirm_cancel'))) return;
   try {
     await client.post(`/v1/ai-advisor/plans/${planId}/cancel`);
-    alert('计划已取消');
+    alert(t('advisor.plans.cancel_success'));
     await loadPlans();
   } catch (err: any) {
-    alert('取消失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.execute_failed') + ': ' + (err.response?.data?.detail || err.message));
   }
 }
 
 async function deletePlan(planId: number) {
-  if (!confirm('确认删除？不可恢复。')) return;
+  if (!confirm(t('advisor.alerts.delete_confirm_permanent'))) return;
   try {
     await client.delete(`/v1/ai-advisor/plans/${planId}`);
     await loadPlans();
   } catch (err: any) {
-    alert('删除失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.delete_failed') + ': ' + (err.response?.data?.detail || err.message));
   }
 }
 
 // === Label Helpers ===
 function actionLabel(action?: string) {
-  return { BUY: '🟢 买入', SELL: '🔴 卖出', HOLD: '⏸ 观望', AVOID: '🚫 回避' }[action || 'HOLD'] || action;
+  const icon = { BUY: '🟢 ', SELL: '🔴 ', HOLD: '⏸ ', AVOID: '🚫 ' }[action || 'HOLD'] || '';
+  const label = t(`advisor.actions.${(action || 'HOLD').toLowerCase()}`);
+  return `${icon}${label}`;
 }
 function dirLabel(dir?: string) {
-  return { LONG: '做多 ↑', SHORT: '做空 ↓', NEUTRAL: '中性 —' }[dir || 'NEUTRAL'] || dir;
+  return t(`advisor.directions.${(dir || 'neutral').toLowerCase()}`);
 }
 function riskLabel(level?: string) {
-  return { LOW: '低风险', MEDIUM: '中风险', HIGH: '高风险' }[level || 'MEDIUM'] || level;
+  return t(`common.risk_levels.${(level || 'medium').toLowerCase()}`);
 }
 function statusLabel(status?: string) {
-  return { ACTIVE: '待执行', EXECUTED: '已执行', CANCELLED: '已取消', FAILED: '失败', EXPIRED: '已过期' }[status || 'ACTIVE'] || status;
+  return t(`advisor.plans.status.${(status || 'active').toLowerCase()}`);
 }
 function confidenceClass(c: number) {
   if (c >= 70) return 'conf-high';
@@ -608,14 +621,14 @@ async function loadHistory() {
 }
 
 async function deleteHistoryRecord(recordId: number) {
-  if (!confirm('确认删除该评估记录？')) return;
+  if (!confirm(t('advisor.history.delete_confirm'))) return;
   
   try {
     await client.delete(`/v1/ai-advisor/history/${recordId}`);
     // 从列表中移除
     evaluationHistory.value = evaluationHistory.value.filter(r => r.id !== recordId);
   } catch (err: any) {
-    alert('删除失败: ' + (err.response?.data?.detail || err.message));
+    alert(t('advisor.alerts.delete_failed') + ': ' + (err.response?.data?.detail || err.message));
   }
 }
 
@@ -625,17 +638,17 @@ function formatTime(timestamp?: string) {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   
-  // 小于1分钟
-  if (diff < 60000) return '刚刚';
-  // 小于1小时
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
-  // 小于1天
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
-  // 小于7天
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`;
+  if (diff < 60000) return t('advisor.history.time.just_now');
+  if (diff < 3600000) return t('advisor.history.time.minutes_ago', { n: Math.floor(diff / 60000) });
+  if (diff < 86400000) return t('advisor.history.time.hours_ago', { n: Math.floor(diff / 3600000) });
+  if (diff < 604800000) return t('advisor.history.time.days_ago', { n: Math.floor(diff / 86400000) });
   
-  // 超过7天显示具体日期
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
 }
 
 onMounted(() => { 

@@ -1,7 +1,14 @@
 <template>
   <div class="layout">
     <aside class="sidebar">
-      <h1>AI Trading · 控制塔</h1>
+      <div class="sidebar-header">
+        <h1>AI Trading</h1>
+        <div class="header-tools">
+          <button class="tool-btn" @click="toggleTheme" :title="$t('auth.switch_theme')">{{ themeLabel }}</button>
+          <button class="tool-btn" @click="toggleLanguage" :title="$t('auth.switch_language')">{{ currentLocaleLabel }}</button>
+        </div>
+      </div>
+      <p class="sidebar-subtitle">{{ $t('nav.control_tower') }}</p>
 
       <nav class="nav-menu">
         <!-- Dashboard 独立入口 -->
@@ -34,16 +41,16 @@
       </nav>
 
       <div v-if="showExpiryBanner" class="expiry-banner">
-        <span>⚠️ Token 将在 {{ expiryText }} 到期</span>
+        <span>{{ $t('expiry.banner_text', { time: expiryText }) }}</span>
         <div class="expiry-actions">
-          <button class="small-btn" @click="dismissBanner">忽略</button>
-          <button class="small-btn" @click="openTokenModal">查看</button>
+          <button class="small-btn" @click="dismissBanner">{{ $t('common.confirm') }}</button>
+          <button class="small-btn" @click="openTokenModal">{{ $t('common.edit') }}</button>
         </div>
       </div>
 
       <div class="auth-block">
         <div v-if="loggedIn" class="user-info" @click="openTokenModal" role="button" tabindex="0">
-          <div class="avatar" :title="username || '管理员'">
+          <div class="avatar" :title="username || $t('auth.admin')">
             <svg viewBox="0 0 24 24" class="avatar-svg" aria-hidden="true">
               <defs>
                 <linearGradient id="grad1" x1="0" x2="1">
@@ -56,17 +63,16 @@
             </svg>
           </div>
           <div class="user-meta">
-            <div class="user-name">{{ username || '管理员' }}</div>
+            <div class="user-name">{{ username || $t('auth.admin') }}</div>
             <div class="token-expiry" v-if="expiryText">Token: {{ expiryText }}</div>
           </div>
           <div class="user-actions">
-            <button class="small-btn" @click.stop="onLogout">登出</button>
-            <button class="small-btn" @click.stop="toggleTheme" title="切换主题">{{ themeLabel }}</button>
+            <button class="small-btn" @click.stop="onLogout">{{ $t('auth.logout') }}</button>
           </div>
-          <div v-if="expiringSoon" class="expiry-badge" title="Token 即将过期">⚠️</div>
+          <div v-if="expiringSoon" class="expiry-badge" :title="$t('auth.token_expiring_soon')">⚠️</div>
         </div>
         <div v-else>
-          <router-link to="/login" class="small-btn">登录</router-link>
+          <router-link to="/login" class="small-btn">{{ $t('auth.login') }}</router-link>
         </div>
 
         <!-- Token / User modal -->
@@ -94,8 +100,8 @@
 
       <section class="footer">
         <p>
-          当前版本：前后端物理分离 · REST 调用<br />
-          行为评分与卖飞评分驱动每个标的的 ShockPolicy / EarningsPolicy；Greeks 暴露通过水位条形图展示与限额的相对关系。
+          {{ $t('footer.version') }}<br />
+          {{ $t('footer.description') }}
         </p>
       </section>
     </main>
@@ -103,54 +109,60 @@
 </template>
 
 <script setup lang="ts">
-
-interface NavItem { path: string; label: string; icon: string }
-interface NavGroup { title: string; items: NavItem[] }
-
-const navGroups: NavGroup[] = [
-  {
-    title: '交易',
-    items: [
-      { path: '/positions', label: '持仓评估', icon: '📊' },
-      { path: '/ai-advisor', label: 'AI交易决策', icon: '🧠' },
-      { path: '/journal', label: '交易日志', icon: '📓' },
-      { path: '/alerts', label: '价格告警', icon: '🔔' },
-      { path: '/quant-loop', label: '量化闭环', icon: '🔄' },
-    ],
-  },
-  {
-    title: '研究',
-    items: [
-      { path: '/hotspots', label: '市场热点', icon: '🔥' },
-      { path: '/macro', label: '宏观分析', icon: '🌍' },
-      { path: '/advice', label: '股票分析', icon: '🤖' },
-      { path: '/strategies', label: '策略库管理', icon: '📚' },
-      { path: '/opportunities', label: '策略筛选', icon: '🔍' },
-      { path: '/behavior', label: '行为评分', icon: '🎯' },
-    ],
-  },
-  {
-    title: '系统',
-    items: [
-      { path: '/system', label: '系统监控', icon: '🩺' },
-    ],
-  },
-]
-
 import { computed, ref, reactive, onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import router from './router';
 import { useRoute } from 'vue-router';
 import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken, getTokenPayload, isTokenExpired } from './api/client';
 import AdminInfoModal from './components/AdminInfoModal.vue';
 
+const { t, locale } = useI18n();
 const route = useRoute()
 
+interface NavItem { path: string; label: string; icon: string }
+interface NavGroup { title: string; items: NavItem[] }
+
+const navGroups = computed<NavGroup[]>(() => [
+  {
+    title: t('nav.group_realtime'),
+    items: [
+      { path: '/positions', label: t('nav.positions'), icon: '📊' },
+      { path: '/ai-advisor', label: t('nav.ai_advisor'), icon: '🧠' },
+      { path: '/journal', label: t('nav.journal'), icon: '📓' },
+      { path: '/alerts', label: t('nav.alerts'), icon: '🔔' },
+      { path: '/quant-loop', label: t('nav.quant_loop'), icon: '🔄' },
+    ],
+  },
+  {
+    title: t('nav.group_analysis'),
+    items: [
+      { path: '/hotspots', label: t('nav.hotspots'), icon: '🔥' },
+      { path: '/macro', label: t('nav.macro'), icon: '🌍' },
+      { path: '/advice', label: t('nav.advice'), icon: '🤖' },
+      { path: '/strategies', label: t('nav.strategies'), icon: '📚' },
+      { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
+      { path: '/behavior', label: t('nav.behavior'), icon: '🎯' },
+    ],
+  },
+  {
+    title: t('nav.group_config'),
+    items: [
+      { path: '/system', label: t('nav.system'), icon: '🩺' },
+    ],
+  },
+])
+
 // --- Collapsible nav groups ---
-const openGroups = reactive<Record<string, boolean>>({
-  '交易': true,
-  '研究': false,
-  '系统': false,
-})
+const openGroups = reactive<Record<string, boolean>>({})
+
+// Initialize openGroups based on navGroups titles
+watch(navGroups, (newGroups) => {
+  newGroups.forEach(group => {
+    if (openGroups[group.title] === undefined) {
+      openGroups[group.title] = group.title === t('nav.group_realtime')
+    }
+  })
+}, { immediate: true })
 
 function toggleGroup(title: string) {
   openGroups[title] = !openGroups[title]
@@ -159,7 +171,7 @@ function toggleGroup(title: string) {
 // Auto-expand the group containing the current route
 function autoExpandGroup() {
   const currentPath = route.path
-  for (const group of navGroups) {
+  for (const group of navGroups.value) {
     if (group.items.some(item => currentPath.startsWith(item.path))) {
       openGroups[group.title] = true
     }
@@ -171,7 +183,14 @@ const loggedIn = computed(() => isLoggedIn());
 const username = ref(getCurrentUsername());
 const expiryText = ref('');
 const theme = ref(localStorage.getItem('theme') || 'dark');
-const themeLabel = computed(() => theme.value === 'dark' ? '浅色' : '深色');
+const themeLabel = computed(() => theme.value === 'dark' ? t('auth.light_mode') : t('auth.dark_mode'));
+
+const currentLocaleLabel = computed(() => locale.value === 'zh-CN' ? 'EN' : 'CN');
+
+function toggleLanguage() {
+  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN';
+  localStorage.setItem('locale', locale.value);
+}
 
 const showTokenModal = ref(false);
 const showRaw = ref(false);
@@ -184,12 +203,12 @@ const bannerDismissUntilKey = 'expiry_banner_dismiss_until';
 function formatExpiryText(ms: number | null) {
   if (!ms) return '';
   const diff = ms - Date.now();
-  if (diff <= 0) return '已过期';
+  if (diff <= 0) return t('expiry.expired');
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} 分钟后到期`;
+  if (mins < 60) return t('expiry.mins_left', { n: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} 小时后到期`;
-  return `${Math.floor(hours / 24)} 天后到期`;
+  if (hours < 24) return t('expiry.hours_left', { n: hours });
+  return t('expiry.days_left', { n: Math.floor(hours / 24) });
 }
 
 function updateExpiry() {
@@ -227,7 +246,7 @@ function updateExpiry() {
 
 function sendExpiryNotification() {
   try {
-    const n = new Notification('Token 快到期', { body: `Token 将在 ${expiryText.value} 到期，建议尽快续期` });
+    const n = new Notification(t('expiry.banner_title'), { body: t('expiry.banner_body', { time: expiryText.value }) });
     n.onclick = () => { openTokenModal(); window.focus && window.focus(); };
   } catch (e) {}
 }
@@ -309,7 +328,35 @@ function applyTheme() {
   flex-shrink: 0;
 }
 
-.sidebar h1 { font-size: 1.05rem; margin: 0 0 4px; }
+.sidebar h1 { font-size: 1.05rem; margin: 0; }
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.header-tools {
+  display: flex;
+  gap: 4px;
+}
+.tool-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.sidebar-subtitle {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
 
 .nav-menu {
   display: flex;

@@ -2,24 +2,24 @@
   <div v-if="show" class="modal-overlay" @click.self="close">
     <div class="plan-dialog">
       <div class="dialog-header">
-        <h3>{{ isEdit ? '编辑交易计划' : '新建交易计划' }}</h3>
+        <h3>{{ isEdit ? $t('execution.dialog.edit_title') : $t('execution.dialog.create_title') }}</h3>
         <button class="close-btn" @click="close">✕</button>
       </div>
 
       <div class="dialog-body">
         <div class="form-group">
-          <label>交易标的 *</label>
+          <label>{{ $t('execution.dialog.symbol') }}</label>
           <input 
             v-model="formData.symbol" 
             :disabled="isEdit"
-            placeholder="如: AAPL, META, TSLA" 
+            :placeholder="$t('execution.dialog.placeholder_symbol')" 
             class="input-field"
           />
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>入场价格 *</label>
+            <label>{{ $t('execution.dialog.entry_price') }}</label>
             <input 
               v-model.number="formData.entry_price" 
               type="number"
@@ -30,7 +30,7 @@
           </div>
           
           <div class="form-group">
-            <label>止损价格 *</label>
+            <label>{{ $t('execution.dialog.stop_loss') }}</label>
             <input 
               v-model.number="formData.stop_loss" 
               type="number"
@@ -39,13 +39,13 @@
               class="input-field"
               :class="{ 'error': stopLossError }"
             />
-            <span v-if="stopLossError" class="error-text">止损价必须低于入场价</span>
+            <span v-if="stopLossError" class="error-text">{{ $t('execution.dialog.errors.stop_loss') }}</span>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>止盈价格 *</label>
+            <label>{{ $t('execution.dialog.take_profit') }}</label>
             <input 
               v-model.number="formData.take_profit" 
               type="number"
@@ -54,11 +54,11 @@
               class="input-field"
               :class="{ 'error': takeProfitError }"
             />
-            <span v-if="takeProfitError" class="error-text">止盈价必须高于入场价</span>
+            <span v-if="takeProfitError" class="error-text">{{ $t('execution.dialog.errors.take_profit') }}</span>
           </div>
           
           <div class="form-group">
-            <label>目标仓位 * (%)</label>
+            <label>{{ $t('execution.dialog.target_position') }}</label>
             <input 
               v-model.number="targetPositionPercent" 
               type="number"
@@ -72,19 +72,19 @@
         </div>
 
         <div v-if="isEdit" class="form-group">
-          <label>计划状态</label>
+          <label>{{ $t('execution.dialog.status') }}</label>
           <select v-model="formData.plan_status" class="input-field">
-            <option value="ACTIVE">待执行</option>
-            <option value="PAUSED">暂停</option>
-            <option value="CANCELLED">取消</option>
+            <option value="ACTIVE">{{ $t('execution.filters.active') }}</option>
+            <option value="PAUSED">{{ $t('execution.filters.paused') }}</option>
+            <option value="CANCELLED">{{ $t('execution.filters.cancelled') }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>备注</label>
+          <label>{{ $t('execution.dialog.notes') }}</label>
           <textarea 
             v-model="formData.notes" 
-            placeholder="交易备注..." 
+            :placeholder="$t('execution.dialog.placeholder_notes')" 
             class="input-field textarea"
             rows="3"
           ></textarea>
@@ -92,18 +92,18 @@
 
         <!-- 风险预览 -->
         <div v-if="formData.entry_price && formData.stop_loss && formData.take_profit" class="risk-preview">
-          <h4>风险预览</h4>
+          <h4>{{ $t('execution.dialog.risk_preview') }}</h4>
           <div class="preview-grid">
             <div class="preview-item">
-              <span class="label">止损幅度</span>
+              <span class="label">{{ $t('execution.dialog.stop_loss_range') }}</span>
               <span class="value risk">{{ stopLossPercent }}%</span>
             </div>
             <div class="preview-item">
-              <span class="label">止盈幅度</span>
+              <span class="label">{{ $t('execution.dialog.take_profit_range') }}</span>
               <span class="value profit">{{ takeProfitPercent }}%</span>
             </div>
             <div class="preview-item">
-              <span class="label">风险收益比</span>
+              <span class="label">{{ $t('execution.dialog.risk_reward_ratio') }}</span>
               <span class="value">1 : {{ riskRewardRatio }}</span>
             </div>
           </div>
@@ -111,13 +111,13 @@
       </div>
 
       <div class="dialog-actions">
-        <button class="btn btn-secondary" @click="close">取消</button>
+        <button class="btn btn-secondary" @click="close">{{ $t('common.cancel') }}</button>
         <button 
           class="btn btn-primary" 
           @click="save"
           :disabled="!isValid || loading"
         >
-          {{ loading ? '保存中...' : (isEdit ? '更新' : '创建') }}
+          {{ loading ? $t('common.loading') : (isEdit ? $t('common.save') : $t('common.confirm')) }}
         </button>
       </div>
     </div>
@@ -126,7 +126,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { client } from '../api/client';
+
+const { t } = useI18n();
 
 interface TradingPlan {
   id?: number;
@@ -238,16 +241,16 @@ async function save() {
     if (isEdit.value) {
       // 更新现有计划
       await client.put(`/v1/execution-center/plans/${props.plan!.id}`, formData.value);
-      alert('计划更新成功！');
+      alert(t('execution.messages.plan_updated'));
     } else {
       // 创建新计划
       await client.post('/v1/execution-center/plans', formData.value);
-      alert('计划创建成功！');
+      alert(t('execution.messages.plan_created'));
     }
     emit('success');
   } catch (error: any) {
     console.error('保存计划失败:', error);
-    alert(error.response?.data?.detail || '保存失败');
+    alert(error.response?.data?.detail || t('execution.messages.save_failed'));
   } finally {
     loading.value = false;
   }

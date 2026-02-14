@@ -3,32 +3,33 @@
     <section class="section-header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h2>🌍 宏观分析</h2>
-          <p>只展示摘要与等级，详细内容可展开</p>
+          <h2>{{ $t('macro.title') }}</h2>
+          <p>{{ $t('macro.subtitle') }}</p>
         </div>
         <button class="refresh-button" @click="onRefreshMacro" :disabled="loading">
-          {{ loading ? '刷新中...' : '刷新数据' }}
+          {{ loading ? $t('macro.refreshing') : $t('macro.refresh') }}
         </button>
       </div>
     </section>
 
     <p v-if="errorMsg" class="error-message">{{ errorMsg }}</p>
-    <p v-else-if="loading" class="loading-message">正在加载宏观风险数据...</p>
+    <p v-else-if="loading" class="loading-message">{{ $t('macro.loading') }}</p>
     
     <div v-else-if="macroRiskData">
       <MacroRiskDigestCard :data="macroRiskData" />
       <details class="detail-accordion">
-        <summary>展开宏观详情</summary>
+        <summary>{{ $t('macro.expand') }}</summary>
         <MacroRiskDashboard :data="macroRiskData" />
       </details>
       <MacroRiskGuideline />
     </div>
-    <p v-else class="info-message">暂无宏观风险数据</p>
+    <p v-else class="info-message">{{ $t('macro.empty') }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import MacroRiskDashboard from '../components/MacroRiskDashboard.vue';
 import MacroRiskDigestCard from '../components/MacroRiskDigestCard.vue';
 import MacroRiskGuideline from '../components/MacroRiskGuideline.vue';
@@ -38,6 +39,7 @@ import {
   refreshMacroData
 } from '../api/client';
 
+const { t } = useI18n();
 const macroRiskData = ref<MacroRiskOverviewResponse | null>(null);
 const loading = ref(false);
 const errorMsg = ref('');
@@ -50,11 +52,11 @@ async function loadMacroRiskData() {
   } catch (e: any) {
     console.error('加载宏观风险失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-      errorMsg.value = '⏱️ 请求超时，请稍后再试！';
+      errorMsg.value = t('positions.error_timeout');
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
-      errorMsg.value = '🌐 网络连接失败，请检查网络或后端服务状态';
+      errorMsg.value = t('positions.error_network');
     } else {
-      errorMsg.value = '❌ 获取宏观风险数据失败';
+      errorMsg.value = t('macro.error_load');
     }
   } finally {
     loading.value = false;
@@ -69,11 +71,11 @@ async function onRefreshMacro() {
   } catch (e: any) {
     console.error('刷新宏观数据失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-      errorMsg.value = '⏱️ 刷新请求超时，请稍后再试！';
+      errorMsg.value = t('positions.refresh_error_timeout');
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
-      errorMsg.value = '🌐 网络连接失败，无法刷新数据';
+      errorMsg.value = t('positions.refresh_error_network');
     } else {
-      errorMsg.value = '❌ 刷新宏观数据失败';
+      errorMsg.value = t('macro.error_refresh');
     }
   }
 }

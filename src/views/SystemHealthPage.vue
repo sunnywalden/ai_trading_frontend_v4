@@ -2,11 +2,11 @@
   <div class="page-container">
     <section class="section-header">
       <div>
-        <h2>🩺 系统健康</h2>
-        <p>仅展示服务状态与最近更新时间</p>
+        <h2>🩺 {{ $t('health.title') }}</h2>
+        <p>{{ $t('health.subtitle') }}</p>
       </div>
       <button class="refresh-button" @click="loadHealth" :disabled="loading">
-        {{ loading ? '刷新中...' : '刷新状态' }}
+        {{ loading ? $t('health.refreshing') : $t('health.refresh') }}
       </button>
     </section>
 
@@ -23,9 +23,11 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SystemHealthCard from '../components/SystemHealthCard.vue';
 import { fetchMonitoringHealth } from '../api/client';
 
+const { t } = useI18n();
 const loading = ref(false);
 const errorMsg = ref('');
 const healthStatus = ref('unknown');
@@ -43,11 +45,11 @@ async function loadHealth() {
   } catch (e: any) {
     console.error('加载健康状态失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
-      errorMsg.value = '⏱️ 请求超时，请稍后再试！';
+      errorMsg.value = t('health.error_timeout');
     } else if (e.code === 'ERR_NETWORK' || e.message?.includes('Network Error')) {
-      errorMsg.value = '🌐 网络连接失败，请检查网络或后端服务状态';
+      errorMsg.value = t('health.error_network');
     } else {
-      errorMsg.value = '❌ 获取系统健康失败';
+      errorMsg.value = t('health.error_generic');
     }
   } finally {
     loading.value = false;

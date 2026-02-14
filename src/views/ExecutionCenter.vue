@@ -3,26 +3,26 @@
     <!-- 头部工具栏 -->
     <div class="header-toolbar">
       <div class="title-section">
-        <h2>⚡ 执行中心</h2>
-        <p class="subtitle">集中管理所有待执行的交易计划</p>
+        <h2>{{ $t('execution.title') }}</h2>
+        <p class="subtitle">{{ $t('execution.subtitle') }}</p>
       </div>
       
       <!-- 统计卡片 -->
       <div class="stats-cards">
         <div class="stat-card">
-          <span class="stat-label">总计划</span>
+          <span class="stat-label">{{ $t('execution.stats.total') }}</span>
           <span class="stat-value">{{ stats.total }}</span>
         </div>
         <div class="stat-card active">
-          <span class="stat-label">待执行</span>
+          <span class="stat-label">{{ $t('execution.stats.active') }}</span>
           <span class="stat-value">{{ stats.active }}</span>
         </div>
         <div class="stat-card success">
-          <span class="stat-label">已执行</span>
+          <span class="stat-label">{{ $t('execution.stats.executed') }}</span>
           <span class="stat-value">{{ stats.executed }}</span>
         </div>
         <div class="stat-card failed">
-          <span class="stat-label">已失败</span>
+          <span class="stat-label">{{ $t('execution.stats.failed') }}</span>
           <span class="stat-value">{{ stats.failed }}</span>
         </div>
       </div>
@@ -32,18 +32,18 @@
     <div class="filter-toolbar">
       <div class="filters">
         <select v-model="filterStatus" @change="loadPlans" class="filter-select">
-          <option value="">全部状态</option>
-          <option value="ACTIVE">待执行</option>
-          <option value="PAUSED">已暂停</option>
-          <option value="EXECUTED">已执行</option>
-          <option value="CANCELLED">已取消</option>
-          <option value="FAILED">已失败</option>
+          <option value="">{{ $t('execution.filters.all_status') }}</option>
+          <option value="ACTIVE">{{ $t('execution.filters.active') }}</option>
+          <option value="PAUSED">{{ $t('execution.filters.paused') }}</option>
+          <option value="EXECUTED">{{ $t('execution.filters.executed') }}</option>
+          <option value="CANCELLED">{{ $t('execution.filters.cancelled') }}</option>
+          <option value="FAILED">{{ $t('execution.filters.failed') }}</option>
         </select>
         
         <input 
           v-model="filterSymbol" 
           @input="loadPlans"
-          placeholder="搜索标的..." 
+          :placeholder="$t('execution.filters.search_symbol')" 
           class="filter-input"
         />
       </div>
@@ -55,7 +55,7 @@
           :disabled="loading"
           class="btn btn-primary"
         >
-          批量执行 ({{ selectedPlans.length }})
+          {{ $t('execution.actions.batch_execute') }} ({{ selectedPlans.length }})
         </button>
         <button 
           v-if="selectedPlans.length > 0"
@@ -63,10 +63,10 @@
           :disabled="loading"
           class="btn btn-danger"
         >
-          批量取消
+          {{ $t('execution.actions.batch_cancel') }}
         </button>
         <button @click="showCreateDialog = true" class="btn btn-success">
-          + 新建计划
+          {{ $t('execution.actions.create_plan') }}
         </button>
       </div>
     </div>
@@ -75,13 +75,13 @@
     <div class="plans-container">
       <div v-if="loading && plans.length === 0" class="loading">
         <div class="spinner"></div>
-        <p>加载中...</p>
+        <p>{{ $t('common.loading') }}</p>
       </div>
       
       <div v-else-if="plans.length === 0" class="empty-state">
         <div class="empty-icon">📋</div>
-        <h3>暂无交易计划</h3>
-        <p>点击"新建计划"创建第一个交易计划</p>
+        <h3>{{ $t('execution.empty_state.title') }}</h3>
+        <p>{{ $t('execution.empty_state.subtitle') }}</p>
       </div>
       
       <div v-else class="plans-table">
@@ -95,14 +95,14 @@
                   :checked="isAllSelected"
                 />
               </th>
-              <th>标的</th>
-              <th>入场价</th>
-              <th>止损价</th>
-              <th>止盈价</th>
-              <th>目标仓位</th>
-              <th>状态</th>
-              <th>创建时间</th>
-              <th>操作</th>
+              <th>{{ $t('execution.table.headers.symbol') }}</th>
+              <th>{{ $t('execution.table.headers.entry_price') }}</th>
+              <th>{{ $t('execution.table.headers.stop_loss') }}</th>
+              <th>{{ $t('execution.table.headers.take_profit') }}</th>
+              <th>{{ $t('execution.table.headers.target_position') }}</th>
+              <th>{{ $t('execution.table.headers.status') }}</th>
+              <th>{{ $t('execution.table.headers.created_at') }}</th>
+              <th>{{ $t('execution.table.headers.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -137,7 +137,7 @@
                   @click="executeSinglePlan(plan.id)"
                   :disabled="loading"
                   class="btn-icon btn-execute"
-                  title="执行"
+                  :title="$t('execution.actions.execute')"
                 >
                   ▶
                 </button>
@@ -145,7 +145,7 @@
                   @click="editPlan(plan)"
                   :disabled="loading"
                   class="btn-icon btn-edit"
-                  title="编辑"
+                  :title="$t('execution.actions.edit')"
                 >
                   ✏️
                 </button>
@@ -153,7 +153,7 @@
                   @click="deletePlan(plan.id)"
                   :disabled="loading"
                   class="btn-icon btn-delete"
-                  title="删除"
+                  :title="$t('execution.actions.delete')"
                 >
                   🗑️
                 </button>
@@ -170,17 +170,17 @@
           :disabled="page === 1 || loading"
           class="btn btn-page"
         >
-          ‹ 上一页
+          ‹ {{ $t('execution.pagination.prev') }}
         </button>
         <span class="page-info">
-          第 {{ page }} 页 / 共 {{ totalPages }} 页
+          {{ $t('execution.pagination.info', { current: page, total: totalPages }) }}
         </span>
         <button 
           @click="goToPage(page + 1)"
           :disabled="page >= totalPages || loading"
           class="btn btn-page"
         >
-          下一页 ›
+          {{ $t('execution.pagination.next') }} ›
         </button>
       </div>
     </div>
@@ -198,6 +198,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { client } from '../api/client';
 import PlanEditDialog from '../components/PlanEditDialog.vue';
 
@@ -223,6 +224,7 @@ interface Stats {
   failed: number;
 }
 
+const { t, locale } = useI18n();
 const plans = ref<TradingPlan[]>([]);
 const stats = ref<Stats>({
   total: 0,
@@ -265,7 +267,7 @@ async function loadPlans() {
     total.value = response.data.total;
   } catch (error: any) {
     console.error('加载计划列表失败:', error);
-    alert(error.response?.data?.detail || '加载失败');
+    alert(error.response?.data?.detail || t('execution.messages.load_failed'));
   } finally {
     loading.value = false;
   }
@@ -311,7 +313,7 @@ function isSelected(planId: number) {
 
 // 执行单个计划
 async function executeSinglePlan(planId: number) {
-  if (!confirm('确认执行该交易计划？')) return;
+  if (!confirm(t('execution.confirm.execute_single'))) return;
   
   loading.value = true;
   try {
@@ -320,15 +322,15 @@ async function executeSinglePlan(planId: number) {
     });
     
     if (response.data.success) {
-      alert('计划执行成功！');
+      alert(t('execution.messages.execute_success'));
       await loadPlans();
       await loadStats();
     } else {
-      alert('计划执行失败: ' + (response.data.results[0]?.error || '未知错误'));
+      alert(t('execution.messages.execute_failed', { error: response.data.results[0]?.error || t('common.unknown_error') }));
     }
   } catch (error: any) {
     console.error('执行计划失败:', error);
-    alert(error.response?.data?.detail || '执行失败');
+    alert(error.response?.data?.detail || t('execution.messages.execute_failed', { error: '' }));
   } finally {
     loading.value = false;
   }
@@ -336,7 +338,7 @@ async function executeSinglePlan(planId: number) {
 
 // 批量执行
 async function batchExecute() {
-  if (!confirm(`确认执行选中的 ${selectedPlans.value.length} 个计划？`)) return;
+  if (!confirm(t('execution.confirm.execute_batch', { n: selectedPlans.value.length }))) return;
   
   loading.value = true;
   try {
@@ -344,13 +346,16 @@ async function batchExecute() {
       plan_ids: selectedPlans.value
     });
     
-    alert(`执行完成！成功: ${response.data.success_count}, 失败: ${response.data.failed_count}`);
+    alert(t('execution.messages.batch_execute_result', { 
+      success: response.data.success_count, 
+      failed: response.data.failed_count 
+    }));
     selectedPlans.value = [];
     await loadPlans();
     await loadStats();
   } catch (error: any) {
     console.error('批量执行失败:', error);
-    alert(error.response?.data?.detail || '批量执行失败');
+    alert(error.response?.data?.detail || t('execution.messages.execute_failed', { error: '' }));
   } finally {
     loading.value = false;
   }
@@ -358,7 +363,7 @@ async function batchExecute() {
 
 // 批量取消
 async function batchCancel() {
-  const reason = prompt(`确认取消选中的 ${selectedPlans.value.length} 个计划？\n请输入取消原因（可选）:`);
+  const reason = prompt(t('execution.confirm.cancel_batch', { n: selectedPlans.value.length }));
   if (reason === null) return;
   
   loading.value = true;
@@ -374,7 +379,7 @@ async function batchCancel() {
     await loadStats();
   } catch (error: any) {
     console.error('批量取消失败:', error);
-    alert(error.response?.data?.detail || '批量取消失败');
+    alert(error.response?.data?.detail || t('execution.messages.batch_cancel_failed'));
   } finally {
     loading.value = false;
   }
@@ -387,17 +392,17 @@ function editPlan(plan: TradingPlan) {
 
 // 删除计划
 async function deletePlan(planId: number) {
-  if (!confirm('确认删除该计划？此操作不可恢复。')) return;
+  if (!confirm(t('execution.confirm.delete_single'))) return;
   
   loading.value = true;
   try {
     await client.delete(`/v1/execution-center/plans/${planId}`);
-    alert('删除成功');
+    alert(t('execution.messages.delete_success'));
     await loadPlans();
     await loadStats();
   } catch (error: any) {
     console.error('删除计划失败:', error);
-    alert(error.response?.data?.detail || '删除失败');
+    alert(error.response?.data?.detail || t('execution.messages.delete_failed'));
   } finally {
     loading.value = false;
   }
@@ -430,18 +435,18 @@ function getStatusClass(status: string) {
 
 function translateStatus(status: string) {
   const map: Record<string, string> = {
-    ACTIVE: '待执行',
-    PAUSED: '已暂停',
-    EXECUTED: '已执行',
-    CANCELLED: '已取消',
-    FAILED: '已失败'
+    ACTIVE: t('execution.filters.active'),
+    PAUSED: t('execution.filters.paused'),
+    EXECUTED: t('execution.filters.executed'),
+    CANCELLED: t('execution.filters.cancelled'),
+    FAILED: t('execution.filters.failed')
   };
   return map[status] || status;
 }
 
 function formatTime(timeStr: string) {
   const date = new Date(timeStr);
-  return date.toLocaleString('zh-CN', { 
+  return date.toLocaleString(locale.value, { 
     month: '2-digit', 
     day: '2-digit', 
     hour: '2-digit', 

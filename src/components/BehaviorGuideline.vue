@@ -1,149 +1,149 @@
 <template>
   <div class="guideline-card">
-    <h2>🧠 行为评分说明</h2>
+    <h2>{{ $t('behavior.guideline.title') }}</h2>
     
     <div class="score-section">
-      <h3>行为评分 (0-100)</h3>
-      <p class="desc">综合评估交易行为的健康度和纪律性</p>
+      <h3>{{ $t('behavior.guideline.score_0_100') }}</h3>
+      <p class="desc">{{ $t('behavior.guideline.desc') }}</p>
       <div class="tier-grid">
         <div class="tier-item tier-t1">
-          <span class="tier-label">T1 优秀</span>
+          <span class="tier-label">T1 {{ $t('behavior.guideline.tiers.t1') }}</span>
           <span class="tier-range">85-100</span>
-          <span class="tier-desc">纪律性强，执行力佳</span>
+          <span class="tier-desc">{{ $t('behavior.guideline.tiers.t1_desc') }}</span>
         </div>
         <div class="tier-item tier-t2">
-          <span class="tier-label">T2 良好</span>
+          <span class="tier-label">T2 {{ $t('behavior.guideline.tiers.t2') }}</span>
           <span class="tier-range">65-84</span>
-          <span class="tier-desc">基本合规，可持续改进</span>
+          <span class="tier-desc">{{ $t('behavior.guideline.tiers.t2_desc') }}</span>
         </div>
         <div class="tier-item tier-t3">
-          <span class="tier-label">T3 警惕</span>
+          <span class="tier-label">T3 {{ $t('behavior.guideline.tiers.t3') }}</span>
           <span class="tier-range">40-64</span>
-          <span class="tier-desc">存在风险，需要调整</span>
+          <span class="tier-desc">{{ $t('behavior.guideline.tiers.t3_desc') }}</span>
         </div>
         <div class="tier-item tier-t4">
-          <span class="tier-label">T4 危险</span>
+          <span class="tier-label">T4 {{ $t('behavior.guideline.tiers.t4') }}</span>
           <span class="tier-range">0-39</span>
-          <span class="tier-desc">严重偏离，立即改善</span>
+          <span class="tier-desc">{{ $t('behavior.guideline.tiers.t4_desc') }}</span>
         </div>
       </div>
     </div>
 
     <div class="score-section">
-      <h3>蝇营狗苟评分 (Sell-Fly Score)</h3>
-      <p class="desc">评估短期波动操作和追涨杀跌行为</p>
+      <h3>{{ $t('behavior.guideline.sell_fly.title') }}</h3>
+      <p class="desc">{{ $t('behavior.guideline.sell_fly.desc') }}</p>
       <ul>
-        <li><span class="range">80+</span> 极少追涨杀跌，心态稳定</li>
-        <li><span class="range">60-79</span> 偶有追高，整体可控</li>
-        <li><span class="range">40-59</span> 频繁短炒，风险增加</li>
-        <li><span class="range">0-39</span> 追涨杀跌严重，易亏损</li>
+        <li><span class="range">80+</span> {{ $t('behavior.guideline.sell_fly.s1') }}</li>
+        <li><span class="range">60-79</span> {{ $t('behavior.guideline.sell_fly.s2') }}</li>
+        <li><span class="range">40-59</span> {{ $t('behavior.guideline.sell_fly.s3') }}</li>
+        <li><span class="range">0-39</span> {{ $t('behavior.guideline.sell_fly.s4') }}</li>
       </ul>
-      <p class="impact">💡 分数越高，操作越理性，避免频繁短炒</p>
+      <p class="impact">{{ $t('behavior.guideline.sell_fly.impact') }}</p>
       <div class="behavior-example">
-        <strong>典型表现：</strong>
+        <strong>{{ $t('behavior.guideline.sell_fly.example_title') }}</strong>
         <ul>
-          <li>看到股票大涨就追高买入</li>
-          <li>股价回调时恐慌性卖出</li>
-          <li>一天内多次买卖同一标的</li>
-          <li>FOMO（错失恐惧）驱动的交易</li>
+          <li>{{ $t('behavior.guideline.sell_fly.e1') }}</li>
+          <li>{{ $t('behavior.guideline.sell_fly.e2') }}</li>
+          <li>{{ $t('behavior.guideline.sell_fly.e3') }}</li>
+          <li>{{ $t('behavior.guideline.sell_fly.e4') }}</li>
         </ul>
       </div>
     </div>
 
     <div class="score-section">
-      <h3>过度交易评分 (Overtrading Score)</h3>
-      <p class="desc">评估交易频率和仓位管理的合理性</p>
+      <h3>{{ $t('behavior.guideline.overtrading.title') }}</h3>
+      <p class="desc">{{ $t('behavior.guideline.overtrading.desc') }}</p>
       <ul>
-        <li><span class="range">80+</span> 交易节制，不过度频繁</li>
-        <li><span class="range">60-79</span> 偶有频繁，需注意成本</li>
-        <li><span class="range">40-59</span> 交易过度，成本侵蚀利润</li>
-        <li><span class="range">0-39</span> 严重过度交易，高风险</li>
+        <li><span class="range">80+</span> {{ $t('behavior.guideline.overtrading.s1') }}</li>
+        <li><span class="range">60-79</span> {{ $t('behavior.guideline.overtrading.s2') }}</li>
+        <li><span class="range">40-59</span> {{ $t('behavior.guideline.overtrading.s3') }}</li>
+        <li><span class="range">0-39</span> {{ $t('behavior.guideline.overtrading.s4') }}</li>
       </ul>
-      <p class="impact">💡 分数越高，交易越克制，手续费成本越低</p>
+      <p class="impact">{{ $t('behavior.guideline.overtrading.impact') }}</p>
       <div class="behavior-example">
-        <strong>典型表现：</strong>
+        <strong>{{ $t('behavior.guideline.overtrading.example_title') }}</strong>
         <ul>
-          <li>每天交易次数过多（>5次）</li>
-          <li>频繁切换持仓标的</li>
-          <li>无明确策略的随机交易</li>
-          <li>手续费占比过高（>2%）</li>
+          <li>{{ $t('behavior.guideline.overtrading.e1') }}</li>
+          <li>{{ $t('behavior.guideline.overtrading.e2') }}</li>
+          <li>{{ $t('behavior.guideline.overtrading.e3') }}</li>
+          <li>{{ $t('behavior.guideline.overtrading.e4') }}</li>
         </ul>
       </div>
     </div>
 
     <div class="score-section">
-      <h3>报复性交易评分 (Revenge Trading Score)</h3>
-      <p class="desc">评估亏损后的情绪化交易行为</p>
+      <h3>{{ $t('behavior.guideline.revenge.title') }}</h3>
+      <p class="desc">{{ $t('behavior.guideline.revenge.desc') }}</p>
       <ul>
-        <li><span class="range">80+</span> 亏损后冷静应对，不急于翻本</li>
-        <li><span class="range">60-79</span> 偶有冲动，但能自控</li>
-        <li><span class="range">40-59</span> 亏损后易冲动，风险加大</li>
-        <li><span class="range">0-39</span> 严重报复性交易，恶性循环</li>
+        <li><span class="range">80+</span> {{ $t('behavior.guideline.revenge.s1') }}</li>
+        <li><span class="range">60-79</span> {{ $t('behavior.guideline.revenge.s2') }}</li>
+        <li><span class="range">40-59</span> {{ $t('behavior.guideline.revenge.s3') }}</li>
+        <li><span class="range">0-39</span> {{ $t('behavior.guideline.revenge.s4') }}</li>
       </ul>
-      <p class="impact">💡 分数越高，情绪管理越好，避免亏损扩大</p>
+      <p class="impact">{{ $t('behavior.guideline.revenge.impact') }}</p>
       <div class="behavior-example">
-        <strong>典型表现：</strong>
+        <strong>{{ $t('behavior.guideline.revenge.example_title') }}</strong>
         <ul>
-          <li>亏损后立即加仓试图翻本</li>
-          <li>连续亏损后重仓单个标的</li>
-          <li>情绪化下单，不遵守止损</li>
-          <li>连续亏损导致仓位失控</li>
+          <li>{{ $t('behavior.guideline.revenge.e1') }}</li>
+          <li>{{ $t('behavior.guideline.revenge.e2') }}</li>
+          <li>{{ $t('behavior.guideline.revenge.e3') }}</li>
+          <li>{{ $t('behavior.guideline.revenge.e4') }}</li>
         </ul>
       </div>
     </div>
 
     <div class="greeks-section">
-      <h3>希腊字母指标说明</h3>
+      <h3>{{ $t('behavior.guideline.greeks.title') }}</h3>
       <div class="greek-grid">
         <div class="greek-item">
           <span class="greek-symbol">Delta (Δ)</span>
-          <span class="greek-desc">标的价格变动1单位，期权价格变动量</span>
+          <span class="greek-desc">{{ $t('behavior.guideline.greeks.delta') }}</span>
         </div>
         <div class="greek-item">
           <span class="greek-symbol">Gamma (Γ)</span>
-          <span class="greek-desc">标的价格变动1单位，Delta的变化量</span>
+          <span class="greek-desc">{{ $t('behavior.guideline.greeks.gamma') }}</span>
         </div>
         <div class="greek-item">
           <span class="greek-symbol">Theta (Θ)</span>
-          <span class="greek-desc">时间流逝1天，期权价值的衰减量</span>
+          <span class="greek-desc">{{ $t('behavior.guideline.greeks.theta') }}</span>
         </div>
         <div class="greek-item">
           <span class="greek-symbol">Vega (V)</span>
-          <span class="greek-desc">波动率变化1%，期权价格变动量</span>
+          <span class="greek-desc">{{ $t('behavior.guideline.greeks.vega') }}</span>
         </div>
       </div>
-      <p class="greek-note">💡 希腊值的"水位"代表风险敞口大小，越高表示该维度风险越大</p>
+      <p class="greek-note">{{ $t('behavior.guideline.greeks.impact') }}</p>
     </div>
 
     <div class="action-section">
-      <h3>操作建议</h3>
+      <h3>{{ $t('behavior.guideline.action_title') }}</h3>
       <div class="action-grid">
         <div class="action-item action-excellent">
-          <span class="action-label">85+分</span>
-          <span class="action-text">保持良好习惯，可适度增加仓位</span>
+          <span class="action-label">85+</span>
+          <span class="action-text">{{ $t('behavior.guideline.actions.s1') }}</span>
         </div>
         <div class="action-item action-good">
-          <span class="action-label">65-84分</span>
-          <span class="action-text">继续保持，注意小问题的改善</span>
+          <span class="action-label">65-84</span>
+          <span class="action-text">{{ $t('behavior.guideline.actions.s2') }}</span>
         </div>
         <div class="action-item action-warning">
-          <span class="action-label">40-64分</span>
-          <span class="action-text">警惕信号，调整交易策略</span>
+          <span class="action-label">40-64</span>
+          <span class="action-text">{{ $t('behavior.guideline.actions.s3') }}</span>
         </div>
         <div class="action-item action-danger">
-          <span class="action-label"><40分</span>
-          <span class="action-text">立即停止交易，重新审视策略</span>
+          <span class="action-label">&lt;40</span>
+          <span class="action-text">{{ $t('behavior.guideline.actions.s4') }}</span>
         </div>
       </div>
     </div>
 
     <div class="note-section">
-      <p>⚠️ <strong>重要提示</strong>：</p>
+      <p><strong>{{ $t('behavior.guideline.note.title') }}</strong></p>
       <ul>
-        <li>行为评分基于历史交易数据，反映您的交易习惯</li>
-        <li>低分不代表技术不行，而是行为需要改善</li>
-        <li>建议定期回顾评分，持续优化交易行为</li>
-        <li>情绪管理是交易成功的关键，保持冷静和纪律</li>
+        <li>{{ $t('behavior.guideline.note.n1') }}</li>
+        <li>{{ $t('behavior.guideline.note.n2') }}</li>
+        <li>{{ $t('behavior.guideline.note.n3') }}</li>
+        <li>{{ $t('behavior.guideline.note.n4') }}</li>
       </ul>
     </div>
   </div>

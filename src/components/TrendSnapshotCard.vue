@@ -3,9 +3,9 @@
     <!-- 空态 -->
     <div v-if="!snapshot" class="empty-state">
       <div class="empty-icon">📊</div>
-      <p class="empty-text">尚未生成今日快照</p>
+      <p class="empty-text">{{ $t('positions.snapshot.empty_title') }}</p>
       <button class="refresh-btn" @click="$emit('refresh')">
-        刷新评估
+        {{ $t('positions.snapshot.refresh_eval') }}
       </button>
     </div>
 
@@ -13,7 +13,7 @@
     <div v-else class="snapshot-content">
       <!-- 标题与时间 -->
       <div class="snapshot-header">
-        <h4>日线趋势快照</h4>
+        <h4>{{ $t('positions.snapshot.title') }}</h4>
         <span class="timestamp">{{ formatTime(snapshot.timestamp) }}</span>
       </div>
 
@@ -33,7 +33,7 @@
         
         <div v-if="snapshot.trend_strength != null" class="trend-strength">
           <div class="strength-header">
-            <span class="strength-label">趋势强度</span>
+            <span class="strength-label">{{ $t('positions.snapshot.strength_label') }}</span>
             <span class="strength-value">{{ snapshot.trend_strength }}</span>
           </div>
           <div class="strength-bar">
@@ -49,7 +49,7 @@
       <!-- 技术指标 -->
       <div class="indicators-section">
         <div v-if="snapshot.rsi_value != null" class="indicator-item">
-          <span class="indicator-label">RSI</span>
+          <span class="indicator-label">{{ $t('positions.snapshot.rsi') }}</span>
           <span class="indicator-value">{{ snapshot.rsi_value.toFixed(1) }}</span>
           <span class="indicator-status" :class="'status-' + (snapshot.rsi_status || '').toLowerCase()">
             {{ rsiStatusLabel }}
@@ -57,19 +57,19 @@
         </div>
 
         <div v-if="snapshot.macd_status" class="indicator-item">
-          <span class="indicator-label">MACD</span>
+          <span class="indicator-label">{{ $t('positions.snapshot.macd') }}</span>
           <span class="indicator-status" :class="macdStatusClass">
             {{ macdStatusLabel }}
           </span>
         </div>
 
         <div v-if="snapshot.bollinger_position" class="indicator-item">
-          <span class="indicator-label">布林带</span>
+          <span class="indicator-label">{{ $t('positions.snapshot.bollinger') }}</span>
           <span class="indicator-status">{{ snapshot.bollinger_position }}</span>
         </div>
 
         <div v-if="snapshot.volume_ratio != null" class="indicator-item">
-          <span class="indicator-label">量能</span>
+          <span class="indicator-label">{{ $t('positions.snapshot.volume') }}</span>
           <span class="volume-value" :class="volumeClass">
             {{ snapshot.volume_ratio.toFixed(2) }}x
             <span class="volume-label">{{ volumeLabel }}</span>
@@ -80,7 +80,7 @@
       <!-- 关键价位 -->
       <div class="price-levels-section" v-if="hasLevels">
         <div v-if="snapshot.support_levels?.length" class="levels-group">
-          <span class="levels-label">支撑位</span>
+          <span class="levels-label">{{ $t('positions.snapshot.support') }}</span>
           <div class="levels-list">
             <span 
               v-for="(level, idx) in visibleSupports" 
@@ -96,7 +96,7 @@
         </div>
 
         <div v-if="snapshot.resistance_levels?.length" class="levels-group">
-          <span class="levels-label">阻力位</span>
+          <span class="levels-label">{{ $t('positions.snapshot.resistance') }}</span>
           <div class="levels-list">
             <span 
               v-for="(level, idx) in visibleResistances" 
@@ -116,7 +116,7 @@
       <div v-if="snapshot.ai_summary" class="ai-summary">
         <div class="summary-icon">💬</div>
         <div class="summary-content">
-          <div class="summary-label">交易员摘要</div>
+          <div class="summary-label">{{ $t('positions.snapshot.trader_summary') }}</div>
           <p class="summary-text">{{ snapshot.ai_summary }}</p>
         </div>
       </div>
@@ -124,7 +124,7 @@
       <!-- 降级提示 -->
       <div v-else-if="!snapshot.ai_summary && snapshot.trend_description" class="fallback-notice">
         <span class="notice-icon">ℹ️</span>
-        <span class="notice-text">已使用规则摘要</span>
+        <span class="notice-text">{{ $t('positions.snapshot.rule_notice') }}</span>
       </div>
     </div>
   </div>
@@ -132,7 +132,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { TrendSnapshot } from '../api/client';
+
+const { t, locale } = useI18n();
 
 interface Props {
   snapshot: TrendSnapshot | null;
@@ -160,9 +163,9 @@ const trendIcon = computed(() => {
 
 const trendLabel = computed(() => {
   const direction = props.snapshot?.trend_direction;
-  if (direction === 'BULLISH') return '看涨';
-  if (direction === 'BEARISH') return '看跌';
-  return '横盘';
+  if (direction === 'BULLISH') return t('positions.snapshot.directions.bullish');
+  if (direction === 'BEARISH') return t('positions.snapshot.directions.bearish');
+  return t('positions.snapshot.directions.sideways');
 });
 
 const strengthClass = computed(() => {
@@ -175,9 +178,9 @@ const strengthClass = computed(() => {
 // RSI状态
 const rsiStatusLabel = computed(() => {
   const status = props.snapshot?.rsi_status;
-  if (status === 'OVERSOLD') return '超卖';
-  if (status === 'OVERBOUGHT') return '超买';
-  return '中性';
+  if (status === 'OVERSOLD') return t('positions.snapshot.rsi_status.oversold');
+  if (status === 'OVERBOUGHT') return t('positions.snapshot.rsi_status.overbought');
+  return t('positions.snapshot.rsi_status.neutral');
 });
 
 // MACD状态
@@ -190,8 +193,8 @@ const macdStatusClass = computed(() => {
 
 const macdStatusLabel = computed(() => {
   const status = props.snapshot?.macd_status;
-  if (status === 'BULLISH_CROSSOVER') return '金叉';
-  if (status === 'BEARISH_CROSSOVER') return '死叉';
+  if (status === 'BULLISH_CROSSOVER') return t('positions.snapshot.macd_status.bullish_crossover');
+  if (status === 'BEARISH_CROSSOVER') return t('positions.snapshot.macd_status.bearish_crossover');
   return status || '';
 });
 
@@ -203,7 +206,7 @@ const volumeClass = computed(() => {
 
 const volumeLabel = computed(() => {
   const ratio = props.snapshot?.volume_ratio || 0;
-  return ratio > 1 ? '放量' : '缩量';
+  return ratio > 1 ? t('positions.snapshot.volume_status.up') : t('positions.snapshot.volume_status.down');
 });
 
 // 关键价位
@@ -224,7 +227,7 @@ const visibleResistances = computed(() => {
 function formatTime(timestamp: string): string {
   try {
     const date = new Date(timestamp);
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString(locale.value, {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',

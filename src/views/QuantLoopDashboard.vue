@@ -4,8 +4,8 @@
       <div class="header-content">
         <div class="header-icon">⚡</div>
         <div class="header-text">
-          <h1>量化系统</h1>
-          <p class="subtitle">AI驱动的自动化交易</p>
+          <h1>{{ $t('dashboard.title') }}</h1>
+          <p class="subtitle">{{ $t('dashboard.subtitle') }}</p>
         </div>
       </div>
       <div class="header-decoration"></div>
@@ -14,15 +14,15 @@
     <!-- 加载状态 -->
     <div v-if="quantLoopStore.loading" class="loading-overlay">
       <div class="spinner-large"></div>
-      <p>加载系统数据中...</p>
+      <p>{{ $t('common.loading') }}</p>
     </div>
     
     <!-- 错误状态 -->
     <div v-else-if="quantLoopStore.error" class="error-message">
       <div class="error-icon">⚠️</div>
-      <h3>加载失败</h3>
+      <h3>{{ $t('common.error_load') }}</h3>
       <p>{{ quantLoopStore.error }}</p>
-      <button @click="loadAllData" class="btn-retry">重试</button>
+      <button @click="loadAllData" class="btn-retry">{{ $t('common.retry') }}</button>
     </div>
     
     <!-- 主内容 -->
@@ -53,9 +53,23 @@
         />
       </div>
       
-      <!-- 第三行: 待执行信号 -->
+      <!-- 第三行: 待执行信号 - 响应式显示 -->
       <div class="row-3">
+        <!-- 桌面/平板版表格 -->
         <PendingSignalsTable 
+          v-if="!isMobileView"
+          :signals="quantLoopStore.pendingSignals"
+          :filter-by-position="filterByPosition"
+          @update:filter-by-position="handleFilterToggle"
+          @execute="handleBatchExecute"
+          @execute-single="handleExecuteSingle"
+          @reject="handleReject"
+          @reject-batch="handleBatchReject"
+          @view-details="handleViewDetails"
+        />
+        <!-- 移动版卡片 -->
+        <PendingSignalsTableMobile
+          v-else
           :signals="quantLoopStore.pendingSignals"
           :filter-by-position="filterByPosition"
           @update:filter-by-position="handleFilterToggle"
@@ -136,33 +150,33 @@
         <div class="modal-body">
           <div v-if="selectedSignal" class="signal-details-content">
             <div class="summary-section">
-              <h4>信号摘要</h4>
-              <p class="summary-text">{{ aiSignalSummary || '生成中...' }}</p>
+              <h4>{{ $t('quant_loop.signal_summary') }}</h4>
+              <p class="summary-text">{{ aiSignalSummary || $t('quant_loop.generating') }}</p>
             </div>
             
             <div class="metrics-grid">
               <div class="metric-item">
-                <span class="label">标的</span>
+                <span class="label">{{ $t('quant_loop.symbol') }}</span>
                 <span class="value">{{ selectedSignal.symbol }}</span>
               </div>
               <div class="metric-item">
-                <span class="label">方向</span>
+                <span class="label">{{ $t('quant_loop.direction') }}</span>
                 <span class="value" :class="selectedSignal.direction === 'LONG' ? 'long' : 'short'">
-                  {{ selectedSignal.direction === 'LONG' ? '做多' : '做空' }}
+                  {{ selectedSignal.direction === 'LONG' ? $t('quant_loop.long') : $t('quant_loop.short') }}
                 </span>
               </div>
               <div class="metric-item">
-                <span class="label">强度</span>
+                <span class="label">{{ $t('quant_loop.strength') }}</span>
                 <span class="value">{{ selectedSignal.signal_strength.toFixed(1) }}</span>
               </div>
               <div class="metric-item">
-                <span class="label">置信度</span>
+                <span class="label">{{ $t('quant_loop.confidence') }}</span>
                 <span class="value">{{ (selectedSignal.confidence * 100).toFixed(1) }}%</span>
               </div>
             </div>
 
             <div class="factor-scores" v-if="selectedSignal.factor_scores">
-              <h4>评分</h4>
+              <h4>{{ $t('quant_loop.scores') }}</h4>
               <div class="scores-list">
                 <div v-for="(score, name) in selectedSignal.factor_scores" :key="name" class="score-row">
                   <span class="score-name">{{ formatFactorName(name) }}</span>
@@ -176,7 +190,7 @@
 
             <div class="raw-data-toggle">
               <details>
-                <summary>原始数据</summary>
+                <summary>{{ $t('quant_loop.raw_data') }}</summary>
                 <pre>{{ JSON.stringify(selectedSignal, null, 2) }}</pre>
               </details>
             </div>
@@ -188,17 +202,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useQuantLoopStore } from '@/stores/quantLoop'
 import SystemStatusCard from '@/components/quant-loop/SystemStatusCard.vue'
 import SignalPipelineChart from '@/components/quant-loop/SignalPipelineChart.vue'
 import PendingSignalsTable from '@/components/quant-loop/PendingSignalsTable.vue'
+import PendingSignalsTableMobile from '@/components/quant-loop/PendingSignalsTableMobile.vue'
 import PerformanceChart from '@/components/quant-loop/PerformanceChart.vue'
 import OptimizationPanel from '@/components/quant-loop/OptimizationPanel.vue'
 import CycleControlPanel from '@/components/quant-loop/CycleControlPanel.vue'
 import type { TradingSignal, CycleConfig, CycleResult } from '@/api/quantLoopService'
 
+const { t } = useI18n()
 const quantLoopStore = useQuantLoopStore()
+
+// 响应式判断：是否为移动端视图
+const isMobileView = ref(window.innerWidth < 1024)
 
 const isCycleRunning = ref(false)
 const lastCycleResult = ref<CycleResult | null>(null)
@@ -214,12 +234,19 @@ const executionResult = ref<{
 } | null>(null)
 let autoRefreshInterval: number | null = null
 
+// 监听窗口大小变化
+const handleResize = () => {
+  isMobileView.value = window.innerWidth < 1024
+}
+
 onMounted(() => {
+  window.addEventListener('resize', handleResize)
   loadAllData()
   startAutoRefresh()
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
   stopAutoRefresh()
 })
 
@@ -268,10 +295,10 @@ async function handleRunCycle(config: CycleConfig) {
     await loadAllData()
     
     // 显示通知
-    alert(`周期完成!\nID: ${result.cycle_id}`)
+    alert(`${t('quant_loop.cycle_complete')}!\nID: ${result.cycle_id}`)
   } catch (error: any) {
-    console.error('运行交易周期失败:', error)
-    alert(`失败: ${error.message || '未知错误'}`)
+    console.error('Run trading cycle failed:', error)
+    alert(`${t('common.failed')}: ${error.message || t('common.unknown_error')}`)
   } finally {
     isCycleRunning.value = false
   }
@@ -287,10 +314,10 @@ async function handleRunOptimization() {
     // 刷新优化建议
     await quantLoopStore.fetchDashboardOverview()
     
-    alert('优化完成')
+    alert(t('quant_loop.optimization_complete'))
   } catch (error: any) {
-    console.error('运行优化失败:', error)
-    alert(`失败: ${error.message || '未知错误'}`)
+    console.error('Run optimization failed:', error)
+    alert(`${t('common.failed')}: ${error.message || t('common.unknown_error')}`)
   }
 }
 
@@ -692,17 +719,18 @@ function formatFactorName(name: string): string {
 
 @media (max-width: 768px) {
   .quant-loop-dashboard {
-    padding: 16px;
+    padding: var(--spacing-lg);
   }
   
   .page-header {
-    padding: 20px;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
   }
   
   .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-md);
   }
   
   .header-icon {
@@ -712,15 +740,39 @@ function formatFactorName(name: string): string {
   }
   
   .page-header h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
   
   .subtitle {
-    font-size: 14px;
+    font-size: 13px;
   }
   
+  .dashboard-content {
+    gap: var(--spacing-xl);
+  }
+  
+  .row-1,
+  .row-4 {
+    gap: var(--spacing-lg);
+  }
+
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* 优化模态框在移动端的显示 */
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+    border-radius: var(--radius-xl);
+  }
+  
+  .modal-header {
+    padding: var(--spacing-lg);
+  }
+  
+  .modal-body {
+    padding: var(--spacing-lg);
   }
 }
 

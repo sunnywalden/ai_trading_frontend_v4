@@ -6,28 +6,28 @@
         <div class="metric-top">
           <div class="metric-circle" :style="{ borderColor: getScoreColor(analysis.weighted_score) }">
             <div class="score-value">{{ analysis.weighted_score }}</div>
-            <div class="score-label">加权综合分</div>
+            <div class="score-label">{{ $t('portfolio.weighted_score') }}</div>
           </div>
           <div class="beta-box">
             <div class="beta-value" :class="getBetaClass(analysis.total_beta)">{{ analysis.total_beta }}</div>
-            <div class="beta-label">组合 Beta (相对于 SPY)</div>
+            <div class="beta-label">{{ $t('portfolio.beta_label') }}</div>
           </div>
         </div>
         <div class="ai-summary" v-if="analysis.ai_summary">
-          <h4>🤖 AI 组合综述</h4>
+          <h4>🤖 {{ $t('portfolio.ai_summary') }}</h4>
           <p>{{ analysis.ai_summary }}</p>
         </div>
       </div>
 
       <!-- 行业分布饼图 -->
       <div class="dashboard-card chart-card">
-        <h4>行业分布 (Sector Exposure)</h4>
+        <h4>{{ $t('portfolio.sector_exposure') }}</h4>
         <div ref="chartRef" class="sector-chart"></div>
       </div>
 
       <!-- 优化建议 -->
       <div class="dashboard-card recommendations-card">
-        <h4>💡 持仓优化建议</h4>
+        <h4>💡 {{ $t('portfolio.optimization_title') }}</h4>
         <div class="rec-list">
           <div v-for="(rec, idx) in recommendations" :key="idx" class="rec-item" :class="rec.type.toLowerCase()">
             <div class="rec-icon">{{ getRecIcon(rec.type) }}</div>
@@ -38,7 +38,7 @@
           </div>
         </div>
         <div v-if="recommendations.length === 0" class="no-rec">
-          目前持仓配置合理，暂无优化建议。
+          {{ $t('portfolio.no_recommendations') }}
         </div>
       </div>
     </div>

@@ -2,51 +2,51 @@
   <div class="page-container">
     <section class="section-header">
       <div>
-        <h2>🧭 交易助手</h2>
-        <p>维护你的入场/止损/止盈与目标仓位，计划驱动执行纪律</p>
+        <h2>{{ $t('trading_plan.title') }}</h2>
+        <p>{{ $t('trading_plan.subtitle') }}</p>
       </div>
       <button class="refresh-button" @click="loadPlans" :disabled="loading">
-        {{ loading ? '刷新中...' : '刷新计划' }}
+        {{ loading ? $t('trading_plan.refreshing') : $t('trading_plan.refresh') }}
       </button>
     </section>
 
     <p v-if="errorMsg" class="error-message">{{ errorMsg }}</p>
 
     <section class="form-card">
-      <h3>新增计划</h3>
+      <h3>{{ $t('trading_plan.new_plan') }}</h3>
       <div class="form-grid">
         <label>
-          标的
+          {{ $t('trading_plan.symbol') }}
           <input v-model.trim="form.symbol" placeholder="AAPL" />
         </label>
         <label>
-          入场价
+          {{ $t('trading_plan.entry_price') }}
           <input v-model.number="form.entry_price" type="number" min="0" step="0.01" />
         </label>
         <label>
-          止损价
+          {{ $t('trading_plan.stop_loss') }}
           <input v-model.number="form.stop_loss" type="number" min="0" step="0.01" />
         </label>
         <label>
-          止盈价
+          {{ $t('trading_plan.take_profit') }}
           <input v-model.number="form.take_profit" type="number" min="0" step="0.01" />
         </label>
         <label>
-          目标仓位(0~1)
+          {{ $t('trading_plan.target_position') }}
           <input v-model.number="form.target_position" type="number" min="0" max="1" step="0.01" />
         </label>
         <label>
-          有效至
+          {{ $t('trading_plan.valid_until') }}
           <input v-model="form.valid_until" type="date" />
         </label>
       </div>
       <label class="notes">
-        备注
-        <textarea v-model.trim="form.notes" rows="2" placeholder="例如：等待回踩确认"></textarea>
+        {{ $t('trading_plan.notes') }}
+        <textarea v-model.trim="form.notes" rows="2" :placeholder="$t('trading_plan.notes_placeholder')"></textarea>
       </label>
       <div class="form-actions">
         <button class="primary-button" @click="onCreate" :disabled="creating">
-          {{ creating ? '创建中...' : '创建计划' }}
+          {{ creating ? $t('trading_plan.creating') : $t('trading_plan.create') }}
         </button>
         <span v-if="successMsg" class="success-msg">{{ successMsg }}</span>
       </div>
@@ -54,10 +54,10 @@
 
     <section class="list-card">
       <div class="list-header">
-        <h3>计划列表</h3>
-        <span class="count">共 {{ plans.length }} 条</span>
+        <h3>{{ $t('trading_plan.list_title') }}</h3>
+        <span class="count">{{ $t('trading_plan.total_count', { n: plans.length }) }}</span>
       </div>
-      <div v-if="!plans.length" class="empty">暂无计划</div>
+      <div v-if="!plans.length" class="empty">{{ $t('trading_plan.empty') }}</div>
       <div v-else class="plan-grid">
         <div v-for="plan in plans" :key="plan.id" class="plan-item">
           <div class="plan-head">
@@ -67,17 +67,17 @@
             </span>
           </div>
           <div class="plan-body">
-            <div>入场 {{ plan.entry_price }}</div>
-            <div>止损 {{ plan.stop_loss }}</div>
-            <div>止盈 {{ plan.take_profit }}</div>
-            <div>目标仓位 {{ (plan.target_position * 100).toFixed(0) }}%</div>
-            <div v-if="plan.valid_until">有效至 {{ formatDate(plan.valid_until) }}</div>
+            <div>{{ $t('trading_plan.entry_price') }} {{ plan.entry_price }}</div>
+            <div>{{ $t('trading_plan.stop_loss') }} {{ plan.stop_loss }}</div>
+            <div>{{ $t('trading_plan.take_profit') }} {{ plan.take_profit }}</div>
+            <div>{{ $t('trading_plan.target_position') }} {{ (plan.target_position * 100).toFixed(0) }}%</div>
+            <div v-if="plan.valid_until">{{ $t('trading_plan.valid_until') }} {{ formatDate(plan.valid_until) }}</div>
           </div>
           <p v-if="plan.notes" class="plan-notes">{{ plan.notes }}</p>
           <div class="plan-actions">
-            <button @click="onUpdateStatus(plan.id, 'EXECUTED')">标记已执行</button>
-            <button @click="onUpdateStatus(plan.id, 'CANCELLED')">取消</button>
-            <button class="danger" @click="onDelete(plan.id)">删除</button>
+            <button @click="onUpdateStatus(plan.id, 'EXECUTED')">{{ $t('trading_plan.execute') }}</button>
+            <button @click="onUpdateStatus(plan.id, 'CANCELLED')">{{ $t('trading_plan.cancel') }}</button>
+            <button class="danger" @click="onDelete(plan.id)">{{ $t('trading_plan.delete') }}</button>
           </div>
         </div>
       </div>
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   fetchPlans,
   createPlan,
@@ -96,6 +97,7 @@ import {
   type PlanStatus
 } from '../api/client';
 
+const { t, locale } = useI18n();
 const plans = ref<PlanView[]>([]);
 const loading = ref(false);
 const creating = ref(false);
@@ -120,7 +122,7 @@ async function loadPlans() {
     plans.value = resp.plans || [];
   } catch (e: any) {
     console.error(e);
-    errorMsg.value = '❌ 获取交易计划失败';
+    errorMsg.value = t('trading_plan.error_load');
   } finally {
     loading.value = false;
   }
@@ -129,26 +131,20 @@ async function loadPlans() {
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(locale.value);
 }
 
 function statusText(status: PlanStatus) {
-  const map: Record<PlanStatus, string> = {
-    ACTIVE: '进行中',
-    EXECUTED: '已执行',
-    EXPIRED: '已过期',
-    CANCELLED: '已取消'
-  };
-  return map[status];
+  return t(`trading_plan.statuses.${status.toLowerCase()}`);
 }
 
 async function onCreate() {
   if (!form.value.symbol) {
-    errorMsg.value = '请输入标的代码';
+    errorMsg.value = t('trading_plan.error_symbol');
     return;
   }
   if (!form.value.entry_price || !form.value.stop_loss || !form.value.take_profit) {
-    errorMsg.value = '请填写入场/止损/止盈价';
+    errorMsg.value = t('trading_plan.error_price_required');
     return;
   }
   creating.value = true;
@@ -164,7 +160,7 @@ async function onCreate() {
       valid_until: form.value.valid_until ? new Date(form.value.valid_until).toISOString() : null,
       notes: form.value.notes || null
     });
-    successMsg.value = '✅ 计划已创建';
+    successMsg.value = t('trading_plan.success_created');
     form.value = {
       symbol: '',
       entry_price: 0,
@@ -177,7 +173,7 @@ async function onCreate() {
     await loadPlans();
   } catch (e: any) {
     console.error(e);
-    errorMsg.value = '❌ 创建计划失败';
+    errorMsg.value = t('trading_plan.error_create_failed');
   } finally {
     creating.value = false;
     setTimeout(() => {
@@ -193,7 +189,7 @@ async function onUpdateStatus(planId: number, status: PlanStatus) {
     await loadPlans();
   } catch (e) {
     console.error(e);
-    errorMsg.value = '❌ 更新计划状态失败';
+    errorMsg.value = t('trading_plan.error_update_failed');
   }
 }
 
@@ -204,7 +200,7 @@ async function onDelete(planId: number) {
     await loadPlans();
   } catch (e) {
     console.error(e);
-    errorMsg.value = '❌ 删除计划失败';
+    errorMsg.value = t('trading_plan.error_delete_failed');
   }
 }
 

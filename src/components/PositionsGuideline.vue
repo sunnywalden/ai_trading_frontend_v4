@@ -1,133 +1,118 @@
 <template>
   <div class="guideline-card">
-    <h2>📊 持仓评估说明</h2>
+    <h2>📊 {{ $t('positions.guideline.title') }}</h2>
     
     <div class="score-section">
-      <h3>综合评分 (0-100)</h3>
-      <p class="desc">技术面、基本面、情绪面加权综合评分</p>
+      <h3>{{ $t('positions.guideline.composite.title') }}</h3>
+      <p class="desc">{{ $t('positions.guideline.composite.desc') }}</p>
       <ul>
-        <li><span class="range">81-100</span> 优秀 - 强烈推荐配置</li>
-        <li><span class="range">61-80</span> 良好 - 适合持有或增持</li>
-        <li><span class="range">40-60</span> 中性 - 观望或持有</li>
-        <li><span class="range">25-40</span> 较差 - 建议减仓</li>
-        <li><span class="range">0-25</span> 差 - 强烈建议清仓</li>
+        <li><span class="range">81-100</span> {{ $t('positions.guideline.composite.excellent') }}</li>
+        <li><span class="range">61-80</span> {{ $t('positions.guideline.composite.good') }}</li>
+        <li><span class="range">40-60</span> {{ $t('positions.guideline.composite.neutral') }}</li>
+        <li><span class="range">25-40</span> {{ $t('positions.guideline.composite.poor') }}</li>
+        <li><span class="range">0-25</span> {{ $t('positions.guideline.composite.bad') }}</li>
       </ul>
     </div>
 
     <div class="score-section">
-      <h3>技术面评分 (0-100)</h3>
-      <p class="desc">基于趋势、动量、支撑阻力等技术指标</p>
+      <h3>{{ $t('positions.guideline.technical.title') }}</h3>
+      <p class="desc">{{ $t('positions.guideline.technical.desc') }}</p>
       <ul>
-        <li>趋势方向与强度（BULLISH/BEARISH/SIDEWAYS）</li>
-        <li>RSI相对强弱指标（超买/超卖）</li>
-        <li>MACD动量指标</li>
-        <li>布林带位置</li>
-        <li>成交量比率</li>
-        <li>关键支撑位和阻力位</li>
+        <li v-for="(item, index) in $tm('positions.guideline.technical.items')" :key="index">
+          {{ $rt(item) }}
+        </li>
       </ul>
-      <p class="impact">💡 分数越高，技术面越强势</p>
+      <p class="impact">{{ $t('positions.guideline.technical.impact') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>日线趋势快照 (Wall Street视角)</h3>
-      <p class="desc">每日每标的生成一次，持久化缓存，手动触发刷新</p>
+      <h3>{{ $t('positions.guideline.snapshot.title') }}</h3>
+      <p class="desc">{{ $t('positions.guideline.snapshot.desc') }}</p>
       <ul>
-        <li><strong>趋势方向</strong>：BULLISH（看涨）/ BEARISH（看跌）/ SIDEWAYS（横盘）</li>
-        <li><strong>趋势强度</strong>：0-100（算法强度打分，非置信度）</li>
-        <li><strong>RSI状态</strong>：OVERSOLD（超卖）/ NEUTRAL（中性）/ OVERBOUGHT（超买）</li>
-        <li><strong>MACD状态</strong>：BULLISH_CROSSOVER（金叉）/ BEARISH_CROSSOVER（死叉）</li>
-        <li><strong>布林带位置</strong>：当前价格在布林带的相对位置</li>
-        <li><strong>量能分析</strong>：volume_ratio > 1 放量（绿色），< 1 缩量（橙色）</li>
-        <li><strong>关键价位</strong>：支撑位和阻力位（显示前2-3个）</li>
-        <li><strong>AI摘要</strong>：OpenAI生成的交易员风格解读（失败降级为规则摘要）</li>
+        <li v-for="(item, index) in $tm('positions.guideline.snapshot.items')" :key="index">
+          <span v-html="$rt(item)"></span>
+        </li>
       </ul>
-      <p class="impact">💡 快照为持久化缓存，可能为空，需手动刷新</p>
-      <p class="warning">⚠️ 宏观风险与日线趋势独立分析，不混合为一个信号源</p>
+      <p class="impact">{{ $t('positions.guideline.snapshot.impact') }}</p>
+      <p class="warning">{{ $t('positions.guideline.snapshot.warning') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>基本面评分 (0-100)</h3>
-      <p class="desc">基于估值、盈利能力、成长性、财务健康度</p>
+      <h3>{{ $t('positions.guideline.fundamental.title') }}</h3>
+      <p class="desc">{{ $t('positions.guideline.fundamental.desc') }}</p>
       <ul>
-        <li><strong>估值</strong>：PE、PB、PEG等估值指标</li>
-        <li><strong>盈利能力</strong>：ROE、ROA、净利润率</li>
-        <li><strong>成长性</strong>：营收增长、利润增长</li>
-        <li><strong>财务健康</strong>：流动比率、负债权益比</li>
+        <li v-for="(item, index) in $tm('positions.guideline.fundamental.items')" :key="index">
+          <span v-html="$rt(item)"></span>
+        </li>
       </ul>
-      <p class="impact">💡 分数越高，基本面越稳健</p>
+      <p class="impact">{{ $t('positions.guideline.fundamental.impact') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>情绪面评分 (0-100)</h3>
-      <p class="desc">基于市场情绪、资金流向、投资者行为</p>
+      <h3>{{ $t('positions.guideline.sentiment.title') }}</h3>
+      <p class="desc">{{ $t('positions.guideline.sentiment.desc') }}</p>
       <ul>
-        <li>分析师评级和目标价</li>
-        <li>机构持仓变化</li>
-        <li>新闻舆情分析</li>
-        <li>期权Put/Call比率</li>
-        <li>社交媒体情绪</li>
+        <li v-for="(item, index) in $tm('positions.guideline.sentiment.items')" :key="index">
+          {{ $rt(item) }}
+        </li>
       </ul>
-      <p class="impact">💡 分数越高，市场情绪越乐观</p>
+      <p class="impact">{{ $t('positions.guideline.sentiment.impact') }}</p>
     </div>
 
     <div class="recommendation-section">
-      <h3>操作建议说明</h3>
+      <h3>{{ $t('positions.guideline.recommendations.title') }}</h3>
       <div class="rec-grid">
         <div class="rec-item rec-strong-buy">
           <span class="rec-label">STRONG BUY</span>
-          <span class="rec-desc">强烈买入 (85+)</span>
+          <span class="rec-desc">{{ $t('positions.guideline.recommendations.strong_buy') }}</span>
         </div>
         <div class="rec-item rec-buy">
           <span class="rec-label">BUY</span>
-          <span class="rec-desc">买入 (75-85)</span>
+          <span class="rec-desc">{{ $t('positions.guideline.recommendations.buy') }}</span>
         </div>
         <div class="rec-item rec-hold">
           <span class="rec-label">HOLD</span>
-          <span class="rec-desc">持有 (40-75)</span>
+          <span class="rec-desc">{{ $t('positions.guideline.recommendations.hold') }}</span>
         </div>
         <div class="rec-item rec-reduce">
           <span class="rec-label">REDUCE</span>
-          <span class="rec-desc">减仓 (30-40)</span>
+          <span class="rec-desc">{{ $t('positions.guideline.recommendations.reduce') }}</span>
         </div>
         <div class="rec-item rec-sell">
           <span class="rec-label">SELL</span>
-          <span class="rec-desc">卖出 (<30)</span>
+          <span class="rec-desc">{{ $t('positions.guideline.recommendations.sell') }}</span>
         </div>
       </div>
     </div>
 
     <div class="risk-section">
-      <h3>风险等级说明</h3>
+      <h3>{{ $t('positions.guideline.risks.title') }}</h3>
       <div class="risk-grid">
         <div class="risk-item risk-low">
           <span class="risk-label">LOW</span>
-          <span class="risk-desc">低风险 (80+)</span>
+          <span class="risk-desc">{{ $t('positions.guideline.risks.low') }}</span>
         </div>
         <div class="risk-item risk-medium">
           <span class="risk-label">MEDIUM</span>
-          <span class="risk-desc">中等风险 (60-80)</span>
+          <span class="risk-desc">{{ $t('positions.guideline.risks.medium') }}</span>
         </div>
         <div class="risk-item risk-high">
           <span class="risk-label">HIGH</span>
-          <span class="risk-desc">高风险 (40-60)</span>
+          <span class="risk-desc">{{ $t('positions.guideline.risks.high') }}</span>
         </div>
         <div class="risk-item risk-extreme">
           <span class="risk-label">EXTREME</span>
-          <span class="risk-desc">极高风险 (<40)</span>
+          <span class="risk-desc">{{ $t('positions.guideline.risks.extreme') }}</span>
         </div>
       </div>
     </div>
 
     <div class="note-section">
-      <p>⚠️ <strong>重要提示</strong>：</p>
+      <p>⚠️ <strong>{{ $t('positions.guideline.notes.title') }}</strong>：</p>
       <ul>
-        <li>评分仅供参考，不构成投资建议</li>
-        <li>趋势快照为持久化缓存，每日每标的只保留最新快照</li>
-        <li>快照可能为空（未生成/未刷新/无数据），需手动触发刷新</li>
-        <li>趋势强度为算法打分，不是置信度</li>
-        <li>宏观风险与持仓趋势独立分析，不混合信号</li>
-        <li>建议结合个人风险承受能力做决策</li>
-        <li>注意及时止损，控制仓位</li>
+        <li v-for="(item, index) in $tm('positions.guideline.notes.items')" :key="index">
+          {{ $rt(item) }}
+        </li>
       </ul>
     </div>
   </div>

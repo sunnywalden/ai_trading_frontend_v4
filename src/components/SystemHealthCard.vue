@@ -1,26 +1,28 @@
 <template>
   <div class="health-card">
     <div class="header">
-      <h3>系统健康</h3>
+      <h3>{{ $t('health.title') }}</h3>
       <span class="status" :class="statusClass">{{ statusText }}</span>
     </div>
     <div class="body">
       <div class="item">
-        <span class="label">监控状态</span>
+        <span class="label">{{ $t('common.status') }}</span>
         <span class="value">{{ enabledText }}</span>
       </div>
       <div class="item">
-        <span class="label">最近更新时间</span>
+        <span class="label">{{ $t('common.last_updated') }}</span>
         <span class="value">{{ lastUpdated }}</span>
       </div>
     </div>
-    <button class="retry" @click="$emit('retry')">重试</button>
+    <button class="retry" @click="$emit('retry')">{{ $t('common.retry') }}</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const props = defineProps<{
   status: string;
   monitoringEnabled: boolean;
@@ -30,7 +32,7 @@ const props = defineProps<{
 defineEmits<{ retry: [] }>();
 
 const statusText = computed(() => props.status.toUpperCase());
-const enabledText = computed(() => (props.monitoringEnabled ? '已启用' : '未启用'));
+const enabledText = computed(() => (props.monitoringEnabled ? t('common.enabled') : t('common.disabled')));
 
 const statusClass = computed(() => {
   const st = props.status.toLowerCase();

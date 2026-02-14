@@ -1,88 +1,93 @@
 <template>
   <div class="guideline-card">
-    <h2>📊 评分标准说明</h2>
+    <h2>{{ t('score_guideline.title') }}</h2>
     
     <div class="score-section">
-      <h3>行为评分 (0-100)</h3>
-      <p class="desc">综合行为指标，评估交易行为的理性程度</p>
+      <h3>{{ t('score_guideline.behavior.title') }}</h3>
+      <p class="desc">{{ t('score_guideline.behavior.desc') }}</p>
       <ul>
-        <li><span class="range">0-30</span> 极度理性，严格遵守纪律</li>
-        <li><span class="range">31-60</span> 较为理性，偶有情绪波动</li>
-        <li><span class="range">61-80</span> 较为躁动，频繁情绪化交易</li>
-        <li><span class="range">81-100</span> 高度躁动，风险控制失效</li>
+        <li><span class="range">0-30</span> {{ t('score_guideline.behavior.r1') }}</li>
+        <li><span class="range">31-60</span> {{ t('score_guideline.behavior.r2') }}</li>
+        <li><span class="range">61-80</span> {{ t('score_guideline.behavior.r3') }}</li>
+        <li><span class="range">81-100</span> {{ t('score_guideline.behavior.r4') }}</li>
       </ul>
-      <p class="impact">📈 分数越高 → ShockPolicy / EarningsPolicy 越保守</p>
+      <p class="impact">{{ t('score_guideline.behavior.impact') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>卖飞评分 (0-100)</h3>
-      <p class="desc">评估提前获利了结导致的机会成本损失</p>
+      <h3>{{ t('score_guideline.sell_fly.title') }}</h3>
+      <p class="desc">{{ t('score_guideline.sell_fly.desc') }}</p>
       <ul>
-        <li><span class="range">0-20</span> 极少卖飞，持仓稳定</li>
-        <li><span class="range">21-50</span> 偶有卖飞，影响较小</li>
-        <li><span class="range">51-80</span> 频繁卖飞，损失较多潜在收益</li>
-        <li><span class="range">81-100</span> 严重卖飞，机会成本巨大</li>
+        <li><span class="range">0-20</span> {{ t('score_guideline.sell_fly.r1') }}</li>
+        <li><span class="range">21-50</span> {{ t('score_guideline.sell_fly.r2') }}</li>
+        <li><span class="range">51-80</span> {{ t('score_guideline.sell_fly.r3') }}</li>
+        <li><span class="range">81-100</span> {{ t('score_guideline.sell_fly.r4') }}</li>
       </ul>
-      <p class="impact">💡 通过"卖飞成本占比"和"卖飞次数"综合计算</p>
+      <p class="impact">{{ t('score_guideline.sell_fly.impact') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>过度交易 (0-100)</h3>
-      <p class="desc">交易频率与合理水平的偏离程度</p>
+      <h3>{{ t('score_guideline.overtrading.title') }}</h3>
+      <p class="desc">{{ t('score_guideline.overtrading.desc') }}</p>
       <ul>
-        <li><span class="range">0-25</span> 交易频率正常</li>
-        <li><span class="range">26-60</span> 交易较为频繁</li>
-        <li><span class="range">61-85</span> 明显过度交易</li>
-        <li><span class="range">86-100</span> 极度频繁，交易成本高企</li>
+        <li><span class="range">0-25</span> {{ t('score_guideline.overtrading.r1') }}</li>
+        <li><span class="range">26-60</span> {{ t('score_guideline.overtrading.r2') }}</li>
+        <li><span class="range">61-85</span> {{ t('score_guideline.overtrading.r3') }}</li>
+        <li><span class="range">86-100</span> {{ t('score_guideline.overtrading.r4') }}</li>
       </ul>
-      <p class="impact">⚡ 根据"过度交易指数"计算，指数 > 1.5 视为过度</p>
+      <p class="impact">{{ t('score_guideline.overtrading.impact') }}</p>
     </div>
 
     <div class="score-section">
-      <h3>报复性交易 (0-100)</h3>
-      <p class="desc">亏损后立即加仓的情绪化交易行为</p>
+      <h3>{{ t('score_guideline.revenge.title') }}</h3>
+      <p class="desc">{{ t('score_guideline.revenge.desc') }}</p>
       <ul>
-        <li><span class="range">0-20</span> 无报复性交易</li>
-        <li><span class="range">21-50</span> 偶有情绪化加仓</li>
-        <li><span class="range">51-80</span> 频繁报复性交易</li>
-        <li><span class="range">81-100</span> 严重失控，连续情绪化加仓</li>
+        <li><span class="range">0-20</span> {{ t('score_guideline.revenge.r1') }}</li>
+        <li><span class="range">21-50</span> {{ t('score_guideline.revenge.r2') }}</li>
+        <li><span class="range">51-80</span> {{ t('score_guideline.revenge.r3') }}</li>
+        <li><span class="range">81-100</span> {{ t('score_guideline.revenge.r4') }}</li>
       </ul>
-      <p class="impact">🔥 基于"报复性交易次数"计算，次数越多分数越高</p>
+      <p class="impact">{{ t('score_guideline.revenge.impact') }}</p>
     </div>
 
     <div class="tier-section">
-      <h3>风险等级 (Tier)</h3>
+      <h3>{{ t('score_guideline.tier.title') }}</h3>
       <div class="tier-grid">
         <div class="tier-item tier-t1">
           <span class="tier-label">T1</span>
-          <span class="tier-desc">核心标的，流动性好</span>
+          <span class="tier-desc">{{ t('score_guideline.tier.t1') }}</span>
         </div>
         <div class="tier-item tier-t2">
           <span class="tier-label">T2</span>
-          <span class="tier-desc">主流标的，风险可控</span>
+          <span class="tier-desc">{{ t('score_guideline.tier.t2') }}</span>
         </div>
         <div class="tier-item tier-t3">
           <span class="tier-label">T3</span>
-          <span class="tier-desc">边缘标的，波动较大</span>
+          <span class="tier-desc">{{ t('score_guideline.tier.t3') }}</span>
         </div>
         <div class="tier-item tier-t4">
           <span class="tier-label">T4</span>
-          <span class="tier-desc">高风险标的，谨慎交易</span>
+          <span class="tier-desc">{{ t('score_guideline.tier.t4') }}</span>
         </div>
       </div>
     </div>
 
     <div class="note-section">
-      <p>⚠️ <strong>决策影响</strong>：行为评分越高，自动对冲引擎会：</p>
+      <p><strong>{{ t('score_guideline.impact_note.title') }}</strong></p>
       <ul>
-        <li>减少裸暴露（Delta 对冲更积极）</li>
-        <li>增加保护性对冲（买入 Put 保护）</li>
-        <li>收紧震荡政策（ShockPolicy）</li>
-        <li>提高财报政策保守度（EarningsPolicy）</li>
+        <li>{{ t('score_guideline.impact_note.i1') }}</li>
+        <li>{{ t('score_guideline.impact_note.i2') }}</li>
+        <li>{{ t('score_guideline.impact_note.i3') }}</li>
+        <li>{{ t('score_guideline.impact_note.i4') }}</li>
       </ul>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
+</script>
 
 <style scoped>
 .guideline-card {

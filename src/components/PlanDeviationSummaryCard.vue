@@ -1,29 +1,30 @@
 <template>
   <div class="summary-card">
     <div class="card-header">
-      <span class="title">计划偏离概览</span>
+      <span class="title">{{ $t('behavior.summary.title') }}</span>
       <span class="badge" :class="badgeClass">{{ badgeText }}</span>
     </div>
     <div class="stats">
       <div class="stat">
-        <span class="label">监控标的</span>
+        <span class="label">{{ $t('behavior.summary.total_symbols') }}</span>
         <span class="value">{{ totalSymbols }}</span>
       </div>
       <div class="stat">
-        <span class="label">过度交易偏离</span>
+        <span class="label">{{ $t('behavior.summary.overtrade') }}</span>
         <span class="value warn">{{ overtradeCount }}</span>
       </div>
       <div class="stat">
-        <span class="label">报复交易偏离</span>
+        <span class="label">{{ $t('behavior.summary.revenge') }}</span>
         <span class="value danger">{{ revengeCount }}</span>
       </div>
     </div>
-    <p class="hint">偏离过多时建议降低频率并复盘计划执行。</p>
+    <p class="hint">{{ $t('behavior.summary.hint') }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   totalSymbols: number;
@@ -32,11 +33,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const badgeText = computed(() => {
-  if (props.overtradeCount + props.revengeCount === 0) return '良好';
-  if (props.overtradeCount + props.revengeCount <= 2) return '注意';
-  return '警戒';
+  if (props.overtradeCount + props.revengeCount === 0) return t('behavior.summary.status_ok');
+  if (props.overtradeCount + props.revengeCount <= 2) return t('behavior.summary.status_warn');
+  return t('behavior.summary.status_danger');
 });
 
 const badgeClass = computed(() => {

@@ -1,9 +1,9 @@
 <template>
   <div class="optimization-panel">
-    <h3>优化建议</h3>
+    <h3>{{ $t('dashboard.optimizations') }}</h3>
     
     <div v-if="opportunities?.recommendations?.length === 0" class="empty-state">
-      <p>🎯 系统运行良好</p>
+      <p>{{ $t('dashboard.opt_empty') }}</p>
     </div>
     
     <div v-else class="recommendations-list">
@@ -22,39 +22,39 @@
         <h4 class="rec-title">{{ rec.title }}</h4>
         <p class="rec-description">{{ rec.description }}</p>
         <div v-if="rec.impact" class="rec-impact">
-          影响: {{ rec.impact }}
+          {{ $t('dashboard.impact') }}: {{ rec.impact }}
         </div>
       </div>
     </div>
     
     <div class="pattern-summary">
-      <h4>模式统计</h4>
+      <h4>{{ $t('dashboard.pattern_stats') }}</h4>
       <div class="pattern-grid">
         <div class="pattern-item">
           <div class="pattern-icon">🎯</div>
           <div class="pattern-info">
-            <div class="pattern-label">过度自信</div>
+            <div class="pattern-label">{{ $t('dashboard.patterns.confidence') }}</div>
             <div class="pattern-count">{{ opportunities?.patterns?.overconfident_signals?.length || 0 }}</div>
           </div>
         </div>
         <div class="pattern-item">
           <div class="pattern-icon">⚠️</div>
           <div class="pattern-info">
-            <div class="pattern-label">高风险</div>
+            <div class="pattern-label">{{ $t('dashboard.patterns.risk') }}</div>
             <div class="pattern-count">{{ opportunities?.patterns?.high_risk_failures?.length || 0 }}</div>
           </div>
         </div>
         <div class="pattern-item">
           <div class="pattern-icon">⏱️</div>
           <div class="pattern-info">
-            <div class="pattern-label">执行问题</div>
+            <div class="pattern-label">{{ $t('dashboard.patterns.execution') }}</div>
             <div class="pattern-count">{{ opportunities?.patterns?.execution_issues?.length || 0 }}</div>
           </div>
         </div>
         <div class="pattern-item">
           <div class="pattern-icon">📉</div>
           <div class="pattern-info">
-            <div class="pattern-label">时机问题</div>
+            <div class="pattern-label">{{ $t('dashboard.patterns.timing') }}</div>
             <div class="pattern-count">{{ opportunities?.patterns?.timing_issues?.length || 0 }}</div>
           </div>
         </div>
@@ -64,7 +64,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { OptimizationOpportunities } from '@/api/quantLoopService'
+
+const { t } = useI18n()
 
 withDefaults(defineProps<{
   opportunities?: OptimizationOpportunities
@@ -88,9 +91,9 @@ function getPriorityClass(priority: string) {
 
 function getPriorityLabel(priority: string) {
   const labels: Record<string, string> = {
-    HIGH: '高',
-    MEDIUM: '中',
-    LOW: '低'
+    HIGH: t('dashboard.priority.high'),
+    MEDIUM: t('dashboard.priority.medium'),
+    LOW: t('dashboard.priority.low')
   }
   return labels[priority] || priority
 }
@@ -102,6 +105,9 @@ function getPriorityLabel(priority: string) {
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 20px;
+  /* 移动端触摸优化 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h3 {
@@ -247,6 +253,174 @@ h4 {
 
 .pattern-count {
   color: #f1f5f9;
+
+/* 移动端响应式优化 */
+@media (max-width: 1024px) {
+  .pattern-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .pattern-icon {
+    font-size: 28px;
+  }
+  
+  .pattern-count {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .optimization-panel {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+  }
+  
+  h3 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 18px;
+  }
+  
+  h4 {
+    margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+    font-size: 16px;
+  }
+  
+  .empty-state {
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    font-size: 15px;
+  }
+  
+  .recommendations-list {
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+  
+  .recommendation-card {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+  }
+  
+  .recommendation-card:hover {
+    transform: none;
+  }
+  
+  .recommendation-card:active {
+    transform: scale(0.98);
+    background: rgba(139, 92, 246, 0.05);
+  }
+  
+  .rec-header {
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+  
+  .rec-category {
+    font-size: 11px;
+  }
+  
+  .rec-priority {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+  
+  .rec-title {
+    margin-bottom: var(--spacing-sm);
+    font-size: 15px;
+  }
+  
+  .rec-description {
+    margin-bottom: var(--spacing-sm);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  
+  .rec-impact {
+    font-size: 12px;
+  }
+  
+  .pattern-summary {
+    padding-top: var(--spacing-lg);
+  }
+  
+  .pattern-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+  
+  .pattern-item {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+  }
+  
+  .pattern-item:active {
+    transform: scale(0.98);
+    background: rgba(139, 92, 246, 0.1);
+  }
+  
+  .pattern-icon {
+    font-size: 24px;
+  }
+  
+  .pattern-label {
+    font-size: 11px;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .pattern-count {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .optimization-panel {
+    padding: var(--spacing-md);
+  }
+  
+  h3 {
+    font-size: 16px;
+  }
+  
+  h4 {
+    font-size: 15px;
+  }
+  
+  .recommendations-list {
+    gap: var(--spacing-sm);
+  }
+  
+  .recommendation-card {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .rec-title {
+    font-size: 14px;
+  }
+  
+  .rec-description {
+    font-size: 12px;
+  }
+  
+  .pattern-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .pattern-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .pattern-icon {
+    font-size: 20px;
+  }
+  
+  .pattern-count {
+    font-size: 16px;
+  }
+}
   font-size: 24px;
   font-weight: 700;
 }

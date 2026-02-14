@@ -179,6 +179,9 @@ function handleResize() {
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 20px;
+  /* 移动端触摸优化 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h3 {
@@ -226,5 +229,97 @@ h3 {
 
 .metric-value.negative {
   color: #ef4444;
+}
+
+/* 移动端响应式优化 */
+@media (max-width: 1024px) {
+  .chart-container {
+    height: 250px;
+  }
+  
+  .metrics-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .metric-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .performance-chart {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+  }
+  
+  h3 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 18px;
+  }
+  
+  .chart-container {
+    height: 220px;
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .metrics-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+  }
+  
+  .metric-card {
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    transition: all 0.2s ease;
+  }
+  
+  .metric-card:active {
+    transform: scale(0.98);
+    background: rgba(139, 92, 246, 0.1);
+  }
+  
+  .metric-label {
+    font-size: 11px;
+  }
+  
+  .metric-value {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .performance-chart {
+    padding: var(--spacing-md);
+  }
+  
+  h3 {
+    font-size: 16px;
+  }
+  
+  .chart-container {
+    height: 200px;
+  }
+  
+  .metrics-summary {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .metric-card {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .metric-label {
+    font-size: 10px;
+  }
+  
+  .metric-value {
+    font-size: 16px;
+  }
 }
 </style>

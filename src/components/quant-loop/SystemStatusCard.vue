@@ -1,7 +1,7 @@
 <template>
   <div class="system-status-card">
     <div class="status-header">
-      <h3>系统状态</h3>
+      <h3>{{ $t('dashboard.system_status') }}</h3>
       <span :class="['status-badge', statusClass]">
         {{ status?.system_status || 'UNKNOWN' }}
       </span>
@@ -9,15 +9,15 @@
     
     <div class="status-body">
       <div class="status-item">
-        <span class="label">账户:</span>
+        <span class="label">{{ $t('dashboard.account') }}:</span>
         <span class="value">{{ status?.account_id || '-' }}</span>
       </div>
       <div class="status-item">
-        <span class="label">上次:</span>
+        <span class="label">{{ $t('dashboard.last') }}:</span>
         <span class="value">{{ formatTime(status?.last_cycle) }}</span>
       </div>
       <div class="status-item">
-        <span class="label">下次:</span>
+        <span class="label">{{ $t('dashboard.next') }}:</span>
         <span class="value">{{ formatTime(status?.next_cycle) }}</span>
       </div>
     </div>
@@ -26,8 +26,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { SystemStatus } from '@/api/quantLoopService'
 
+const { locale } = useI18n()
 const props = defineProps<{
   status: SystemStatus | null
 }>()
@@ -48,7 +50,7 @@ const statusClass = computed(() => {
 
 function formatTime(time: string | undefined) {
   if (!time) return '-'
-  return new Date(time).toLocaleString('zh-CN')
+  return new Date(time).toLocaleString(locale.value)
 }
 </script>
 
@@ -60,6 +62,9 @@ function formatTime(time: string | undefined) {
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  /* 移动端触摸优化 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .system-status-card:hover {
@@ -166,5 +171,81 @@ function formatTime(time: string | undefined) {
   font-size: 14px;
   font-weight: 600;
   font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* 移动端响应式优化 */
+@media (max-width: 768px) {
+  .system-status-card {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+  }
+  
+  .status-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .status-header h3 {
+    font-size: 18px;
+  }
+  
+  .status-header h3::before {
+    font-size: 20px;
+  }
+  
+  .status-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+  
+  .status-body {
+    gap: var(--spacing-md);
+  }
+  
+  .status-item {
+    padding: var(--spacing-md);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    min-height: 48px;
+  }
+  
+  .status-item:hover {
+    transform: none;
+  }
+  
+  .status-item:active {
+    transform: scale(0.98);
+    background: rgba(139, 92, 246, 0.15);
+  }
+  
+  .status-item .label {
+    font-size: 13px;
+    color: #a0aec0;
+  }
+  
+  .status-item .value {
+    font-size: 15px;
+    word-break: break-all;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .system-status-card {
+    padding: var(--spacing-md);
+  }
+  
+  .status-header h3 {
+    font-size: 16px;
+  }
+  
+  .status-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
 }
 </style>

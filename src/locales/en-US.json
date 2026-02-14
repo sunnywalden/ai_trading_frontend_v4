@@ -1,0 +1,1289 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error_load": "Load Failed",
+    "retry": "Retry",
+    "no_data": "No Data",
+    "search": "Search",
+    "failed": "Failed",
+    "unknown_error": "Unknown Error",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "status": "Status",
+    "last_updated": "Last Updated",
+    "execute": "Execute",
+    "timeout": "⏱️ Request timeout, please try again later!",
+    "network_error": "🌐 Network error, please check connection or backend status"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "risk": "Risk Monitor",
+    "behavior": "Behavior Analysis",
+    "strategy": "Strategy Library",
+    "settings": "Settings",
+    "control_tower": "Control Tower",
+    "group_realtime": "Real-time Board",
+    "group_analysis": "Behavior & Analysis",
+    "group_config": "Config & Tools",
+    "positions": "Positions",
+    "ai_advisor": "AI Decision",
+    "journal": "Journal",
+    "alerts": "Alerts",
+    "quant_loop": "Quant Loop",
+    "hotspots": "Market Hotspots",
+    "macro": "Macro Analysis",
+    "advice": "Stock Analysis",
+    "strategies": "Strategies",
+    "opportunities": "Opportunities",
+    "behavior": "Behavior Scores",
+    "system": "System Monitor"
+  },
+  "auth": {
+    "logged_in_as": "Logged in as",
+    "logout": "Logout",
+    "login": "Login",
+    "token_expiry": "Token Exp",
+    "token_expiring_soon": "Token Expiring Soon",
+    "admin": "Admin",
+    "switch_theme": "Switch Theme",
+    "dark_mode": "Dark",
+    "light_mode": "Light",
+    "switch_language": "Switch Language",
+    "info_modal": {
+      "title": "Admin Information",
+      "username": "Username",
+      "token_expiry": "Token Expiry",
+      "payload": "Payload",
+      "raw_token": "Raw Token",
+      "hide": "Hide",
+      "show": "Show",
+      "copy": "Copy",
+      "logout": "Logout",
+      "close": "Close"
+    }
+  },
+  "expiry": {
+    "expired": "Expired",
+    "mins_left": "Expires in {n}m",
+    "hours_left": "Expires in {n}h",
+    "days_left": "Expires in {n}d",
+    "banner_title": "Token Expiring",
+    "banner_body": "Token will expire in {time}. Renew it soon.",
+    "banner_text": "⚠️ Token expires in {time}"
+  },
+  "dashboard": {
+    "title": "Quant Loop Dashboard",
+    "subtitle": "Real-time risk monitoring & trade execution engine",
+    "system_status": "System Status",
+    "title_v2": "Trading Console",
+    "last_update": "Last Update",
+    "loading": "Loading Dashboard data...",
+    "total_equity": "Total Equity",
+    "daily_pnl": "Daily PnL",
+    "weekly_return": "Weekly Return",
+    "monthly_return": "MTD Return",
+    "risk_level": "Risk Level",
+    "equity_curve": "Equity Curve (30D)",
+    "pnl_attribution": "PnL Attribution",
+    "greeks_exposure": "Greeks Exposure",
+    "risk_metrics": "Risk Metrics",
+    "signal_pipeline": "Signal Pipeline",
+    "pending_execution": "{n} Pending",
+    "ai_insights": "AI Insights",
+    "new_insights": "{n} New Insights",
+    "no_insights": "No AI insights available",
+    "todo_list": "To- Do List",
+    "high_priority": "{n} High Priority",
+    "no_todos": "No tasks pending",
+    "active_positions": "Active Positions",
+    "no_positions": "No active positions",
+    "active_plans": "Active Plans",
+    "no_plans": "No active plans",
+    "market_hotspots": "Market Hotspots",
+    "view_all_signals": "View all {n} signals →",
+    "no_pending_signals": "No signals pending execution",
+    "risk_labels": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk",
+      "extreme": "Extreme Risk"
+    },
+    "account": "Account",
+    "last": "Last run",
+    "next": "Next run",
+    "run_cycle": "Run Full Cycle",
+    "run_optimization": "Run Optimization Only",
+    "execute_real_trade": "Execute Real Trade",
+    "pending_signals": "Pending Signals",
+    "manual_control": "Manual Control",
+    "execute_real_trade_desc": "Execute Real Trades",
+    "irrevocable_warning": "⚠️ Irrevocable action",
+    "run_optimization_desc": "Run Parameter Optimization",
+    "optimization_hint": "Recommended for better strategy results",
+    "running": "Running...",
+    "last_result": "Last Run Result",
+    "cycle_id": "Cycle ID",
+    "run_time": "Run Time",
+    "account_id": "Account ID",
+    "confirm_execute_warning": "Confirm executing real trades? This action is IRREVOCABLE!",
+    "show_json": "View Full JSON",
+    "optimizations": "Optimization Advice",
+    "opt_empty": "🎯 System running well",
+    "impact": "Impact",
+    "pipeline_status": "Pipeline Status",
+    "total": "Total",
+    "pass": "Pass",
+    "execution_rate": "Execution",
+    "pipeline_stages": {
+      "generated": "Generated",
+      "validated": "Validated",
+      "queued": "Queued",
+      "executing": "Executing",
+      "executed": "Executed"
+    },
+    "pattern_stats": "Pattern Stats",
+    "patterns": {
+      "confidence": "Overconfident",
+      "risk": "High Risk",
+      "execution": "Execution Issues",
+      "timing": "Timing Issues"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "phases": {
+      "data_ingestion": "Data Ingestion",
+      "signal_generation": "Signal Gen",
+      "signal_validation": "Validation",
+      "risk_assessment": "Risk Assessment",
+      "adaptive_optimization": "Optimization",
+      "order_staging": "Order Staging",
+      "execution": "Execution"
+    },
+    "phase_details": {
+      "gen_signals": "Signals",
+      "proc_strategies": "Strategies",
+      "val_rate": "Val Rate",
+      "passed": "Passed"
+    }
+  },
+  "quant_loop": {
+    "signal_summary": "Signal Summary",
+    "generating": "Generating...",
+    "symbol": "Symbol",
+    "direction": "Direction",
+    "long": "Long",
+    "short": "Short",
+    "strength": "Strength",
+    "confidence": "Confidence",
+    "scores": "Scores",
+    "raw_data": "Raw Data",
+    "cycle_complete": "Cycle Complete",
+    "optimization_complete": "Optimization Complete",
+    "execution_result": "Execution Result",
+    "batch_execute": "Batch Execute",
+    "reject": "Reject",
+    "details": "Details",
+    "view_details": "View Details",
+    "execute_real": "Real Execute",
+    "execute_sim": "Sim Execute",
+    "execute_batch": "Batch Execute",
+    "reject_batch": "Batch Reject",
+    "signals_selected": "{n} signals selected",
+    "real_trade": "Real Trade",
+    "long": "Long",
+    "short": "Short",
+    "confirm_batch_execute": "⚠️ WARNING: Confirm REAL TRADES for {n} selected items?\nThis will submit orders to the broker. Please ensure account status and risk controls are correct.",
+    "confirm_single_execute": "⚠️ WARNING: Confirm REAL TRADE for {symbol}?",
+    "confirm_batch_reject": "Confirm rejecting {n} selected signals?",
+    "position_filter": "Position Filter",
+    "execute_selected": "Execute Selected",
+    "reject_selected": "Reject Selected",
+    "no_position": "No Position",
+    "generated_at": "Generated At",
+    "headers": {
+      "symbol": "Symbol",
+      "type": "Type",
+      "direction": "Direction",
+      "position": "Pos",
+      "strength": "Str",
+      "confidence": "Conf",
+      "expected_return": "Exp Ret",
+      "risk_score": "Risk",
+      "qty": "Qty",
+      "time": "Time",
+      "actions": "Actions"
+    },
+    "shares": "sh",
+    "confirm_execute": "Are you sure to execute selected signals?",
+    "just_now": "just now",
+    "minutes_ago": "{n}m ago",
+    "hours_ago": "{n}h ago",
+    "reject_confirm": "Are you sure to reject this signal?",
+    "reject_selected_confirm": "Are you sure to reject selected signals?",
+    "types": {
+      "trend": "Trend Following",
+      "reversion": "Mean Reversion",
+      "breakout": "Volatility Breakout",
+      "arbitrage": "Arbitrage",
+      "entry": "Entry",
+      "exit": "Exit",
+      "add": "Add",
+      "reduce": "Reduce",
+      "hedge": "Hedge"
+    }
+  },
+  "hotspots": {
+    "title": "Market Hotspots",
+    "subtitle": "Aggregated real-time news on US stocks, macro, and financial dynamics",
+    "force_refresh": "Force Refresh",
+    "info_count": "Total News",
+    "avg_impact": "Avg Impact",
+    "unique_symbols": "Symbols",
+    "bullish": "Bullish",
+    "bearish": "Bearish",
+    "neutral": "Neutral",
+    "impact": "Impact",
+    "severity": "Severity",
+    "view_insight": "VIEW INSIGHT",
+    "no_news_title": "No Hotspots Today",
+    "no_news_desc": "No hot news matching criteria currently available",
+    "categories": {
+      "all": "All Updates",
+      "war": "Conflict",
+      "economy": "Macro Econ",
+      "finance": "Finance",
+      "politics": "Politics",
+      "company": "Earnings",
+      "tech": "Tech Innovation"
+    }
+  },
+  "macro": {
+    "title": "Macro Analysis",
+    "subtitle": "Show summary and level; expand for details",
+    "refresh": "Refresh Data",
+    "refreshing": "Refreshing...",
+    "loading": "Loading macro risk data...",
+    "expand": "Expand Macro Details",
+    "empty": "No macro risk data",
+    "digest_title": "Macro Risk Summary",
+    "overall_score": "Overall Score",
+    "no_summary": "No summary available",
+    "error_load": "❌ Failed to fetch macro risk data",
+    "error_refresh": "❌ Failed to refresh macro data",
+    "ai_analysis": "AI Analysis",
+    "risk_alerts": "Risk Alerts",
+    "monetary_policy": "Monetary Policy",
+    "geopolitical": "Geopolitical",
+    "sector_bubble": "Sector Bubble",
+    "economic_cycle": "Economic Cycle",
+    "market_sentiment": "Market Sentiment",
+    "key_concerns": "Key Concerns",
+    "overall_recommendations": "Overall Recommendations",
+    "levels": {
+      "extreme": "Extreme",
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "stable": "Stable",
+      "unknown": "Unknown"
+    },
+    "guideline": {
+      "title": "🌍 Macro Risk Assessment Guide",
+      "five_dim_model": "Five-Dimensional Risk Model",
+      "five_dim_desc": "Comprehensive assessment of systemic risks across Politics, Economy, Market, Finance, and Technology",
+      "political": {
+        "name": "📊 Political Risk",
+        "desc": "Assessment of political instability, policy changes, and geopolitical conflicts",
+        "policy": "Policy: Monetary, fiscal, and regulatory adjustments",
+        "geopolitical": "Geopolitical: International conflicts, trade frictions, sanctions",
+        "events": "Political Events: Elections, leadership changes, stability",
+        "regulations": "Regulations: Industry oversight, compliance requirements",
+        "low": "0-30: Low Risk",
+        "medium": "30-60: Medium Risk",
+        "high": "60-100: High Risk"
+      },
+      "economic": {
+        "name": "💰 Economic Risk",
+        "desc": "Assessment of economic fundamentals, slowing growth, and inflation",
+        "growth": "Growth: GDP rate, unemployment, consumer confidence",
+        "inflation": "Inflation: CPI, PPI, core inflation changes",
+        "rates": "Rates: Central bank policy, bond yield trends",
+        "business": "Business: PMI, retail data, corporate earnings",
+        "health": "0-30: Healthy",
+        "slowdown": "30-60: Mild Slowdown",
+        "recession": "60-100: Recession Risk"
+      },
+      "market": {
+        "name": "📈 Market Risk",
+        "desc": "Assessment of volatility, liquidity, and valuation bubbles",
+        "volatility": "Volatility: VIX index, market panic sentiment",
+        "valuation": "Valuation: P/E, Shiller PE, P/B ratios",
+        "liquidity": "Liquidity: Volume, bid-ask spreads, depth",
+        "technical": "Technical: Trend strength, OB/OS, S/R levels",
+        "stable": "0-30: Stable",
+        "vol_high": "30-60: Elevated Vol",
+        "extreme": "60-100: Extreme Vol"
+      },
+      "financial": {
+        "name": "🏦 Financial Risk",
+        "desc": "Assessment of financial fragility, credit risk, and liquidity crisis",
+        "credit": "Credit: Default rates, credit spreads, bond ratings",
+        "health": "Banking: Capital adequacy, NPL ratios",
+        "liquidity": "Liquidity: Money market rates, repo rates",
+        "leverage": "Leverage: Margin debt, corporate leverage ratios",
+        "solid": "0-30: Solid",
+        "stress": "30-60: Pressure Emerging",
+        "systemic": "60-100: Systemic Risk",
+        "level_label": "Financial Risk"
+      },
+      "technical": {
+        "name": "🔬 Technical Risk",
+        "desc": "Assessment of innovation, disruption, and cybersecurity risks",
+        "disruption": "Disruption: New tech impact on traditional sectors",
+        "innovation": "Innovation: R&D, patents, competitiveness",
+        "cybersecurity": "Cyber: Data leaks, hack attacks, system failures",
+        "transformation": "Transformation: Adaptability, technical debt",
+        "leading": "0-30: Leading",
+        "investment_needed": "30-60: Investment Needed",
+        "disrupt_risk": "60-100: Disruption Risk"
+      },
+      "levels_title": "Risk Level Definitions",
+      "levels": {
+        "low_desc": "Healthy environment, active allocation possible",
+        "low_action": "✓ Consider adding positions",
+        "medium_desc": "Uncertainty exists, maintain caution",
+        "medium_action": "⚠ Maintain neutral exposure",
+        "high_desc": "Significant risk, consider trimming",
+        "high_action": "⚠ Reduce exposure, enhance hedging",
+        "critical_desc": "Extreme risk, consider exiting",
+        "critical_action": "🚨 Aggressively reduce or clear positions"
+      },
+      "strategies_title": "Risk Mitigation Strategies",
+      "defense": {
+        "title": "🛡️ Defensive",
+        "assets": "Increase defensive assets (Gold, Treasuries)",
+        "beta": "Reduce High-Beta stock exposure",
+        "cash": "Increase cash reserves"
+      },
+      "hedge": {
+        "title": "⚖️ Hedging",
+        "put": "Use Put options for downside protection",
+        "etf": "Partial hedge with Inverse ETFs",
+        "rotation": "Sector rotation to low-risk areas"
+      },
+      "diversify": {
+        "title": "🎯 Diversification",
+        "assets": "Cross-asset (Equity/Bond balance)",
+        "market": "Cross-market (Intl allocation)",
+        "sector": "Cross-sector (Avoid concentration)"
+      },
+      "timing": {
+        "title": "⏰ Timing",
+        "signals": "Monitor signals for timely adjustments",
+        "calm": "Stay calm during crises",
+        "entry": "Wait for risk release before entry"
+      },
+      "indicators_title": "Key Monitoring Indicators",
+      "indicators": {
+        "vix": "VIX Index",
+        "vix_threshold": ">30 High Risk",
+        "yield": "Treasury Yield Curve",
+        "yield_threshold": "Inversion = Recession Warning",
+        "spread": "High Yield Spreads",
+        "spread_threshold": ">600bp Credit Risk",
+        "dxy": "Dollar Index (DXY)",
+        "dxy_threshold": "Strong = Risk-Off Sentiment",
+        "pmi": "PMI Index",
+        "pmi_threshold": "<50 Economic Contraction",
+        "unemployment": "Unemployment Rate",
+        "unemployment_threshold": "Rapid Rise = Recession"
+      },
+      "notes": {
+        "title": "⚠️ Important Notes",
+        "ai": "Macro assessment is based on multi-source data and AI models",
+        "periodic": "Systemic risk is hard to predict; monitor periodically",
+        "interact": "Risk dimensions may interact; assess holistically",
+        "blackswan": "Black Swan events can suddenly shift the risk landscape",
+        "capacity": "Adjust strategy based on timeframe and risk tolerance"
+      }
+    }
+  },
+  "behavior": {
+    "title": "Behavior Score",
+    "subtitle": "Based on Tiger history fills & PnL for recent {n} days",
+    "window_days": "Window Days",
+    "recalculate": "Recalculate Scores",
+    "recalculating": "Recalculating...",
+    "loading": "Loading behavior scores...",
+    "fetch_failed": "❌ Failed to fetch AI risk/behavior state",
+    "rebuild_success_with_count": "✅ Recalculated behavior scores for {count} symbols",
+    "rebuild_failed_general": "❌ Failed to recalculate scores, please try again later",
+    "summary": {
+      "title": "Strategy Deviation Summary",
+      "total_symbols": "Monitored Symbols",
+      "overtrade": "Overtrade Dev",
+      "revenge": "Revenge Dev",
+      "status_ok": "GOOD",
+      "status_warn": "WARN",
+      "status_danger": "DANGER",
+      "hint": "High deviation suggests reducing frequency and reviewing strategy execution."
+    },
+    "card": {
+      "profile": "Behavior Profile (Real-time calculation from history)",
+      "score": "Score",
+      "sell_fly": "Sell-Fly",
+      "discipline": "Discipline",
+      "overtrade": "Overtrading",
+      "revenge": "Revenge",
+      "trade_count": "Trades",
+      "trades_in_window": "Trades in Window",
+      "recent_sell_fly": "Recent Sell-Fly",
+      "sell_fly_ratio": "Sell-Fly Ratio",
+      "overtrade_index": "Overtrade Index",
+      "recent_revenge": "Recent Revenge",
+      "hint": "Higher behavioral 'volatility' leads to tighter ShockPolicy / EarningsPolicy."
+    },
+    "guideline": {
+      "title": "🧠 Behavior Scoring Guide",
+      "score_0_100": "Behavior Score (0-100)",
+      "desc": "Comprehensive assessment of trading health and discipline",
+      "tiers": {
+        "t1": "Excellent",
+        "t1_desc": "Strong discipline, great execution",
+        "t2": "Good",
+        "t2_desc": "Mostly compliant, room for improvement",
+        "t3": "Watch",
+        "t3_desc": "Risks identified, adjustment needed",
+        "t4": "Danger",
+        "t4_desc": "Serious deviation, immediate attention"
+      },
+      "sell_fly": {
+        "title": "Sell-Fly Score (Anti-Chase)",
+        "desc": "Assessment of short-term volatility chasing",
+        "impact": "💡 Higher score means more rational entry, avoiding FOMO",
+        "s1": "Rarely chases, stable mindset",
+        "s2": "Occasional chasing, mostly controlled",
+        "s3": "Frequent day-trading, risk increasing",
+        "s4": "Severe chasing, high loss probability",
+        "example_title": "Typical Indicators:",
+        "e1": "Buying at the peak of a rally",
+        "e2": "Panic selling during minor pullbacks",
+        "e3": "Flipping same symbol multiple times a day",
+        "e4": "FOMO-driven trade entry"
+      },
+      "overtrading": {
+        "title": "Overtrading Score",
+        "desc": "Assessment of trade frequency and allocation logic",
+        "impact": "💡 Higher score means more restraint, lower commission costs",
+        "s1": "Disciplined, not overly frequent",
+        "s2": "Occasional high frequency, watch costs",
+        "s3": "Trading too much, fees eroding profit",
+        "s4": "Severe overtrading, high risk",
+        "example_title": "Typical Indicators:",
+        "e1": "Too many trades per day (>5)",
+        "e2": "Frequent switching between symbols",
+        "e3": "Random trades without clear strategy",
+        "e4": "Fees/Commissions > 2% of capital"
+      },
+      "revenge": {
+        "title": "Revenge Trading Score",
+        "desc": "Assessment of emotional trading after losses",
+        "impact": "💡 Higher score means better emotional regulation",
+        "s1": "Stay calm after loss, no rush to recover",
+        "s2": "Occasional impulse, but self-aware",
+        "s3": "Impulsive after loss, risk escalating",
+        "s4": "Severe revenge trading, vicious cycle",
+        "example_title": "Typical Indicators:",
+        "e1": "Increasing size immediately after a loss",
+        "e2": "Oversized position to 'get it back'",
+        "e3": "Ignoring stops after hitting a loser",
+        "e4": "Loss stream leading to loss of control"
+      },
+      "greeks": {
+        "title": "Greeks Definition",
+        "impact": "💡 'Water level' represents exposure; higher means higher risk",
+        "delta": "Change in option price per 1 unit asset change",
+        "gamma": "Rate of change in Delta",
+        "theta": "Time decay (daily loss of value)",
+        "vega": "Sensitivity to 1% change in Implied Volatility"
+      },
+      "action_title": "Recommendations",
+      "actions": {
+        "s1": "Maintain good habits, can increase size",
+        "s2": "Keep going, improve minor issues",
+        "s3": "Warning signals, adjust strategy",
+        "s4": "STOP TRADING, review strategy immediately"
+      },
+      "note": {
+        "title": "⚠️ Important Notes",
+        "n1": "Scores are based on historical tiger fills",
+        "n2": "Low score != bad analyst, it means bad execution",
+        "n3": "Review scores periodically to optimize behavior",
+        "n4": "Psychology/Discipline is key to long-term success"
+      }
+    }
+  },
+  "health": {
+    "title": "System Health",
+    "subtitle": "Service status and latest heartbeat",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "error_timeout": "⏱️ Request timeout, please try again later!",
+    "error_network": "🌐 Network error, please check the server status",
+    "error_generic": "❌ Failed to fetch system health"
+  },
+  "positions": {
+    "title": "Positions Assessment",
+    "subtitle": "Multi-dimensional scoring across technicals, fundamentals, and sentiment",
+    "refresh": "Refresh Data",
+    "refreshing": "Refreshing...",
+    "loading": "Loading positions...",
+    "empty": "No positions found",
+    "error_timeout": "⏱️ Request timeout, please try again later!",
+    "error_network": "🌐 Network error, please check the server status",
+    "error_generic": "❌ Failed to fetch positions data",
+    "refresh_error_timeout": "⏱️ Refresh timeout, please try again later!",
+    "refresh_error_network": "🌐 Network connection failed, unable to refresh",
+    "refresh_error_generic": "❌ Failed to refresh positions data",
+    "single_refresh_timeout": "⏱️ Refresh for {symbol} timeout, please try again later!",
+    "single_refresh_error": "❌ Failed to refresh {symbol}",
+    "summary": {
+      "total_positions": "Total Pos",
+      "total_value": "Total Value",
+      "total_pnl": "Total PnL",
+      "avg_score": "Avg Score",
+      "high_risk": "High Risk",
+      "buy_recommendation": "BUY Rec"
+    },
+    "overall_score": "Overall Score",
+    "quantity": "Quantity",
+    "avg_cost": "Avg Cost",
+    "current_price": "Price",
+    "unrealized_pnl": "Unrealized PnL",
+    "technical": "Technicals",
+    "fundamental": "Fundamentals",
+    "sentiment": "Sentiment",
+    "ai_advice": "AI Advice",
+    "refresh_snapshot": "Refresh Snapshot",
+    "recommendations": {
+      "strong_buy": "Strong Buy",
+      "buy": "Buy",
+      "hold": "Hold",
+      "reduce": "Reduce",
+      "sell": "Sell",
+      "strong_sell": "Strong Sell"
+    },
+    "risk_levels": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk",
+      "extreme": "Extreme Risk"
+    },
+    "snapshot": {
+      "empty_title": "No daily snapshot generated",
+      "refresh_eval": "Refresh Assessment",
+      "title": "Daily Trend Snapshot",
+      "strength_label": "Trend Strength",
+      "rsi": "RSI",
+      "macd": "MACD",
+      "bollinger": "Bollinger",
+      "volume": "Volume",
+      "support": "Support",
+      "resistance": "Resistance",
+      "trader_summary": "Trader Summary",
+      "rule_notice": "Using rule-base summary",
+      "directions": {
+        "bullish": "Bullish",
+        "bearish": "Bearish",
+        "sideways": "Sideways"
+      },
+      "rsi_status": {
+        "oversold": "Oversold",
+        "overbought": "Overbought",
+        "neutral": "Neutral"
+      },
+      "macd_status": {
+        "bullish_crossover": "Bullish X-over",
+        "bearish_crossover": "Bearish X-over"
+      },
+      "volume_status": {
+        "up": "Vol Up",
+        "down": "Vol Down"
+      }
+    },
+    "guideline": {
+      "title": "Positions Assessment Guideline",
+      "composite": {
+        "title": "Composite Score (0-100)",
+        "desc": "Weighted score across technicals, fundamentals, and sentiment",
+        "excellent": "Excellent - Strongly Recommended",
+        "good": "Good - Suitable for Holding/Increasing",
+        "neutral": "Neutral - Hold or Watch",
+        "poor": "Poor - Suggested Reducing",
+        "bad": "Bad - Strongly Suggested Liquidating"
+      },
+      "technical": {
+        "title": "Technical Score (0-100)",
+        "desc": "Based on trend, momentum, support/resistance, etc.",
+        "items": [
+          "Trend direction and strength (BULLISH/BEARISH/SIDEWAYS)",
+          "RSI (Overbought/Oversold)",
+          "MACD momentum",
+          "Bollinger Bands position",
+          "Volume ratio",
+          "Key support and resistance levels"
+        ],
+        "impact": "💡 Higher score means stronger technicals"
+      },
+      "snapshot": {
+        "title": "Daily Trend Snapshot (Wall Street Perspective)",
+        "desc": "Generated daily per symbol, cached, manual refresh triggered",
+        "items": [
+          "Trend Direction: BULLISH / BEARISH / SIDEWAYS",
+          "Trend Strength: 0-100 (Algorithmic score, not confidence)",
+          "RSI Status: OVERSOLD / NEUTRAL / OVERBOUGHT",
+          "MACD Status: BULLISH_CROSSOVER / BEARISH_CROSSOVER",
+          "Bollinger Position: Relative price position in bands",
+          "Volume Analysis: volume_ratio > 1 (High), < 1 (Low)",
+          "Key Levels: Support and Resistance levels",
+          "AI Summary: Trader-style interpretation by OpenAI"
+        ],
+        "impact": "💡 Snapshot is cached and may be empty; use manual refresh",
+        "warning": "⚠️ Macro risks and daily trends are analyzed independently"
+      },
+      "fundamental": {
+        "title": "Fundamental Score (0-100)",
+        "desc": "Based on valuation, profitability, growth, and financial health",
+        "items": [
+          "Valuation: PE, PB, PEG, etc.",
+          "Profitability: ROE, ROA, Net Margin",
+          "Growth: Revenue and Profit growth",
+          "Financial Health: Current Ratio, Debt/Equity"
+        ],
+        "impact": "💡 Higher score means more solid fundamentals"
+      },
+      "sentiment": {
+        "title": "Sentiment Score (0-100)",
+        "desc": "Based on market sentiment, flow, and investor behavior",
+        "items": [
+          "Analyst ratings and target prices",
+          "Institutional holding changes",
+          "News sentiment analysis",
+          "Put/Call ratio",
+          "Social media sentiment"
+        ],
+        "impact": "💡 Higher score means more optimistic sentiment"
+      },
+      "recommendations": {
+        "title": "Recommendation Legend",
+        "strong_buy": "STRONG BUY (85+)",
+        "buy": "BUY (75-85)",
+        "hold": "HOLD (40-75)",
+        "reduce": "REDUCE (30-40)",
+        "sell": "SELL (<30)"
+      },
+      "risks": {
+        "title": "Risk Level Legend",
+        "low": "LOW Risk (80+)",
+        "medium": "MEDIUM Risk (60-80)",
+        "high": "HIGH Risk (40-60)",
+        "extreme": "EXTREME Risk (<40)"
+      },
+      "notes": {
+        "title": "Important Notes",
+        "items": [
+          "Scores are for reference only, not investment advice",
+          "Trend snapshots are cached daily",
+          "Snapshots may be empty (not scheduled/refreshed); use manual refresh",
+          "Trend strength is algorithmic, not confidence",
+          "Macro risks and position trends are independent",
+          "Make decisions based on your own risk tolerance",
+          "Manage stops and position sizes carefully"
+        ]
+      }
+    }
+  },
+  "portfolio": {
+    "weighted_score": "Weighted Score",
+    "beta_label": "Portfolio Beta (vs SPY)",
+    "ai_summary": "AI Portfolio Summary",
+    "sector_exposure": "Sector Exposure",
+    "optimization_title": "Optimization Recommendations",
+    "no_recommendations": "Portfolio is well-balanced. No optimization needed."
+  },
+  "journal": {
+    "title": "Trade Journal",
+    "new_journal": "New Journal",
+    "filter_all": "All",
+    "status_draft": "Draft",
+    "status_completed": "Completed",
+    "status_reviewed": "Reviewed",
+    "entry": "Entry",
+    "exit": "Exit",
+    "pnl": "PnL",
+    "execution_quality": "Exec Quality",
+    "ai_review_btn": "AI Review",
+    "fail_reason": "Fail Reason",
+    "ai_review_label": "AI Review",
+    "empty": "No journals found",
+    "prev_page": "Prev",
+    "next_page": "Next",
+    "modal_new_title": "New Trade Journal",
+    "form": {
+      "symbol": "Symbol",
+      "direction": "Direction",
+      "entry_date": "Entry Date",
+      "entry_price": "Entry Price",
+      "exit_date": "Exit Date",
+      "exit_price": "Exit Price",
+      "quantity": "Quantity",
+      "realized_pnl": "Realized PnL",
+      "execution_quality_label": "Exec Quality (1-5)",
+      "emotion": "Emotion",
+      "reflection": "Reflection"
+    }
+  },
+  "advisor": {
+    "title": "AI Trading Advisor",
+    "subtitle": "Multi-agent collaborative evaluation, providing professional qualitative and quantitative analysis",
+    "step1": "Input Symbols",
+    "step2": "AI Evaluation Results",
+    "placeholder": "Enter symbols separated by commas (e.g., AAPL, TSLA)",
+    "evaluate": "Start Evaluation",
+    "evaluating": "Evaluating...",
+    "hot_labels": "Hot Symbols:",
+    "confidence": "Confidence",
+    "execute_selected": "Execute Selected ({n})",
+    "executing": "Executing...",
+    "holding_period": "Holding Period",
+    "scenario_analysis": "Scenario Analysis",
+    "metrics": {
+      "risk_reward": "Risk/Reward",
+      "entry_price": "Entry Price",
+      "stop_loss": "Stop Loss",
+      "take_profit": "Take Profit",
+      "suggested_position": "Position",
+      "risk_level": "Risk Level"
+    },
+    "scenarios": {
+      "bull": "Bull Case",
+      "bear": "Bear Case",
+      "neutral": "Neutral Case",
+      "target": "Target",
+      "upside": "Upside",
+      "support": "Support",
+      "downside": "Downside",
+      "range": "Range"
+    },
+    "catalysts": {
+      "title": "Catalysts & Drivers",
+      "short_term": "Short-term (1-2w)",
+      "mid_term": "Mid-term (1-6m)"
+    },
+    "dimensions": {
+      "technical": "Technicals",
+      "fundamental": "Fundamentals",
+      "kline": "K-Line Trend"
+    },
+    "actions": {
+      "buy": "BUY",
+      "sell": "SELL",
+      "hold": "HOLD",
+      "avoid": "AVOID",
+      "execute_now": "Execute Now",
+      "save_plan": "Save Plan"
+    },
+    "directions": {
+      "long": "Long ↑",
+      "short": "Short ↓",
+      "neutral": "Neutral —"
+    },
+    "plans": {
+      "title": "Trading Plans",
+      "empty": "No trading plans. Create directly after AI evaluation.",
+      "confirm_execute": "Confirm executing this trading plan?",
+      "confirm_cancel": "Confirm cancelling this trading plan?",
+      "execute_success": "Plan executed successfully",
+      "cancel_success": "Plan cancelled",
+      "table": {
+        "symbol": "Symbol",
+        "entry": "Entry",
+        "stop_loss": "SL",
+        "take_profit": "TP",
+        "position": "Pos",
+        "status": "Status",
+        "notes": "Notes",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "executed": "Executed",
+        "cancelled": "Cancelled",
+        "failed": "Failed",
+        "expired": "Expired"
+      }
+    },
+    "history": {
+      "title": "Evaluation History",
+      "empty": "No history records. History is saved automatically after evaluation.",
+      "delete_confirm": "Confirm delete this record?",
+      "refresh": "Refresh",
+      "loading": "Loading...",
+      "time": {
+        "just_now": "Just now",
+        "minutes_ago": "{n}m ago",
+        "hours_ago": "{n}h ago",
+        "days_ago": "{n}d ago"
+      }
+    },
+    "alerts": {
+      "evaluate_failed": "AI Evaluation Failed",
+      "execute_confirm_single": "Confirm executing AI decision for {symbol}?\nDir: {direction}\nPos: {pos}%",
+      "execute_confirm_batch": "Confirm executing decisions for {n} symbols?",
+      "execute_success": "Execution completed",
+      "execute_failed": "Execution failed",
+      "batch_execute_success": "Execution finished! Success: {success}, Failed: {failed}, Skipped: {skipped}",
+      "batch_execute_failed": "Batch execution failed",
+      "plan_created": "Plan created",
+      "plan_create_failed": "Failed to create plan",
+      "delete_failed": "Delete failed",
+      "delete_confirm_permanent": "Are you sure? This action cannot be undone."
+    }
+  },
+  "execution": {
+    "title": "⚡ Execution Center",
+    "subtitle": "Centralized management of all pending trading plans",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "executed": "Executed",
+      "failed": "Failed"
+    },
+    "filters": {
+      "all_status": "All Status",
+      "active": "Active",
+      "paused": "Paused",
+      "executed": "Executed",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "search_symbol": "Search symbol..."
+    },
+    "actions": {
+      "batch_execute": "Batch Execute",
+      "batch_cancel": "Batch Cancel",
+      "create_plan": "+ New Plan",
+      "execute": "Execute",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "empty_state": {
+      "title": "No Trading Plans",
+      "subtitle": "Click \"New Plan\" to create your first trading plan"
+    },
+    "table": {
+      "headers": {
+        "symbol": "Symbol",
+        "entry_price": "Entry",
+        "stop_loss": "SL",
+        "take_profit": "TP",
+        "target_position": "Position",
+        "status": "Status",
+        "created_at": "Created At",
+        "actions": "Actions"
+      }
+    },
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next",
+      "info": "Page {current} of {total}"
+    },
+    "confirm": {
+      "execute_single": "Confirm executing this trading plan?",
+      "execute_batch": "Confirm executing {n} selected plans?",
+      "cancel_batch": "Confirm cancelling {n} selected plans?\nPlease enter cancellation reason (optional):",
+      "delete_single": "Are you sure you want to delete this plan? This action is IRREVERSIBLE."
+    },
+    "messages": {
+      "execute_success": "Plan executed successfully!",
+      "execute_failed": "Plan execution failed: {error}",
+      "batch_execute_result": "Execution finished! Success: {success}, Failed: {failed}",
+      "delete_success": "Deleted successfully",
+      "load_failed": "Failed to load plans",
+      "stats_failed": "Failed to load stats",
+      "batch_cancel_failed": "Batch cancel failed",
+      "delete_failed": "Delete failed",
+      "plan_updated": "Plan updated successfully!",
+      "plan_created": "Plan created successfully!",
+      "save_failed": "Failed to save plan"
+    },
+    "dialog": {
+      "create_title": "New Trading Plan",
+      "edit_title": "Edit Trading Plan",
+      "symbol": "Symbol *",
+      "entry_price": "Entry Price *",
+      "stop_loss": "Stop Loss *",
+      "take_profit": "Take Profit *",
+      "target_position": "Target Pos * (%)",
+      "status": "Plan Status",
+      "notes": "Notes",
+      "placeholder_symbol": "e.g. AAPL, META, TSLA",
+      "placeholder_notes": "Trading notes...",
+      "risk_preview": "Risk Preview",
+      "stop_loss_range": "SL Range",
+      "take_profit_range": "TP Range",
+      "risk_reward_ratio": "R/R Ratio",
+      "errors": {
+        "stop_loss": "SL must be below Entry",
+        "take_profit": "TP must be above Entry"
+      },
+      "actions": {
+        "save": "Save Plan",
+        "creating": "Creating...",
+        "saving": "Saving..."
+      }
+    }
+  },
+  "execution_list": {
+    "title": "⚡ Execution List",
+    "subtitle": "Core hub for signals, strategies, and plans",
+    "header": {
+      "universe": "Universe: {name}",
+      "min_score": "Min Score: {score}",
+      "max_results": "Max Results: {count}",
+      "force_refresh": "Force Refresh",
+      "hint": "Execution list prioritizes plans and risk constraints"
+    },
+    "strategy_mgmt": {
+      "title": "⚙️ Strategy Management",
+      "subtitle": "Browse built-in strategies, trigger async runs, and sync progress",
+      "loading": "Strategies loading...",
+      "empty": "No strategies available, check back later",
+      "error_load": "Strategy list temporarily unavailable",
+      "error_detail": "Failed to get strategy details",
+      "error_run": "Strategy execution failed, please try again",
+      "run_submitted": "Strategy submitted, waiting for execution"
+    },
+    "strategy_card": {
+      "builtin": "Built-in",
+      "no_desc": "No description",
+      "not_run": "Not run",
+      "last_run": "Last Run",
+      "tags": "Tags",
+      "details": "Strategy Details",
+      "relative": {
+        "just_now": "Just now",
+        "min_ago": "{n}m ago",
+        "hour_ago": "{n}h ago",
+        "day_ago": "{n}d ago",
+        "week_ago": "{n}w ago",
+        "month_ago": "{n}mo ago",
+        "year_ago": "{n}y ago",
+        "unknown": "Unknown"
+      }
+    },
+    "recent_run": {
+      "title": "Recent Strategy Run",
+      "status_info": "Status: {status} · Attempt {attempt}",
+      "export_csv": "Export CSV",
+      "progress": "Progress: {progress}%",
+      "in_progress": "In Progress",
+      "top_assets": "Top Assets",
+      "view_full": "View Full Results",
+      "strength": "Strength: {val}"
+    },
+    "run_modal": {
+      "title": "Strategy Execution",
+      "select_strategy": "Select Strategy",
+      "direction": "Direction",
+      "auto": "Auto",
+      "priority": "Priority",
+      "optional": "Optional",
+      "target_universe": "Target Universe",
+      "min_score": "Min Score",
+      "max_results": "Max Results",
+      "notify_channels": "Notify Channels (Comma separated)",
+      "placeholder_channels": "e.g., slack-strategy|email-trading",
+      "cancel": "Cancel",
+      "confirm": "Confirm Run",
+      "submitting": "Submitting...",
+      "error_submit": "Submission failed, please try again",
+      "universes": {
+        "US_LARGE_MID_TECH": "US Large/Mid Tech",
+        "PRECIOUS_METALS": "Precious Metals",
+        "US_SMALL_TECH": "US Small Tech",
+        "TRADITIONAL_QUALITY": "Traditional Quality",
+        "EMERGING_QUALITY": "Emerging Quality",
+        "BLOCKCHAIN_CRYPTO": "Blockchain/Crypto"
+      }
+    },
+    "results_modal": {
+      "title": "Strategy Run Results",
+      "run_id": "Run ID: {id}",
+      "select_all": "Select All",
+      "selected_count": "{n} assets selected",
+      "batch_trade": "🎯 Batch Trade ({n})",
+      "table": {
+        "symbol": "Symbol",
+        "action": "Action",
+        "direction": "Direction",
+        "strength": "Strength",
+        "weight": "Weight",
+        "dimensions": "Dimensions",
+        "risk_flags": "Risk Flags",
+        "notes": "Notes",
+        "quick_trade": "Quick Trade"
+      },
+      "messages": {
+        "trade_created": "Trade signal created: {msg}",
+        "batch_trade_complete": "Batch trade complete: {msg}",
+        "auto_generated": "Auto-generated by engine"
+      },
+      "enums": {
+        "actions": {
+          "buy": "BUY",
+          "sell": "SELL",
+          "hold": "HOLD",
+          "increase": "INCREASE",
+          "decrease": "DECREASE"
+        },
+        "directions": {
+          "long": "LONG",
+          "short": "SHORT",
+          "neutral": "NEUTRAL"
+        },
+        "dimensions": {
+          "volume": "Volume Analysis",
+          "momentum": "Price Momentum",
+          "sentiment": "Sentiment",
+          "volatility": "Volatility",
+          "growth": "Growth Potential"
+        },
+        "risk_flags": {
+          "volatile": "Extreme Volatility",
+          "high_risk": "High Risk",
+          "suspicious": "Anomaly",
+          "normal": "Normal"
+        }
+      }
+    },
+    "history": {
+      "title": "🧾 Strategy Run History (Last {n})",
+      "refresh": "Refresh History",
+      "empty": "No strategy run records",
+      "loading": "Loading...",
+      "table": {
+        "run_id": "Run ID",
+        "strategy_id": "Strat ID",
+        "status": "Status",
+        "hits": "Hits / Hit Rate",
+        "avg_strength": "Avg Strength",
+        "time": "Time",
+        "actions": "Actions",
+        "view_results": "Results",
+        "export": "Export"
+      }
+    },
+    "messages": {
+      "run_started": "Strategy {id} run triggered",
+      "run_failed": "Failed to run strategy",
+      "export_started": "Exporting results...",
+      "export_success": "Strategy results exported",
+      "export_failed": "Export failed"
+    }
+  },
+  "trading_plan": {
+    "title": "Trading Assistant",
+    "subtitle": "Maintain entries, stops, targets; plan-driven discipline",
+    "refresh": "Refresh Plans",
+    "refreshing": "Refreshing...",
+    "new_plan": "New Plan",
+    "symbol": "Symbol",
+    "entry_price": "Entry Price",
+    "stop_loss": "Stop Loss",
+    "take_profit": "Take Profit",
+    "target_position": "Target Pos (0~1)",
+    "valid_until": "Valid Until",
+    "notes": "Notes",
+    "notes_placeholder": "e.g., waiting for retest confirmation",
+    "create": "Create Plan",
+    "creating": "Creating...",
+    "list_title": "Plan List",
+    "total_count": "Total {n} items",
+    "empty": "No plans found",
+    "execute": "Mark Executed",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "error_load": "❌ Failed to fetch plans",
+    "error_symbol": "Please enter symbol",
+    "error_price_required": "Please fill entry/stop/profit prices",
+    "success_created": "✅ Plan created successfully",
+    "error_create_failed": "❌ Failed to create plan",
+    "error_update_failed": "❌ Failed to update plan status",
+    "error_delete_failed": "❌ Failed to delete plan",
+    "statuses": {
+      "active": "Active",
+      "executed": "Executed",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    }
+  },
+  "system": {
+    "title": "System Health",
+    "status": "System Status",
+    "subtitle": "AI Risk Control + Auto Hedge Engine (DRY_RUN / REAL mode)",
+    "refresh": "Refresh Status",
+    "refreshing": "Refreshing...",
+    "run_hedge": "Run One-off Hedge",
+    "running": "Running...",
+    "run_success": "✅ Hedge command sent successfully",
+    "run_result": "Hedge result: {detail}",
+    "run_failed": "❌ Hedge failed: {error}",
+    "run_failed_simple": "Failed to run auto hedge",
+    "mode": {
+      "DRY_RUN": "DRY_RUN",
+      "REAL": "REAL",
+      "UNKNOWN": "UNKNOWN"
+    }
+  },
+  "login": {
+    "subtitle": "Risk Control · Position Evaluation · Auto Hedge",
+    "username": "Username",
+    "password": "Password",
+    "username_placeholder": "Admin username",
+    "password_placeholder": "Admin password",
+    "remember_me": "Remember Me",
+    "forgot_password": "Forgot Password?",
+    "login_btn": "Sign In",
+    "dev_hint": "Dev Default: {auth}",
+    "login_failed": "Login failed, please check username/password",
+    "login_error": "Login error",
+    "help_msg": "Please reset ADMIN_PASSWORD in .env or contact Ops (Admin only).",
+    "hide_password": "Hide Password",
+    "show_password": "Show Password"
+  },
+  "opportunities_guideline": {
+    "title": "📖 Opportunity Discovery Guide",
+    "mechanism": {
+      "title": "⚙️ Execution Mechanism",
+      "pool": "Watchlists: Choose targets from various pools (US Tech, HK Bluechips, etc.)",
+      "async": "Async Execution: Background tasks allow you to leave or check history later.",
+      "custom": "Parameter Customization: Input min score thresholds and max results.",
+      "monitor": "Real-time Monitoring: Track status, progress, and matched assets.",
+      "export": "Result Export: Export detailed analysis reports after completion."
+    },
+    "score": {
+      "title": "📊 3D Scoring System",
+      "tech": "Technical (0-100)",
+      "tech_desc": "Evaluates MA trends, MACD, RSI, Bollinger Bands, and Volume.",
+      "fund": "Fundamental (0-100)",
+      "fund_desc": "Evaluates P/E, P/B, ROE, Growth, Margins, and Debt ratio.",
+      "sent": "Sentiment (0-100)",
+      "sent_desc": "Evaluates Social Media, News, Option activity, and Short ratios.",
+      "formula": "Final Score = Tech × 40% + Fund × 35% + Sent × 25%"
+    },
+    "macro": {
+      "title": "🌍 Macro Risk Linkage",
+      "th_level": "Macro Risk Level",
+      "th_threshold": "Filter Threshold",
+      "th_adj": "Policy Adjustment",
+      "low_med": "Standard filter, 1-3 opportunities recommended.",
+      "high": "Increased threshold, favor defensive picks.",
+      "extreme": "Strict filtering, no recommendation possible.",
+      "hint": "💡 High macro risk triggers stricter criteria to reduce entry risks."
+    },
+    "recommend": {
+      "title": "🎯 Recommendation Levels",
+      "strong_buy": "Strong Buy",
+      "strong_buy_desc": "Excellent scores + friendly macro. Aggressive entry suggested.",
+      "buy": "Buy",
+      "buy_desc": "Good overall score. Moderate entry with risk control.",
+      "hold": "Hold/Watch",
+      "hold_desc": "Partial indicators weak. Suggest staying flat or < 10% exposure.",
+      "no_recommend": "N/A",
+      "no_recommend_desc": "Doesn't meet criteria. Hidden from results."
+    },
+    "data": {
+      "title": "🗂️ Data Sources",
+      "tech": "Technical: Yahoo Finance, Alpha Vantage. Real-time / 15m delay.",
+      "fund": "Fundamental: Financial Modeling Prep, IEX Cloud. Quarterly.",
+      "sent": "Sentiment: StockTwits, Reddit, Twitter API. Hourly updates.",
+      "fallback": "Fallback: Uses local static watchlist if APIs are throttled."
+    },
+    "tips": {
+      "title": "💡 Usage Tips",
+      "daily": "Daily Routine: Auto scans at 20:30. Check results next morning.",
+      "realtime": "Real-time Scan: Click 'Scan Now' for manual trigger (may take minutes).",
+      "events": "Major Events: Refresh after earnings or policy releases for current view.",
+      "risk": "Risk Control: Reduce exposure if Macro Risk is HIGH/EXTREME.",
+      "history": "History: Review past scans to analyze hit rate and trends.",
+      "diversify": "Diversify: Combine with Portfolio Assessment module for decisions."
+    },
+    "disclaimer": "⚠️ Disclaimer: For reference only. Not financial advice. Investors bear all risks. Combine with Macro risk and personal risk tolerance."
+  },
+  "score_guideline": {
+    "title": "📊 Scoring Guide",
+    "behavior": {
+      "title": "Behavior Score (0-100)",
+      "desc": "Aggregated metrics evaluating trading rationality",
+      "r1": "Highly Rational, strict discipline",
+      "r2": "Rational, occasional mood swings",
+      "r3": "Restless, frequent emotional trades",
+      "r4": "Highly Restless, risk control failure",
+      "impact": "📈 Higher score → Conservative Shock/Earnings policies"
+    },
+    "sell_fly": {
+      "title": "Sell-Fly Score (0-100)",
+      "desc": "Opportunity cost from premature profit-taking",
+      "r1": "Rarely sells fly, stable holding",
+      "r2": "Occasional sell-fly, low impact",
+      "r3": "Frequent sell-fly, loss of potential gains",
+      "r4": "Severe sell-fly, massive opportunity cost",
+      "impact": "💡 Calculated from sell-fly ratio and frequency"
+    },
+    "overtrading": {
+      "title": "Overtrading (0-100)",
+      "desc": "Deviation of trade frequency from reasonable levels",
+      "r1": "Normal frequency",
+      "r2": "Somewhat frequent",
+      "r3": "Obvious overtrading",
+      "r4": "Extreme frequency, high costs",
+      "impact": "⚡ Based on 'Overtrade Index', > 1.5 is overtrading"
+    },
+    "revenge": {
+      "title": "Revenge Trading (0-100)",
+      "desc": "Emotional scaling-in immediately after a loss",
+      "r1": "No revenge trades",
+      "r2": "Occasional emotional scaling",
+      "r3": "Frequent revenge trading",
+      "r4": "Severe loss of control, cascading trades",
+      "impact": "🔥 Based on revenge trade count"
+    },
+    "tier": {
+      "title": "Risk Tiers",
+      "t1": "Core assets, high liquidity",
+      "t2": "Mainstream assets, controlled risk",
+      "t3": "Peripheral assets, high volatility",
+      "t4": "High-risk assets, cautious entry"
+    },
+    "impact_note": {
+      "title": "⚠️ Impact: High Behavior Scores trigger:",
+      "i1": "Reduced naked exposure (Aggressive Delta hedge)",
+      "i2": "Increased protective hedging (Buy Put protection)",
+      "i3": "Tighter ShockPolicy",
+      "i4": "More conservative EarningsPolicy"
+    }
+  },
+  "footer": {
+    "version": "Current Version: REST-based Architecture",
+    "description": "Scores drive Shock/Earnings policies; Greeks are monitored vs limits via water-level bars."
+  }
+}

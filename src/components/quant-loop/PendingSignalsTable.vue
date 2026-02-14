@@ -1,11 +1,11 @@
 <template>
   <div class="pending-signals-table">
     <div class="table-header">
-      <h3>待执行信号 ({{ signals.length }})</h3>
+      <h3>{{ $t('dashboard.pending_signals') }} ({{ signals.length }})</h3>
       <div class="header-actions">
         <label class="action-toggle">
           <input type="checkbox" v-model="executeRealTrades" />
-          <span>执行真实交易</span>
+          <span>{{ $t('dashboard.execute_real_trade_desc') }}</span>
         </label>
         <label class="action-toggle filter-toggle">
           <input 
@@ -13,7 +13,7 @@
             :checked="filterByPosition"
             @change="$emit('update:filterByPosition', ($event.target as HTMLInputElement).checked)"
           />
-          <span>持仓过滤</span>
+          <span>{{ $t('quant_loop.position_filter') }}</span>
         </label>
         <button 
           class="btn-execute"
@@ -21,7 +21,7 @@
           :disabled="selectedSignals.size === 0"
           @click="executeSelected"
         >
-          {{ executeRealTrades ? '执行(真实)' : '执行选中' }} ({{ selectedSignals.size }})
+          {{ executeRealTrades ? $t('quant_loop.execute_real') : $t('quant_loop.execute_selected') }} ({{ selectedSignals.size }})
         </button>
         <button 
           class="btn-reject"
@@ -29,13 +29,13 @@
           :disabled="selectedSignals.size === 0"
           @click="rejectSelected"
         >
-          拒绝选中 ({{ selectedSignals.size }})
+          {{ $t('quant_loop.reject_selected') }} ({{ selectedSignals.size }})
         </button>
       </div>
     </div>
     
     <div v-if="signals.length === 0" class="empty-state">
-      <p>暂无信号</p>
+      <p>{{ $t('common.no_data') }}</p>
     </div>
     
     <div v-else class="table-container">
@@ -50,17 +50,17 @@
                 @change="toggleSelectAll"
               />
             </th>
-            <th>标的</th>
-            <th>类型</th>
-            <th>方向</th>
-            <th>持仓</th>
-            <th>强度</th>
-            <th>置信度</th>
-            <th>预期收益</th>
-            <th>风险评分</th>
-            <th>建议数量</th>
-            <th>时间</th>
-            <th>操作</th>
+            <th>{{ $t('quant_loop.headers.symbol') }}</th>
+            <th>{{ $t('quant_loop.headers.type') }}</th>
+            <th>{{ $t('quant_loop.headers.direction') }}</th>
+            <th>{{ $t('quant_loop.headers.position') }}</th>
+            <th>{{ $t('quant_loop.headers.strength') }}</th>
+            <th>{{ $t('quant_loop.headers.confidence') }}</th>
+            <th>{{ $t('quant_loop.headers.expected_return') }}</th>
+            <th>{{ $t('quant_loop.headers.risk_score') }}</th>
+            <th>{{ $t('quant_loop.headers.qty') }}</th>
+            <th>{{ $t('quant_loop.headers.time') }}</th>
+            <th>{{ $t('quant_loop.headers.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -91,7 +91,7 @@
             <td class="position-info">
               <template v-if="signal.extra_metadata?.current_position">
                 <div class="position-qty">
-                  {{ signal.extra_metadata.current_position.qty }}股
+                  {{ signal.extra_metadata.current_position.qty }}{{ $t('quant_loop.shares') }}
                 </div>
                 <div class="position-pnl" :class="signal.extra_metadata.current_position.unrealized_pnl >= 0 ? 'positive' : 'negative'">
                   {{ signal.extra_metadata.current_position.unrealized_pnl >= 0 ? '+' : '' }}{{ signal.extra_metadata.current_position.unrealized_pnl.toFixed(2) }}
@@ -122,13 +122,13 @@
             <td class="time">{{ formatTime(signal.generated_at) }}</td>
             <td class="actions" @click.stop>
               <button class="btn-small" @click="$emit('view-details', signal)">
-                详情
+                {{ $t('quant_loop.details') }}
               </button>
               <button class="btn-small btn-primary" @click="executeSingle(signal)">
-                执行
+                {{ executeRealTrades ? $t('quant_loop.execute_real') : $t('common.execute') }}
               </button>
               <button class="btn-small btn-danger" @click="rejectSingle(signal)">
-                拒绝
+                {{ $t('quant_loop.reject') }}
               </button>
             </td>
           </tr>
@@ -140,8 +140,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { TradingSignal } from '@/api/quantLoopService'
 
+const { t, locale } = useI18n()
 const props = defineProps<{
   signals: TradingSignal[],
   filterByPosition: boolean
@@ -191,7 +193,7 @@ function toggleSelectAll() {
 function executeSelected() {
   const selected = props.signals.filter(s => selectedSignals.value.has(s.signal_id))
   if (executeRealTrades.value) {
-    if (!confirm(`⚠️ 警告：确认对选中的 ${selected.length} 个标的执行【真实交易】？\n此操作将提交订单到券商，请确保账户状态和风控设置无误。`)) {
+    if (!confirm(t('quant_loop.confirm_batch_execute', { n: selected.length }))) {
       return
     }
   }
@@ -204,13 +206,15 @@ function executeSelected() {
 
 function rejectSelected() {
   const signals = props.signals.filter(s => selectedSignals.value.has(s.signal_id))
-  emit('reject-batch', signals)
-  selectedSignals.value.clear()
+  if (confirm(t('quant_loop.reject_selected_confirm'))) {
+    emit('reject-batch', signals)
+    selectedSignals.value.clear()
+  }
 }
 
 function executeSingle(signal: TradingSignal) {
   if (executeRealTrades.value) {
-    if (!confirm(`⚠️ 警告：确认对 ${signal.symbol} 执行【真实交易】？`)) {
+    if (!confirm(t('quant_loop.confirm_single_execute', { symbol: signal.symbol }))) {
       return
     }
   }
@@ -221,7 +225,9 @@ function executeSingle(signal: TradingSignal) {
 }
 
 function rejectSingle(signal: TradingSignal) {
-  emit('reject', signal)
+  if (confirm(t('quant_loop.reject_confirm'))) {
+    emit('reject', signal)
+  }
 }
 
 function getStrengthClass(strength: number) {
@@ -249,23 +255,22 @@ function formatTime(time: string) {
     const now = new Date()
     const diff = (now.getTime() - date.getTime()) / 1000 / 60 // minutes
     
-    if (diff < 0) return '刚刚' // 处理未来时间
-    if (diff < 1) return '刚刚'
-    if (diff < 60) return `${Math.floor(diff)}分钟前`
-    if (diff < 1440) return `${Math.floor(diff / 60)}小时前`
-    return date.toLocaleString('zh-CN')
+    if (diff < 1) return t('quant_loop.just_now')
+    if (diff < 60) return t('quant_loop.minutes_ago', { n: Math.floor(diff) })
+    if (diff < 1440) return t('quant_loop.hours_ago', { n: Math.floor(diff / 60) })
+    return date.toLocaleString(locale.value)
   } catch (e) {
-    return time // 出错时返回原始字符串
+    return time
   }
 }
 
 function formatSignalType(type: string) {
   const typeMap: Record<string, string> = {
-    'ENTRY': '开仓',
-    'EXIT': '平仓',
-    'ADD': '加仓',
-    'REDUCE': '减仓',
-    'HEDGE': '对冲'
+    'ENTRY': t('quant_loop.types.entry'),
+    'EXIT': t('quant_loop.types.exit'),
+    'ADD': t('quant_loop.types.add'),
+    'REDUCE': t('quant_loop.types.reduce'),
+    'HEDGE': t('quant_loop.types.hedge')
   }
   return typeMap[type] || type
 }
@@ -283,8 +288,8 @@ function getSignalTypeClass(type: string) {
 
 function formatDirection(direction: string) {
   const directionMap: Record<string, string> = {
-    'LONG': '做多',
-    'SHORT': '做空'
+    'LONG': t('quant_loop.long'),
+    'SHORT': t('quant_loop.short')
   }
   return directionMap[direction] || direction
 }

@@ -4,24 +4,24 @@
       <div>
         <div class="header-tags">
           <span class="style-chip" v-if="strategy.style">{{ strategy.style }}</span>
-          <span v-if="strategy.is_builtin" class="builtin-chip">内置策略</span>
+          <span v-if="strategy.is_builtin" class="builtin-chip">{{ $t('execution_list.strategy_card.builtin') }}</span>
         </div>
         <h3 class="strategy-name">{{ strategy.name }}</h3>
-        <p class="strategy-description">{{ strategy.description || '暂无描述' }}</p>
+        <p class="strategy-description">{{ strategy.description || $t('execution_list.strategy_card.no_desc') }}</p>
       </div>
       <span class="status-badge" :class="statusClass">{{ statusLabel }}</span>
     </div>
 
     <div class="meta-row">
       <div class="meta-item">
-        <span class="meta-label">最近运行</span>
+        <span class="meta-label">{{ $t('execution_list.strategy_card.last_run') }}</span>
         <div class="meta-value">
           <span>{{ lastRunText }}</span>
           <span class="relative-label">{{ lastRunRelative }}</span>
         </div>
       </div>
       <div class="meta-item">
-        <span class="meta-label">标签</span>
+        <span class="meta-label">{{ $t('execution_list.strategy_card.tags') }}</span>
         <div class="tag-wrap">
           <span v-for="tag in (strategy.tags || [])" :key="tag" class="tag-pill">{{ tag }}</span>
         </div>
@@ -29,7 +29,7 @@
     </div>
 
     <div class="actions">
-      <button class="ghost-btn" @click="$emit('view', strategy)">策略逻辑详情</button>
+      <button class="ghost-btn" @click="$emit('view', strategy)">{{ $t('execution_list.strategy_card.details') }}</button>
     </div>
   </div>
 </template>
@@ -37,6 +37,9 @@
 <script setup lang="ts">
 import type { Strategy } from '@/types/strategy';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 type StrategyLike = Strategy | { id: string; name: string; style?: string | null; description?: string | null; is_builtin: boolean; is_active: boolean; tags: string[]; last_run_status?: string | null; last_run_at?: string | null; };
 
@@ -47,7 +50,7 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: 'run', strategy: StrategyLike): void; (e: 'view', strategy: StrategyLike): void }>();
 
 const statusLabel = computed(() => {
-  if (!props.strategy.last_run_status) return '未运行';
+  if (!props.strategy.last_run_status) return t('execution_list.strategy_card.not_run');
   return props.strategy.last_run_status;
 });
 
@@ -61,13 +64,18 @@ const statusClass = computed(() => {
 });
 
 const lastRunText = computed(() => {
-  if (!props.strategy.last_run_at) return '暂无记录';
+  if (!props.strategy.last_run_at) return t('execution_list.strategy_card.not_run');
   const date = new Date(props.strategy.last_run_at);
-  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return date.toLocaleString(locale.value, {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 });
 
 const lastRunRelative = computed(() => {
-  if (!props.strategy.last_run_at) return '暂无记录';
+  if (!props.strategy.last_run_at) return '';
   const date = new Date(props.strategy.last_run_at);
   return formatRelativeTime(date);
 });
@@ -76,22 +84,22 @@ function formatRelativeTime(date: Date): string {
   try {
     const now = Date.now();
     const diffMs = now - date.getTime();
-    if (Number.isNaN(diffMs)) return '未知';
+    if (Number.isNaN(diffMs)) return t('execution_list.strategy_card.relative.unknown');
     const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes} 分钟前`;
+    if (minutes < 1) return t('execution_list.strategy_card.relative.just_now');
+    if (minutes < 60) return t('execution_list.strategy_card.relative.min_ago', { n: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} 小时前`;
+    if (hours < 24) return t('execution_list.strategy_card.relative.hour_ago', { n: hours });
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} 天前`;
+    if (days < 7) return t('execution_list.strategy_card.relative.day_ago', { n: days });
     const weeks = Math.floor(days / 7);
-    if (weeks < 5) return `${weeks} 周前`;
+    if (weeks < 5) return t('execution_list.strategy_card.relative.week_ago', { n: weeks });
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months} 个月前`;
+    if (months < 12) return t('execution_list.strategy_card.relative.month_ago', { n: months });
     const years = Math.floor(days / 365);
-    return `${years} 年前`;
+    return t('execution_list.strategy_card.relative.year_ago', { n: years });
   } catch (e) {
-    return '未知';
+    return t('execution_list.strategy_card.relative.unknown');
   }
 }
 </script>
