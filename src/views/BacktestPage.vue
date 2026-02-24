@@ -69,11 +69,11 @@
         <tbody>
           <tr v-for="task in backtestStore.tasks" :key="task.id">
             <td>{{ task.strategy_type }}</td>
-            <td>{{ task.symbols.join(', ') }}</td>
+            <td>{{ formatSymbols(task.symbols) }}</td>
             <td><span :class="`status-badge status-${(task.status || 'PENDING').toLowerCase()}`">{{ task.status }}</span></td>
-            <td>{{ task.result?.metrics?.sharpe?.toFixed(2) ?? '—' }}</td>
-            <td>{{ task.result?.metrics?.max_drawdown ? (task.result.metrics.max_drawdown * 100).toFixed(1) + '%' : '—' }}</td>
-            <td>{{ task.result?.metrics?.win_rate ? (task.result.metrics.win_rate * 100).toFixed(1) + '%' : '—' }}</td>
+            <td>{{ formatMetric('sharpe', task.result?.sharpe) }}</td>
+            <td>{{ formatMetric('max_drawdown', task.result?.max_drawdown) }}</td>
+            <td>{{ formatMetric('win_rate', task.result?.win_rate) }}</td>
             <td>
               <span v-if="task.result?.graduation_eligible" class="badge-success">✓ 可晋级</span>
               <span v-else-if="task.status === 'DONE'" class="badge-warning">未达标</span>
@@ -99,22 +99,22 @@
     <div v-if="currentReport?.result" class="card">
       <h3 style="margin: 0 0 16px;">回测报告 — {{ currentReport.strategy_type }}</h3>
       <div class="metrics-grid">
-        <div class="metric-item" v-for="(val, key) in currentReport.result.metrics" :key="key">
-          <div class="metric-label">{{ metricLabels[key] ?? key }}</div>
-          <div class="metric-value">{{ formatMetric(key, val) }}</div>
+        <div class="metric-item" v-for="(label, key) in metricLabels" :key="key">
+          <div class="metric-label">{{ label }}</div>
+          <div class="metric-value">{{ formatMetric(key, (currentReport!.result as any)[key]) }}</div>
         </div>
       </div>
-      <div v-if="currentReport.result.walk_forward?.length" style="margin-top: 20px;">
+      <div v-if="currentReport.result.windows_results?.length" style="margin-top: 20px;">
         <h4>Walk-Forward 窗口结果</h4>
         <table class="data-table">
           <thead><tr><th>窗口</th><th>Sharpe</th><th>最大回撤</th><th>胜率</th><th>超额收益(α)</th></tr></thead>
           <tbody>
-            <tr v-for="wf in currentReport.result.walk_forward" :key="wf.window">
-              <td>{{ wf.window }}</td>
-              <td>{{ wf.metrics.sharpe.toFixed(2) }}</td>
-              <td>{{ (wf.metrics.max_drawdown * 100).toFixed(1) }}%</td>
-              <td>{{ (wf.metrics.win_rate * 100).toFixed(1) }}%</td>
-              <td>{{ (wf.metrics.alpha * 100).toFixed(2) }}%</td>
+            <tr v-for="(wf, idx) in currentReport.result.windows_results" :key="idx">
+              <td>#{{ idx + 1 }}</td>
+              <td>{{ formatMetric('sharpe', wf.sharpe) }}</td>
+              <td>{{ formatMetric('max_drawdown', wf.max_drawdown) }}</td>
+              <td>{{ formatMetric('win_rate', wf.win_rate) }}</td>
+              <td>{{ formatMetric('alpha', wf.alpha) }}</td>
             </tr>
           </tbody>
         </table>
@@ -146,9 +146,25 @@ const metricLabels: Record<string, string> = {
   win_rate: '胜率', alpha: '超额收益(α)', total_return: '总收益率',
 }
 
-function formatMetric(key: string, val: number): string {
-  if (key === 'sharpe' || key === 'sortino') return val.toFixed(2)
-  return (val * 100).toFixed(2) + '%'
+function formatMetric(key: string, val: any): string {
+  if (val === undefined || val === null) return '—'
+  const n = Number(val)
+  if (isNaN(n)) return '—'
+  if (key === 'sharpe' || key === 'sortino') return n.toFixed(2)
+  return (n * 100).toFixed(2) + '%'
+}
+
+function formatSymbols(symbols: any): string {
+  if (Array.isArray(symbols)) return symbols.join(', ')
+  if (typeof symbols === 'string') {
+    try {
+      const parsed = JSON.parse(symbols)
+      if (Array.isArray(parsed)) return parsed.join(', ')
+    } catch {
+      return symbols
+    }
+  }
+  return '—'
 }
 
 async function handleRun() {

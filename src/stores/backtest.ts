@@ -50,10 +50,20 @@ export const useBacktestStore = defineStore('backtest', () => {
     try {
       loading.value = true
       const res = await backtestApi.getReport(taskId)
-      currentReport.value = res.data
+      const data = res.data
+      
+      // V10 Data Alignment: Handle potential stringified JSON from older backend or DB driver
+      if (typeof data.result === 'string') {
+        try { data.result = JSON.parse(data.result) } catch(e) {}
+      }
+      if (typeof data.symbols === 'string') {
+        try { data.symbols = JSON.parse(data.symbols) } catch(e) {}
+      }
+      
+      currentReport.value = data
       // 更新列表中的对应条目
       const idx = tasks.value.findIndex(t => t.id === taskId)
-      if (idx !== -1) tasks.value[idx] = res.data
+      if (idx !== -1) tasks.value[idx] = data
     } catch (e: any) {
       error.value = e.message
     } finally {
