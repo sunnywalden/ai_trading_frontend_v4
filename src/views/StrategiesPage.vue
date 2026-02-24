@@ -1,17 +1,20 @@
 <template>
   <div class="strategies-page">
+    <!-- 页面标题栏 -->
     <div class="page-header">
-      <h1>{{ $t('strategies.title') }}</h1>
+      <div class="page-title-group">
+        <h1 class="page-title">策略库管理</h1>
+        <span class="strategy-count">{{ filteredStrategies.length }} 个策略</span>
+      </div>
       <div class="header-actions">
-        <el-button type="primary" @click="router.push('/opportunities')">
-          {{ $t('strategies.go_to_opportunities') }}
+        <el-button type="primary" class="action-btn" @click="router.push('/opportunities')">
+          {{ $t('strategies.go_to_opportunities') }} →
         </el-button>
         <el-input
           v-model="searchQuery"
           :placeholder="$t('strategies.search_placeholder')"
-          style="width: 200px; margin-left: 12px;"
+          class="search-input"
           clearable
-          @input="handleSearch"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -20,49 +23,53 @@
       </div>
     </div>
 
-    <div class="filter-bar">
-      <el-radio-group v-model="selectedCategory" @change="handleCategoryChange">
-        <el-radio-button value="">{{ $t('strategies.categories.all') }}</el-radio-button>
-        <el-radio-button value="均值回归">{{ $t('strategies.categories.mean_reversion') }}</el-radio-button>
-        <el-radio-button value="趋势跟踪">{{ $t('strategies.categories.trend_following') }}</el-radio-button>
-        <el-radio-button value="多因子">{{ $t('strategies.categories.multi_factor') }}</el-radio-button>
-        <el-radio-button value="防御">{{ $t('strategies.categories.defense') }}</el-radio-button>
-        <el-radio-button value="波动率">{{ $t('strategies.categories.volatility') }}</el-radio-button>
-        <el-radio-button value="宏观对冲">{{ $t('strategies.categories.macro_hedge') }}</el-radio-button>
-      </el-radio-group>
-
-      <div class="batch-actions">
-        <el-button @click="batchRun" :disabled="selectedStrategies.length === 0">
-          {{ $t('strategies.batch_run', { n: selectedStrategies.length }) }}
-        </el-button>
+    <!-- 筛选栏 -->
+    <div class="filter-section">
+      <div class="category-tabs">
+        <button
+          v-for="cat in categories"
+          :key="cat.value"
+          class="cat-tab"
+          :class="{ active: selectedCategory === cat.value }"
+          @click="selectedCategory = cat.value"
+        >
+          {{ cat.label }}
+        </button>
       </div>
+      <el-button
+        class="batch-btn"
+        :disabled="selectedStrategies.length === 0"
+        @click="batchRun"
+      >
+        批量运行
+        <span v-if="selectedStrategies.length > 0" class="batch-count">{{ selectedStrategies.length }}</span>
+      </el-button>
     </div>
 
-    <div v-loading="strategyStore.loading">
+    <!-- 卡片列表 -->
+    <div v-loading="strategyStore.loading" class="card-container">
       <div v-if="filteredStrategies.length === 0" class="empty-state">
-        <p>{{ $t('strategies.no_strategies') }}</p>
+        <div class="empty-icon">🔍</div>
+        <p class="empty-text">{{ $t('strategies.no_strategies') }}</p>
       </div>
 
-      <el-checkbox-group v-else v-model="selectedStrategies">
-        <div class="strategies-grid">
-          <div 
-            v-for="strategy in filteredStrategies" 
-            :key="strategy.id"
-            class="strategy-list-item"
-          >
-            <div class="selection-area">
-              <el-checkbox :value="strategy.id" size="large" />
-            </div>
-            <StrategyCard
-              :strategy="strategy"
-              :performance="strategyStore.performances[strategy.id] || {}"
-              @toggle="handleToggle"
-              @run="handleRun"
-              @view="handleView"
-              class="flex-1"
-            />
-          </div>
-        </div>
+      <el-checkbox-group v-else v-model="selectedStrategies" class="card-grid">
+        <label
+          v-for="strategy in filteredStrategies"
+          :key="strategy.id"
+          class="card-item"
+          :class="{ selected: selectedStrategies.includes(strategy.id) }"
+        >
+          <el-checkbox :value="strategy.id" class="card-checkbox" />
+          <StrategyCard
+            :strategy="strategy"
+            :performance="strategyStore.performances[strategy.id] || {}"
+            @toggle="handleToggle"
+            @run="handleRun"
+            @view="handleView"
+            class="card-inner"
+          />
+        </label>
       </el-checkbox-group>
     </div>
   </div>
@@ -73,15 +80,28 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { useStrategyStore } from '@/stores/strategyStore'
 import StrategyCard from '@/components/StrategyCard.vue'
 import type { Strategy } from '@/types/strategy'
+
+const { t: $t } = useI18n()
 
 const router = useRouter()
 const strategyStore = useStrategyStore()
 const searchQuery = ref('')
 const selectedCategory = ref('')
 const selectedStrategies = ref<string[]>([])
+
+const categories = [
+  { value: '', label: $t('strategies.categories.all') },
+  { value: '均值回归', label: $t('strategies.categories.mean_reversion') },
+  { value: '趋势跟踪', label: $t('strategies.categories.trend_following') },
+  { value: '多因子', label: $t('strategies.categories.multi_factor') },
+  { value: '防御', label: $t('strategies.categories.defense') },
+  { value: '波动率', label: $t('strategies.categories.volatility') },
+  { value: '宏观对冲', label: $t('strategies.categories.macro_hedge') },
+]
 
 const filteredStrategies = computed(() => {
   let result = strategyStore.strategies
@@ -172,96 +192,197 @@ const batchRun = async () => {
 </script>
 
 <style scoped>
+/* ===== 页面容器 ===== */
 .strategies-page {
-  padding: 24px;
+  padding: 28px 24px;
+  min-height: 100vh;
+  background: transparent;
 }
 
+/* ===== 页面标题 ===== */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.page-header h1 {
+.page-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.page-title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: #f1f5f9;
+  letter-spacing: -0.02em;
+}
+
+.strategy-count {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  width: 220px;
 }
 
 /* Element Plus overrides */
-:deep(.el-radio-button__inner) {
-  background-color: rgba(15, 23, 42, 0.5);
-  color: #94a3b8;
-  border-color: rgba(56, 189, 248, 0.2);
-}
-
-:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background-color: #38bdf8;
-  color: #0f172a;
-  border-color: #38bdf8;
-  box-shadow: -1px 0 0 0 #38bdf8;
-}
-
 :deep(.el-input__wrapper) {
-  background-color: rgba(15, 23, 42, 0.5);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset;
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset !important;
+  border-radius: 8px;
 }
-
 :deep(.el-input__inner) {
-  color: #f1f5f9;
+  color: #e2e8f0;
+}
+:deep(.el-input__inner::placeholder) {
+  color: #475569;
 }
 
-.filter-bar {
+/* ===== 筛选栏 ===== */
+.filter-section {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  gap: 12px;
   margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(30, 41, 59, 0.7);
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.08);
   border-radius: 12px;
-  border: 1px solid rgba(56, 189, 248, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.empty-state {
-  text-align: center;
-  padding: 48px;
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.cat-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.cat-tab:hover {
   color: #94a3b8;
+  background: rgba(56, 189, 248, 0.06);
 }
 
-.strategies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
+.cat-tab.active {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border-color: rgba(14, 165, 233, 0.3);
+  font-weight: 600;
 }
 
-.strategy-list-item {
+.batch-btn {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 12px;
-  padding: 8px;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+  gap: 6px;
 }
 
-.strategy-list-item:hover {
-  background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(56, 189, 248, 0.3);
-  transform: translateX(4px);
-}
-
-.selection-area {
-  padding: 0 12px;
-  display: flex;
+.batch-count {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
-.flex-1 {
-  flex: 1;
-  min-width: 0; /* 防止子元素溢出 */
+/* ===== 卡片网格 ===== */
+.card-container {
+  min-height: 300px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* ===== 卡片 + 复选框一体化 ===== */
+.card-item {
+  display: block;
+  position: relative;
+  cursor: pointer;
+  /* 隐藏原生 label 行为 */
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* 选中状态卡片高亮 */
+.card-item.selected :deep(.strategy-card) {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.98) 60%);
+}
+
+/* 复选框：隐藏内建的，根据选中状态显示角标 */
+.card-checkbox {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+/* 隐藏 Element Plus 复选框的默认 label 文字 */
+:deep(.card-checkbox .el-checkbox__label) {
+  display: none;
+}
+
+/* 复选框未选中时默认包裹隐藏 */
+:deep(.card-checkbox .el-checkbox__inner) {
+  background-color: rgba(15, 23, 42, 0.8);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* 卡片内容不被复选框透过层覆盖 */
+.card-inner {
+  display: block;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 16px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+
+.empty-text {
+  color: #475569;
+  font-size: 0.95rem;
+  margin: 0;
 }
 </style>
