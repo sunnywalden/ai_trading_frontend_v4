@@ -1353,6 +1353,12 @@
       "i4": "提高财报政策保守度（EarningsPolicy）"
     }
   },
+  "autonomy": {
+    "status_paused": "已暂停",
+    "status_running": "运行中",
+    "circuit_breaker_active": "熔断器触发",
+    "daily_trades": "今日交易"
+  },
   "footer": {
     "version": "当前版本：前后端物理分离 · REST 调用",
     "description": "AI 自主决策 · 量化闭环进化 · 实时风险控制"
