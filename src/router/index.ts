@@ -111,6 +111,49 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/StrategyDetailPage.vue'),
     meta: { title: '策略详情' }
   },
+  // V10 新路由
+  {
+    path: '/autonomy',
+    name: 'Autonomy',
+    component: () => import('../views/AutonomyPage.vue'),
+    meta: { title: 'AI 自主中枢' }
+  },
+  {
+    path: '/copilot',
+    name: 'Copilot',
+    component: () => import('../views/CopilotPage.vue'),
+    meta: { title: 'AI 助手' }
+  },
+  {
+    path: '/backtest',
+    name: 'Backtest',
+    component: () => import('../views/BacktestPage.vue'),
+    meta: { title: '回测引擎' }
+  },
+  {
+    path: '/portfolio',
+    name: 'Portfolio',
+    component: () => import('../views/PortfolioPage.vue'),
+    meta: { title: '组合优化' }
+  },
+  {
+    path: '/stress-test',
+    name: 'StressTest',
+    component: () => import('../views/StressTestPage.vue'),
+    meta: { title: '压力测试' }
+  },
+  {
+    path: '/options',
+    name: 'OptionsAnalysis',
+    component: () => import('../views/OptionsAnalysisPage.vue'),
+    meta: { title: '期权分析' }
+  },
+  {
+    path: '/paper',
+    name: 'PaperTrading',
+    component: () => import('../views/PaperTradingPage.vue'),
+    meta: { title: '模拟盘' }
+  },
   {
     path: '/login',
     name: 'Login',
