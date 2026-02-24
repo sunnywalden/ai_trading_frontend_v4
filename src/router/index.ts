@@ -78,8 +78,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/PositionsPage.vue'),
     meta: { title: '持仓监控' }
   },
-  {
-    path: '/paper',
+  {    path: '/position-evaluation',
+    name: 'PositionEvaluation',
+    component: () => import('../views/PositionEvaluationPage.vue'),
+    meta: { title: '持仓评估' }
+  },
+  {    path: '/paper',
     name: 'PaperTrading',
     component: () => import('../views/PaperTradingPage.vue'),
     meta: { title: '模拟盘' }

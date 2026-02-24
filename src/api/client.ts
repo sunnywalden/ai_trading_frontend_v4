@@ -1721,3 +1721,140 @@ export function createWsUrl(): string {
     : `${wsProtocol}//${window.location.host}`;
   return `${base}/api/v1/ws?token=${token}`;
 }
+
+// ═══════════════════════════════════════════════════════════
+// 持仓评估任务 API
+// ═══════════════════════════════════════════════════════════
+
+export interface PositionEvalConfig {
+  id: number
+  account_id: string
+  name: string
+  description?: string
+  scope: 'ALL_POSITIONS' | 'SYMBOL_LIST'
+  symbols?: string[]
+  eval_dimensions: string[]
+  trigger_mode: 'MANUAL' | 'DAILY' | 'WEEKLY'
+  trigger_time?: string
+  enabled: boolean
+  extra_params?: Record<string, any>
+  created_at: string
+  updated_at: string
+}
+
+export interface PositionEvalConfigCreate {
+  name: string
+  description?: string
+  scope?: 'ALL_POSITIONS' | 'SYMBOL_LIST'
+  symbols?: string[]
+  eval_dimensions?: string[]
+  trigger_mode?: 'MANUAL' | 'DAILY' | 'WEEKLY'
+  trigger_time?: string
+  enabled?: boolean
+  extra_params?: Record<string, any>
+}
+
+export interface PositionEvalTask {
+  id: number
+  account_id: string
+  config_id?: number
+  config_name?: string
+  scope: string
+  symbols?: string[]
+  eval_dimensions: string[]
+  extra_params?: Record<string, any>
+  status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELLED'
+  triggered_by: string
+  scheduled_at?: string
+  started_at?: string
+  completed_at?: string
+  result_summary?: {
+    total_evaluated: number
+    recommendation_counts: Record<string, number>
+    avg_score: number
+  }
+  error_message?: string
+  total_symbols?: number
+  evaluated_symbols?: number
+  created_at: string
+}
+
+export interface PositionEvalTaskDetail extends PositionEvalTask {
+  result_detail?: Array<{
+    symbol: string
+    status: 'ok' | 'skipped' | 'error'
+    overall_score?: number
+    technical_score?: number
+    fundamental_score?: number
+    sentiment_score?: number
+    recommendation?: string
+    risk_level?: string
+    target_position?: number
+    stop_loss?: number
+    take_profit?: number
+    error?: string
+  }>
+}
+
+export interface PositionEvalListResponse<T> {
+  total: number
+  items: T[]
+}
+
+// --- Config APIs ---
+export async function listPositionEvalConfigs(): Promise<PositionEvalListResponse<PositionEvalConfig>> {
+  const { data } = await api.get<PositionEvalListResponse<PositionEvalConfig>>('/v1/position-eval/configs')
+  return data
+}
+
+export async function createPositionEvalConfig(body: PositionEvalConfigCreate): Promise<PositionEvalConfig> {
+  const { data } = await api.post<PositionEvalConfig>('/v1/position-eval/configs', body)
+  return data
+}
+
+export async function updatePositionEvalConfig(id: number, body: Partial<PositionEvalConfigCreate>): Promise<PositionEvalConfig> {
+  const { data } = await api.put<PositionEvalConfig>(`/v1/position-eval/configs/${id}`, body)
+  return data
+}
+
+export async function deletePositionEvalConfig(id: number): Promise<void> {
+  await api.delete(`/v1/position-eval/configs/${id}`)
+}
+
+// --- Task APIs ---
+export async function listPendingEvalTasks(): Promise<PositionEvalListResponse<PositionEvalTask>> {
+  const { data } = await api.get<PositionEvalListResponse<PositionEvalTask>>('/v1/position-eval/tasks/pending')
+  return data
+}
+
+export async function triggerEvalTask(body: {
+  config_id?: number
+  scope?: string
+  symbols?: string[]
+  eval_dimensions?: string[]
+  extra_params?: Record<string, any>
+}): Promise<PositionEvalTask> {
+  const { data } = await api.post<PositionEvalTask>('/v1/position-eval/tasks', body)
+  return data
+}
+
+export async function batchDeletePendingTasks(task_ids: number[]): Promise<{ status: string; deleted: number }> {
+  const { data } = await api.delete<{ status: string; deleted: number }>('/v1/position-eval/tasks/pending', {
+    data: { task_ids }
+  })
+  return data
+}
+
+export async function listEvalTaskHistory(params?: {
+  page?: number
+  page_size?: number
+  status?: string
+}): Promise<PositionEvalListResponse<PositionEvalTask>> {
+  const { data } = await api.get<PositionEvalListResponse<PositionEvalTask>>('/v1/position-eval/tasks/history', { params })
+  return data
+}
+
+export async function getEvalTaskDetail(taskId: number): Promise<PositionEvalTaskDetail> {
+  const { data } = await api.get<PositionEvalTaskDetail>(`/v1/position-eval/tasks/${taskId}`)
+  return data
+}
