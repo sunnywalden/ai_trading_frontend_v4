@@ -164,7 +164,9 @@ const navGroups = computed<NavGroup[]>(() => [
   {
     title: t('nav.group_system'),
     items: [
-      { path: '/system', label: t('nav.system'), icon: '🩺' },
+      { path: '/api-monitoring',   label: t('nav.api_monitoring'),  icon: '🔌' },
+      { path: '/service-health',    label: t('nav.service_health'),  icon: '🩺' },
+      { path: '/task-management',  label: t('nav.task_management'), icon: '⚙️' },
     ],
   },
 ])

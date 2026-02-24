@@ -105,13 +105,26 @@ const routes: RouteRecordRaw[] = [
 
   // ── 系统 ─────────────────────────────────────────────────────
   {
-    path: '/system',
-    name: 'SystemMonitor',
-    component: () => import('../views/SystemMonitorPage.vue'),
-    meta: { title: '系统健康' }
+    path: '/api-monitoring',
+    name: 'ApiMonitoring',
+    component: () => import('../views/ExternalApiMonitoringPage.vue'),
+    meta: { title: '外部API监控' }
+  },
+  {
+    path: '/service-health',
+    name: 'ServiceHealth',
+    component: () => import('../views/ServiceHealthPage.vue'),
+    meta: { title: '服务健康' }
+  },
+  {
+    path: '/task-management',
+    name: 'TaskManagement',
+    component: () => import('../views/TaskManagementPage.vue'),
+    meta: { title: '任务管理' }
   },
 
   // ── 已合并页面重定向（向后兼容） ────────────────────────────
+  { path: '/system',           redirect: '/service-health' },
   { path: '/dashboard-v1',     redirect: '/dashboard' },
   { path: '/hotspots',         redirect: '/opportunities' },
   { path: '/behavior',         redirect: '/opportunities' },
@@ -122,8 +135,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/execution-algo',   redirect: '/quant-loop' },
   { path: '/execution-center', redirect: '/autonomy' },
   { path: '/plans',            redirect: '/autonomy' },
-  { path: '/api-monitoring',   redirect: '/system' },
-  { path: '/monitoring',       redirect: '/system' },
+  { path: '/monitoring',       redirect: '/service-health' },
 
   // ── 认证 ─────────────────────────────────────────────────────
   {

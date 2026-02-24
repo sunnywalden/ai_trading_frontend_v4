@@ -21,76 +21,18 @@
         :key="tab.key"
         class="tab-btn"
         :class="{ active: activeTab === tab.key }"
-        @click="activeTab = (tab.key as 'config' | 'pending' | 'history')"
+        @click="activeTab = (tab.key as 'pending' | 'history')"
       >
         {{ tab.label }}
         <span v-if="tab.badge" class="tab-badge">{{ tab.badge }}</span>
       </button>
+      <router-link to="/task-management" class="tab-link-secondary">
+        ⚙️ {{ $t('nav.task_management') }}
+      </router-link>
     </div>
 
     <!-- ═══════════════════════════════════════
-         Tab 1: 任务配置管理
-    ═══════════════════════════════════════ -->
-    <div v-show="activeTab === 'config'" class="tab-content">
-      <div class="toolbar">
-        <button class="btn-primary" @click="openConfigDialog()">
-          + {{ $t('position_eval.config.new') }}
-        </button>
-        <button class="btn-icon-sm" @click="loadConfigs" :class="{ spinning: loadingConfigs }">
-          <RefreshIcon />
-        </button>
-      </div>
-
-      <div v-if="loadingConfigs" class="state-loading">{{ $t('common.loading') }}</div>
-      <div v-else-if="configs.length === 0" class="state-empty">{{ $t('position_eval.config.empty') }}</div>
-      <table v-else class="data-table">
-        <thead>
-          <tr>
-            <th>{{ $t('position_eval.config.name') }}</th>
-            <th>{{ $t('position_eval.config.scope') }}</th>
-            <th>{{ $t('position_eval.config.dimensions') }}</th>
-            <th>{{ $t('position_eval.config.trigger_mode') }}</th>
-            <th>{{ $t('common.status') }}</th>
-            <th>{{ $t('position_eval.config.updated_at') }}</th>
-            <th>{{ $t('common.edit') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="cfg in configs" :key="cfg.id">
-            <td>
-              <span class="cfg-name">{{ cfg.name }}</span>
-              <span v-if="cfg.description" class="cfg-desc">{{ cfg.description }}</span>
-            </td>
-            <td>
-              <span class="chip">{{ cfg.scope === 'ALL_POSITIONS' ? $t('position_eval.scope.all') : $t('position_eval.scope.list') }}</span>
-              <span v-if="cfg.symbols?.length" class="chip chip-sm">{{ cfg.symbols.length }} symbols</span>
-            </td>
-            <td>
-              <span v-for="d in cfg.eval_dimensions" :key="d" class="chip chip-dim">{{ d }}</span>
-            </td>
-            <td>
-              <span class="chip" :class="`mode-${cfg.trigger_mode.toLowerCase()}`">
-                {{ $t(`position_eval.trigger.${cfg.trigger_mode.toLowerCase()}`) }}
-              </span>
-              <span v-if="cfg.trigger_time" class="text-dim"> {{ cfg.trigger_time }}</span>
-            </td>
-            <td>
-              <span class="status-dot" :class="cfg.enabled ? 'active' : 'inactive'"></span>
-              {{ cfg.enabled ? $t('common.enabled') : $t('common.disabled') }}
-            </td>
-            <td class="text-dim text-mono">{{ formatDt(cfg.updated_at) }}</td>
-            <td class="actions">
-              <button class="btn-link" @click="openTriggerDialog(cfg.id)">▶ {{ $t('common.execute') }}</button>
-              <button class="btn-link" @click="openConfigDialog(cfg)">{{ $t('common.edit') }}</button>
-              <button class="btn-link btn-danger" @click="confirmDeleteConfig(cfg)">{{ $t('common.delete') }}</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ═══════════════════════════════════════
-         Tab 2: 待执行任务
+         Tab 1: 待执行任务
     ═══════════════════════════════════════ -->
     <div v-show="activeTab === 'pending'" class="tab-content">
       <div class="toolbar">
@@ -155,7 +97,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════
-         Tab 3: 执行历史
+         Tab 2: 执行历史
     ═══════════════════════════════════════ -->
     <div v-show="activeTab === 'history'" class="tab-content">
       <div class="toolbar">
@@ -482,127 +424,37 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  type PositionEvalConfig,
   type PositionEvalTask,
   type PositionEvalTaskDetail,
-  listPositionEvalConfigs,
-  createPositionEvalConfig,
-  updatePositionEvalConfig,
-  deletePositionEvalConfig,
+  type TaskTriggerConfig,
+  type TaskType,
   listPendingEvalTasks,
   listEvalTaskHistory,
   triggerEvalTask,
   batchDeletePendingTasks,
   getEvalTaskDetail,
-} from '@/api/client'
+  listTaskTriggerConfigs,
+  createTaskTriggerConfig,
+  updateTaskTriggerConfig,
+  toggleTaskTriggerConfig,
+} from '../api/client'
 
 const { t } = useI18n()
 
+// ─── Inline SVG component ──────────────
+const RefreshIcon = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>`
+}
+
 // ─── Tabs ─────────────────────────────
-const activeTab = ref<'config' | 'pending' | 'history'>('config')
+const activeTab = ref<'pending' | 'history'>('pending')
 const tabs = computed(() => [
-  { key: 'config',  label: t('position_eval.tab.config'),  badge: configs.value.length || undefined },
   { key: 'pending', label: t('position_eval.tab.pending'), badge: pendingTasks.value.length || undefined },
   { key: 'history', label: t('position_eval.tab.history'), badge: undefined },
 ])
 
 // ─── Available options ─────────────────
 const availableDimensions = ['technical', 'fundamental', 'composite']
-
-// ─── Config state ──────────────────────
-const configs = ref<PositionEvalConfig[]>([])
-const loadingConfigs = ref(false)
-
-async function loadConfigs() {
-  loadingConfigs.value = true
-  try {
-    const res = await listPositionEvalConfigs()
-    configs.value = res.items
-  } catch (e) { console.error(e) }
-  finally { loadingConfigs.value = false }
-}
-
-// Config dialog
-const showConfigDialog = ref(false)
-const editingConfig = ref<PositionEvalConfig | null>(null)
-const savingConfig = ref(false)
-const configError = ref('')
-
-const defaultConfigForm = () => ({
-  name: '',
-  description: '',
-  scope: 'ALL_POSITIONS' as 'ALL_POSITIONS' | 'SYMBOL_LIST',
-  symbols: [] as string[],
-  eval_dimensions: ['composite'] as string[],
-  trigger_mode: 'MANUAL' as 'MANUAL' | 'DAILY' | 'WEEKLY',
-  trigger_time: '',
-  enabled: true,
-})
-const configForm = ref(defaultConfigForm())
-const configFormSymbolsStr = computed({
-  get: () => configForm.value.symbols.join(','),
-  set: (v: string) => { configForm.value.symbols = v.split(',').map(s => s.trim()).filter(Boolean) }
-})
-
-function openConfigDialog(cfg?: PositionEvalConfig) {
-  configError.value = ''
-  if (cfg) {
-    editingConfig.value = cfg
-    configForm.value = {
-      name: cfg.name,
-      description: cfg.description || '',
-      scope: cfg.scope as 'ALL_POSITIONS' | 'SYMBOL_LIST',
-      symbols: cfg.symbols || [],
-      eval_dimensions: [...cfg.eval_dimensions],
-      trigger_mode: cfg.trigger_mode as 'MANUAL' | 'DAILY' | 'WEEKLY',
-      trigger_time: cfg.trigger_time || '',
-      enabled: cfg.enabled,
-    }
-  } else {
-    editingConfig.value = null
-    configForm.value = defaultConfigForm()
-  }
-  showConfigDialog.value = true
-}
-
-async function saveConfig() {
-  configError.value = ''
-  if (!configForm.value.name.trim()) {
-    configError.value = t('position_eval.config.name_required')
-    return
-  }
-  if (configForm.value.eval_dimensions.length === 0) {
-    configError.value = t('position_eval.config.dimension_required')
-    return
-  }
-  savingConfig.value = true
-  try {
-    const payload = {
-      ...configForm.value,
-      symbols: configForm.value.scope === 'SYMBOL_LIST' ? configForm.value.symbols : undefined,
-      trigger_time: configForm.value.trigger_time || undefined,
-    }
-    if (editingConfig.value) {
-      await updatePositionEvalConfig(editingConfig.value.id, payload)
-    } else {
-      await createPositionEvalConfig(payload)
-    }
-    showConfigDialog.value = false
-    await loadConfigs()
-  } catch (e: any) {
-    configError.value = e?.response?.data?.detail || t('common.unknown_error')
-  } finally {
-    savingConfig.value = false
-  }
-}
-
-async function confirmDeleteConfig(cfg: PositionEvalConfig) {
-  if (!confirm(t('position_eval.config.delete_confirm', { name: cfg.name }))) return
-  try {
-    await deletePositionEvalConfig(cfg.id)
-    await loadConfigs()
-  } catch (e) { console.error(e) }
-}
 
 // ─── Pending tasks state ───────────────
 const pendingTasks = ref<PositionEvalTask[]>([])
@@ -647,6 +499,95 @@ const defaultTriggerForm = () => ({
 })
 const triggerForm = ref(defaultTriggerForm())
 const triggerSymbolsStr = ref('')
+
+// ─── Config state ──────────────────────
+const configs = ref<TaskTriggerConfig[]>([])
+const showConfigDialog = ref(false)
+const editingConfig = ref(false)
+const savingConfig = ref(false)
+const configError = ref('')
+const configForm = ref({
+  id: undefined as number | undefined,
+  name: '',
+  description: '',
+  scope: 'ALL_POSITIONS' as 'ALL_POSITIONS' | 'SYMBOL_LIST',
+  eval_dimensions: ['composite'] as string[],
+  trigger_mode: 'MANUAL' as 'MANUAL' | 'DAILY' | 'WEEKLY' | 'CRON',
+  trigger_time: '',
+  enabled: true,
+})
+const configFormSymbolsStr = ref('')
+
+async function loadConfigs() {
+  try {
+    const res = await listTaskTriggerConfigs('POSITION_EVAL')
+    configs.value = res.configs
+  } catch (e) { console.error(e) }
+}
+
+function openConfigDialog(cfg?: TaskTriggerConfig) {
+  configError.value = ''
+  editingConfig.value = !!cfg
+  if (cfg) {
+    configForm.value = {
+      id: cfg.id,
+      name: cfg.name,
+      description: cfg.description || '',
+      scope: (cfg.params?.scope || 'ALL_POSITIONS') as any,
+      eval_dimensions: cfg.params?.eval_dimensions || ['composite'],
+      trigger_mode: cfg.trigger_mode,
+      trigger_time: cfg.trigger_time || '',
+      enabled: cfg.enabled,
+    }
+    configFormSymbolsStr.value = (cfg.params?.symbols || []).join(',')
+  } else {
+    configForm.value = {
+      id: undefined,
+      name: '',
+      description: '',
+      scope: 'ALL_POSITIONS',
+      eval_dimensions: ['composite'],
+      trigger_mode: 'MANUAL',
+      trigger_time: '',
+      enabled: true,
+    }
+    configFormSymbolsStr.value = ''
+  }
+  showConfigDialog.value = true
+}
+
+async function saveConfig() {
+  configError.value = ''
+  savingConfig.value = true
+  try {
+    const symbols = configFormSymbolsStr.value.split(',').map(s => s.trim()).filter(Boolean)
+    const payload = {
+      task_type: 'POSITION_EVAL' as TaskType,
+      name: configForm.value.name,
+      description: configForm.value.description,
+      trigger_mode: configForm.value.trigger_mode,
+      trigger_time: configForm.value.trigger_time || undefined,
+      enabled: configForm.value.enabled,
+      params: {
+        scope: configForm.value.scope,
+        symbols: configForm.value.scope === 'SYMBOL_LIST' ? symbols : undefined,
+        eval_dimensions: configForm.value.eval_dimensions,
+      }
+    }
+
+    if (editingConfig.value && configForm.value.id) {
+      await updateTaskTriggerConfig(configForm.value.id, payload)
+    } else {
+      await createTaskTriggerConfig(payload)
+    }
+    showConfigDialog.value = false
+    await loadConfigs()
+  } catch (e: any) {
+    configError.value = e?.response?.data?.detail || t('common.unknown_error')
+  } finally {
+    savingConfig.value = false
+  }
+}
 
 function openTriggerDialog(configId?: number) {
   triggerError.value = ''
@@ -728,13 +669,7 @@ function scoreClass(score?: number | null): string {
   return 'score-low'
 }
 
-// ─── Inline SVG component ──────────────
-const RefreshIcon = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>`
-}
-
 onMounted(() => {
-  loadConfigs()
   loadPending()
   loadHistory()
 })
