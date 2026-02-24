@@ -1723,105 +1723,113 @@ export function createWsUrl(): string {
 }
 
 // ═══════════════════════════════════════════════════════════
-// 持仓评估任务 API
+// 统一任务触发配置 (TaskTriggerConfig)
 // ═══════════════════════════════════════════════════════════
 
-export interface PositionEvalConfig {
-  id: number
-  account_id: string
-  name: string
-  description?: string
-  scope: 'ALL_POSITIONS' | 'SYMBOL_LIST'
-  symbols?: string[]
-  eval_dimensions: string[]
-  trigger_mode: 'MANUAL' | 'DAILY' | 'WEEKLY'
-  trigger_time?: string
-  enabled: boolean
-  extra_params?: Record<string, any>
-  created_at: string
-  updated_at: string
+export type TaskType = 'OPPORTUNITY_SCAN' | 'POSITION_EVAL' | 'DATA_WARMUP' | 'SYSTEM_HEALTH';
+export type TriggerMode = 'MANUAL' | 'DAILY' | 'WEEKLY' | 'CRON';
+
+export interface TaskTriggerConfig {
+  id: number;
+  account_id: string;
+  task_type: TaskType;
+  name: string;
+  description?: string;
+  trigger_mode: TriggerMode;
+  trigger_time?: string;
+  params?: any;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface PositionEvalConfigCreate {
-  name: string
-  description?: string
-  scope?: 'ALL_POSITIONS' | 'SYMBOL_LIST'
-  symbols?: string[]
-  eval_dimensions?: string[]
-  trigger_mode?: 'MANUAL' | 'DAILY' | 'WEEKLY'
-  trigger_time?: string
-  enabled?: boolean
-  extra_params?: Record<string, any>
+export interface TaskTriggerConfigCreate {
+  task_type: TaskType;
+  name: string;
+  description?: string;
+  trigger_mode: TriggerMode;
+  trigger_time?: string;
+  params?: any;
+  enabled?: boolean;
 }
+
+export interface TaskTriggerConfigUpdate {
+  name?: string;
+  description?: string;
+  trigger_mode?: TriggerMode;
+  trigger_time?: string;
+  params?: any;
+  enabled?: boolean;
+}
+
+export interface TaskTriggerConfigList {
+  configs: TaskTriggerConfig[];
+  total: number;
+}
+
+export async function listTaskTriggerConfigs(task_type?: TaskType): Promise<TaskTriggerConfigList> {
+  const params: any = {};
+  if (task_type) {
+    params.task_type = task_type;
+  }
+  const { data } = await api.get<TaskTriggerConfigList>('/v1/task-configs', { params });
+  return data;
+}
+
+export async function createTaskTriggerConfig(req: TaskTriggerConfigCreate): Promise<TaskTriggerConfig> {
+  const { data } = await api.post<TaskTriggerConfig>('/v1/task-configs', req);
+  return data;
+}
+
+export async function updateTaskTriggerConfig(id: number, req: TaskTriggerConfigUpdate): Promise<TaskTriggerConfig> {
+  const { data } = await api.put<TaskTriggerConfig>(`/v1/task-configs/${id}`, req);
+  return data;
+}
+
+export async function deleteTaskTriggerConfig(id: number): Promise<{ message: string; id: number; success: boolean }> {
+  const { data } = await api.delete<{ message: string; id: number; success: boolean }>(`/v1/task-configs/${id}`);
+  return data;
+}
+
+export async function toggleTaskTriggerConfig(id: number, enabled: boolean): Promise<TaskTriggerConfig> {
+  const { data } = await api.post<TaskTriggerConfig>(`/v1/task-configs/${id}/toggle`, null, { params: { enabled } });
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 持仓评估任务
+// ═══════════════════════════════════════════════════════════
 
 export interface PositionEvalTask {
-  id: number
-  account_id: string
-  config_id?: number
-  config_name?: string
-  scope: string
-  symbols?: string[]
-  eval_dimensions: string[]
-  extra_params?: Record<string, any>
-  status: 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELLED'
-  triggered_by: string
-  scheduled_at?: string
-  started_at?: string
-  completed_at?: string
-  result_summary?: {
-    total_evaluated: number
-    recommendation_counts: Record<string, number>
-    avg_score: number
-  }
-  error_message?: string
-  total_symbols?: number
-  evaluated_symbols?: number
-  created_at: string
+  id: number;
+  account_id: string;
+  config_id?: number;
+  config_name?: string;
+  scope: string;
+  symbols?: string[];
+  eval_dimensions: string[];
+  extra_params?: Record<string, any>;
+  status: string;
+  triggered_by: string;
+  scheduled_at?: string;
+  started_at?: string;
+  completed_at?: string;
+  result_summary?: Record<string, any>;
+  error_message?: string;
+  total_symbols?: number;
+  evaluated_symbols?: number;
+  created_at: string;
 }
 
 export interface PositionEvalTaskDetail extends PositionEvalTask {
-  result_detail?: Array<{
-    symbol: string
-    status: 'ok' | 'skipped' | 'error'
-    overall_score?: number
-    technical_score?: number
-    fundamental_score?: number
-    sentiment_score?: number
-    recommendation?: string
-    risk_level?: string
-    target_position?: number
-    stop_loss?: number
-    take_profit?: number
-    error?: string
-  }>
+  result_detail?: any[];
 }
 
 export interface PositionEvalListResponse<T> {
-  total: number
-  items: T[]
+  total: number;
+  items: T[];
 }
 
-// --- Config APIs ---
-export async function listPositionEvalConfigs(): Promise<PositionEvalListResponse<PositionEvalConfig>> {
-  const { data } = await api.get<PositionEvalListResponse<PositionEvalConfig>>('/v1/position-eval/configs')
-  return data
-}
-
-export async function createPositionEvalConfig(body: PositionEvalConfigCreate): Promise<PositionEvalConfig> {
-  const { data } = await api.post<PositionEvalConfig>('/v1/position-eval/configs', body)
-  return data
-}
-
-export async function updatePositionEvalConfig(id: number, body: Partial<PositionEvalConfigCreate>): Promise<PositionEvalConfig> {
-  const { data } = await api.put<PositionEvalConfig>(`/v1/position-eval/configs/${id}`, body)
-  return data
-}
-
-export async function deletePositionEvalConfig(id: number): Promise<void> {
-  await api.delete(`/v1/position-eval/configs/${id}`)
-}
-
-// --- Task APIs ---
 export async function listPendingEvalTasks(): Promise<PositionEvalListResponse<PositionEvalTask>> {
   const { data } = await api.get<PositionEvalListResponse<PositionEvalTask>>('/v1/position-eval/tasks/pending')
   return data

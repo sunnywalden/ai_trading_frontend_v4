@@ -45,7 +45,10 @@
     "paper": "Paper Trading",
     "journal": "Trade Journal",
     "alerts": "Alerts",
-    "system": "System Health"
+    "system": "System Health",
+    "api_monitoring": "API Monitoring",
+    "service_health": "Service Health",
+    "task_management": "Task Management"
   },
   "auth": {
     "logged_in_as": "Logged in as",
@@ -1436,5 +1439,33 @@
       "stop_loss": "Stop Loss",
       "take_profit": "Take Profit"
     }
+  },
+  "task_mgmt": {
+    "title": "Task Management",
+    "subtitle": "Centralized management for automated task triggers and configurations.",
+    "new": "New Config",
+    "edit": "Edit Config",
+    "type": "Task Type",
+    "name": "Config Name",
+    "description": "Description",
+    "no_description": "No description",
+    "trigger_mode": "Trigger Mode",
+    "trigger_time": "Trigger Time",
+    "trigger_time_tz": "(Beijing Time UTC+8)",
+    "params": "Parameters (JSON)",
+    "enabled": "Enabled State",
+    "delete_confirm": "Are you sure you want to delete 「{name}」? This will stop any associated automated schedule.",
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "types": {
+      "all": "All",
+      "position_eval": "Position Eval",
+      "opportunity_scan": "Opportunity Scan",
+      "data_warmup": "Data Warmup",
+      "unknown": "Unknown"
+    },
+    "empty": "No task configurations found recorded."
   }
 }

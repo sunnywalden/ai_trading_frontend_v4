@@ -45,7 +45,10 @@
     "paper": "模拟盘",
     "journal": "交易日志",
     "alerts": "告警中心",
-    "system": "系统健康"
+    "system": "系统健康",
+    "api_monitoring": "外部API监控",
+    "service_health": "服务健康",
+    "task_management": "任务管理"
   },
   "auth": {
     "logged_in_as": "登录用户",
@@ -1439,5 +1442,33 @@
       "stop_loss": "止损价",
       "take_profit": "止盈价"
     }
+  },
+  "task_mgmt": {
+    "title": "任务管理",
+    "subtitle": "系统性管理机会扫描、持仓评估、数据同步等自动触发任务配置",
+    "new": "新建配置",
+    "edit": "编辑配置",
+    "type": "任务类型",
+    "name": "配置名称",
+    "description": "说明",
+    "no_description": "暂无描述",
+    "trigger_mode": "触发模式",
+    "trigger_time": "执行时间",
+    "trigger_time_tz": "(北京时间 UTC+8)",
+    "params": "特定参数 (JSON)",
+    "enabled": "启用状态",
+    "delete_confirm": "确认要删除配置「{name}」吗？这将停止关联的自动任务定时器。",
+    "status": {
+      "enabled": "已启用",
+      "disabled": "已禁用"
+    },
+    "types": {
+      "all": "全部",
+      "position_eval": "持仓评估",
+      "opportunity_scan": "机会扫描",
+      "data_warmup": "数据预热",
+      "unknown": "未知类型"
+    },
+    "empty": "暂无任务配置记录"
   }
 }
