@@ -70,7 +70,7 @@
           <tr v-for="task in backtestStore.tasks" :key="task.id">
             <td>{{ task.strategy_type }}</td>
             <td>{{ task.symbols.join(', ') }}</td>
-            <td><span :class="`status-badge status-${task.status.toLowerCase()}`">{{ task.status }}</span></td>
+            <td><span :class="`status-badge status-${(task.status || 'PENDING').toLowerCase()}`">{{ task.status }}</span></td>
             <td>{{ task.result?.metrics?.sharpe?.toFixed(2) ?? '—' }}</td>
             <td>{{ task.result?.metrics?.max_drawdown ? (task.result.metrics.max_drawdown * 100).toFixed(1) + '%' : '—' }}</td>
             <td>{{ task.result?.metrics?.win_rate ? (task.result.metrics.win_rate * 100).toFixed(1) + '%' : '—' }}</td>

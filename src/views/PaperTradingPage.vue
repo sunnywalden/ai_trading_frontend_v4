@@ -20,21 +20,21 @@
     <div v-if="account" class="stats-grid" style="margin-bottom: 24px;">
       <div class="stat-card">
         <div class="stat-label">账户净值</div>
-        <div class="stat-value">${{ account.equity.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="stat-value">${{ (account.equity || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">可用现金</div>
-        <div class="stat-value">${{ account.cash.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
+        <div class="stat-value">${{ (account.cash || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">总收益</div>
-        <div class="stat-value" :class="account.total_pnl >= 0 ? 'text-success' : 'text-danger'">
-          {{ account.total_pnl >= 0 ? '+' : '' }}{{ account.total_pnl_pct.toFixed(2) }}%
+        <div class="stat-value" :class="(account.total_pnl || 0) >= 0 ? 'text-success' : 'text-danger'">
+          {{ (account.total_pnl || 0) >= 0 ? '+' : '' }}{{ ((account.total_pnl_pct || 0) * 100).toFixed(2) }}%
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-label">交易次数</div>
-        <div class="stat-value">{{ account.trade_count }}</div>
+        <div class="stat-value">{{ account.trade_count || 0 }}</div>
       </div>
     </div>
 
@@ -94,17 +94,17 @@
         <!-- 持仓 -->
         <div class="card">
           <h3 style="margin: 0 0 16px;">当前持仓</h3>
-          <div v-if="!account?.positions.length" style="color: #666; text-align: center; padding: 20px;">无持仓</div>
+          <div v-if="!account || !account.positions || account.positions.length === 0" style="color: #666; text-align: center; padding: 20px;">无持仓</div>
           <table v-else class="data-table">
             <thead><tr><th>标的</th><th>数量</th><th>均价</th><th>市值</th><th>浮盈亏</th></tr></thead>
             <tbody>
               <tr v-for="p in account.positions" :key="p.symbol">
                 <td>{{ p.symbol }}</td>
                 <td>{{ p.qty }}</td>
-                <td>${{ p.avg_cost.toFixed(2) }}</td>
-                <td>${{ p.market_value.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
-                <td :class="p.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'">
-                  {{ p.unrealized_pnl >= 0 ? '+' : '' }}{{ p.unrealized_pnl_pct.toFixed(2) }}%
+                <td>${{ (p.avg_cost || 0).toFixed(2) }}</td>
+                <td>${{ (p.market_value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                <td :class="(p.unrealized_pnl || 0) >= 0 ? 'text-success' : 'text-danger'">
+                  {{ (p.unrealized_pnl || 0) >= 0 ? '+' : '' }}{{ ((p.unrealized_pnl_pct || 0) * 100).toFixed(2) }}%
                 </td>
               </tr>
             </tbody>

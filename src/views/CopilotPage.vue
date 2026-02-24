@@ -11,13 +11,13 @@
         <div v-else-if="brief">
           <p class="brief-date">{{ brief.date }}</p>
           <p class="brief-summary">{{ brief.summary }}</p>
-          <div v-if="brief.risk_alerts.length" class="risk-alerts">
+          <div v-if="brief.risk_alerts && brief.risk_alerts.length" class="risk-alerts">
             <div v-for="alert in brief.risk_alerts" :key="alert" class="risk-alert-item">⚠️ {{ alert }}</div>
           </div>
-          <div v-if="brief.top_signals.length" class="signal-list">
+          <div v-if="brief.top_signals && brief.top_signals.length" class="signal-list">
             <div v-for="sig in brief.top_signals" :key="sig.symbol" class="signal-item">
               <span class="signal-symbol">{{ sig.symbol }}</span>
-              <span class="signal-action" :class="sig.action === 'BUY' ? 'buy' : 'sell'">{{ sig.action }}</span>
+              <span class="signal-action" :class="(sig.action || 'BUY') === 'BUY' ? 'buy' : 'sell'">{{ sig.action }}</span>
               <span class="signal-reason">{{ sig.reason }}</span>
             </div>
           </div>

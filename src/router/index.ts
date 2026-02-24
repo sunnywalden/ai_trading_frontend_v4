@@ -149,6 +149,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '期权分析' }
   },
   {
+    path: '/execution-algo',
+    name: 'AlgoExecution',
+    component: () => import('../views/AlgoExecutionPage.vue'),
+    meta: { title: '算法执行' }
+  },
+  {
     path: '/paper',
     name: 'PaperTrading',
     component: () => import('../views/PaperTradingPage.vue'),
