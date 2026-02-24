@@ -41,6 +41,7 @@
     "backtest": "Backtest Engine",
     "portfolio": "Portfolio Optimizer",
     "positions": "Positions",
+    "position_evaluation": "Position Eval",
     "paper": "Paper Trading",
     "journal": "Trade Journal",
     "alerts": "Alerts",
@@ -1359,5 +1360,81 @@
   "footer": {
     "version": "Current Version: REST-based Architecture",
     "description": "AI Autonomous Trading · Quant Loop Evolution · Real-time Risk Control"
+  },
+  "position_eval": {
+    "title": "Position Evaluation",
+    "subtitle": "Manage evaluation task configs, schedule execution, and review results",
+    "trigger_task": "Trigger Evaluation",
+    "tab": {
+      "config": "Task Configs",
+      "pending": "Pending Tasks",
+      "history": "Execution History"
+    },
+    "scope": {
+      "all": "All Positions",
+      "list": "Symbol List"
+    },
+    "trigger": {
+      "manual": "Manual",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "use_config": "Use Config",
+      "no_config": "No Config",
+      "confirm": "Run Now"
+    },
+    "config": {
+      "new": "New Config",
+      "edit": "Edit Config",
+      "empty": "No configs yet. Click \"New Config\" to create one.",
+      "name": "Config Name",
+      "name_placeholder": "e.g. Full Composite Eval",
+      "name_required": "Config name is required",
+      "description": "Description",
+      "scope": "Evaluation Scope",
+      "symbols": "Symbols",
+      "dimensions": "Evaluation Dimensions",
+      "dimension_required": "Please select at least one dimension",
+      "trigger_mode": "Trigger Mode",
+      "trigger_time": "Scheduled Time",
+      "trigger_time_tz": "(Beijing Time UTC+8)",
+      "trigger_time_hint": "Enter HH:MM format. Tasks are executed in Beijing Time (CST).",
+      "enabled": "Enable Config",
+      "updated_at": "Last Updated",
+      "delete_confirm": "Delete config \"{name}\"? This action cannot be undone."
+    },
+    "task": {
+      "config": "Config",
+      "scope": "Scope",
+      "dimensions": "Dimensions",
+      "triggered": "Triggered By",
+      "created_at": "Created",
+      "started_at": "Started",
+      "completed_at": "Completed"
+    },
+    "pending": {
+      "empty": "No pending tasks",
+      "batch_delete": "Batch Delete",
+      "delete_confirm": "Delete {n} pending task(s)?"
+    },
+    "history": {
+      "all_status": "All Statuses",
+      "empty": "No execution records",
+      "evaluated": "Evaluated",
+      "avg_score": "Avg Score",
+      "result": "Result",
+      "detail": "View Detail"
+    },
+    "detail": {
+      "title": "Task Result",
+      "error": "Failure Reason",
+      "rec_distribution": "Recommendation Distribution",
+      "per_symbol": "Per-Symbol Results",
+      "no_result": "No evaluation results available",
+      "overall": "Overall",
+      "recommendation": "Recommendation",
+      "risk": "Risk Level",
+      "stop_loss": "Stop Loss",
+      "take_profit": "Take Profit"
+    }
   }
 }

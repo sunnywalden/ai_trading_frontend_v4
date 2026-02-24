@@ -41,6 +41,7 @@
     "backtest": "回测引擎",
     "portfolio": "组合优化",
     "positions": "持仓监控",
+    "position_evaluation": "持仓评估",
     "paper": "模拟盘",
     "journal": "交易日志",
     "alerts": "告警中心",
@@ -1362,5 +1363,81 @@
   "footer": {
     "version": "当前版本：前后端物理分离 · REST 调用",
     "description": "AI 自主决策 · 量化闭环进化 · 实时风险控制"
+  },
+  "position_eval": {
+    "title": "持仓评估",
+    "subtitle": "管理持仓评估任务配置、调度执行与结果查阅",
+    "trigger_task": "触发评估",
+    "tab": {
+      "config": "任务配置",
+      "pending": "待执行任务",
+      "history": "执行历史"
+    },
+    "scope": {
+      "all": "全量持仓",
+      "list": "指定标的"
+    },
+    "trigger": {
+      "manual": "手动",
+      "daily": "每日",
+      "weekly": "每周",
+      "use_config": "使用配置",
+      "no_config": "不使用配置",
+      "confirm": "立即执行"
+    },
+    "config": {
+      "new": "新建配置",
+      "edit": "编辑配置",
+      "empty": "暂无配置，请点击“新建配置”创建第一个",
+      "name": "配置名称",
+      "name_placeholder": "例：全量综合评估",
+      "name_required": "配置名称不能为空",
+      "description": "备注说明",
+      "scope": "评估范围",
+      "symbols": "指定标的",
+      "dimensions": "评估维度",
+      "dimension_required": "请至少选择一个评估维度",
+      "trigger_mode": "触发方式",
+      "trigger_time": "定时时间",
+      "trigger_time_tz": "（北京时间 UTC+8）",
+      "trigger_time_hint": "请输入 HH:MM 格式，系统以北京时间执行定时任务",
+      "enabled": "启用配置",
+      "updated_at": "最后更新",
+      "delete_confirm": "确认删除配置「{name}」？该操作不可撤销。"
+    },
+    "task": {
+      "config": "关联配置",
+      "scope": "评估范围",
+      "dimensions": "维度",
+      "triggered": "触发方式",
+      "created_at": "创建时间",
+      "started_at": "开始时间",
+      "completed_at": "完成时间"
+    },
+    "pending": {
+      "empty": "当前无待执行任务",
+      "batch_delete": "批量删除",
+      "delete_confirm": "确认删除 {n} 个待执行任务？"
+    },
+    "history": {
+      "all_status": "全部状态",
+      "empty": "暂无执行记录",
+      "evaluated": "已评估标的",
+      "avg_score": "平均分数",
+      "result": "评估结果",
+      "detail": "查看详情"
+    },
+    "detail": {
+      "title": "任务评估结果",
+      "error": "失败原因",
+      "rec_distribution": "投资建议分布",
+      "per_symbol": "逐标的评估明细",
+      "no_result": "未收到历史评估结果",
+      "overall": "综合分",
+      "recommendation": "建议",
+      "risk": "风险等级",
+      "stop_loss": "止损价",
+      "take_profit": "止盈价"
+    }
   }
 }

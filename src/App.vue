@@ -149,8 +149,9 @@ const navGroups = computed<NavGroup[]>(() => [
   {
     title: t('nav.group_execution'),
     items: [
-      { path: '/positions', label: t('nav.positions'), icon: '📊' },
-      { path: '/paper',     label: t('nav.paper'),     icon: '🧪' },
+      { path: '/positions',           label: t('nav.positions'),           icon: '📊' },
+      { path: '/position-evaluation',  label: t('nav.position_evaluation'), icon: '🔬' },
+      { path: '/paper',                label: t('nav.paper'),               icon: '🧪' },
     ],
   },
   {
