@@ -159,6 +159,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/portfolio', label: '组合优化', icon: '⚖️' },
       { path: '/stress-test', label: '压力测试', icon: '🔥' },
       { path: '/options', label: '期权分析', icon: '📉' },
+      { path: '/execution-algo', label: '算法执行', icon: '⚙️' },
       { path: '/paper', label: '模拟盘', icon: '🧪' },
     ],
   },

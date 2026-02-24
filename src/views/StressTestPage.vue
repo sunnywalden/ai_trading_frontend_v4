@@ -9,7 +9,7 @@
       <!-- 场景选择 -->
       <div class="card panel-left">
         <h3 style="margin: 0 0 16px;">选择压力场景</h3>
-        <div v-if="stressStore.loading && !stressStore.scenarios.length" class="loading-message">加载中...</div>
+        <div v-if="stressStore.loading && !stressStore.scenarios?.length" class="loading-message">加载中...</div>
         <div v-else class="scenario-list">
           <label
             v-for="s in stressStore.scenarios"

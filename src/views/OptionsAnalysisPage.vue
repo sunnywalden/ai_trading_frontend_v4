@@ -44,7 +44,7 @@
     </div>
 
     <!-- 异常大单 -->
-    <div v-if="unusual.length" class="card" style="margin-bottom: 24px;">
+    <div v-if="unusual && unusual.length" class="card" style="margin-bottom: 24px;">
       <h3 style="margin: 0 0 16px;">⚡ 异常大单 (量/OI > 10x)</h3>
       <table class="data-table">
         <thead>
@@ -114,7 +114,7 @@ async function handleSearch() {
 }
 
 async function renderIVChart(data: IVSurfaceData) {
-  if (!ivChartDom.value || !data.surface.length) return
+  if (!ivChartDom.value || !data?.surface?.length) return
   try {
     const echarts = await import('echarts')
     const chart = echarts.init(ivChartDom.value)

@@ -70,7 +70,7 @@
         <KPICard
           :label="$t('dashboard.risk_level')"
           :value="riskLevelLabel(store.riskLevel)"
-          :class="['risk-badge', `risk-${store.riskLevel.toLowerCase()}`]"
+          :class="['risk-badge', `risk-${(store.riskLevel || 'MEDIUM').toLowerCase()}`]"
           icon="⚠️"
           @refresh="handleModuleRefresh('kpi')"
           :loading="moduleLoading['kpi']"
