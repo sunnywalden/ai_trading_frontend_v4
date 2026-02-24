@@ -24,27 +24,27 @@
     "network_error": "🌐 Network error, please check connection or backend status"
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "risk": "Risk Monitor",
-    "behavior": "Behavior Analysis",
-    "strategy": "Strategy Library",
-    "settings": "Settings",
-    "control_tower": "Control Tower",
-    "group_realtime": "Real-time Board",
-    "group_analysis": "Behavior & Analysis",
-    "group_config": "Config & Tools",
-    "positions": "Positions",
-    "ai_advisor": "AI Decision",
-    "journal": "Journal",
-    "alerts": "Alerts",
+    "dashboard": "Overview",
+    "control_tower": "AI Quant Autonomous Trading",
+    "group_autonomous": "AI Autonomous Engine",
+    "group_market": "Market & Strategy",
+    "group_research": "Research & Backtest",
+    "group_execution": "Positions & Execution",
+    "group_audit": "Audit & Reports",
+    "group_system": "System",
+    "autonomy": "AI Autonomy Hub",
+    "copilot": "AI Copilot",
     "quant_loop": "Quant Loop",
-    "hotspots": "Market Hotspots",
-    "macro": "Macro Analysis",
-    "advice": "Stock Analysis",
+    "opportunities": "Opportunity Scan",
+    "macro": "Macro Risk",
     "strategies": "Strategies",
-    "opportunities": "Opportunities",
-    "behavior": "Behavior Scores",
-    "system": "System Monitor"
+    "backtest": "Backtest Engine",
+    "portfolio": "Portfolio Optimizer",
+    "positions": "Positions",
+    "paper": "Paper Trading",
+    "journal": "Trade Journal",
+    "alerts": "Alerts",
+    "system": "System Health"
   },
   "auth": {
     "logged_in_as": "Logged in as",
@@ -1352,6 +1352,6 @@
   },
   "footer": {
     "version": "Current Version: REST-based Architecture",
-    "description": "Scores drive Shock/Earnings policies; Greeks are monitored vs limits via water-level bars."
+    "description": "AI Autonomous Trading · Quant Loop Evolution · Real-time Risk Control"
   }
 }

@@ -22,13 +22,13 @@
 
     <div class="filter-bar">
       <el-radio-group v-model="selectedCategory" @change="handleCategoryChange">
-        <el-radio-button label="">{{ $t('strategies.categories.all') }}</el-radio-button>
-        <el-radio-button label="均值回归">{{ $t('strategies.categories.mean_reversion') }}</el-radio-button>
-        <el-radio-button label="趋势跟踪">{{ $t('strategies.categories.trend_following') }}</el-radio-button>
-        <el-radio-button label="多因子">{{ $t('strategies.categories.multi_factor') }}</el-radio-button>
-        <el-radio-button label="防御">{{ $t('strategies.categories.defense') }}</el-radio-button>
-        <el-radio-button label="波动率">{{ $t('strategies.categories.volatility') }}</el-radio-button>
-        <el-radio-button label="宏观对冲">{{ $t('strategies.categories.macro_hedge') }}</el-radio-button>
+        <el-radio-button value="">{{ $t('strategies.categories.all') }}</el-radio-button>
+        <el-radio-button value="均值回归">{{ $t('strategies.categories.mean_reversion') }}</el-radio-button>
+        <el-radio-button value="趋势跟踪">{{ $t('strategies.categories.trend_following') }}</el-radio-button>
+        <el-radio-button value="多因子">{{ $t('strategies.categories.multi_factor') }}</el-radio-button>
+        <el-radio-button value="防御">{{ $t('strategies.categories.defense') }}</el-radio-button>
+        <el-radio-button value="波动率">{{ $t('strategies.categories.volatility') }}</el-radio-button>
+        <el-radio-button value="宏观对冲">{{ $t('strategies.categories.macro_hedge') }}</el-radio-button>
       </el-radio-group>
 
       <div class="batch-actions">
@@ -38,32 +38,33 @@
       </div>
     </div>
 
-    <el-loading :loading="strategyStore.loading">
+    <div v-loading="strategyStore.loading">
       <div v-if="filteredStrategies.length === 0" class="empty-state">
         <p>{{ $t('strategies.no_strategies') }}</p>
       </div>
 
-      <div v-else class="strategies-grid">
-        <div 
-          v-for="strategy in filteredStrategies" 
-          :key="strategy.id"
-          class="strategy-card-wrapper"
-        >
-          <el-checkbox 
-            v-model="selectedStrategies" 
-            :label="strategy.id"
-            class="strategy-checkbox"
-          />
-          <StrategyCard
-            :strategy="strategy"
-            :performance="strategyStore.performances[strategy.id] || {}"
-            @toggle="handleToggle"
-            @run="handleRun"
-            @view="handleView"
-          />
+      <el-checkbox-group v-else v-model="selectedStrategies">
+        <div class="strategies-grid">
+          <div 
+            v-for="strategy in filteredStrategies" 
+            :key="strategy.id"
+            class="strategy-list-item"
+          >
+            <div class="selection-area">
+              <el-checkbox :value="strategy.id" size="large" />
+            </div>
+            <StrategyCard
+              :strategy="strategy"
+              :performance="strategyStore.performances[strategy.id] || {}"
+              @toggle="handleToggle"
+              @run="handleRun"
+              @view="handleView"
+              class="flex-1"
+            />
+          </div>
         </div>
-      </div>
-    </el-loading>
+      </el-checkbox-group>
+    </div>
   </div>
 </template>
 
@@ -186,6 +187,30 @@ const batchRun = async () => {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  color: #f1f5f9;
+}
+
+/* Element Plus overrides */
+:deep(.el-radio-button__inner) {
+  background-color: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border-color: #38bdf8;
+  box-shadow: -1px 0 0 0 #38bdf8;
+}
+
+:deep(.el-input__wrapper) {
+  background-color: rgba(15, 23, 42, 0.5);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset;
+}
+
+:deep(.el-input__inner) {
+  color: #f1f5f9;
 }
 
 .filter-bar {
@@ -194,31 +219,49 @@ const batchRun = async () => {
   align-items: center;
   margin-bottom: 24px;
   padding: 16px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .empty-state {
   text-align: center;
   padding: 48px;
-  color: #999;
+  color: #94a3b8;
 }
 
 .strategies-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
 }
 
-.strategy-card-wrapper {
-  position: relative;
+.strategy-list-item {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 12px;
+  padding: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
-.strategy-checkbox {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 10;
+.strategy-list-item:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateX(4px);
+}
+
+.selection-area {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0; /* 防止子元素溢出 */
 }
 </style>

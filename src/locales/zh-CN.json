@@ -24,27 +24,27 @@
     "network_error": "🌐 网络连接失败，请检查网络或后端服务状态"
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "risk": "风险监控",
-    "behavior": "行为分析",
-    "strategy": "策略库",
-    "settings": "设置",
-    "control_tower": "控制塔",
-    "group_realtime": "实时看板",
-    "group_analysis": "行为与分析",
-    "group_config": "配置及监控",
-    "positions": "持仓评估",
-    "ai_advisor": "AI交易决策",
-    "journal": "交易日志",
-    "alerts": "价格告警",
+    "dashboard": "总览",
+    "control_tower": "AI 量化自主交易系统",
+    "group_autonomous": "AI 自主引擎",
+    "group_market": "市场 & 策略",
+    "group_research": "研究 & 回测",
+    "group_execution": "持仓 & 执行",
+    "group_audit": "审计 & 报告",
+    "group_system": "系统",
+    "autonomy": "AI 自主中枢",
+    "copilot": "AI 助手",
     "quant_loop": "量化闭环",
-    "hotspots": "市场热点",
-    "macro": "宏观分析",
-    "advice": "股票分析",
-    "strategies": "策略库管理",
-    "opportunities": "策略筛选",
-    "behavior": "行为评分",
-    "system": "系统监控"
+    "opportunities": "机会扫描",
+    "macro": "宏观风险",
+    "strategies": "策略库",
+    "backtest": "回测引擎",
+    "portfolio": "组合优化",
+    "positions": "持仓监控",
+    "paper": "模拟盘",
+    "journal": "交易日志",
+    "alerts": "告警中心",
+    "system": "系统健康"
   },
   "auth": {
     "logged_in_as": "登录用户",
@@ -1355,6 +1355,6 @@
   },
   "footer": {
     "version": "当前版本：前后端物理分离 · REST 调用",
-    "description": "行为评分与卖飞评分驱动每个标的的 ShockPolicy / EarningsPolicy；Greeks 暴露通过水位条形图展示与限额的相对关系。"
+    "description": "AI 自主决策 · 量化闭环进化 · 实时风险控制"
   }
 }

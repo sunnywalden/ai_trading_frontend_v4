@@ -1,117 +1,17 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    redirect: '/dashboard'
-  },
+  { path: '/', redirect: '/dashboard' },
+
+  // ── 主控台 ──────────────────────────────────────────────────
   {
     path: '/dashboard',
     name: 'Dashboard',
     component: () => import('../views/DashboardV2Page.vue'),
     meta: { title: 'Dashboard' }
   },
-  {
-    path: '/dashboard-v1',
-    name: 'DashboardV1',
-    component: () => import('../views/DashboardPage.vue'),
-    meta: { title: 'Dashboard V1 (旧版)' }
-  },
-  {
-    path: '/journal',
-    name: 'Journal',
-    component: () => import('../views/JournalPage.vue'),
-    meta: { title: '交易日志' }
-  },
-  {
-    path: '/alerts',
-    name: 'Alerts',
-    component: () => import('../views/AlertsPage.vue'),
-    meta: { title: '价格告警' }
-  },
-  {
-    path: '/hotspots',
-    name: 'MarketHotspots',
-    component: () => import('../views/MarketHotspotsPage.vue'),
-    meta: { title: '市场热点' }
-  },
-  {
-    path: '/behavior',
-    name: 'Behavior',
-    component: () => import('../views/BehaviorScorePage.vue'),
-    meta: { title: '行为评分' }
-  },
-  {
-    path: '/positions',
-    name: 'Positions',
-    component: () => import('../views/PositionsPage.vue'),
-    meta: { title: '持仓评估' }
-  },
-  {
-    path: '/macro',
-    name: 'Macro',
-    component: () => import('../views/MacroRiskPage.vue'),
-    meta: { title: '宏观风险' }
-  },
-  {
-    path: '/opportunities',
-    name: 'Opportunities',
-    component: () => import('../views/OpportunitiesPage.vue'),
-    meta: { title: '策略筛选' }
-  },
-  {
-    path: '/advice',
-    name: 'AiAdvice',
-    component: () => import('../views/AiAdvicePage.vue'),
-    meta: { title: 'AI 建议' }
-  },
-  {
-    path: '/api-monitoring',
-    redirect: '/system'
-  },
-  {
-    path: '/monitoring',
-    redirect: '/system'
-  },
-  {
-    path: '/system',
-    name: 'SystemMonitor',
-    component: () => import('../views/SystemMonitorPage.vue'),
-    meta: { title: '系统监控' }
-  },
-  {
-    path: '/ai-advisor',
-    name: 'AIAdvisor',
-    component: () => import('../views/AIAdvisorPage.vue'),
-    meta: { title: 'AI 交易决策' }
-  },
-  {
-    path: '/plans',
-    redirect: '/ai-advisor'
-  },
-  {
-    path: '/execution-center',
-    redirect: '/ai-advisor'
-  },
-  {
-    path: '/quant-loop',
-    name: 'QuantLoop',
-    component: () => import('../views/QuantLoopDashboard.vue'),
-    meta: { title: '量化交易闭环' }
-  },
-  {
-    path: '/strategies',
-    name: 'Strategies',
-    component: () => import('../views/StrategiesPage.vue'),
-    meta: { title: '策略库管理' }
-  },
-  {
-    path: '/strategies/:id',
-    name: 'StrategyDetail',
-    component: () => import('../views/StrategyDetailPage.vue'),
-    meta: { title: '策略详情' }
-  },
-  // V10 新路由
+
+  // ── AI 自主引擎 ──────────────────────────────────────────────
   {
     path: '/autonomy',
     name: 'Autonomy',
@@ -125,6 +25,40 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'AI 助手' }
   },
   {
+    path: '/quant-loop',
+    name: 'QuantLoop',
+    component: () => import('../views/QuantLoopDashboard.vue'),
+    meta: { title: '量化闭环' }
+  },
+
+  // ── 市场 & 策略 ──────────────────────────────────────────────
+  {
+    path: '/opportunities',
+    name: 'Opportunities',
+    component: () => import('../views/OpportunitiesPage.vue'),
+    meta: { title: '机会扫描' }
+  },
+  {
+    path: '/macro',
+    name: 'Macro',
+    component: () => import('../views/MacroRiskPage.vue'),
+    meta: { title: '宏观风险' }
+  },
+  {
+    path: '/strategies',
+    name: 'Strategies',
+    component: () => import('../views/StrategiesPage.vue'),
+    meta: { title: '策略库' }
+  },
+  {
+    path: '/strategies/:id',
+    name: 'StrategyDetail',
+    component: () => import('../views/StrategyDetailPage.vue'),
+    meta: { title: '策略详情' }
+  },
+
+  // ── 研究 & 回测 ──────────────────────────────────────────────
+  {
     path: '/backtest',
     name: 'Backtest',
     component: () => import('../views/BacktestPage.vue'),
@@ -136,23 +70,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/PortfolioPage.vue'),
     meta: { title: '组合优化' }
   },
+
+  // ── 持仓 & 执行 ──────────────────────────────────────────────
   {
-    path: '/stress-test',
-    name: 'StressTest',
-    component: () => import('../views/StressTestPage.vue'),
-    meta: { title: '压力测试' }
-  },
-  {
-    path: '/options',
-    name: 'OptionsAnalysis',
-    component: () => import('../views/OptionsAnalysisPage.vue'),
-    meta: { title: '期权分析' }
-  },
-  {
-    path: '/execution-algo',
-    name: 'AlgoExecution',
-    component: () => import('../views/AlgoExecutionPage.vue'),
-    meta: { title: '算法执行' }
+    path: '/positions',
+    name: 'Positions',
+    component: () => import('../views/PositionsPage.vue'),
+    meta: { title: '持仓监控' }
   },
   {
     path: '/paper',
@@ -160,6 +84,44 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/PaperTradingPage.vue'),
     meta: { title: '模拟盘' }
   },
+
+  // ── 审计 & 报告 ──────────────────────────────────────────────
+  {
+    path: '/journal',
+    name: 'Journal',
+    component: () => import('../views/JournalPage.vue'),
+    meta: { title: '交易日志' }
+  },
+  {
+    path: '/alerts',
+    name: 'Alerts',
+    component: () => import('../views/AlertsPage.vue'),
+    meta: { title: '告警中心' }
+  },
+
+  // ── 系统 ─────────────────────────────────────────────────────
+  {
+    path: '/system',
+    name: 'SystemMonitor',
+    component: () => import('../views/SystemMonitorPage.vue'),
+    meta: { title: '系统健康' }
+  },
+
+  // ── 已合并页面重定向（向后兼容） ────────────────────────────
+  { path: '/dashboard-v1',     redirect: '/dashboard' },
+  { path: '/hotspots',         redirect: '/opportunities' },
+  { path: '/behavior',         redirect: '/opportunities' },
+  { path: '/ai-advisor',       redirect: '/autonomy' },
+  { path: '/advice',           redirect: '/copilot' },
+  { path: '/stress-test',      redirect: '/backtest' },
+  { path: '/options',          redirect: '/opportunities' },
+  { path: '/execution-algo',   redirect: '/quant-loop' },
+  { path: '/execution-center', redirect: '/autonomy' },
+  { path: '/plans',            redirect: '/autonomy' },
+  { path: '/api-monitoring',   redirect: '/system' },
+  { path: '/monitoring',       redirect: '/system' },
+
+  // ── 认证 ─────────────────────────────────────────────────────
   {
     path: '/login',
     name: 'Login',
@@ -178,7 +140,7 @@ import { isLoggedIn } from '../api/client';
 
 router.beforeEach((to, from, next) => {
   if (to.meta.title) {
-    document.title = `${to.meta.title} - AI Trading 控制塔`;
+    document.title = `${to.meta.title} - AI 量化自主交易系统`;
   }
 
   // 允许匿名访问的页面
