@@ -1,35 +1,40 @@
 <template>
   <div class="strategy-card" :class="{ inactive: !strategy.is_active }">
-    <div class="card-header">
-      <div>
-        <div class="header-tags">
-          <span class="style-chip" v-if="strategy.style">{{ strategy.style }}</span>
-          <span v-if="strategy.is_builtin" class="builtin-chip">{{ $t('execution_list.strategy_card.builtin') }}</span>
-        </div>
-        <h3 class="strategy-name">{{ strategy.name }}</h3>
-        <p class="strategy-description">{{ strategy.description || $t('execution_list.strategy_card.no_desc') }}</p>
+    <!-- 顶部：分类标签 + 状态 -->
+    <div class="card-top">
+      <div class="badge-group">
+        <span class="style-chip" v-if="strategy.style">{{ strategy.style }}</span>
+        <span v-if="strategy.is_builtin" class="builtin-chip">{{ $t('execution_list.strategy_card.builtin') }}</span>
       </div>
-      <span class="status-badge" :class="statusClass">{{ statusLabel }}</span>
+      <span class="status-dot" :class="statusClass"></span>
+      <span class="status-text" :class="statusClass">{{ statusLabel }}</span>
     </div>
 
-    <div class="meta-row">
-      <div class="meta-item">
-        <span class="meta-label">{{ $t('execution_list.strategy_card.last_run') }}</span>
-        <div class="meta-value">
-          <span>{{ lastRunText }}</span>
-          <span class="relative-label">{{ lastRunRelative }}</span>
-        </div>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">{{ $t('execution_list.strategy_card.tags') }}</span>
-        <div class="tag-wrap">
-          <span v-for="tag in (strategy.tags || [])" :key="tag" class="tag-pill">{{ tag }}</span>
-        </div>
-      </div>
+    <!-- 策略名称 -->
+    <h3 class="strategy-name">{{ strategy.name }}</h3>
+
+    <!-- 策略描述 -->
+    <p class="strategy-description">{{ strategy.description || $t('execution_list.strategy_card.no_desc') }}</p>
+
+    <!-- 分隔线 -->
+    <div class="card-divider"></div>
+
+    <!-- 标签 -->
+    <div class="tag-wrap" v-if="strategy.tags && strategy.tags.length">
+      <span v-for="tag in strategy.tags.slice(0, 4)" :key="tag" class="tag-pill"># {{ tag }}</span>
     </div>
 
-    <div class="actions">
-      <button class="ghost-btn" @click="$emit('view', strategy)">{{ $t('execution_list.strategy_card.details') }}</button>
+    <!-- 底部：时间 + 按钮 -->
+    <div class="card-footer">
+      <div class="last-run-info">
+        <span class="last-run-icon">🕐</span>
+        <span class="last-run-text">{{ lastRunText }}</span>
+        <span class="last-run-relative" v-if="lastRunRelative">{{ lastRunRelative }}</span>
+      </div>
+      <button class="detail-btn" @click="$emit('view', strategy)">
+        {{ $t('execution_list.strategy_card.details') }}
+        <span class="detail-arrow">→</span>
+      </button>
     </div>
   </div>
 </template>
@@ -105,178 +110,222 @@ function formatRelativeTime(date: Date): string {
 </script>
 
 <style scoped>
+/* ===== 卡片容器 ===== */
 .strategy-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  background: rgba(15, 23, 42, 0.8);
-  transition: border 0.3s ease, box-shadow 0.3s ease;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .strategy-card:hover {
-  border-color: rgba(59, 130, 246, 0.6);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.6);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.15), 0 2px 8px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
 }
 
 .strategy-card.inactive {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.style-chip {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  background: rgba(14, 165, 233, 0.2);
-  color: #38bdf8;
-  margin-bottom: 4px;
-}
-
-.header-tags {
+/* ===== 顶部标签行 ===== */
+.card-top {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
-}
-
-.builtin-chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  border: 1px solid rgba(248, 113, 113, 0.3);
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
-}
-
-.strategy-name {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #e5e7eb;
-}
-
-.strategy-description {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-completed {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
-}
-
-.status-executing,
-.status-queued {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-}
-
-.status-failed {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-}
-
-.status-unknown {
-  background: rgba(107, 114, 128, 0.2);
-  color: #cbd5f5;
-}
-
-.meta-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
   flex-wrap: wrap;
 }
 
-.meta-item {
+.badge-group {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
 }
 
-.meta-label {
-  font-size: 0.7rem;
-  color: #9ca3af;
-}
-
-.meta-value {
-  font-size: 0.9rem;
+.style-chip {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.68rem;
   font-weight: 600;
-  color: #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  letter-spacing: 0.05em;
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.25);
 }
 
-.relative-label {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: #94a3b8;
+.builtin-chip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.25);
 }
 
+/* ===== 状态指示 ===== */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.status-completed .status-dot,
+.status-dot.status-completed { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.6); }
+.status-text.status-completed { color: #4ade80; }
+
+.status-executing .status-dot,
+.status-queued .status-dot,
+.status-dot.status-executing,
+.status-dot.status-queued { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.6); }
+.status-text.status-executing,
+.status-text.status-queued { color: #60a5fa; }
+
+.status-failed .status-dot,
+.status-dot.status-failed { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6); }
+.status-text.status-failed { color: #f87171; }
+
+.status-unknown .status-dot,
+.status-dot.status-unknown { background: #6b7280; }
+.status-text.status-unknown { color: #9ca3af; }
+
+/* ===== 策略名称 ===== */
+.strategy-name {
+  margin: 6px 0 2px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: 0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== 策略描述 ===== */
+.strategy-description {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* ===== 分隔线 ===== */
+.card-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), transparent);
+  margin: 2px 0;
+}
+
+/* ===== 标签 ===== */
 .tag-wrap {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .tag-pill {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(30, 58, 138, 0.3);
   color: #93c5fd;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-family: monospace;
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
-.actions {
+/* ===== 底部行 ===== */
+.card-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
 }
 
-.primary-btn,
-.ghost-btn {
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
+.last-run-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: #475569;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.last-run-icon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.last-run-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.last-run-relative {
+  color: #334155;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detail-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  border: none;
+  background: rgba(14, 165, 233, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.detail-btn:hover {
+  background: rgba(14, 165, 233, 0.25);
+  border-color: rgba(14, 165, 233, 0.5);
+  color: #7dd3fc;
+}
+
+.detail-arrow {
+  font-size: 0.9rem;
   transition: transform 0.2s ease;
 }
 
-.primary-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #fff;
-}
-
-.ghost-btn {
-  background: transparent;
-  border: 1px solid rgba(226, 232, 240, 0.4);
-  color: #e5e7eb;
-}
-
-.actions button:hover {
-  transform: translateY(-1px);
+.detail-btn:hover .detail-arrow {
+  transform: translateX(3px);
 }
 </style>
