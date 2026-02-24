@@ -1350,6 +1350,12 @@
       "i4": "More conservative EarningsPolicy"
     }
   },
+  "autonomy": {
+    "status_paused": "Paused",
+    "status_running": "Running",
+    "circuit_breaker_active": "Circuit Breaker Active",
+    "daily_trades": "Today's Trades"
+  },
   "footer": {
     "version": "Current Version: REST-based Architecture",
     "description": "AI Autonomous Trading · Quant Loop Evolution · Real-time Risk Control"
