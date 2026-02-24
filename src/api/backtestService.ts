@@ -29,9 +29,8 @@ export interface BacktestTask {
   status: BacktestStatus
   created_at: string
   completed_at?: string
-  result?: {
-    metrics: BacktestMetrics
-    walk_forward?: Array<{ window: number; metrics: BacktestMetrics }>
+  result?: BacktestMetrics & {
+    windows_results?: BacktestMetrics[]
     graduation_eligible?: boolean
     equity_curve?: Array<{ date: string; equity: number }>
   }
