@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V9.0 | 更新日期：2026-02-13
+> 版本：V10.0 | 更新日期：2026-02-24  
+> 变更摘要：新增 AI 自主度控制面板、回测中心、组合优化、压力测试、Trading Copilot、Paper Trading、期权分析中心；Dashboard 增加 AI 运行状态监控
 
 ---
 
@@ -9,10 +10,10 @@
 
 ### 1.1 核心理念
 
-- **一屏全览**：Dashboard 首页一屏知晓关键信息
-- **闭环体验**：信号 → 计划 → 执行 → 复盘在系统内完成
-- **实时感知**：WebSocket 驱动的实时更新
-- **极简操作**：核心流程 ≤ 5 步
+- **AI 运行中枢**：Dashboard 展示 AI 自主运行状态，人工以审计员身份观察
+- **零操作目标**：FULL 模式下用户无需任何日常操作，仅需配置边界
+- **人机协同入口**：Copilot 是唯一主动交互窗口，自然语言驱动一切
+- **可信可追溯**：每笔 AI 决策均有 reasoning 展示，操作可撤销
 
 ### 1.2 视觉风格
 
@@ -38,47 +39,60 @@
 
 ## 3. 信息架构
 
-### 3.1 导航结构
+### 3.1 导航结构（V10 更新）
 
 ```
 交易仪表盘 (Dashboard) ← 首页
+├── 🤖 AI 自主中枢（V10 新增）
+│   ├── AI 自主控制 (Autonomy Control) ← AI 运行状态 + 自主度配置
+│   ├── Trading Copilot 💬 ← 对话式人机接口
+│   └── 量化交易闭环 (Quant Loop)
 ├── 核心功能
-│   ├── 交易计划 (Plans)
-│   ├── 交易日志 (Journal)
-│   └── 股票分析 (AI Advisor)
-├── 分析工具
-│   ├── 市场热点 (Hotspots)
 │   ├── 持仓评估 (Positions)
+│   ├── AI 交易决策 (AI Advisor)
+│   ├── 交易日志 (Journal)
+│   ├── 价格告警 (Alerts)
+│   └── Paper Trading 🧪 (V10 新增)
+├── 研究与分析（V10 增强）
+│   ├── 回测中心 (Backtest) 🔬 (V10 新增)
+│   ├── 组合优化 (Portfolio) 📐 (V10 新增)
+│   ├── 压力测试 (Stress Test) 🛡 (V10 新增)
+│   ├── 期权分析 (Options) 📊 (V10 新增)
+│   ├── 市场热点 (Hotspots)
 │   ├── 宏观分析 (Macro)
 │   ├── 策略筛选 (Opportunities)
-│   └── 策略库管理 (Strategy Library)
-├── 风险管理
-│   ├── 行为评分 (Behavior)
-│   ├── 资金曲线 (Equity)
-│   └── 价格告警 (Alerts)
-└── 系统监控
-    ├── API 监控 (API Monitoring)
-    └── 系统健康 (System Health)
+│   └── 策略库管理 (Strategies)
+├── 复盘
+│   └── 行为评分 (Behavior)
+└── 系统
+    └── 系统监控 (System)
 ```
 
-### 3.2 页面层级
+### 3.2 页面层级（V10）
 
-| 页面 | 路由 | 权限 | 说明 |
-|------|------|------|------|
-| 交易仪表盘 | `/dashboard` | 需登录 | 首页，核心数据聚合 |
-| AI 评估 | `/ai-advisor` | 需登录 | AI 交易决策助手 |
-| 交易计划 | `/plans` | 需登录 | 计划管理（创建/执行/监控） |
-| 交易日志 | `/journal` | 需登录 | 交易复盘与自我评价 |
-| 策略库管理 | `/strategies` | 需登录 | 策略库管理（查看/启用/配置） |
-| 策略详情 | `/strategies/:id` | 需登录 | 策略参数配置与运行 |
-| 市场热点 | `/hotspots` | 需登录 | 热门赛道与个股 |
-| 持仓评估 | `/positions` | 需登录 | 技术+基本面评估 |
-| 宏观分析 | `/macro` | 需登录 | 地缘政治+经济指标 |
-| 策略筛选 | `/opportunities` | 需登录 | 多因子选股 |
-| 行为评分 | `/behavior` | 需登录 | 交易坏习惯识别 |
-| 资金曲线 | `/equity` | 需登录 | 净值走势与回撤 |
-| 价格告警 | `/alerts` | 需登录 | 条件触发推送 |
-| 登录 | `/login` | 公开 | JWT 认证 |
+| 页面 | 路由 | 说明 |
+|------|------|------|
+| 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态 |
+| **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志（V10 新增）|
+| **Trading Copilot** | `/copilot` | 对话式人机接口（V10 新增）|
+| 量化交易闭环 | `/quant-loop` | 闭环可视化 |
+| 持仓评估 | `/positions` | 技术+基本面评估 |
+| AI 交易决策 | `/ai-advisor` | AI 决策历史+手动触发 |
+| 交易日志 | `/journal` | 交易复盘与 AI 自动复盘 |
+| 价格告警 | `/alerts` | 条件触发推送 |
+| **Paper Trading** | `/paper` | 模拟账户独立视图（V10 新增）|
+| **回测中心** | `/backtest` | 提交回测、查看报告、策略对比（V10 新增）|
+| **组合优化** | `/portfolio` | Markowitz+Kelly 组合构建（V10 新增）|
+| **压力测试** | `/stress-test` | 历史情景+自定义压测（V10 新增）|
+| **期权分析** | `/options` | IV曲面、P/C Ratio、异常成交（V10 新增，只读）|
+| 市场热点 | `/hotspots` | 热门赛道与个股 |
+| 宏观分析 | `/macro` | 地缘政治+经济指标 |
+| 策略筛选 | `/opportunities` | 多因子选股 |
+| 策略库管理 | `/strategies` | 策略库管理 |
+| 策略详情 | `/strategies/:id` | 策略参数配置与运行 |
+| 行为评分 | `/behavior` | AI 决策质量评分 |
+| 系统监控 | `/system` | 系统健康 |
+| 登录 | `/login` | JWT 认证 |
 
 ---
 
@@ -451,7 +465,214 @@
 
 ---
 
-## 5. 组件设计
+### 4.10 AI 自主控制 (Autonomy Control) —— V10 新增
+
+**设计目标**：人工控制中心——查看 AI 运行状态、切换自主度、审计日志、紧急暫停
+
+**布局**：
+```
+┌──────────────────────────────────────────────────┐
+│ 🤖 AI 自主控制                                  │
+├──────────────────────────────────────────────────┤
+│ 自主度模式：  [全自主] [半自主✓] [建议模式] │
+│ 运行状态：  🟢 运行中  AI 已自主执行 3 笔交易   │
+│ 记录时间：  2026-02-24 09:30      [紧急暂停] │
+├──────────────────────────────────────────────────┤
+│ 🛡 风险边界配置                                │
+│ 单标的最大仓位  [25]%   单日最多交易 [10]笔  │
+│ VaR@95% 上限   [3]%    压力测试上限 [15]%     │
+│ 允许标的类型  [STOCK]        [保存配置]       │
+├──────────────────────────────────────────────────┤
+│ 📝 AI 决策审计日志（最近 20 笔）                  │
+│ 09:32 AAPL 买入 $178.5×100 [TWAP] 置信度:78 [撑销] │
+│ 09:28 NVDA 卖出 $520.3×50 [市价] 置信度:71 [查看] │
+│ 09:15 TSLA 风险闸机拒绝：VaR 超限              │
+│                                [加载更多]             │
+└──────────────────────────────────────────────────┘
+```
+
+**交互规范**：
+- 自主度模式切换：带确认对话框（切换全自主时加重警示）
+- 紧急暂停按鈕：红色明显按鈕，点击后即刷新状态为暂停
+- 撤销按鈕：审计日志内每笔 30 分钟内有撤销链接
+- 风险边界更改：即时生效，推送 Telegram 确认
+
+**API**：
+- `GET /api/v1/autonomy/status`
+- `PUT /api/v1/autonomy/level`
+- `POST /api/v1/autonomy/pause` / `resume`
+- `GET /api/v1/autonomy/audit-log`
+- `POST /api/v1/autonomy/revoke/{exec_id}`
+
+---
+
+### 4.11 Trading Copilot —— V10 新增
+
+**设计目标**：对话式人机接口，替代散落的按鈕操作
+
+**布局**：
+```
+┌─────────────────────────────────────────┐
+│ 💬 Trading Copilot              [清空]│
+├─────────────────────────────────────────┤
+│ 🖋 盘前摘要（自动生成）          [刷新]│
+│ AI 今日计划：布林带策略扫描 08:30...          │
+├─────────────────────────────────────────┤
+│ 对话历史                              │
+│ ┇ 👤 今天 AI 做了哪些交易？                 │
+│ ┇ 🤖 共 3 笔：AAPL 买入、NVDA 卖出、TSLA 拒绝│
+│ ┇    [AAPL详情 ↗] [NVDA详情 ↗] [TSLA原因]│
+│ ┇ 👤 把 AAPL 止损改到 175           │
+│ ┇ 🤖 确认：将 AAPL 止损位修改为 $175  [确认]│
+├─────────────────────────────────────────┤
+│ [输入框] 问任何事...      [deepseek] [发送]│
+│ 快捷：[盘前摘要] [当日复盘] [暨同风险]         │
+└─────────────────────────────────────────┘
+```
+
+**消息类型规范**：
+- 查询类：直接显示结果，可能带内链接跳转
+- 分析类：流式输出动画ﾈTyping indicatorﾉ
+- 操作意图：黄色警告框 + 确认按鈕才执行
+- AI 模型标记：消息顶部显示 deepseek-chat / deepseek-reasoner
+
+**API**：
+- `POST /api/v1/copilot/chat`
+- `GET /api/v1/copilot/history`
+- `GET /api/v1/copilot/morning-brief`
+- `POST /api/v1/copilot/confirm/{action_id}`
+
+---
+
+### 4.12 回测中心 (Backtest) —— V10 新增
+
+**布局**：
+```
+┌─────────────────────────────────────────────┐
+│ 🔬 回测中心                      [新建回测]│
+├─────────────────────────────────────────────┤
+│ 提交回测表单：                           │
+│ 策略： [布林带均値回归 ▼]  标的池: [AAPL,NVDA]│
+│ 时间范围： [2023-01-01] — [2024-12-31]  │
+│ 作并方式： ☑ Walk-Forward    资金: $100,000│
+│                               [提交回测]       │
+├─────────────────────────────────────────────┤
+│ 任务列表：                                  │
+│ • 布林带均値回归 2023-2024 ✔ [62%胜率]│
+│   Sharpe: 1.42  回撤: -8.3%  [查看报告]│
+│ • 突破动量    2023-2024 ⏳运行中 ...│
+├─────────────────────────────────────────────┤
+│ 报告面板（展开）：                            │
+│ 年化收益：+18.3% 最大回撤: -8.3%        │
+│ Sharpe: 1.42  Sortino: 1.76  Alpha: +7.2%  │
+│ ECharts: 策略收益 vs SPY 基准  [导出 CSV]│
+└─────────────────────────────────────────────┘
+```
+
+**API**：
+- `POST /api/v1/backtest/run`
+- `GET /api/v1/backtest/tasks`
+- `GET /api/v1/backtest/tasks/{id}/report`
+- `GET /api/v1/backtest/compare`
+
+---
+
+### 4.13 组合优化 (Portfolio) —— V10 新增
+
+**布局**：
+```
+┌───────────────────────────────────────────┐
+│ 📐 组合优化                     [运行优化]│
+├───────────────────────────────────────────┤
+│ 优化方法： [Markowitz✓] [风险平价] [Kelly]    │
+├───────────────────────────────────────────┤
+│ 有效前沿（ECharts 散点图）                │
+│       套算收益↑                              │
+│  12%  *  *  * ← 当前持仓                   │
+│   8%       ◎ ← Markowitz 最优                  │
+│  ___──────────────────────────────→            │
+│ 0    5%   10%   15% 风险(Std.Dev)             │
+├───────────────────────────────────────────┤
+│ 推荐仓位分配 vs 当前持仓                │
+│ AAPL  目标: 15%  当前: 22%  ↓减 7%         │
+│ NVDA  目标: 20%  当前: 12%  ↑加 8%         │
+│ MSFT  目标: 12%  当前: 0%   ♔新建           │
+│               [生成再平衡计划]             │
+└───────────────────────────────────────────┘
+```
+
+---
+
+### 4.14 压力测试 (Stress Test) —— V10 新增
+
+**布局**：
+```
+┌───────────────────────────────────────────┐
+│ 🛡 压力测试              [运行压力测试]│
+├───────────────────────────────────────────┤
+│ 情景选择：                                  │
+│ ☑ GFC_2008 (金融危机 -50%)                  │
+│ ☑ COVID_2020 (疫情熶断 -35%)              │
+│ ☑ RATE_HIKE_2022 (加息周期 -33%)         │
+│ ☐ FLASH_CRASH (闪崩 -10%)               │
+│ ☐ 自定义情景...  [+ 新建]              │
+├───────────────────────────────────────────┤
+│ 结果燭影图（ECharts 棒状图）：             │
+│ GFC_2008: -$18,450 (-14.8%)  ☒ 超限！  │
+│ COVID:    -$11,230 (-9.0%)               │
+│ 2022加息:  -$8,500 (-6.8%)              │
+├───────────────────────────────────────────┤
+│ CVaR@99%: -$15,200  各标的巨燫: 热力图          │
+│ 😨 GFC_2008 超过容忍限！建议增加防御策略  │
+└───────────────────────────────────────────┘
+```
+
+---
+
+### 4.15 Paper Trading —— V10 新增
+
+**布局**：与实盘 Dashboard 布局一致，顶部标注 `模拟盘`，随时可切换到实盘视图
+
+```
+┌───────────────────────────────────────────┐
+│ 🧪 Paper Trading          [切换实盘视图] │
+├───────────────────────────────────────────┤
+│ 模拟权益: $105,420    模拟敝亏: +5.4%    │
+│ 今日已实现: +$320      最大回撤: -3.1%    │
+├───────────────────────────────────────────┤
+│ 可升级 Live 的策略：                      │
+│ ✔ 布林带  运行 32 天  胜率 62%  [Promote]│
+│ ⏳ 突破动量  18 天 / 需 30 天验证期  │
+├───────────────────────────────────────────┤
+│ 模拟交易记录                             │
+│ AAPL 买入 $178.5 +$420 ✔ 已关闭              │
+│              [重置白板]  [殫 导出]       │
+└───────────────────────────────────────────┘
+```
+
+---
+
+### 4.16 期权分析 (Options) —— V10 新增（只读工具）
+
+**信息调用类型**，不执行任何期权交易
+
+**布局**：
+```
+┌────────────────────────────────────────────┐
+│ 📊 期权分析                    [输入标的]    │
+│ AAPL │ [IV曲面] [IV Rank] [P/C Ratio] [异常成交]│
+├────────────────────────────────────────────┤
+│ IV Rank: 72%  偏高，适合卖方策略              │
+│ IV: 28.5%  52周区间: 18%-42%                  │
+├────────────────────────────────────────────┤
+│ IV 微笑曲面（ECharts 3D / 热力图）│ 期权链     │
+│ 到期日 × 执行价 → IV 颜色  │ 调 │ 到 │ Delta│
+├────────────────────────────────────────────┤
+│ 异常成交: AAPL 03/21 $185C  100倉 > 10x ★ │
+└────────────────────────────────────────────┘
+```
+
+---
 
 ### 5.1 通用组件
 
@@ -727,115 +948,47 @@ export const useStrategyStore = defineStore('strategy', () => {
 - `useNotificationStore` - 通知推送
 - `useStrategyStore` - 策略库管理
 
----
-
-## 6. 状态管理 (Pinia)
-
-### 6.1 Store 设计
-
-```typescript
-// stores/dashboardV2.ts
-export const useDashboardV2Store = defineStore('dashboardV2', () => {
-  const fullData = ref<DashboardV2Response | null>(null);
-  const quickData = ref<QuickUpdateData | null>(null);
-  const loading = ref(false);
-  
-  // 计算属性
-  const totalEquity = computed(() => fullData.value?.account.total_equity);
-  const todayPnL = computed(() => fullData.value?.pnl.today_pnl);
-  
-  // 操作
-  async function loadFull() {
-    loading.value = true;
-    const { data } = await fetchDashboardV2Full();
-    fullData.value = data;
-    loading.value = false;
-  }
-  
-  async function loadQuick() {
-    const { data } = await fetchDashboardV2Quick();
-    quickData.value = data;
-  }
-  
-  // 自动刷新
-  let refreshTimer: NodeJS.Timeout | null = null;
-  function startAutoRefresh() {
-    loadFull();
-    loadQuick();
-    refreshTimer = setInterval(() => {
-      loadQuick();
-    }, 15000); // 15s 快速更新
-  }
-  
-  return {
-    fullData,
-    quickData,
-    loading,
-    totalEquity,
-    todayPnL,
-    loadFull,
-    loadQuick,
-    startAutoRefresh
-  };
-});
-```
-
-### 6.2 其他 Store
-
-- `useAuthStore` - 用户认证
-- `usePlansStore` - 交易计划
-- `usePositionsStore` - 持仓数据
-- `useJournalStore` - 交易日志
-- `useNotificationStore` - 通知推送
+**V10 新增 Stores**：
+- `useAutonomyStore` - AI 自主控制台状态（运行模式、审计日志、Circuit Breaker 状态）
+- `useCopilotStore` - Copilot 对话历史、早报内容
+- `useBacktestStore` - 回测任务列表、当前报告
+- `usePortfolioStore` - 有效前沿数据、推荐配置
+- `useStressTestStore` - 情景结果、热力图数据
+- `usePaperTradingStore` - 模拟账户权益、可升级策略列表
 
 ---
 
 ## 7. 路由设计
 
 ```typescript
-// router/index.ts
+// router/index.ts — V10 更新
 const routes = [
-  {
-    path: '/',
-    redirect: '/dashboard'
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/views/DashboardV2Page.vue'),
-    meta: { requiresAuth: true, title: '交易仪表盘' }
-  },
-  {
-    path: '/ai-advisor',
-    name: 'AIAdvisor',
-    component: () => import('@/views/AIAdvisorPage.vue'),
-    meta: { requiresAuth: true, title: 'AI 交易决策' }
-  },
-  {
-    path: '/plans',
-    name: 'Plans',
-    component: () => import('@/views/PlansPage.vue'),
-    meta: { requiresAuth: true, title: '交易计划' }
-  },
-  {
-    path: '/journal',
-    name: 'Journal',
-    component: () => import('@/views/JournalPage.vue'),
-    meta: { requiresAuth: true, title: '交易日志' }
-  },
-  {
-    path: '/strategies',
-    name: 'Strategies',
-    component: () => import('@/views/StrategiesPage.vue'),
-    meta: { requiresAuth: true, title: '策略库管理' }
-  },
-  {
-    path: '/strategies/:id',
-    name: 'StrategyDetail',
-    component: () => import('@/views/StrategyDetailPage.vue'),
-    meta: { requiresAuth: true, title: '策略详情' }
-  },
-  // ... 其他路由
+  { path: '/', redirect: '/dashboard' },
+  { path: '/dashboard', name: 'Dashboard', component: () => import('@/views/DashboardV2Page.vue') },
+
+  // V10 新增：AI 自主中枢
+  { path: '/autonomy', name: 'Autonomy', component: () => import('@/views/AutonomyPage.vue') },
+  { path: '/copilot', name: 'Copilot', component: () => import('@/views/CopilotPage.vue') },
+  { path: '/backtest', name: 'Backtest', component: () => import('@/views/BacktestPage.vue') },
+  { path: '/portfolio', name: 'Portfolio', component: () => import('@/views/PortfolioPage.vue') },
+  { path: '/stress-test', name: 'StressTest', component: () => import('@/views/StressTestPage.vue') },
+  { path: '/paper', name: 'PaperTrading', component: () => import('@/views/PaperTradingPage.vue') },
+  { path: '/options', name: 'Options', component: () => import('@/views/OptionsAnalysisPage.vue') },
+
+  // 原有路由保留
+  { path: '/ai-advisor', name: 'AIAdvisor', component: () => import('@/views/AIAdvisorPage.vue') },
+  { path: '/journal', name: 'Journal', component: () => import('@/views/JournalPage.vue') },
+  { path: '/strategies', name: 'Strategies', component: () => import('@/views/StrategiesPage.vue') },
+  { path: '/strategies/:id', name: 'StrategyDetail', component: () => import('@/views/StrategyDetailPage.vue') },
+  { path: '/positions', name: 'Positions', component: () => import('@/views/PositionsPage.vue') },
+  { path: '/hotspots', name: 'Hotspots', component: () => import('@/views/MarketHotspotsPage.vue') },
+  { path: '/macro', name: 'Macro', component: () => import('@/views/MacroRiskPage.vue') },
+  { path: '/opportunities', name: 'Opportunities', component: () => import('@/views/OpportunitiesPage.vue') },
+  { path: '/behavior', name: 'Behavior', component: () => import('@/views/BehaviorScorePage.vue') },
+  { path: '/alerts', name: 'Alerts', component: () => import('@/views/AlertsPage.vue') },
+  { path: '/quant-loop', name: 'QuantLoop', component: () => import('@/views/QuantLoopDashboard.vue') },
+  { path: '/system', name: 'System', component: () => import('@/views/SystemMonitorPage.vue') },
+  { path: '/login', name: 'Login', component: () => import('@/views/LoginPage.vue') },
 ];
 ```
 
