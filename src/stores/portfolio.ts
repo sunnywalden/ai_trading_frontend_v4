@@ -25,7 +25,12 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     try {
       loading.value = true
       const res = await portfolioApi.getLatest()
-      result.value = res.data
+      // V10: Only set result if it's a valid non-empty object
+      if (res.data && Object.keys(res.data).length > 0) {
+        result.value = res.data
+      } else {
+        result.value = null
+      }
     } catch (e: any) {
       error.value = e.message
     } finally {
