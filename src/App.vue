@@ -2,7 +2,7 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h1>AI Trading</h1>
+        <h1>AI Quant</h1>
         <div class="header-tools">
           <button class="tool-btn" @click="toggleTheme" :title="$t('auth.switch_theme')">{{ themeLabel }}</button>
           <button class="tool-btn" @click="toggleLanguage" :title="$t('auth.switch_language')">{{ currentLocaleLabel }}</button>
@@ -124,43 +124,46 @@ interface NavGroup { title: string; items: NavItem[] }
 
 const navGroups = computed<NavGroup[]>(() => [
   {
-    title: t('nav.group_realtime'),
+    title: t('nav.group_autonomous'),
+    items: [
+      { path: '/autonomy',  label: t('nav.autonomy'),  icon: '🤖' },
+      { path: '/copilot',   label: t('nav.copilot'),   icon: '💬' },
+      { path: '/quant-loop',label: t('nav.quant_loop'),icon: '🔄' },
+    ],
+  },
+  {
+    title: t('nav.group_market'),
+    items: [
+      { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
+      { path: '/macro',         label: t('nav.macro'),         icon: '🌍' },
+      { path: '/strategies',    label: t('nav.strategies'),    icon: '📚' },
+    ],
+  },
+  {
+    title: t('nav.group_research'),
+    items: [
+      { path: '/backtest',  label: t('nav.backtest'),  icon: '📈' },
+      { path: '/portfolio', label: t('nav.portfolio'), icon: '⚖️' },
+    ],
+  },
+  {
+    title: t('nav.group_execution'),
     items: [
       { path: '/positions', label: t('nav.positions'), icon: '📊' },
-      { path: '/ai-advisor', label: t('nav.ai_advisor'), icon: '🧠' },
-      { path: '/journal', label: t('nav.journal'), icon: '📓' },
-      { path: '/alerts', label: t('nav.alerts'), icon: '🔔' },
-      { path: '/quant-loop', label: t('nav.quant_loop'), icon: '🔄' },
+      { path: '/paper',     label: t('nav.paper'),     icon: '🧪' },
     ],
   },
   {
-    title: t('nav.group_analysis'),
+    title: t('nav.group_audit'),
     items: [
-      { path: '/hotspots', label: t('nav.hotspots'), icon: '🔥' },
-      { path: '/macro', label: t('nav.macro'), icon: '🌍' },
-      { path: '/advice', label: t('nav.advice'), icon: '🤖' },
-      { path: '/strategies', label: t('nav.strategies'), icon: '📚' },
-      { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
-      { path: '/behavior', label: t('nav.behavior'), icon: '🎯' },
+      { path: '/journal', label: t('nav.journal'), icon: '📓' },
+      { path: '/alerts',  label: t('nav.alerts'),  icon: '🔔' },
     ],
   },
   {
-    title: t('nav.group_config'),
+    title: t('nav.group_system'),
     items: [
       { path: '/system', label: t('nav.system'), icon: '🩺' },
-    ],
-  },
-  {
-    title: 'AI 自主中枢',
-    items: [
-      { path: '/autonomy', label: 'AI 自主中枢', icon: '🤖' },
-      { path: '/copilot', label: 'AI 助手', icon: '💬' },
-      { path: '/backtest', label: '回测引擎', icon: '📈' },
-      { path: '/portfolio', label: '组合优化', icon: '⚖️' },
-      { path: '/stress-test', label: '压力测试', icon: '🔥' },
-      { path: '/options', label: '期权分析', icon: '📉' },
-      { path: '/execution-algo', label: '算法执行', icon: '⚙️' },
-      { path: '/paper', label: '模拟盘', icon: '🧪' },
     ],
   },
 ])
@@ -172,7 +175,7 @@ const openGroups = reactive<Record<string, boolean>>({})
 watch(navGroups, (newGroups) => {
   newGroups.forEach(group => {
     if (openGroups[group.title] === undefined) {
-      openGroups[group.title] = group.title === t('nav.group_realtime')
+      openGroups[group.title] = group.title === t('nav.group_autonomous')
     }
   })
 }, { immediate: true })
