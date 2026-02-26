@@ -1,8 +1,9 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.0 | 更新日期：2026-02-24  
-> 变更摘要：新增 AI 自主度控制面板、回测中心、组合优化、压力测试、Trading Copilot、Paper Trading、期权分析中心；Dashboard 增加 AI 运行状态监控
+> 版本：V10.1 | 更新日期：2026-02-26  
+> 变更摘要（V10.1）：VaR/宏观风险/滑点/热点等 Dashboard 数据真实化；Copilot 操作意图确认弹窗落地（`action_intent` 执行闭环）；ETF 标的池管理入口（ETFWatchlistPanel）；港股持仓视图（Tiger API 统一，US/HK 市场标签）；Paper Trading 毕业自动化状态展示；自主控制台移除 Telegram 依赖；组合页增加批量 AI 决策历史  
+> 历史版本：V10.0（2026-02-24）新增 AI 自主度控制面板、回测中心、组合优化、压力测试、Trading Copilot、Paper Trading、期权分析中心
 
 ---
 
@@ -39,52 +40,52 @@
 
 ## 3. 信息架构
 
-### 3.1 导航结构（V10 更新）
+### 3.1 导航结构（V10.1 更新）
 
 ```
 交易仪表盘 (Dashboard) ← 首页
-├── 🤖 AI 自主中枢（V10 新增）
-│   ├── AI 自主控制 (Autonomy Control) ← AI 运行状态 + 自主度配置
-│   ├── Trading Copilot 💬 ← 对话式人机接口
+├── 🤖 AI 自主中枢
+│   ├── AI 自主控制 (Autonomy Control) ← AI 运行状态 + 自主度配置（V10.1 VaR 实时展示）
+│   ├── Trading Copilot 💬 ← 对话式人机接口（V10.1 操作意图执行闭环）
 │   └── 量化交易闭环 (Quant Loop)
 ├── 核心功能
-│   ├── 持仓评估 (Positions)
+│   ├── 持仓评估 (Positions)  ← V10.1 港股视图（US/HK 市场标签）
 │   ├── AI 交易决策 (AI Advisor)
 │   ├── 交易日志 (Journal)
 │   ├── 价格告警 (Alerts)
-│   └── Paper Trading 🧪 (V10 新增)
-├── 研究与分析（V10 增强）
-│   ├── 回测中心 (Backtest) 🔬 (V10 新增)
-│   ├── 组合优化 (Portfolio) 📐 (V10 新增)
-│   ├── 压力测试 (Stress Test) 🛡 (V10 新增)
-│   ├── 期权分析 (Options) 📊 (V10 新增)
+│   └── Paper Trading 🧪       ← V10.1 毕业自动化进度展示
+├── 研究与分析
+│   ├── 回测中心 (Backtest) 🔬
+│   ├── 组合优化 (Portfolio) 📐 ← V10.1 批量 AI 决策历史
+│   ├── 压力测试 (Stress Test) 🛡
+│   ├── 期权分析 (Options) 📊（只读）
 │   ├── 市场热点 (Hotspots)
 │   ├── 宏观分析 (Macro)
 │   ├── 策略筛选 (Opportunities)
-│   └── 策略库管理 (Strategies)
+│   └── 策略库管理 (Strategies) ← V10.1 ETF 标的池管理（ETFWatchlistPanel）
 ├── 复盘
 │   └── 行为评分 (Behavior)
 └── 系统
     └── 系统监控 (System)
 ```
 
-### 3.2 页面层级（V10）
+### 3.2 页面层级（V10.1）
 
 | 页面 | 路由 | 说明 |
 |------|------|------|
-| 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态 |
-| **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志（V10 新增）|
-| **Trading Copilot** | `/copilot` | 对话式人机接口（V10 新增）|
+| 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态、VaR/宏观风险水位（V10.1 真实数据）|
+| **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志；V10.1 新增允许市场/标的类型多选、VaR 实时展示 |
+| **Trading Copilot** | `/copilot` | 对话式人机接口；V10.1 `action_intent` 执行闭环落地 |
 | 量化交易闭环 | `/quant-loop` | 闭环可视化 |
-| 持仓评估 | `/positions` | 技术+基本面评估 |
+| 持仓评估 | `/positions` | 技术+基本面评估；V10.1 港股持仓视图（US/HK 市场标签，Tiger API）|
 | AI 交易决策 | `/ai-advisor` | AI 决策历史+手动触发 |
 | 交易日志 | `/journal` | 交易复盘与 AI 自动复盘 |
 | 价格告警 | `/alerts` | 条件触发推送 |
-| **Paper Trading** | `/paper` | 模拟账户独立视图（V10 新增）|
-| **回测中心** | `/backtest` | 提交回测、查看报告、策略对比（V10 新增）|
-| **组合优化** | `/portfolio` | Markowitz+Kelly 组合构建（V10 新增）|
-| **压力测试** | `/stress-test` | 历史情景+自定义压测（V10 新增）|
-| **期权分析** | `/options` | IV曲面、P/C Ratio、异常成交（V10 新增，只读）|
+| **Paper Trading** | `/paper` | 模拟账户独立视图；V10.1 新增 Paper→Live 毕业自动化状态展示 |
+| **回测中心** | `/backtest` | 提交回测、查看报告、策略对比 |
+| **组合优化** | `/portfolio` | Markowitz+Kelly 组合构建；V10.1 新增批量 AI 决策历史 |
+| **压力测试** | `/stress-test` | 历史情景+自定义压测 |
+| **期权分析** | `/options` | IV曲面、P/C Ratio、异常成交（只读）|
 | 市场热点 | `/hotspots` | 热门赛道与个股 |
 | 宏观分析 | `/macro` | 地缘政治+经济指标 |
 | 策略筛选 | `/opportunities` | 多因子选股 |
@@ -119,6 +120,10 @@
 │ 📈 资金曲线（近30天）                              │
 │ ECharts 折线图：我的组合 vs SPY 基准               │
 ├──────────────────────────────────────────────────┤
+│ � 风险仪表                                      │
+│ VaR 1日(95%): -$2,340 (-1.9%)  最大回撤: -4.3%  │
+│ 宏观风险: 🟡 中等  Sharpe: 1.45  Beta: 0.82      │
+├──────────────────────────────────────────────────┤
 │ 🔔 实时信号 & 待办                                │
 │ ● AAPL 触及止损位 $178.50    [查看计划] 2min ago │
 │ ● NVDA MACD金叉信号           [查看详情] 15m ago  │
@@ -128,10 +133,11 @@
 ```
 
 **交互规范**：
-- 自动刷新：每 30s 通过 WebSocket 或轮询更新
+- 自动刷新：每 30s 通过 WebSocket 或轮询更新（V10.1 VaR/宏观风险来自真实计算）
 - Greeks 超限告警：>80% 红色闪烁
 - 信号列表：按时间倒序，最多显示 10 条
 - 资金曲线：支持 30D/90D/YTD/ALL 切换
+- VaR 水位：绿色（<2%）/ 黄色（2-3%）/ 红色（>3%，超 VaR 上限）
 
 **API 调用**：
 - GET `/api/v1/dashboard/v2/full` - 完整数据
@@ -294,25 +300,34 @@
 
 ### 4.6 持仓评估 (Positions)
 
-**功能**：技术面+基本面综合评估
+**功能**：技术面+基本面综合评估；V10.1 新增港股持仓（通过 Tiger API 统一获取）
 
 **列表视图**：
 
 ```
-┌────────────────────────────────────────────┐
-│ 📊 持仓评估                    [刷新全部]   │
-├──────┬───────┬───────┬──────┬──────────────┤
-│标的  │数量   │成本   │浮盈  │综合评分      │
-├──────┼───────┼───────┼──────┼──────────────┤
-│AAPL  │100    │$178.5 │+$340 │85 ⭐⭐⭐⭐⭐│
-│      │       │       │      │趋势: 强势↑   │
-│      │       │       │      │[详情]        │
-├──────┼───────┼───────┼──────┼──────────────┤
-│NVDA  │50     │$520.0 │-$120 │62 ⭐⭐⭐   │
-│      │       │       │      │趋势: 弱势↓   │
-│      │       │       │      │[详情]        │
-└──────┴───────┴───────┴──────┴──────────────┘
+┌─────────────────────────────────────────────────┐
+│ 📊 持仓评估          [筛选: 全部▼ US HK] [刷新] │
+├──────┬──────┬───────┬───────┬──────┬────────────┤
+│市场  │标的  │数量   │成本   │浮盈  │综合评分    │
+├──────┼──────┼───────┼───────┼──────┼────────────┤
+│ 🇺🇸US │AAPL  │100    │$178.5 │+$340 │85 ⭐⭐⭐⭐⭐│
+│      │      │       │       │      │趋势: 强势↑ │
+│      │      │       │       │      │[详情]      │
+├──────┼──────┼───────┼───────┼──────┼────────────┤
+│ 🇭🇰HK │00700 │200    │HK$355 │+HK$1,400│78 ⭐⭐⭐⭐│
+│      │腾讯  │       │       │      │趋势: 中性→ │
+│      │      │       │       │      │[详情]      │
+├──────┼──────┼───────┼───────┼──────┼────────────┤
+│ 🇺🇸US │NVDA  │50     │$520.0 │-$120 │62 ⭐⭐⭐   │
+│      │      │       │       │      │趋势: 弱势↓ │
+│      │      │       │       │      │[详情]      │
+└──────┴──────┴───────┴───────┴──────┴────────────┘
 ```
+
+**V10.1 港股注意事项**：
+- 市场标签：US（美股）/ HK（港股）；行情数据统一来自 Tiger API（`Market.HK`）
+- 港股价格以港币显示，组合汇总按实时汇率换算为美元
+- 港股无 yfinance 降级，数据完全依赖 Tiger；Tiger 离线时显示上次缓存价
 
 **详情页**：
 - 技术分析卡片：
@@ -481,21 +496,28 @@
 │ 🛡 风险边界配置                                │
 │ 单标的最大仓位  [25]%   单日最多交易 [10]笔  │
 │ VaR@95% 上限   [3]%    压力测试上限 [15]%     │
-│ 允许标的类型  [STOCK]        [保存配置]       │
+│ 允许标的类型  [STOCK,ETF ▼]  允许市场 [US,HK ▼]│
+│                              [保存配置]       │
+├──────────────────────────────────────────────────┤
+│ 📊 今日实时风险                                  │
+│ 当前 VaR 1日: -$2,340 (-1.9%)  ✅ 未超限        │
+│ 宏观风险评分: 58/100 🟡 中等风险               │
 ├──────────────────────────────────────────────────┤
 │ 📝 AI 决策审计日志（最近 20 笔）                  │
-│ 09:32 AAPL 买入 $178.5×100 [TWAP] 置信度:78 [撑销] │
-│ 09:28 NVDA 卖出 $520.3×50 [市价] 置信度:71 [查看] │
+│ 09:32 AAPL 买入 $178.5×100 [TWAP] 置信度:78 [撤销]│
+│ 09:28 NVDA 卖出 $520.3×50 [市价] 置信度:71 [查看]│
 │ 09:15 TSLA 风险闸机拒绝：VaR 超限              │
-│                                [加载更多]             │
+│                                [加载更多]      │
 └──────────────────────────────────────────────────┘
 ```
 
-**交互规范**：
+**交互规范（V10.1 更新）**：
 - 自主度模式切换：带确认对话框（切换全自主时加重警示）
-- 紧急暂停按鈕：红色明显按鈕，点击后即刷新状态为暂停
-- 撤销按鈕：审计日志内每笔 30 分钟内有撤销链接
-- 风险边界更改：即时生效，推送 Telegram 确认
+- 紧急暂停按钮：红色明显按钮，点击后即刷新状态为暂停
+- 撤销按钮：审计日志内每笔 30 分钟内有撤销链接
+- 风险边界更改：即时生效，记录到系统日志（V10.1 移除 Telegram 依赖）
+- 允许标的类型：下拉多选（STOCK / ETF / STOCK,ETF）；允许市场：US / US,HK
+- 今日实时风险区：VaR 来自 `VaRCalculator.calculate_var_cvar()`，每次页面加载刷新
 
 **API**：
 - `GET /api/v1/autonomy/status`
@@ -629,7 +651,7 @@
 
 ---
 
-### 4.15 Paper Trading —— V10 新增
+### 4.15 Paper Trading —— V10 新增 / V10.1 增强毕业自动化
 
 **布局**：与实盘 Dashboard 布局一致，顶部标注 `模拟盘`，随时可切换到实盘视图
 
@@ -637,24 +659,39 @@
 ┌───────────────────────────────────────────┐
 │ 🧪 Paper Trading          [切换实盘视图] │
 ├───────────────────────────────────────────┤
-│ 模拟权益: $105,420    模拟敝亏: +5.4%    │
+│ 模拟权益: $105,420    模拟盈亏: +5.4%    │
 │ 今日已实现: +$320      最大回撤: -3.1%    │
 ├───────────────────────────────────────────┤
-│ 可升级 Live 的策略：                      │
-│ ✔ 布林带  运行 32 天  胜率 62%  [Promote]│
-│ ⏳ 突破动量  18 天 / 需 30 天验证期  │
+│ Paper → Live 毕业进度 (V10.1 自动化)      │
+│ 布林带均值回归                            │
+│ ████████████████████░░░░ 32/30天 ✅通过  │
+│ 胜率: 62%  最大回撤: -4.1%  [申请毕业 →] │
+│                                          │
+│ 突破动量                                  │
+│ ████████████░░░░░░░░░░░░ 18/30天 ⏳进行中 │
+│ 胜率: 55%  最大回撤: -5.2%  [查看详情]   │
+├───────────────────────────────────────────┤
+│ 毕业历史                                  │
+│ ✔ 布林带  2026-01-15 毕业  → 实盘运行中  │
 ├───────────────────────────────────────────┤
 │ 模拟交易记录                             │
-│ AAPL 买入 $178.5 +$420 ✔ 已关闭              │
-│              [重置白板]  [殫 导出]       │
+│ AAPL 买入 $178.5 +$420 ✔ 已关闭          │
+│              [重置模拟账户] [导出记录]    │
 └───────────────────────────────────────────┘
 ```
+
+**V10.1 新增：毕业自动化交互规范**：
+- 毕业进度条：`已运行天数 / PAPER_GRADUATION_DAYS`（默认 30 天），每日定时任务更新
+- 满足条件（天数 + 胜率 + 回撤上限）后，状态自动变为「可升级」，顶部 Banner 提示
+- 「申请毕业」按钮：调用 `POST /api/v1/paper/graduate/{strategy_run_id}`，创建真实策略运行记录并切换
+- 毕业历史：显示已毕业策略及当前实盘运行状态
+- V10.1 移除 Telegram 毕业提醒；改为系统内 Banner 通知 + 审计日志记录
 
 ---
 
 ### 4.16 期权分析 (Options) —— V10 新增（只读工具）
 
-**信息调用类型**，不执行任何期权交易
+**信息调用类型**，不执行任何期权交易；行情数据通过 Tiger API（`TigerOptionClient`）获取
 
 **布局**：
 ```
@@ -663,14 +700,70 @@
 │ AAPL │ [IV曲面] [IV Rank] [P/C Ratio] [异常成交]│
 ├────────────────────────────────────────────┤
 │ IV Rank: 72%  偏高，适合卖方策略              │
-│ IV: 28.5%  52周区间: 18%-42%                  │
+│ IV: 28.5%  52周区间: 18%-42%                 │
+│ 数据来源: 🐯 Tiger API  更新: 2m ago         │
 ├────────────────────────────────────────────┤
 │ IV 微笑曲面（ECharts 3D / 热力图）│ 期权链     │
 │ 到期日 × 执行价 → IV 颜色  │ 调 │ 到 │ Delta│
 ├────────────────────────────────────────────┤
-│ 异常成交: AAPL 03/21 $185C  100倉 > 10x ★ │
+│ 异常成交: AAPL 03/21 $185C  100仓 > 10x ★  │
 └────────────────────────────────────────────┘
 ```
+
+### 4.17 ETF 标的池管理 (ETFWatchlistPanel) —— V10.1 新增
+
+**位置**：嵌入 StrategiesPage，作为策略配置的标的池扩展面板
+
+**布局**：
+```
+┌──────────────────────────────────────────────────┐
+│ 📋 ETF 标的池                     [+ 添加 ETF]   │
+├────────────┬──────────────────────┬──────────────┤
+│筛选：全部  │宽基指数  │行业 ETF  │商品/债券 │杠杆│
+├────────────┴──────────────────────┴──────────────┤
+│ 🌐 宽基指数                                      │
+│ SPY   SPDR S&P 500  ×1.0  ✅ 允许 FULL 模式      │
+│ QQQ   Nasdaq 100    ×1.0  ✅ 允许 FULL 模式  [移除]│
+├──────────────────────────────────────────────────┤
+│ 🏭 行业 ETF                                       │
+│ XLK   科技行业 ETF  ×1.0  ✅ 允许 FULL 模式      │
+│ XLE   能源行业 ETF  ×1.0  ✅ 允许 FULL 模式      │
+├──────────────────────────────────────────────────┤
+│ ⚠️ 杠杆/反向 ETF                                  │
+│ TQQQ  3倍做多 QQQ  ×3.0  ❌ FULL 模式禁用 [详情]│
+│ SQQQ  3倍做空 QQQ  ×-3.0 ❌ FULL 模式禁用       │
+└──────────────────────────────────────────────────┘
+```
+
+**交互规范**：
+- 添加 ETF：输入 ticker，自动从 Tiger API 验证并填充 name/leverage_factor
+- 杠杆 ETF（`leverage_factor != 1.0`）：自动标记 ⚠️，FULL 模式下 `allowed_in_full_mode=false`，不参与自主交易
+- 所有 ETF 共享 `ALLOWED_ASSET_TYPES=STOCK,ETF` 配置，需同步更新 Autonomy 页的「允许标的类型」
+- API：`GET/POST/DELETE /api/v1/strategies/etf-watchlist`
+
+---
+
+### 4.18 组合优化 — V10.1 新增批量 AI 决策历史
+
+在原有组合优化页面底部增加「AI 批量决策历史」面板：
+
+```
+┌──────────────────────────────────────────────────┐
+│ 🤖 AI 组合级决策历史 (V10.1)     [本周▼]        │
+├──────────────────────────────────────────────────┤
+│ 批次 #2026-02-26-003  09:32  信号数:8  执行:5   │
+│ 决策摘要：集中于科技行业，AAPL/NVDA/META 多头     │
+│ 组合收益预期: +2.1%  实际 T+3: +1.8%             │
+│ [展开详情 ▾]                                      │
+├──────────────────────────────────────────────────┤
+│ 批次 #2026-02-25-011  15:45  信号数:6  拒绝:6   │
+│ 决策摘要：VaR 超限，整批拒绝执行                  │
+│ 拒绝原因: portfolio_var_exceeded                  │
+│ [展开详情 ▾]                                      │
+└──────────────────────────────────────────────────┘
+```
+
+**API**：`GET /api/v1/portfolio/batch-decisions?limit=20`；展开详情调用 `GET /api/v1/portfolio/batch-decisions/{batch_id}`
 
 ---
 
@@ -747,6 +840,77 @@ import * as echarts from 'echarts';
 #### PlanCard - 计划卡片
 #### JournalEditor - 日志编辑器
 #### DecisionMatrix - AI 决策矩阵
+#### VaRGauge - VaR 水位仪表盘（V10.1 新增）
+
+```vue
+<!-- 用于 Dashboard 风险仪表区和 Autonomy 今日风险区 -->
+<template>
+  <div class="var-gauge" :class="gaugeLevel">
+    <div class="var-label">VaR 1日 (95%)</div>
+    <div class="var-value">{{ formatCurrency(varDollar) }}</div>
+    <div class="var-pct">{{ (varPct * 100).toFixed(2) }}%</div>
+    <div class="var-bar">
+      <div class="var-fill" :style="{ width: Math.min(Math.abs(varPct) / 0.03 * 100, 100) + '%' }"></div>
+    </div>
+    <div class="var-limit-label">VaR 上限: {{ limitPct * 100 }}%</div>
+  </div>
+</template>
+```
+
+**Props**: `varPct: number`, `varDollar: number`, `limitPct: number`  
+**Class**: `gaugeLevel` = `safe`（<2%）/ `warn`（2-3%）/ `breach`（>3%）
+
+#### ActionIntentConfirmModal - 操作意图确认弹窗（V10.1 新增）
+
+```vue
+<!-- 由 CopilotPage 在收到 action_intent != null 消息时触发 -->
+<template>
+  <div v-if="intent" class="intent-modal-overlay">
+    <div class="intent-modal intent-warning">
+      <h3>⚠️ 操作意图确认</h3>
+      <div class="intent-type">{{ intentTypeLabel(intent.type) }}</div>
+      <div class="intent-params">
+        <div v-for="(val, key) in intent.params" :key="key">
+          <span class="param-key">{{ key }}:</span>
+          <span class="param-val">{{ val }}</span>
+        </div>
+      </div>
+      <div class="intent-actions">
+        <button class="btn-confirm" @click="confirm">确认执行</button>
+        <button class="btn-cancel" @click="cancel">取消</button>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+**Emit**: `confirm` → 调用 `POST /api/v1/copilot/confirm/{action_id}`；`cancel` → 关闭弹窗不执行
+
+#### ETFWatchlistPanel - ETF 标的池面板（V10.1 新增）
+
+见 §4.17
+
+#### PaperGraduationCard - Paper 毕业进度卡片（V10.1 新增）
+
+```vue
+<template>
+  <div class="graduation-card" :class="status">
+    <div class="strategy-name">{{ strategyName }}</div>
+    <div class="progress-bar">
+      <div class="progress-fill" :style="{ width: progressPct + '%' }"></div>
+    </div>
+    <div class="progress-label">{{ runDays }} / {{ targetDays }} 天</div>
+    <div class="metrics">
+      <span>胜率 {{ winRate }}%</span>
+      <span>最大回撤 {{ maxDrawdown }}%</span>
+    </div>
+    <button v-if="status === 'eligible'" class="btn-graduate" @click="graduate">
+      申请毕业 →
+    </button>
+  </div>
+</template>
+```
+
 #### StrategyCard - 策略卡片
 
 ```vue
@@ -948,7 +1112,7 @@ export const useStrategyStore = defineStore('strategy', () => {
 - `useNotificationStore` - 通知推送
 - `useStrategyStore` - 策略库管理
 
-**V10 新增 Stores**：
+**V10 Stores（保留）**：
 - `useAutonomyStore` - AI 自主控制台状态（运行模式、审计日志、Circuit Breaker 状态）
 - `useCopilotStore` - Copilot 对话历史、早报内容
 - `useBacktestStore` - 回测任务列表、当前报告
@@ -956,12 +1120,46 @@ export const useStrategyStore = defineStore('strategy', () => {
 - `useStressTestStore` - 情景结果、热力图数据
 - `usePaperTradingStore` - 模拟账户权益、可升级策略列表
 
+**V10.1 新增 Stores**：
+- `useRiskMetricsStore` - VaR/最大回撤/宏观风险实时数据（来自后端 VaRCalculator + MacroRiskScoringService）
+- `useETFWatchlistStore` - ETF 标的池列表（etf_watchlist 表）
+- `useBatchDecisionStore` - AI 批量决策历史（autonomy_audit_log + batch_decision_id 聚合）
+
+```typescript
+// stores/riskMetrics.ts （V10.1 新增）
+export const useRiskMetricsStore = defineStore('riskMetrics', () => {
+  const varData = ref<{ var_95_pct: number; var_95_dollar: number; max_drawdown_pct: number; sharpe_ratio: number } | null>(null);
+  const macroScore = ref<{ overall_score: number; level: string } | null>(null);
+  const loading = ref(false);
+
+  async function load(accountId: string) {
+    loading.value = true;
+    const [varRes, macroRes] = await Promise.all([
+      fetchVaRMetrics(accountId),
+      fetchMacroRisk(),
+    ]);
+    varData.value = varRes.data;
+    macroScore.value = macroRes.data;
+    loading.value = false;
+  }
+
+  const varLevel = computed(() => {
+    const pct = Math.abs(varData.value?.var_95_pct ?? 0);
+    if (pct > 0.03) return 'breach';
+    if (pct > 0.02) return 'warn';
+    return 'safe';
+  });
+
+  return { varData, macroScore, loading, varLevel, load };
+});
+```
+
 ---
 
 ## 7. 路由设计
 
 ```typescript
-// router/index.ts — V10 更新
+// router/index.ts — V10.1 更新
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', name: 'Dashboard', component: () => import('@/views/DashboardV2Page.vue') },
@@ -977,6 +1175,7 @@ const routes = [
 
   // 原有路由保留
   { path: '/ai-advisor', name: 'AIAdvisor', component: () => import('@/views/AIAdvisorPage.vue') },
+  { path: '/portfolio/batch-decisions', name: 'BatchDecisions', component: () => import('@/views/PortfolioPage.vue') }, // 复用 PortfolioPage，通过 tab 切换
   { path: '/journal', name: 'Journal', component: () => import('@/views/JournalPage.vue') },
   { path: '/strategies', name: 'Strategies', component: () => import('@/views/StrategiesPage.vue') },
   { path: '/strategies/:id', name: 'StrategyDetail', component: () => import('@/views/StrategyDetailPage.vue') },
@@ -1138,6 +1337,22 @@ export default {
 
 ### C. 参考文档
 
-- PRODUCT.md - 产品需求文档
+- PRODUCT.md - 产品需求文档（V10.1）
 - API.md - API 接口文档
-- BACKEND_DESIGN.md - 后端设计文档
+- BACKEND_DESIGN.md - 后端设计文档（V10.1）
+- RELEASE_PLAN_V10.1.md - V10.1 版本规划
+
+### D. V10.1 变更一览
+
+| 章节 | 变更类型 | 说明 |
+|------|---------|------|
+| §3.1 导航结构 | 更新 | 港股持仓入口、ETF 配置入口、Paper 毕业自动化标注 |
+| §4.1 Dashboard | 新增 | 风险仪表区（VaR 水位 + 宏观风险评分，来自真实数据）|
+| §4.6 Positions | 增强 | 港股持仓视图，US/HK 市场标签，Tiger API 数据来源 |
+| §4.10 Autonomy | 更新 | 移除 Telegram 确认；新增允许标的/市场多选；今日实时 VaR 展示 |
+| §4.11 Copilot | 增强 | 操作意图确认弹窗完整交互设计（V10.1 执行闭环）；移除 Telegram 快捷入口 |
+| §4.15 Paper Trading | 增强 | 毕业自动化进度卡片、毕业历史、申请毕业按钮 |
+| §4.17 ETFWatchlistPanel | 新增 | ETF 标的池管理面板（嵌入 StrategiesPage）|
+| §4.18 批量 AI 决策历史 | 新增 | 嵌入 PortfolioPage，展示 AI 组合级决策批次记录 |
+| §5.1 组件库 | 新增 | VaRGauge、ActionIntentConfirmModal、ETFWatchlistPanel、PaperGraduationCard |
+| §6.1 Stores | 新增 | useRiskMetricsStore、useETFWatchlistStore、useBatchDecisionStore |
