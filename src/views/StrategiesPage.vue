@@ -134,11 +134,10 @@ const filteredStrategies = computed(() => {
 onMounted(async () => {
   // Load all builtin strategies with a high limit
   await strategyStore.loadStrategies({ is_builtin: true, limit: 100 })
-  
-  // Load performance for each strategy
-  for (const strategy of strategyStore.strategies) {
-    strategyStore.loadPerformance(strategy.id).catch(console.error)
-  }
+
+  // 单次批量请求替代 N 次逐条请求，消除请求轰炸
+  const ids = strategyStore.strategies.map(s => s.id)
+  strategyStore.loadAllPerformances(ids).catch(console.error)
 })
 
 const handleSearch = () => {

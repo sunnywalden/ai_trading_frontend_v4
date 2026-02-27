@@ -51,6 +51,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '策略库' }
   },
   {
+    path: '/etf-pool',
+    name: 'EtfPool',
+    component: () => import('../views/EtfPoolPage.vue'),
+    meta: { title: 'ETF 标的池' }
+  },
+  {
+    path: '/options',
+    name: 'OptionsAnalysis',
+    component: () => import('../views/OptionsAnalysisPage.vue'),
+    meta: { title: '期权分析' }
+  },
+  {
     path: '/strategies/:id',
     name: 'StrategyDetail',
     component: () => import('../views/StrategyDetailPage.vue'),
@@ -131,7 +143,6 @@ const routes: RouteRecordRaw[] = [
   { path: '/ai-advisor',       redirect: '/autonomy' },
   { path: '/advice',           redirect: '/copilot' },
   { path: '/stress-test',      redirect: '/backtest' },
-  { path: '/options',          redirect: '/opportunities' },
   { path: '/execution-algo',   redirect: '/quant-loop' },
   { path: '/execution-center', redirect: '/autonomy' },
   { path: '/plans',            redirect: '/autonomy' },

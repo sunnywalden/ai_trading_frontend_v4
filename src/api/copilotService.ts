@@ -31,8 +31,8 @@ export const copilotApi = {
   getHistory: (params?: { limit?: number; session_id?: string }) =>
     api.get<{ messages: CopilotMessage[] }>('/v1/copilot/history', { params }),
 
-  getMorningBrief: () =>
-    api.get<MorningBrief>('/v1/copilot/morning-brief'),
+  getMorningBrief: (refresh: boolean = false) =>
+    api.get<MorningBrief>('/v1/copilot/morning-brief', { params: { refresh } }),
 
   confirmAction: (actionId: string) =>
     api.post(`/v1/copilot/confirm/${actionId}`),

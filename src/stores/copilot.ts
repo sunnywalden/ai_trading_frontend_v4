@@ -54,10 +54,10 @@ export const useCopilotStore = defineStore('copilot', () => {
     }
   }
 
-  async function fetchMorningBrief() {
+  async function fetchMorningBrief(force = false) {
     try {
       loading.value = true
-      const res = await copilotApi.getMorningBrief()
+      const res = await copilotApi.getMorningBrief(force)
       morningBrief.value = res.data
     } catch (e: any) {
       error.value = e.message
