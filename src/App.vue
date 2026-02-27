@@ -113,6 +113,7 @@
       </div>
     </aside>
     <main class="main">
+      <SituationalAwarenessBar v-if="loggedIn" />
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -136,6 +137,7 @@ import router from './router';
 import { useRoute } from 'vue-router';
 import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken, getTokenPayload, isTokenExpired } from './api/client';
 import AdminInfoModal from './components/AdminInfoModal.vue';
+import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
 
 const { t, locale } = useI18n();
 const route = useRoute()
@@ -177,6 +179,14 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/copilot',   label: t('nav.copilot'),   icon: '💬' },
       { path: '/evolution', label: t('nav.evolution'), icon: '🧬' },
       { path: '/journal',   label: t('nav.journal'),   icon: '📓' },
+    ],
+  },
+  {
+    title: t('nav.module_observability'),
+    desc: t('nav.module_observability_desc'),
+    items: [
+      { path: '/trade-lifecycle', label: t('nav.trade_lifecycle'), icon: '🔄' },
+      { path: '/order-book',      label: t('nav.order_book'),      icon: '📋' },
     ],
   },
 ])

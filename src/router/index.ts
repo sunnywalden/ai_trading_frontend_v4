@@ -163,6 +163,20 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '任务管理' }
   },
 
+  // ── V10.3 交易可观测性 ────────────────────────────────────
+  {
+    path: '/trade-lifecycle',
+    name: 'TradeLifecycle',
+    component: () => import('../views/TradeLifecycleCenterPage.vue'),
+    meta: { title: '交易生命周期中心' }
+  },
+  {
+    path: '/order-book',
+    name: 'OrderBook',
+    component: () => import('../views/IntelligentOrderBookPage.vue'),
+    meta: { title: '智能订单簿' }
+  },
+
   // ── 已合并页面重定向（向后兼容） ────────────────────────────
   { path: '/system',           redirect: '/service-health' },
   { path: '/dashboard-v1',     redirect: '/dashboard' },

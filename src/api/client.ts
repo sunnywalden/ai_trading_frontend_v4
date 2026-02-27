@@ -1716,9 +1716,7 @@ export async function cancelOrder(orderId: string): Promise<void> {
 export function createWsUrl(): string {
   const token = getAuthToken();
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const base = import.meta.env.DEV
-    ? `${wsProtocol}//${window.location.hostname}:8000`
-    : `${wsProtocol}//${window.location.host}`;
+  const base = `${wsProtocol}//${window.location.host}`;
   return `${base}/api/v1/ws?token=${token}`;
 }
 

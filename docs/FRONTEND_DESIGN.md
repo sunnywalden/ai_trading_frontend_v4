@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.2 | 更新日期：2026-02-28  
+> 版本：V10.3 | 更新日期：2026-02-27  
+> 变更摘要（V10.3）：**Trade Lifecycle Center（交易生命周期中枢）**——新增 `/trade-lifecycle` 路由，PipelineKanban 17阶段泳道（任务卡片 + 阶段耗时色码 + 统计行）、DualFSMPanel 双状态机可视化（Plan FSM + Position FSM + 转换事件日志滚动流）、DecisionProvenanceDrawer（六维信号表 + 风险门禁链 + 执行进度 + AI摘要）；**智能订单簿（Intelligent Order Book）**——新增 `/order-book` 路由，高密度信息列表（17阶段徽章 + 六维雷达迷你图 + 价格偏差标记 + 风险徽章 + AI摘要截断）、分组视图（活跃执行/持仓监控/已完成）、批量操作；**全局态势感知栏（Situational Awareness Bar）**——顶部 36px 粘性状态栏复用至所有页面（体制/VaR水位/围栏/执行队列/待确认/自主模式）、WebSocket 实时推送驱动；导航组新增"交易可观测性"分组；i18n 补全 V10.3 所有命名空间  
 > 变更摘要（V10.2-M2~M8）：**事件日历页（EventCalendarPage）**——风险色环格、EPS 与反应标注、围栏覆盖弹窗；**归因分析页（AttributionPage）**——三层 ECharts 饼图、明细表、JSON 抽屉；**AI 进化页（EvolutionPage）**——洞察知识库 Tab + A/B 实验管理 Tab；**CopilotPage 深度研究**——Standard/Deep Research 模式切换、结构化报告展示；导航组与路由同步新增 `/events`、`/attribution`、`/evolution`；i18n 补全 M2-M8 所有命名空间  
 > 变更摘要（V10.2-M1）：**市场体制感知页（RegimePage）** ——新增 `/regime` 路由、RegimeStatusCard（当前体制+置信度）、RegimeRadarChart（五维雷达图）、RegimeStrategyWeights（策略权重水平柱状图）、RegimeTimeline（体制历史时间轴）；DashboardV2 新增体制感知 KPI 卡；AutonomyPage 新增体制感知横幅 Banner  
 > 变更摘要（V10.1）：VaR/宏观风险/滑点/热点等 Dashboard 数据真实化；Copilot 操作意图确认弹窗落地（`action_intent` 执行闭环）；ETF 标的池管理入口（ETFWatchlistPanel）；港股持仓视图（Tiger API 统一，US/HK 市场标签）；Paper Trading 毕业自动化状态展示；自主控制台移除 Telegram 依赖；组合页增加批量 AI 决策历史  
@@ -52,6 +53,14 @@
 │   ├── 📅 事件日历 (Events) ★ V10.2-M2 新增 ← 盈利/FOMC/CPI 日历 + 围栏管理
 │   ├── Trading Copilot 💬 ← 对话式人机接口（V10.1 意图执行闭环 | V10.2-M7 深度研究）
 │   └── 量化交易闭环 (Quant Loop)
+├── 🔭 交易可观测性 ★ V10.3 新增分组
+│   ├── 🔄 交易生命周期中枢 (Trade Lifecycle Center) ★ V10.3 新增
+│   │   ├── Pipeline Kanban ← 17阶段实时泳道，任务卡片色码 + 阶段耗时统计
+│   │   ├── Dual FSM Panel ← Plan FSM + Position FSM 双状态机实时图
+│   │   └── Decision Provenance Drawer ← 单笔交易决策因果链溯源
+│   └── 📋 智能订单簿 (Order Book) ★ V10.3 新增
+│       ├── 全量交易列表 ← 17阶段徽章 + 六维雷达小图 + 价格偏差 + AI摘要
+│       └── 分组视图 ← 活跃执行 / 持仓监控 / 今日完成
 ├── 核心功能
 │   ├── 持仓评估 (Positions)  ← V10.1 港股视图（US/HK 市场标签）
 │   ├── AI 交易决策 (AI Advisor)
@@ -102,6 +111,8 @@
 | 行为评分 | `/behavior` | AI 决策质量评分 |
 | **归因分析** | `/attribution` | 三层 PnL 归因饼图（Alpha源/执行质量/仓位管理）+ 明细表 + JSON 抽屉 ★ V10.2-M5 新增 |
 | **AI 进化** | `/evolution` | 洞察知识库管理（周报/模式/规则候选）+ A/B 实验列表与创建 ★ V10.2-M6 新增 |
+| **交易生命周期中枢** | `/trade-lifecycle` | 17阶段 Pipeline Kanban + Dual FSM Panel + Decision Provenance Drawer ★ V10.3 新增 |
+| **智能订单簿** | `/order-book` | 全量交易列表（17阶段徽章 + 六维迷你雷达图 + AI摘要 + 价格偏差 + 风险徽章）★ V10.3 新增 |
 | 系统监控 | `/system` | 系统健康 |
 | 登录 | `/login` | JWT 认证 |
 
@@ -777,7 +788,477 @@
 
 ---
 
-### 5.1 通用组件
+## 4.Z V10.3 新增页面设计详述——交易全链路可观测性
+
+> 所有页面继承全局态势感知栏（Situational Awareness Bar），该栏在所有路由页面顶部固定显示，高度 36px，占据页面顶部导航栏紧下方位置。
+
+---
+
+### 4.Z.0 全局态势感知栏（Situational Awareness Bar）
+
+**定位**：全局共享布局组件，注入 `AppLayout.vue`，所有路由均可见。
+
+**布局**（响应式，宽屏展示全部 6 区块，窄屏折叠为 3 区块）：
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ 🌊 BULL_TREND ⬆85%  │  ⚠️ VaR 2.4/3.0% [███████░░░]  │  📅 MSFT🔒 AAPL🔒明日   │
+│                      │                                  │                          │
+│ ⑥ AAPL·NVDA 执行中  │  🕐 待确认 2笔  (⚡闪烁)        │  🤖 SEMI ● 运行中        │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**样式规范**：
+- 背景色：`rgba(26,26,46,0.95)`（比全局背景稍亮）+ `backdrop-filter: blur(8px)`
+- 区块间用竖线分隔，颜色 `#333355`
+- 字体：Consolas 11px / 等宽字体
+- 各区块状态色码：
+  - 体制：BULL_TREND=`#00ff88` / BEAR_TREND=`#ff6b6b` / CRISIS=`#ff0000 闪烁` / RANGE_BOUND=`#ffd93d`
+  - VaR：< 2%=绿 / 2~3%=黄 / > 3%=红+闪烁
+  - 待确认 > 0：整个区块黄色背景 + 脉冲动画
+  - 自主模式：FULL=`#00ff88` / SEMI=`#ffd93d` / ADVISORY=`#00b4d8` / 暂停=`#ff6b6b`
+
+**交互**：
+- 点击任意区块 → 导航至对应详情页（体制→`/regime`，VaR→`/stress-test`，围栏→`/events`，执行→`/trade-lifecycle`，自主→`/autonomy`）
+- ADVISORY 待确认区块点击 → 展开 Side Drawer 直接显示待确认计划列表
+
+**Pinia Store**：`useSituationalAwarenessStore`
+- 数据来源：`GET /api/v1/situational-awareness` 初始化，`/ws/v1/situational-awareness` WebSocket 实时更新
+- 更新策略：任意字段变更触发响应式更新，无需整体轮询
+
+---
+
+### 4.Z.1 交易生命周期中枢（Trade Lifecycle Center）
+
+**路由**：`/trade-lifecycle`  
+**菜单位置**：交易可观测性 > 交易生命周期中枢  
+**功能定位**：实时展示 AI 自主交易的动态过程（"AI 在做什么"），与 Journal（"AI 做了什么"）形成互补。
+
+---
+
+#### 区块 A — 17 阶段流水线泳道（PipelineKanban）
+
+**布局**：横向滚动容器，每列对应一个阶段，固定列宽 120px，任务卡片垂直排列在列内。
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ 🔄 AI 交易流水线                               [今日通过: 47笔] [异常: 1笔]  [⟳] │
+├────────┬────────┬────────┬────────┬────────┬────────┬────────┬────────┬────────┤
+│ ⓪体制  │ ①扫描  │ ②研究  │ ③信号  │③.₅融合 │ ④组合  │④.₅仓位 │ ⑤风控  │ ⑥执行  │
+│分类    │        │        │        │        │        │        │        │        │
+├────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┤
+│        │ NVDA 🟡│        │ AAPL 🟢│        │        │ TSLA 🟢│        │ AAPL 🟢│
+│        │ META 🟢│        │        │        │        │        │        │ NVDA 🟢│
+│        │        │ MSFT 🟢│        │        │        │        │        │        │
+├────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┤
+│  0     │  2     │  1     │  1     │  0     │  0     │  1     │  0     │  2     │
+│ —      │ P50+2s │ P50    │ P50-1s │ —      │ —      │ P50    │ —      │ P50+5s │
+├────────┴────────┴────────┴────────┴────────┴────────┴────────┴────────┴────────┤
+│ ⑦监控  │⑦.₅事件 │ ⑧评估  │⑧.₅TCA │ ⑨回测  │⑨.₅进化 │ ⑩优化  │ ⑪循环  │        │
+├────────┼────────┼────────┼────────┼────────┼────────┼────────┼────────┤        │
+│ 00700🟢│        │ MSFT 🟢│        │        │        │        │ → ⓪   │        │
+│ AMZN 🟢│        │ AMZN 🟢│        │        │        │        │ Loop ↺ │        │
+├────────┴────────┴────────┴────────┴────────┴────────┴────────┴────────┘        │
+│  2     │  0     │  2     │  0     │  0     │  0     │  0     │  ∞     │        │
+│ P50    │ —      │ P50    │ —      │ —      │ —      │ —      │        │        │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**任务卡片**（最小单元，60px × 32px）：
+```
+┌──────────────┐
+│ 🟢 AAPL  ↑  │  ← 颜色点（正常/延迟/停滞）+ 代码 + 方向箭头
+│  12s / P50   │  ← 当前阶段耗时 / 历史 P50 基准
+└──────────────┘
+```
+- 🟢 正常（≤ P50）/ 🟡 轻度延迟（P50~P90）/ 🔴 严重延迟（> P90）/ ⚫ 停滞（> 2×P95）
+- 点击卡片 → 滚动至区块C（Decision Provenance Drawer）并展开该交易
+
+**列底部统计行**：当前滞留数 + 平均耗时 vs P50 偏差（正/负秒数）
+
+**ECharts 配置**：使用 `ECharts Custom Series` 渲染泳道卡片（支持水平滚动 + 动态数据绑定）
+
+---
+
+#### 区块 B — 双维度 FSM 面板（DualFSMPanel）
+
+左右等宽分列，使用 `ECharts Graph` 渲染带方向箭头的状态转换图。
+
+```
+┌──────────────────────────────┬──────────────────────────────────────────────┐
+│  计划生命周期（Plan FSM）       │  持仓状态机（Position State Machine）         │
+├──────────────────────────────┼──────────────────────────────────────────────┤
+│                               │                                              │
+│  [AI_GENERATED(5)]            │  [INITIAL(1)]                                │
+│      │                        │      │ ScaleIn                               │
+│      ├──FULL/SEMI──▶          │      ▼                                       │
+│  [AUTO_EXECUTING(3)] ──▶      │  [PARTIAL(3)] ◀──────────────────┐          │
+│      │           [EXECUTED]   │      │ ScaleIn满仓                 │ScaleIn   │
+│      │ ADVISORY               │      ▼                             │          │
+│  [PENDING(2)]──▶[EXECUTING]   │  [FULL(5)] ─ScaleOut──▶ [REDUCING(2)]       │
+│      │撤销                    │      │                     │ TrailingStop     │
+│  [REVOKED]                    │      └──────止损触发──────▶ [CLOSED(今日8)]   │
+│  [FAILED] [CANCELLED]         │                                              │
+├──────────────────────────────┼──────────────────────────────────────────────┤
+│ 活跃:5  完成:12  撤销:1       │ INITIAL:1 PARTIAL:3 FULL:5 REDUCING:2       │
+│ FULL执行:2 SEMI执行:3         │ CLOSED今日:8                                 │
+│                               │ ScaleIn×3 ScaleOut×2 TrailingStop×1         │
+└──────────────────────────────┴──────────────────────────────────────────────┘
+```
+
+**FSM 转换事件日志**（DualFSMPanel 正下方，固定高度 180px，自动滚动）：
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│ 📋 状态转换事件流（实时）                                       [暂停滚动] │
+├───────────────────────────────────────────────────────────────────────────┤
+│ 10:32:15  🔵 持仓  AAPL  PARTIAL → FULL      ScaleInEngine +40%  $183.2   │
+│ 10:18:04  🔵 持仓  NVDA  FULL    → REDUCING  ScaleOutEngine 超止盈1.5×   │
+│ 10:14:38  🟣 计划  #2847 AI_GENERATED → AUTO_EXECUTING  AAPL BUY TWAP    │
+│ 09:45:22  🔵 持仓  META  INITIAL → PARTIAL   首次建仓，Plan #2840 完成   │
+│ 09:31:00  🔵 持仓  TSLA  REDUCING → CLOSED   TrailingStop ATR×14 锁利+8%│
+└───────────────────────────────────────────────────────────────────────────┘
+```
+- 颜色码：🟣 计划状态机事件 / 🔵 持仓状态机事件
+- 点击任意行 → 跳转 Decision Provenance 展示该笔交易
+
+---
+
+#### 区块 C — 决策溯源面板（DecisionProvenanceDrawer）
+
+**触发方式**：点击 Kanban 任务卡片 或 FSM 事件日志行，以 **Side Drawer（右侧抽屉，宽 520px）** 或页面内**展开嵌入区块**展示（根据屏幕宽度自适应）。
+
+**内容结构**（自上而下 5 卡片式）：
+
+```
+┌─ #2847 AAPL ↑BUY  $183.20 × 120股  TWAP ─────────────────────────── ×关闭 ─┐
+│ 状态徽章: [⑥执行中] [BULL_TREND] [置信度78] [SEMI模式]  创建 10:14:32        │
+├────────────────────────────────────────────────────────────────────────────┤
+│ 📡 Card 1 — 六维信号来源（SignalFusion 快照）                               │
+│                                                                            │
+│   维度      原始分   体制权重   贡献 /上限   贡献占比                        │
+│   技术面     82      ×1.3     26.7/32.5    ████████████░  34.2%           │
+│   基本面     75      ×1.0     15.0/20.0    ████████░░░░░  19.2%           │
+│   宏观       68      ×0.9      9.2/13.5    █████░░░░░░░░  11.8%           │
+│   波动率     71      ×0.9      9.6/13.5    █████░░░░░░░░  12.3%           │
+│   期权       65      ×1.1     10.7/16.5    ██████░░░░░░░  13.7%           │
+│   情绪       70      ×1.0      7.0/10.0    ████░░░░░░░░░   8.9%           │
+│   ─────────────────────────────────────────────────────────────────────  │
+│   综合评分: 78.2 / 100          当前体制: BULL_TREND（置信度 85%）          │
+│                          [六维雷达图 ECharts]                              │
+├────────────────────────────────────────────────────────────────────────────┤
+│ ⚖️ Card 2 — 风险门禁检查链（Risk Gate）                                    │
+│   ✅ VaR@95%      2.4% ≤ 3.0%（剩余空间 0.6%）                            │
+│   ✅ 压力测试      COVID 场景: -8.3% ≤ -15%（上限）                         │
+│   ✅ 仓位合规      单标的 12% ≤ 25%，行业科技 35% ≤ 40%                    │
+│   ✅ 标的类型      STOCK ∈ ALLOWED_ASSET_TYPES                            │
+│   ✅ 频率控制      今日 3笔 ≤ 10笔                                          │
+│   通过时间: 10:14:35  耗时: 0.31s                                          │
+├────────────────────────────────────────────────────────────────────────────┤
+│ 🤖 Card 3 — AI 决策摘要（reasoning 原文）                                  │
+│   "技术面强势(82分)，BULL_TREND 体制下技术权重上调至1.3×；基本面健康(75分)，  │
+│   Q4 EPS 超预期12%；期权面显示机构大单 Call 买入增加，OI 偏多；宏观环境低    │
+│   风险，Fed 利率预期稳定。组合优化 Kelly 建议18%，Markowitz 约束后压缩至12%  │
+│   ，账户净值对应 TWAP 30分钟执行（订单价值约占净值 2.1%）。"               │
+│                               [展开全文 ▾]  [复制JSON]                     │
+├────────────────────────────────────────────────────────────────────────────┤
+│ ⚡ Card 4 — 执行进度（ExecutionAlgo Live）                                  │
+│   算法: TWAP  计划: 6份 × 20股  时长: 30min                                │
+│   ████████░░░░  4/6 已成交   均价 $183.18   目标 $183.20  偏差 -0.01%     │
+│   09:10 $183.15 × 20  09:15 $183.22 × 20  09:20 $183.18 × 20  …         │
+│   剩余: 2份  预计完成: 10:29   [取消剩余]                                   │
+├────────────────────────────────────────────────────────────────────────────┤
+│ 📊 Card 5 — 当前持仓状态（Position FSM）                                    │
+│   状态: PARTIAL  成本均价: $183.18  现价: $184.50  浮盈: +$158 (+0.72%)    │
+│   止损: $178.00（TrailingStop 实时）  止盈目标: $191.00                     │
+│   下次 ScaleIn 触发条件: 价格 ≤ $181.5（高点-30%×ATR）                      │
+│                                                                            │
+│ [跳转归因分析]  [修改止损]  [手动平仓]  [标注观察]                          │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+**组件**：`DecisionProvenanceDrawer.vue`，通过 `provideProp tradePlanId` 驱动数据加载。
+
+**API**：`GET /api/v1/lifecycle/provenance/{plan_id}`
+
+---
+
+### 4.Z.2 智能订单簿（Intelligent Order Book）
+
+**路由**：`/order-book`  
+**菜单位置**：交易可观测性 > 智能订单簿  
+**功能定位**：全量交易视图，对标 Bloomberg EMSX / Goldman SigmaPrime Order Monitor；替代分散视图，提供统一的高密度交易总览。
+
+---
+
+#### 顶部摘要栏（OrderBookSummaryBar）
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [执行中: 3] [持仓中: 7] [待确认: 2] [今日完成: 18]   今日净PnL: +$2,340 +1.87%│
+│ 账户: Live $125,430 | Paper $100,000          筛选: [全部▼] [时间: 今日▼]   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 主表格（OrderBookTable）
+
+**列设计（16 列，支持列显隐配置）**：
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ 账户  │ 标的          │ 方向  │ 策略源      │ 当前阶段         │ 入场目标区间       │ 成交均价  │ 止损    │ 止盈    │
+├───┼───────┼───────────────┼───────┼────────────┼──────────────────┼────────────────────┼──────────┼─────────┼─────────┤
+│ 1 │ LIVE  │ 🇺🇸AAPL Apple │ ↑BUY  │ [布林带]    │ ⑥执行·TWAP 4/6▶ │ $183.0 ～ $183.5   │ $183.18  │ $178.0  │ $191.0  │
+│ 2 │ LIVE  │ 🇺🇸NVDA Nvidia│ ↑BUY  │ [突破动量]  │ ⑥执行·VWAP 1/3▶ │ $890.0 ～ $895.0   │ $891.30  │ $870.0  │ $940.0  │
+│ 3 │ LIVE  │ 🇺🇸MSFT Msft  │ ↑BUY  │ [Fama-FF]  │ ⑦监控·PARTIAL    │ $415.0 ～ $416.0  │ $415.20  │ $405.0  │ $435.0  │
+│ 4 │ LIVE  │ 🇭🇰00700 腾讯 │ ↑BUY  │ [行业轮动]  │ ⑦监控·FULL       │ HK$354 ～ HK$358  │ HK$356   │ HK$348  │ HK$380  │
+│ 5 │ PAPER │ 🇺🇸META Meta  │ ↑BUY  │ [多因子]    │ ③信号生成…       │ $590.0 ～ $595.0   │ —        │ —       │ —       │
+└───┴───────┴───────────────┴───────┴────────────┴──────────────────┴────────────────────┴──────────┴─────────┴─────────┘
+
+│ 仓位%    │ 浮盈/PnL        │ 置信度          │ 风险标记                │ AI 摘要（前80字）                  │ 操作       │
+├──────────┼─────────────────┼─────────────────┼─────────────────────────┼───────────────────────────────────┼────────────┤
+│ 12% ████ │ +$158 +0.72%    │ 78 ⬡迷你雷达    │                         │ "技术强势82，BULL_TREND加权Q4 EP…" │ [详] [撤]  │
+│  8% ███  │ 执行中          │ 71 ⬡迷你雷达    │                         │ "突破关键阻力$888，量放大2.3×，AI…" │ [详] [撤]  │
+│ 10% ████ │ +$1,330 +3.2%   │ 75 ⬡迷你雷达    │ 🔒盈利围栏              │ "多因子强信号ROE 40%+，PEG 1.8 合…" │ [详] [止]  │
+│  7% ███  │ +HK$3,000 +4.2% │ 69 ⬡迷你雷达    │ ⚡体制预警              │ "港股互联网轮动，政策改善，体制权重…" │ [详] [止]  │
+│  5% ██   │ —               │ 66 ⬡迷你雷达    │ 📄Paper                 │ "多因子强信号，市场情绪偏多，动量持…" │ [详]       │
+```
+
+**阶段徽章样式**（当前阶段列）：
+- 执行中：蓝色动画脉冲点 + 阶段名 + 细节（TWAP 4/6）
+- 监控中：绿色静态点 + 仓位状态（PARTIAL/FULL/REDUCING）
+- 等待中（信号/组合）：灰色旋转点 + 阶段名
+- 异常：红色警告图标 + 阶段名 + "超时"
+
+**置信度迷你雷达图**（悬停触发，使用 ECharts `tooltip.formatter` 内嵌小图）：
+```
+   技术 82
+情绪70  基本85
+情绪65  宏观68
+   波动71
+```
+
+**风险标记徽章**组合显示：
+- `🔒` 盈利围栏激活（橙色）
+- `⚡` 体制风险预警（黄色）
+- `💧` 流动性预警（低成交量）（浅蓝）
+- `⏰` SEMI 撤销窗口倒计时（红色，剩余分钟数）
+- `📄` Paper 账户（灰色）
+
+**AI 摘要 Tooltip**：列内截断至 80 字，鼠标悬停展示完整 reasoning 文本（max-width: 400px）。
+
+---
+
+#### 分组展开视图（GroupedView toggle）
+
+右上角 `[列表视图] [分组视图]` 切换，分组视图对应 PRD 4.Y.3 的三层分组：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ▼ 活跃执行中 (2笔)    ↑买入×2   今日执行进度中                             │
+│   ...（展开后同主表格行样式，含进度条）                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ▼ 持仓监控中 (5笔)    ↑多头×4 ↑多头ETF×1  浮盈 +$4,890                    │
+│   ...                                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ▼ 今日已完成 (18笔)   成交×16  取消×1  失败×1   已实现 PnL: +$1,340        │
+│   ...                                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 高级筛选面板（FilterPanel，可收起）
+
+```
+方向:   [全部] [↑买入] [↓卖出]
+账户:   [全部] [Live] [Paper]
+市场:   [全部] [US] [HK]
+类型:   [全部] [STOCK] [ETF]
+阶段:   [全部] [①扫描-④组合] [⑤风控-⑥执行] [⑦监控] [⑧-⑪复盘]
+策略:   [全选] [布林带] [突破动量] [Fama-FF] [行业轮动] ... (多选)
+风险:   [全部] [🔒围栏] [⚡体制预警] [⏰撤销窗口]
+置信度: [全部] [>80] [60-80] [<60]
+时间:   [今日] [近7天] [自定义]
+```
+
+---
+
+#### 批量操作工具栏（活跃持仓勾选后展示）
+
+```
+选中 3 笔  ▸ [批量修改止损 +0.5%] [批量标记观察] [导出 CSV]
+```
+
+---
+
+#### 快捷键支持（Bloomberg Terminal 风格）
+
+| 快捷键 | 动作 |
+|--------|------|
+| `F5` | 强制刷新全量数据 |
+| `Ctrl+F` | 聚焦标的搜索框 |
+| `↑/↓` | 上下选中行 |
+| `Enter` | 展开当前行溯源面板 |
+| `Esc` | 关闭溯源 Drawer |
+
+---
+
+### 4.Z.3 Dashboard V2 新增卡片（V10.3 扩展）
+
+在现有 Dashboard 增加 2 个新 KPI 卡和 1 个状态栏（不替换现有布局，追加到已有 KPI 行下方）：
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ V10.3 新增 —— 交易流水线快览                                  │
+├──────────────────┬───────────────────┬──────────────────────┤
+│ 🔄 流水线活跃任务  │ 📋 今日订单概况    │ 🔵 持仓FSM分布        │
+│  Stage⑥: 2笔     │  执行:2 监控:5    │  PARTIAL:3 FULL:5    │
+│  Stage⑦: 5笔     │  待确:2 完成:18   │  REDUCING:2          │
+│  异常:  0笔     ✅ │  已实现 +$1,340   │  ScaleIn触发×3今日   │
+│ [→ 生命周期中枢]  │ [→ 智能订单簿]    │ [→ 生命周期中枢]     │
+└──────────────────┴───────────────────┴──────────────────────┘
+```
+
+---
+
+### 4.Z.4 组件库扩展（V10.3）
+
+#### PipelineKanbanBoard.vue
+```
+Props:
+  stages: PipelineStage[]      // 17个阶段配置
+  tasks: PipelineTask[]        // 活跃任务列表
+  p50Benchmarks: Record<number, number>  // 各阶段P50基准耗时(ms)
+Emits:
+  task-click(planId: string)
+  stage-hover(stageId: number, stats: StageStats)
+```
+
+#### DualFSMPanel.vue
+```
+Props:
+  planFsmStats: PlanFSMStats       // 各状态计划数
+  positionFsmStats: PositionFSMStats  // 各状态仓位数
+  fsmEvents: FSMTransitionEvent[]  // 最新转换事件流
+Emits:
+  plan-state-click(state: PlanState)
+  position-state-click(state: PositionState)
+  event-click(event: FSMTransitionEvent)
+```
+
+#### DecisionProvenanceDrawer.vue
+```
+Props:
+  planId: string              // 交易计划ID
+  mode: 'drawer' | 'inline'  // 展示模式
+Emits:
+  close
+  action(type: 'goto-attribution' | 'modify-sl' | 'cancel')
+```
+
+#### OrderBookTable.vue
+```
+Props:
+  orders: OrderBookItem[]
+  groupBy: 'none' | 'status'
+  showColumns: ColumnKey[]    // 可配置列显隐
+Emits:
+  row-click(planId: string)
+  bulk-action(type: BulkActionType, planIds: string[])
+```
+
+#### SituationalAwarenessBar.vue
+```
+// 全局组件，注入 AppLayout.vue
+// 数据完全来自 useSituationalAwarenessStore
+// 无 props，完全响应式
+```
+
+---
+
+### 4.Z.5 Pinia Store 扩展（V10.3）
+
+新增 Store：
+
+```typescript
+// useLifecycleStore.ts
+interface LifecycleStore {
+  // 流水线
+  pipelineTasks: PipelineTask[]        // 当前各阶段活跃任务
+  stageStats: StageStats[]             // 各阶段统计
+  // FSM
+  planFsmStats: PlanFSMStats
+  positionFsmStats: PositionFSMStats
+  fsmEvents: FSMTransitionEvent[]      // 滚动日志，保留最新100条
+  // 溯源
+  provenanceCache: Map<string, ProvenanceData>  // planId → 溯源数据缓存
+  activeProvenancePlanId: string | null
+  // 方法
+  fetchPipeline(): Promise<void>
+  fetchFSMStats(): Promise<void>
+  streamFSMEvents(): void              // WebSocket 订阅
+  loadProvenance(planId: string): Promise<void>
+}
+
+// useOrderBookStore.ts
+interface OrderBookStore {
+  orders: OrderBookItem[]
+  summary: OrderBookSummary
+  filters: OrderBookFilters
+  selectedPlanIds: Set<string>
+  // 方法
+  fetchOrders(params?: FilterParams): Promise<void>
+  subscribeupdates(): void  // WebSocket 实时价格/状态更新
+  bulkModifyStopLoss(planIds: string[], deltaPercent: number): Promise<void>
+  exportCSV(): void
+}
+
+// useSituationalAwarenessStore.ts
+interface SAStore {
+  regime: RegimeSummary
+  varStatus: VaRStatus
+  activeFences: EarningsFence[]
+  activeExecutions: ExecutionSummary[]
+  pendingConfirmCount: number
+  autonomyStatus: AutonomyStatus
+  // 方法
+  init(): Promise<void>
+  connectWebSocket(): void
+}
+```
+
+---
+
+### 4.Z.6 国际化（i18n，V10.3 新增命名空间）
+
+新增翻译 key（中/英）：
+
+```typescript
+// lifecycle.*
+'lifecycle.pipeline.title'   → '17阶段流水线' / 'AI Pipeline'
+'lifecycle.fsm.plan.title'   → '计划生命周期' / 'Plan Lifecycle'
+'lifecycle.fsm.position.title' → '持仓状态机' / 'Position State Machine'
+'lifecycle.provenance.title' → 'AI决策溯源' / 'Decision Provenance'
+'lifecycle.stage.*'          → 各阶段名称（17个）
+
+// orderBook.*
+'orderBook.title'            → '智能订单簿' / 'Order Book'
+'orderBook.group.executing'  → '活跃执行中' / 'Executing'
+'orderBook.group.monitoring' → '持仓监控中' / 'Monitoring'
+'orderBook.group.completed'  → '今日已完成' / 'Completed Today'
+'orderBook.risk.*'           → 风险标记文案
+
+// awareness.*
+'awareness.regime.*'         → 体制相关
+'awareness.var.*'            → VaR 相关
+'awareness.pending'          → '⏳ 待确认 {n}笔' / '⏳ Pending {n}'
+```
+
+---
+
+## 5. 组件库
 
 #### KPICard - KPI 卡片
 
@@ -1183,6 +1664,16 @@ const routes = [
   { path: '/paper', name: 'PaperTrading', component: () => import('@/views/PaperTradingPage.vue') },
   { path: '/options', name: 'Options', component: () => import('@/views/OptionsAnalysisPage.vue') },
 
+  // V10.2-M1~M6：体制/事件/归因/进化
+  { path: '/regime', name: 'Regime', component: () => import('@/views/RegimePage.vue') },
+  { path: '/events', name: 'Events', component: () => import('@/views/EventCalendarPage.vue') },
+  { path: '/attribution', name: 'Attribution', component: () => import('@/views/AttributionPage.vue') },
+  { path: '/evolution', name: 'Evolution', component: () => import('@/views/EvolutionPage.vue') },
+
+  // V10.3 新增：交易可观测性
+  { path: '/trade-lifecycle', name: 'TradeLifecycle', component: () => import('@/views/TradeLifecycleCenterPage.vue') },
+  { path: '/order-book', name: 'OrderBook', component: () => import('@/views/IntelligentOrderBookPage.vue') },
+
   // 原有路由保留
   { path: '/ai-advisor', name: 'AIAdvisor', component: () => import('@/views/AIAdvisorPage.vue') },
   { path: '/portfolio/batch-decisions', name: 'BatchDecisions', component: () => import('@/views/PortfolioPage.vue') }, // 复用 PortfolioPage，通过 tab 切换
@@ -1536,12 +2027,26 @@ export default {
 
 ### C. 参考文档
 
-- PRODUCT.md - 产品需求文档（V10.2）
+- PRODUCT.md - 产品需求文档（V10.3）
 - API.md - API 接口文档
-- BACKEND_DESIGN.md - 后端设计文档（V10.2）
-- RELEASE_PLAN_V10.2.md - V10.2 版本规划
+- BACKEND_DESIGN.md - 后端设计文档（V10.3）
+- RELEASE_PLAN_V10.3.md - V10.3 版本规划
 
-### D. V10.2 变更一览
+### D. V10.3 变更一览
+
+| 章节 | 变更类型 | 说明 |
+|------|---------|------|
+| §3.1 导航结构 | 更新 | 新增"交易可观测性"分组；新增 `/trade-lifecycle`（生命周期中枢）和 `/order-book`（智能订单簿）路由 |
+| §3.2 页面层级 | 更新 | 新增 TradeLifecycleCenter、OrderBookPage 两个主页面 |
+| §4.1 Dashboard | 增强 | 新增"交易流水线快览"组件行（流水线任务分布 + 今日订单概况 + 持仓FSM分布）|
+| **§4.Z.0 SituationalAwarenessBar** | 新增 | 全局顶部 36px 粘性状态栏，体制/VaR/围栏/执行/待确认/自主模式 ★ V10.3 |
+| **§4.Z.1 TradeLifecycleCenter** | 新增 | 17阶段 PipelineKanban + DualFSMPanel + DecisionProvenanceDrawer ★ V10.3 |
+| **§4.Z.2 IntelligentOrderBook** | 新增 | 高密度全量订单表（16列）+ 分组视图 + 高级筛选 + Bloomberg风格快捷键 ★ V10.3 |
+| §5 组件库 | 新增 | PipelineKanbanBoard / DualFSMPanel / DecisionProvenanceDrawer / OrderBookTable / SituationalAwarenessBar |
+| §6 Pinia Stores | 新增 | useLifecycleStore / useOrderBookStore / useSituationalAwarenessStore |
+| i18n | 更新 | 补全 lifecycle / orderBook / awareness 三个命名空间（中英双语）|
+
+### E. V10.2-M2~M7 变更一览（归档）
 
 | 章节 | 变更类型 | 说明 |
 |------|---------|------|
@@ -1556,7 +2061,7 @@ export default {
 | i18n | 更新 | zh-CN/en-US 补全 events/attribution/evolution/signals/insights 命名空间 |
 | §4.X RegimePage | 新增（M1）| 体制感知主页：4块布局（状态卡+雷达图+策略权重+历史时间轴）|
 
-### E. V10.1 变更一览（归档）
+### F. V10.1 变更一览（归档）
 
 | 章节 | 变更类型 | 说明 |
 |------|---------|------|
