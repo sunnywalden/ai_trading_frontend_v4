@@ -198,7 +198,7 @@ function autoExpandGroup() {
 }
 watch(() => route.path, autoExpandGroup, { immediate: true })
 
-const loggedIn = computed(() => isLoggedIn());
+const loggedIn = ref(isLoggedIn());
 const username = ref(getCurrentUsername());
 const expiryText = ref('');
 const theme = ref(localStorage.getItem('theme') || 'dark');
@@ -301,6 +301,7 @@ let timer: number | undefined;
 onMounted(() => {
   timer = window.setInterval(() => {
     username.value = getCurrentUsername();
+    loggedIn.value = isLoggedIn();
     updateExpiry();
   }, 1000);
   updateExpiry();
@@ -334,6 +335,10 @@ function applyTheme() {
   min-height: 100vh;
   background: var(--bg-main);
   color: var(--text-color);
+}
+
+.layout.no-sidebar {
+  grid-template-columns: 1fr;
 }
 
 .sidebar {
