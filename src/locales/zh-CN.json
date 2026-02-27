@@ -234,7 +234,9 @@
       "risk_assessment": "风险评估",
       "adaptive_optimization": "自适应优化",
       "order_staging": "订单筹备",
-      "execution": "执行记录"
+      "execution": "执行记录",
+      "trade_execution": "交易执行",
+      "performance_evaluation": "绩效评估"
     },
     "phase_details": {
       "gen_signals": "生成信号",
