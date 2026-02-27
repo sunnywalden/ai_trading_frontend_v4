@@ -22,6 +22,26 @@
       </div>
     </section>
 
+    <!-- V10.2-M1: 体制感知横幅 Banner -->
+    <div
+      v-if="regimeInfo"
+      class="regime-banner"
+      :style="{ borderColor: regimeBannerColor + '66', backgroundImage: `linear-gradient(135deg, ${regimeBannerColor}0a 0%, transparent 60%)` }"
+    >
+      <span class="regime-banner-icon">🧠</span>
+      <span class="regime-banner-label">当前市场体制：</span>
+      <span class="regime-banner-name" :style="{ color: regimeBannerColor }">
+        {{ regimeBannerLabel }}
+      </span>
+      <span class="regime-banner-conf">置信度 {{ regimeBannerConf }}</span>
+      <span class="regime-banner-sep">|</span>
+      <span class="regime-banner-var" :style="{ color: varMultColor }">
+        VaR 倍数 ×{{ regimeVarMult }}
+      </span>
+      <span class="regime-banner-sep">|</span>
+      <router-link to="/regime" class="regime-banner-link">查看详情 →</router-link>
+    </div>
+
     <!-- 状态卡片 -->
     <div v-if="status" class="stats-grid" style="margin-bottom: 24px;">
       <div class="stat-card">
@@ -185,13 +205,52 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useAutonomyStore } from '@/stores/autonomy'
 import type { AutonomyLevel } from '@/api/autonomyService'
 import { storeToRefs } from 'pinia'
+import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
+
+// V10.2-M1: 体制感知
+const regimeInfo     = ref<RegimeInfo | null>(null)
+const regimeVarMultN = ref<number>(1.0)
+
+const regimeBannerLabel = computed(() => {
+  if (!regimeInfo.value) return '—'
+  return REGIME_LABELS[regimeInfo.value.regime] ?? regimeInfo.value.regime
+})
+const regimeBannerConf = computed(() => {
+  if (!regimeInfo.value || typeof regimeInfo.value !== 'object') return '—'
+  const conf = regimeInfo.value.confidence
+  if (typeof conf !== 'number') return '—'
+  return (conf * 100).toFixed(0) + '%'
+})
+const regimeBannerColor = computed(() => {
+  if (!regimeInfo.value) return '#555555'
+  return REGIME_COLORS[regimeInfo.value.regime as RegimeType] ?? '#aaaaaa'
+})
+const regimeVarMult = computed(() => regimeVarMultN.value.toFixed(2))
+const varMultColor = computed(() => {
+  if (regimeVarMultN.value > 1.05) return '#00ff88'
+  if (regimeVarMultN.value < 0.75) return '#ff4d4d'
+  return '#aaaaaa'
+})
+
+async function fetchRegime() {
+  try {
+    const res = await regimeApi.getCurrent()
+    if (res.data && 'regime' in res.data) {
+      regimeInfo.value     = res.data.regime
+      regimeVarMultN.value = res.data.var_multiplier ?? 1.0
+    } else {
+      regimeInfo.value     = res.data as any
+      regimeVarMultN.value = 1.0
+    }
+  } catch { /* silent */ }
+}
 
 function signalTypeClass(type: string) {
   if (type === 'EXIT' || type === 'REDUCE' || type === 'SELL') return 'badge-warning'
@@ -254,6 +313,7 @@ onMounted(async () => {
   await autonomyStore.fetchStatus()
   await autonomyStore.fetchAuditLog({ limit: 50 })
   await autonomyStore.fetchSignalPipeline()
+  fetchRegime()  // V10.2-M1: 异步获取体制，不阻塞主查询
 })
 </script>
 
@@ -309,4 +369,33 @@ onMounted(async () => {
 }
 .trigger-button:hover:not(:disabled) { background: rgba(74,144,226,0.3); }
 .trigger-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* V10.2-M1: 体制感知横幅 */
+.regime-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  background: #0e0e28;
+  border: 1px solid #1e1e4a;
+  border-radius: 7px;
+  font-size: 13px;
+  transition: border-color 0.3s;
+}
+.regime-banner-icon { font-size: 16px; }
+.regime-banner-label { color: #666688; }
+.regime-banner-name { font-weight: 700; font-size: 15px; }
+.regime-banner-conf { color: #555577; font-size: 12px; }
+.regime-banner-sep { color: #2a2a4a; }
+.regime-banner-var { font-weight: 600; font-size: 13px; }
+.regime-banner-link {
+  color: #00ccff;
+  text-decoration: none;
+  font-size: 12px;
+  margin-left: auto;
+  transition: color 0.2s;
+}
+.regime-banner-link:hover { color: #00ff88; }
 </style>
