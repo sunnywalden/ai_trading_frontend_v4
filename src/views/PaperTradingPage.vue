@@ -112,39 +112,31 @@
         </div>
       </div>
 
-      <!-- 右: 晋级评估 -->
+      <!-- 右: 晋级评估 (V10.1 PaperGraduationCard) -->
       <div class="card graduation-panel">
         <h3 style="margin: 0 0 16px;">🎓 晋级评估</h3>
         <button class="primary-button" style="width: 100%; margin-bottom: 16px;" @click="paperStore.checkGraduation()">
           检查晋级资格
         </button>
-        <div v-if="graduation">
-          <div
-            class="graduation-banner"
-            :class="graduation.eligible ? 'eligible' : 'not-eligible'"
-          >
-            {{ graduation.eligible ? '✅ 达到晋级标准！可以申请实盘' : '⏳ 尚未达到晋级标准' }}
-          </div>
-          <p style="font-size: 13px; color: #888; margin-top: 8px;">{{ graduation.message }}</p>
-          <div class="requirement-list">
-            <div class="req-item" :class="graduation.metrics.sharpe >= graduation.requirements.min_sharpe ? 'pass' : 'fail'">
-              <span>Sharpe 比率</span>
-              <span>{{ graduation.metrics.sharpe.toFixed(2) }} / ≥{{ graduation.requirements.min_sharpe }}</span>
-            </div>
-            <div class="req-item" :class="graduation.metrics.max_drawdown <= graduation.requirements.max_drawdown_limit ? 'pass' : 'fail'">
-              <span>最大回撤</span>
-              <span>{{ (graduation.metrics.max_drawdown * 100).toFixed(1) }}% / ≤{{ (graduation.requirements.max_drawdown_limit * 100).toFixed(0) }}%</span>
-            </div>
-            <div class="req-item" :class="graduation.metrics.win_rate >= graduation.requirements.min_win_rate ? 'pass' : 'fail'">
-              <span>胜率</span>
-              <span>{{ (graduation.metrics.win_rate * 100).toFixed(1) }}% / ≥{{ (graduation.requirements.min_win_rate * 100).toFixed(0) }}%</span>
-            </div>
-            <div class="req-item" :class="graduation.metrics.trade_days >= graduation.requirements.min_days ? 'pass' : 'fail'">
-              <span>运行天数</span>
-              <span>{{ graduation.metrics.trade_days }} / ≥{{ graduation.requirements.min_days }} 天</span>
-            </div>
-          </div>
-        </div>
+        <!-- 已有数据时显示详细卡片 -->
+        <PaperGraduationCard
+          v-if="graduation"
+          :account-id="account?.account_id || 'paper'"
+          :strategy-name="'模拟策略'"
+          :eligible="graduation.eligible"
+          :message="graduation.message"
+          :criteria="{
+            min_win_rate: graduation.requirements.min_win_rate,
+            max_drawdown: graduation.requirements.max_drawdown_limit,
+            min_run_days: graduation.requirements.min_days,
+          }"
+          :metrics="{
+            win_rate: graduation.metrics.win_rate,
+            max_drawdown: graduation.metrics.max_drawdown,
+            run_days: graduation.metrics.trade_days,
+          }"
+          @graduate="onGraduate"
+        />
         <p v-else style="color: #666; font-size: 13px;">点击按钮评估晋级资格</p>
       </div>
     </div>
@@ -155,6 +147,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { usePaperTradingStore } from '@/stores/paperTrading'
 import { storeToRefs } from 'pinia'
+import PaperGraduationCard from '@/components/PaperGraduationCard.vue'
 import type { PaperTradeRequest } from '@/api/paperTradingService'
 
 const paperStore = usePaperTradingStore()
@@ -174,6 +167,13 @@ async function handleTrade() {
 function confirmReset() {
   if (window.confirm('确定要重置模拟账户吗？所有持仓和交易记录将被清除。')) {
     paperStore.resetAccount()
+  }
+}
+
+async function onGraduate(accountId: string) {
+  if (window.confirm(`确认将账户 ${accountId} 晋级至实盘？`)) {
+    // 调用后端毕业接口（V10.1 P3.4）
+    console.log('[Paper] Graduation requested for', accountId)
   }
 }
 

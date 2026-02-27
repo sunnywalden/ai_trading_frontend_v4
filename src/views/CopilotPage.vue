@@ -25,14 +25,24 @@
         <p v-else class="info-message">点击刷新获取早间简报</p>
       </div>
 
-      <!-- 待确认操作 -->
+      <!-- 待确认操作列表 -->
       <div v-if="copilotStore.pendingActions.length" class="card">
-        <h4 style="margin: 0 0 12px; color: #ff9800;">⚡ 待确认操作</h4>
+        <h4 style="margin: 0 0 12px; color: #ff9800;">⚡ 待确认操作 ({{ copilotStore.pendingActions.length }})</h4>
         <div v-for="action in copilotStore.pendingActions" :key="action.action_id" class="pending-action">
           <p>{{ action.description }}</p>
-          <button class="success-button small" @click="copilotStore.confirmAction(action.action_id)">确认执行</button>
+          <button class="success-button small" @click="openConfirmModal(action)">确认执行</button>
         </div>
       </div>
+
+      <!-- 操作意图确认弹窗 -->
+      <ActionIntentConfirmModal
+        :visible="!!activeConfirmAction"
+        :action-id="activeConfirmAction?.action_id ?? ''"
+        :intent="{ type: activeConfirmAction?.type ?? 'general', description: activeConfirmAction?.description, params: activeConfirmAction?.params }"
+        :expires-seconds="30"
+        @confirm="onModalConfirm"
+        @cancel="activeConfirmAction = null"
+      />
     </div>
 
     <!-- 右栏：对话框 -->
@@ -87,9 +97,22 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useCopilotStore } from '@/stores/copilot'
 import { storeToRefs } from 'pinia'
+import ActionIntentConfirmModal from '@/components/ActionIntentConfirmModal.vue'
 
 const copilotStore = useCopilotStore()
 const { morningBrief: brief } = storeToRefs(copilotStore)
+
+// 操作意图确认弹窗
+const activeConfirmAction = ref<typeof copilotStore.pendingActions[0] | null>(null)
+
+function openConfirmModal(action: typeof copilotStore.pendingActions[0]) {
+  activeConfirmAction.value = action
+}
+
+async function onModalConfirm(actionId: string) {
+  await copilotStore.confirmAction(actionId)
+  activeConfirmAction.value = null
+}
 const inputText = ref('')
 const messagesArea = ref<HTMLElement>()
 

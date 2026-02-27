@@ -16,6 +16,20 @@
     <p v-else-if="loading" class="loading-message">{{ $t('positions.loading') }}</p>
     
     <div v-else-if="positionsData">
+      <!-- V10.1: US/HK 市场过滤标签 -->
+      <div class="market-filter-bar" v-if="hasHkPositions">
+        <button
+          v-for="tab in marketTabs"
+          :key="tab.key"
+          class="market-tab"
+          :class="{ active: marketFilter === tab.key }"
+          @click="marketFilter = tab.key"
+        >
+          {{ tab.label }}
+          <span class="tab-count">{{ tab.count }}</span>
+        </button>
+      </div>
+
       <!-- 汇总信息 -->
       <section class="summary-bar">
         <div class="summary-item">
@@ -56,7 +70,7 @@
       <!-- 持仓列表 -->
       <section class="positions-grid">
         <PositionScoreCard
-          v-for="position in positionsData.positions"
+          v-for="position in filteredPositions"
           :key="position.symbol"
           :symbol="position.symbol"
           :quantity="position.quantity"
@@ -86,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PositionScoreCard from '../components/PositionScoreCard.vue';
 import PortfolioDashboard from '../components/PortfolioDashboard.vue';
@@ -102,6 +116,42 @@ const { t } = useI18n();
 const positionsData = ref<PositionsAssessmentResponse | null>(null);
 const loading = ref(false);
 const errorMsg = ref('');
+
+// V10.1: US/HK 市场过滤
+type MarketFilter = 'all' | 'us' | 'hk'
+const marketFilter = ref<MarketFilter>('all')
+
+function isHkSymbol(symbol: string): boolean {
+  const s = symbol.trim().toUpperCase()
+  if (s.endsWith('.HK')) return true
+  if (s.endsWith('HK')) {
+    const core = s.slice(0, -2)
+    return /^\d{1,5}$/.test(core)
+  }
+  return /^\d{1,5}$/.test(s)
+}
+
+const hasHkPositions = computed(() =>
+  (positionsData.value?.positions ?? []).some(p => isHkSymbol(p.symbol))
+)
+
+const filteredPositions = computed(() => {
+  const all = positionsData.value?.positions ?? []
+  if (marketFilter.value === 'hk') return all.filter(p => isHkSymbol(p.symbol))
+  if (marketFilter.value === 'us') return all.filter(p => !isHkSymbol(p.symbol))
+  return all
+})
+
+const marketTabs = computed(() => {
+  const all = positionsData.value?.positions ?? []
+  const hkCount = all.filter(p => isHkSymbol(p.symbol)).length
+  const usCount = all.length - hkCount
+  return [
+    { key: 'all' as MarketFilter, label: '全部', count: all.length },
+    { key: 'us' as MarketFilter, label: '🇺🇸 美股', count: usCount },
+    { key: 'hk' as MarketFilter, label: '🇭🇰 港股', count: hkCount },
+  ]
+})
 
 async function loadPositionsData() {
   loading.value = true;
@@ -212,6 +262,36 @@ onMounted(() => {
 .refresh-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.market-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.market-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #2d2d4e);
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.market-tab.active {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+.tab-count {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
 }
 
 .summary-bar {

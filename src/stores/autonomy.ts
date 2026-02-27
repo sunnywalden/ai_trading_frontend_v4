@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { autonomyApi, type AutonomyLevel, type AutonomyStatus, type AuditLogEntry } from '@/api/autonomyService'
+import { autonomyApi, type AutonomyLevel, type AutonomyStatus, type AuditLogEntry, type SignalPipelineItem } from '@/api/autonomyService'
 
 export const useAutonomyStore = defineStore('autonomy', () => {
   const status = ref<AutonomyStatus | null>(null)
   const auditLogs = ref<AuditLogEntry[]>([])
   const auditTotal = ref(0)
+  const signalPipeline = ref<SignalPipelineItem[]>([])
   const loading = ref(false)
+  const triggerLoading = ref(false)
   const error = ref<string | null>(null)
 
   const isPaused = computed(() => status.value?.paused ?? false)
@@ -59,14 +61,46 @@ export const useAutonomyStore = defineStore('autonomy', () => {
     }
   }
 
+  async function fetchSignalPipeline() {
+    try {
+      const res = await autonomyApi.getSignalPipeline(30)
+      signalPipeline.value = res.data.signals
+    } catch (e: any) {
+      error.value = e.message
+    }
+  }
+
   async function revokeOrder(execId: string) {
     await autonomyApi.revokeOrder(execId)
     await fetchAuditLog()
   }
 
+  async function triggerRebalance() {
+    triggerLoading.value = true
+    try {
+      const res = await autonomyApi.triggerRebalance()
+      await fetchSignalPipeline()
+      return res.data
+    } finally {
+      triggerLoading.value = false
+    }
+  }
+
+  async function triggerDecisionCycle() {
+    triggerLoading.value = true
+    try {
+      const res = await autonomyApi.triggerDecisionCycle()
+      await fetchStatus()
+      return res.data
+    } finally {
+      triggerLoading.value = false
+    }
+  }
+
   return {
-    status, auditLogs, auditTotal, loading, error,
+    status, auditLogs, auditTotal, signalPipeline, loading, triggerLoading, error,
     isPaused, currentLevel, circuitBreakerActive,
-    fetchStatus, setLevel, pause, resume, fetchAuditLog, revokeOrder,
+    fetchStatus, setLevel, pause, resume, fetchAuditLog,
+    fetchSignalPipeline, revokeOrder, triggerRebalance, triggerDecisionCycle,
   }
 })

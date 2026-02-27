@@ -72,6 +72,11 @@
         </label>
       </el-checkbox-group>
     </div>
+
+    <!-- V10.1: ETF 标的池管理 -->
+    <div class="etf-section">
+      <ETFWatchlistPanel @select="onEtfSelect" />
+    </div>
   </div>
 </template>
 
@@ -83,6 +88,7 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useStrategyStore } from '@/stores/strategyStore'
 import StrategyCard from '@/components/StrategyCard.vue'
+import ETFWatchlistPanel from '@/components/ETFWatchlistPanel.vue'
 import type { Strategy } from '@/types/strategy'
 
 const { t: $t } = useI18n()
@@ -92,6 +98,10 @@ const strategyStore = useStrategyStore()
 const searchQuery = ref('')
 const selectedCategory = ref('')
 const selectedStrategies = ref<string[]>([])
+
+function onEtfSelect(etf: { symbol: string }) {
+  searchQuery.value = etf.symbol
+}
 
 const categories = [
   { value: '', label: $t('strategies.categories.all') },
@@ -292,6 +302,10 @@ const batchRun = async () => {
   color: #38bdf8;
   border-color: rgba(14, 165, 233, 0.3);
   font-weight: 600;
+}
+
+.etf-section {
+  margin-top: 28px;
 }
 
 .batch-btn {

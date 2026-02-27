@@ -9,7 +9,13 @@ export const useCopilotStore = defineStore('copilot', () => {
   const loading = ref(false)
   const streaming = ref(false)
   const error = ref<string | null>(null)
-  const pendingActions = ref<Array<{ action_id: string; description: string }>>([])
+  const pendingActions = ref<Array<{
+    action_id: string
+    description: string
+    type?: string
+    params?: Record<string, any>
+    expires_at?: string
+  }>>([])
 
   async function sendMessage(content: string) {
     messages.value.push({ role: 'user', content })
@@ -24,6 +30,9 @@ export const useCopilotStore = defineStore('copilot', () => {
         pendingActions.value.push({
           action_id: reply.action_intent.action_id,
           description: reply.action_intent.description ?? '',
+          type: reply.action_intent.type ?? 'general',
+          params: reply.action_intent.params,
+          expires_at: reply.action_intent.expires_at,
         })
       }
     } catch (e: any) {

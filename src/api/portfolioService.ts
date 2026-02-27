@@ -30,10 +30,21 @@ export interface OptimizeResult {
   created_at: string
 }
 
+export interface SnapshotHistoryItem {
+  id: number
+  method: OptimizeMethod
+  weights: Record<string, number>
+  metrics: { expected_return: number; volatility: number; sharpe: number }
+  created_at: string
+}
+
 export const portfolioApi = {
   optimize: (req: OptimizeRequest) =>
     api.post<OptimizeResult>('/v1/portfolio/optimize', req),
 
   getLatest: () =>
     api.get<OptimizeResult>('/v1/portfolio/latest'),
+
+  getHistory: (limit = 10) =>
+    api.get<SnapshotHistoryItem[]>('/v1/portfolio/history', { params: { limit } }),
 }
