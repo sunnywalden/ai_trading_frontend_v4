@@ -72,12 +72,49 @@
         <div ref="chartDom" style="height: 320px;"></div>
       </div>
     </div>
+
+    <!-- V10.1: 批量优化历史记录 -->
+    <div class="card" style="margin-top: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">📋 优化历史</h3>
+        <button class="primary-button" style="padding: 6px 14px; font-size: 12px;" @click="loadHistory">刷新</button>
+      </div>
+      <div v-if="historyLoading" style="color: #888; font-size: 13px;">加载中...</div>
+      <div v-else-if="!history.length" style="color: #666; font-size: 13px; text-align: center; padding: 20px;">暂无历史记录，执行一次优化后此处将显示结果。</div>
+      <table v-else class="history-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>方法</th>
+            <th>预期收益</th>
+            <th>波动率</th>
+            <th>Sharpe</th>
+            <th>头部权重</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="h in history" :key="h.id">
+            <td>{{ new Date(h.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</td>
+            <td><span class="method-badge">{{ h.method }}</span></td>
+            <td class="text-success">{{ (h.metrics.expected_return * 100).toFixed(1) }}%</td>
+            <td>{{ (h.metrics.volatility * 100).toFixed(1) }}%</td>
+            <td class="text-primary">{{ h.metrics.sharpe.toFixed(2) }}</td>
+            <td class="weights-cell">
+              <span v-for="(w, sym) in topWeights(h.weights)" :key="sym" class="weight-chip">
+                {{ sym }} {{ (w * 100).toFixed(0) }}%
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick } from 'vue'
 import { usePortfolioStore } from '@/stores/portfolio'
+import { portfolioApi, type SnapshotHistoryItem } from '@/api/portfolioService'
 import { storeToRefs } from 'pinia'
 
 const portfolioStore = usePortfolioStore()
@@ -86,6 +123,30 @@ const symbolsInput = ref('AAPL,MSFT,GOOGL,AMZN')
 const form = ref({ method: 'MARKOWITZ' as const, lookback_days: 252 })
 const rfPct = ref(4.0)
 const chartDom = ref<HTMLElement>()
+
+// V10.1: 批量优化历史
+const history = ref<SnapshotHistoryItem[]>([])
+const historyLoading = ref(false)
+
+async function loadHistory() {
+  historyLoading.value = true
+  try {
+    const res = await portfolioApi.getHistory(10)
+    history.value = res.data
+  } catch (e) {
+    console.warn('[Portfolio] history load failed', e)
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+function topWeights(weights: Record<string, number>) {
+  return Object.fromEntries(
+    Object.entries(weights)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+  )
+}
 
 async function handleOptimize() {
   const symbols = symbolsInput.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
@@ -124,7 +185,10 @@ watch(result, async (r) => {
   } catch {}
 })
 
-onMounted(() => portfolioStore.fetchLatest())
+onMounted(() => {
+  portfolioStore.fetchLatest()
+  loadHistory()
+})
 </script>
 
 <style scoped>
@@ -152,4 +216,10 @@ onMounted(() => portfolioStore.fetchLatest())
 .primary-button { background: #4a90e2; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .error-message { color: #f44336; font-size: 13px; margin-top: 8px; }
+.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.history-table th, .history-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color, #2d2d4e); text-align: left; }
+.history-table th { color: #888; font-weight: 500; }
+.method-badge { background: rgba(74,144,226,0.15); color: #4a90e2; border-radius: 4px; padding: 2px 8px; font-size: 11px; }
+.weights-cell { display: flex; gap: 4px; flex-wrap: wrap; }
+.weight-chip { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 6px; font-size: 11px; }
 </style>

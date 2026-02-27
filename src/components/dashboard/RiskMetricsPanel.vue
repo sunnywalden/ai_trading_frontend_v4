@@ -1,30 +1,41 @@
 <template>
   <div class="risk-metrics-panel">
-    <div class="metric-row">
-      <span class="metric-label">1日VaR:</span>
-      <span class="metric-value">${{ metrics.var_1d.toFixed(0) }}</span>
+    <!-- Visual Gauge for leading Risk Metric (VaR 1D) -->
+    <div class="gauge-container">
+      <VaRGauge 
+        label="1日 VaR (95%)"
+        :value="metrics.var_1d"
+        :max-scale="5.0"
+        sublabel="历史模拟法"
+      />
     </div>
-    <div class="metric-row">
-      <span class="metric-label">最大回撤:</span>
-      <span class="metric-value">{{ metrics.max_drawdown.toFixed(2) }}%</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">夏普比率:</span>
-      <span class="metric-value">{{ metrics.sharpe_ratio.toFixed(2) }}</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Beta系数:</span>
-      <span class="metric-value">{{ metrics.beta.toFixed(2) }}</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">集中度:</span>
-      <span class="metric-value">{{ metrics.concentration_risk.toFixed(1) }}%</span>
+
+    <div class="metrics-grid">
+      <div class="metric-item">
+        <span class="m-label">最大回撤</span>
+        <span class="m-value neg">{{ metrics.max_drawdown.toFixed(2) }}%</span>
+      </div>
+      <div class="metric-item">
+        <span class="m-label">夏普比率 (Sharpe)</span>
+        <span class="m-value accent">{{ (metrics.sharpe_ratio || 0).toFixed(2) }}</span>
+      </div>
+      <div class="metric-item">
+        <span class="m-label">Beta 系数</span>
+        <span class="m-value">{{ (metrics.beta || 0).toFixed(2) }}</span>
+      </div>
+      <div class="metric-item">
+        <span class="m-label">持仓集中度</span>
+        <span class="m-value" :class="metrics.concentration_risk > 30 ? 'warn' : ''">
+          {{ metrics.concentration_risk.toFixed(1) }}%
+        </span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { RiskMetrics } from '@/api/client'
+import VaRGauge from '@/components/VaRGauge.vue'
 
 defineProps<{
   metrics: RiskMetrics

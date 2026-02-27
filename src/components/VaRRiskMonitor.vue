@@ -41,6 +41,22 @@
         </div>
       </div>
 
+      <!-- VaR/CVaR 仪表盘一览 -->
+      <div class="gauge-row">
+        <VaRGauge
+          :value="Math.abs(riskData.var_95_pct) * 100"
+          :max-scale="10"
+          label="1日 VaR (95%)"
+          sublabel="在险价值"
+        />
+        <VaRGauge
+          :value="Math.abs(riskData.cvar_95_pct) * 100"
+          :max-scale="15"
+          label="CVaR (95%)"
+          sublabel="期望尾部损失"
+        />
+      </div>
+
       <!-- VaR/CVaR 指标卡片 -->
       <div class="metrics-grid">
         <!-- VaR 95% -->
@@ -202,6 +218,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import QuantLoopService from '@/api/quantLoopService'
+import VaRGauge from '@/components/VaRGauge.vue'
 
 // Props
 const props = defineProps<{
@@ -301,6 +318,14 @@ onMounted(() => {
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* VaR 仪表盘双列布局 */
+.gauge-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .panel-header {

@@ -114,7 +114,7 @@
             {{ riskLevelLabel(store.riskLevel) }}
           </div>
           <div class="kpi-sub">
-            <span class="kpi-dimmed">Max DD {{ (store.fullData.risk.max_drawdown * 100).toFixed(1) }}%</span>
+            <span class="kpi-dimmed">Max DD {{ store.fullData.risk.max_drawdown.toFixed(1) }}%</span>
           </div>
         </div>
       </section>
@@ -189,6 +189,11 @@
         </div>
       </div>
 
+      <!-- Section: VaR/CVaR 风险监控 (V10.1) -->
+      <div class="section-var" v-if="store.fullData">
+        <VaRRiskMonitor :account-id="store.fullData.account_id" />
+      </div>
+
     <!-- Section 4: 交易计划 -->
     <div class="section-plans">
       <!-- 活跃计划 -->
@@ -250,6 +255,7 @@ import PnLAttributionPanel from '@/components/dashboard/PnLAttributionPanel.vue'
 import PositionCard from '@/components/dashboard/PositionCard.vue'
 import PlanCard from '@/components/dashboard/PlanCard.vue'
 import HotspotCard from '@/components/dashboard/HotspotCard.vue'
+import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
 
 const store = useDashboardV2Store()
 const autonomy = useAutonomyStore()
@@ -770,6 +776,13 @@ function riskLevelLabel(level: string): string {
   align-items: center;
   gap: 7px;
   font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ════════════════════════════════════════
+   VaR Section
+   ════════════════════════════════════════ */
+.section-var {
+  margin-top: 0;
 }
 
 /* ════════════════════════════════════════

@@ -63,6 +63,78 @@
       </div>
     </div>
 
+    <!-- 手动触发 -->
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px;">手动触发</h3>
+      <p style="font-size: 13px; color: #888; margin: 0 0 16px;">用于调试：手动触发再平衡扫描（将持仓评分 REDUCE/SELL 转换为交易信号）或决策周期（处理待执行的信号）。</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button
+          class="trigger-button"
+          :disabled="autonomyStore.triggerLoading"
+          @click="handleTriggerRebalance"
+        >
+          {{ autonomyStore.triggerLoading ? '执行中...' : '🔄 触发再平衡扫描' }}
+        </button>
+        <button
+          class="trigger-button"
+          :disabled="autonomyStore.triggerLoading"
+          @click="handleTriggerDecisionCycle"
+        >
+          {{ autonomyStore.triggerLoading ? '执行中...' : '⚡ 触发决策周期' }}
+        </button>
+        <button class="refresh-button" @click="autonomyStore.fetchSignalPipeline()">刷新信号流</button>
+      </div>
+    </div>
+
+    <!-- 信号流水线 -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">信号流水线（最近 30 条）</h3>
+        <div v-if="status?.signal_pipeline" style="display: flex; gap: 8px; font-size: 12px;">
+          <span class="badge-info">待处理: {{ status.signal_pipeline['GENERATED'] ?? 0 }}</span>
+          <span class="badge-info">已验证: {{ status.signal_pipeline['VALIDATED'] ?? 0 }}</span>
+          <span class="badge-success">已执行: {{ status.signal_pipeline['EXECUTED'] ?? 0 }}</span>
+          <span class="badge-danger">失败: {{ status.signal_pipeline['FAILED'] ?? 0 }}</span>
+        </div>
+      </div>
+      <div v-if="autonomyStore.loading" class="loading-message">加载中...</div>
+      <table v-else class="data-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>标的</th>
+            <th>类型</th>
+            <th>方向</th>
+            <th>数量</th>
+            <th>置信度</th>
+            <th>状态</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="sig in autonomyStore.signalPipeline" :key="sig.signal_id">
+            <td>{{ formatDate(sig.created_at) }}</td>
+            <td>{{ sig.symbol }}</td>
+            <td>
+              <span :class="signalTypeClass(sig.type)">{{ sig.type }}</span>
+            </td>
+            <td>{{ sig.direction ?? '—' }}</td>
+            <td>{{ sig.quantity ?? '—' }}</td>
+            <td>{{ (sig.strength * 100).toFixed(0) + '%' }}</td>
+            <td>
+              <span :class="signalStatusClass(sig.status)">{{ sig.status }}</span>
+            </td>
+            <td style="max-width: 200px; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {{ sig.notes ?? '—' }}
+            </td>
+          </tr>
+          <tr v-if="autonomyStore.signalPipeline.length === 0">
+            <td colspan="8" style="text-align: center; color: #666;">暂无信号记录</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- 审计日志 -->
     <div class="card">
       <h3 style="margin: 0 0 16px;">决策审计日志</h3>
@@ -121,6 +193,19 @@ import { storeToRefs } from 'pinia'
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
 
+function signalTypeClass(type: string) {
+  if (type === 'EXIT' || type === 'REDUCE' || type === 'SELL') return 'badge-warning'
+  if (type === 'ENTRY' || type === 'ADD' || type === 'BUY') return 'badge-info'
+  return 'badge-default'
+}
+
+function signalStatusClass(s: string) {
+  if (s === 'EXECUTED') return 'badge-success'
+  if (s === 'FAILED' || s === 'REJECTED') return 'badge-danger'
+  if (s === 'VALIDATED') return 'badge-info'
+  return 'badge-default'
+}
+
 const levelLabels: Record<string, string> = {
   FULL: '全自主 (FULL)',
   SEMI: '半自主 (SEMI)',
@@ -145,6 +230,18 @@ async function handleResume() {
   await autonomyStore.resume()
 }
 
+async function handleTriggerRebalance() {
+  await autonomyStore.triggerRebalance()
+  await autonomyStore.fetchSignalPipeline()
+  await autonomyStore.fetchStatus()
+}
+
+async function handleTriggerDecisionCycle() {
+  await autonomyStore.triggerDecisionCycle()
+  await autonomyStore.fetchSignalPipeline()
+  await autonomyStore.fetchStatus()
+}
+
 async function handleRevoke(execId: string) {
   await autonomyStore.revokeOrder(execId)
 }
@@ -156,6 +253,7 @@ function formatDate(s: string) {
 onMounted(async () => {
   await autonomyStore.fetchStatus()
   await autonomyStore.fetchAuditLog({ limit: 50 })
+  await autonomyStore.fetchSignalPipeline()
 })
 </script>
 
@@ -201,4 +299,14 @@ onMounted(async () => {
 .refresh-button { background: transparent; border: 1px solid #4a6fa5; color: #4a90e2; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 .small-button { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: none; cursor: pointer; }
 .small-button.danger { background: rgba(244,67,54,0.15); color: #f44336; }
+.badge-info { background: rgba(74,144,226,0.15); color: #4a90e2; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-warning { background: rgba(255,152,0,0.15); color: #ff9800; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-default { background: rgba(150,150,150,0.15); color: #aaa; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.trigger-button {
+  background: rgba(74,144,226,0.15); color: #4a90e2;
+  border: 1px solid rgba(74,144,226,0.4); padding: 8px 18px; border-radius: 6px;
+  cursor: pointer; font-size: 13px; transition: all 0.2s;
+}
+.trigger-button:hover:not(:disabled) { background: rgba(74,144,226,0.3); }
+.trigger-button:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

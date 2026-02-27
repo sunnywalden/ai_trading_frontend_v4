@@ -10,6 +10,23 @@ export interface AutonomyStatus {
   daily_trades_today: number
   max_daily_trades: number
   revoke_window_minutes: number
+  signal_pipeline?: Record<string, number>  // 各状态信号数量
+  failed_trades_today?: number
+}
+
+export interface SignalPipelineItem {
+  signal_id: string
+  symbol: string
+  type: string
+  status: string
+  direction: string
+  quantity: number | null
+  strength: number
+  priority: number
+  notes: string | null
+  order_id: string | null
+  executed_at: string | null
+  created_at: string
 }
 
 export interface AuditLogEntry {
@@ -43,4 +60,13 @@ export const autonomyApi = {
 
   revokeOrder: (execId: string) =>
     api.post(`/v1/autonomy/revoke/${execId}`),
+
+  getSignalPipeline: (limit = 30) =>
+    api.get<{ signals: SignalPipelineItem[] }>('/v1/autonomy/signal-pipeline', { params: { limit } }),
+
+  triggerRebalance: () =>
+    api.post<{ success: boolean; result: any }>('/v1/autonomy/trigger-rebalance'),
+
+  triggerDecisionCycle: () =>
+    api.post<{ success: boolean; decisions: number; executed: number; details: any[] }>('/v1/autonomy/trigger-decision-cycle'),
 }
