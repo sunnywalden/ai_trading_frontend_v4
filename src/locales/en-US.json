@@ -229,7 +229,9 @@
       "risk_assessment": "Risk Assessment",
       "adaptive_optimization": "Optimization",
       "order_staging": "Order Staging",
-      "execution": "Execution"
+      "execution": "Execution",
+      "trade_execution": "Trade Execution",
+      "performance_evaluation": "Performance Eval"
     },
     "phase_details": {
       "gen_signals": "Signals",
