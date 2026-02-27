@@ -7,13 +7,13 @@ const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL
 // 业务 API（/api/v1/*）
 export const api = axios.create({
   baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL ?? "") + "/api",
-  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 60000
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 120000
 });
 
 // 系统 API（无前缀，如 /health）
 const systemApi = axios.create({
   baseURL: BACKEND_URL,
-  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 60000
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 120000
 });
 
 // 导出 client 别名以保持兼容性
