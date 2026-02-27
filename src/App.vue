@@ -1,6 +1,6 @@
 <template>
-  <div class="layout">
-    <aside class="sidebar">
+  <div class="layout" :class="{ 'no-sidebar': !loggedIn }">
+    <aside v-if="loggedIn" class="sidebar">
       <div class="sidebar-header">
         <h1>AI Quant</h1>
         <div class="header-tools">
