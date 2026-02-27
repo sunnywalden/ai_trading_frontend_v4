@@ -11,16 +11,22 @@
       <p class="sidebar-subtitle">{{ $t('nav.control_tower') }}</p>
 
       <nav class="nav-menu">
-        <!-- Dashboard 独立入口 -->
-        <router-link to="/dashboard" class="nav-button" active-class="active">
-          <span class="nav-icon">📈</span>
-          <span class="nav-label">Dashboard</span>
+        <!-- 指挥室 独立顶级入口 -->
+        <router-link to="/dashboard" class="nav-button command-room" active-class="active">
+          <span class="nav-icon">🏛️</span>
+          <div class="nav-label-block">
+            <span class="nav-label">{{ $t('nav.module_command') }}</span>
+            <span class="nav-subdesc">{{ $t('nav.module_command_desc') }}</span>
+          </div>
         </router-link>
 
-        <!-- 分组导航 -->
+        <!-- 三大模块分组 -->
         <div v-for="group in navGroups" :key="group.title" class="nav-group">
           <button class="group-header" @click="toggleGroup(group.title)">
-            <span class="group-title">{{ group.title }}</span>
+            <div class="group-title-block">
+              <span class="group-title">{{ group.title }}</span>
+              <span v-if="group.desc" class="group-desc">{{ group.desc }}</span>
+            </div>
             <span class="group-arrow" :class="{ open: openGroups[group.title] }">▸</span>
           </button>
           <transition name="slide">
@@ -37,6 +43,21 @@
               </router-link>
             </div>
           </transition>
+        </div>
+
+        <!-- 系统区（底部分隔，弱化呈现）-->
+        <div class="nav-system-section">
+          <div class="system-section-label">
+            <span class="nav-icon">⚙️</span>
+            <span>{{ $t('nav.module_system') }}</span>
+          </div>
+          <div class="system-items">
+            <router-link to="/regime"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🌊</span><span class="nav-label">{{ $t('nav.regime') }}</span></router-link>
+            <router-link to="/alerts"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🔔</span><span class="nav-label">{{ $t('nav.alerts') }}</span></router-link>
+            <router-link to="/task-management" class="nav-button sub sys" active-class="active"><span class="nav-icon">📋</span><span class="nav-label">{{ $t('nav.task_management') }}</span></router-link>
+            <router-link to="/service-health"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🩺</span><span class="nav-label">{{ $t('nav.service_health') }}</span></router-link>
+            <router-link to="/api-monitoring"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🔌</span><span class="nav-label">{{ $t('nav.api_monitoring') }}</span></router-link>
+          </div>
         </div>
       </nav>
 
@@ -120,55 +141,42 @@ const { t, locale } = useI18n();
 const route = useRoute()
 
 interface NavItem { path: string; label: string; icon: string }
-interface NavGroup { title: string; items: NavItem[] }
+interface NavGroup { title: string; desc?: string; items: NavItem[] }
 
 const navGroups = computed<NavGroup[]>(() => [
   {
-    title: t('nav.group_autonomous'),
-    items: [
-      { path: '/autonomy',  label: t('nav.autonomy'),  icon: '🤖' },
-      { path: '/copilot',   label: t('nav.copilot'),   icon: '💬' },
-      { path: '/quant-loop',label: t('nav.quant_loop'),icon: '🔄' },
-    ],
-  },
-  {
-    title: t('nav.group_market'),
+    title: t('nav.module_research'),
+    desc: t('nav.module_research_desc'),
     items: [
       { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
       { path: '/macro',         label: t('nav.macro'),         icon: '🌍' },
       { path: '/strategies',    label: t('nav.strategies'),    icon: '📚' },
       { path: '/etf-pool',      label: t('nav.etf_pool'),      icon: '📊' },
+      { path: '/backtest',      label: t('nav.backtest'),      icon: '📈' },
+      { path: '/portfolio',     label: t('nav.portfolio'),     icon: '⚖️' },
+      { path: '/options',       label: t('nav.options'),       icon: '💎' },
     ],
   },
   {
-    title: t('nav.group_research'),
+    title: t('nav.module_desk'),
+    desc: t('nav.module_desk_desc'),
     items: [
-      { path: '/backtest',  label: t('nav.backtest'),  icon: '📈' },
-      { path: '/portfolio', label: t('nav.portfolio'), icon: '⚖️' },
-      { path: '/options',    label: t('nav.options'),    icon: '💎' },
+      { path: '/positions',          label: t('nav.positions'),          icon: '📊' },
+      { path: '/position-evaluation', label: t('nav.position_evaluation'), icon: '🔬' },
+      { path: '/events',             label: t('nav.events'),             icon: '📅' },
+      { path: '/quant-loop',         label: t('nav.quant_loop'),         icon: '🔄' },
+      { path: '/paper',              label: t('nav.paper'),              icon: '🧪' },
+      { path: '/attribution',        label: t('nav.attribution'),        icon: '🎯' },
     ],
   },
   {
-    title: t('nav.group_execution'),
+    title: t('nav.module_ai'),
+    desc: t('nav.module_ai_desc'),
     items: [
-      { path: '/positions',           label: t('nav.positions'),           icon: '📊' },
-      { path: '/position-evaluation',  label: t('nav.position_evaluation'), icon: '🔬' },
-      { path: '/paper',                label: t('nav.paper'),               icon: '🧪' },
-    ],
-  },
-  {
-    title: t('nav.group_audit'),
-    items: [
-      { path: '/journal', label: t('nav.journal'), icon: '📓' },
-      { path: '/alerts',  label: t('nav.alerts'),  icon: '🔔' },
-    ],
-  },
-  {
-    title: t('nav.group_system'),
-    items: [
-      { path: '/api-monitoring',   label: t('nav.api_monitoring'),  icon: '🔌' },
-      { path: '/service-health',    label: t('nav.service_health'),  icon: '🩺' },
-      { path: '/task-management',  label: t('nav.task_management'), icon: '⚙️' },
+      { path: '/autonomy',  label: t('nav.autonomy'),  icon: '🤖' },
+      { path: '/copilot',   label: t('nav.copilot'),   icon: '💬' },
+      { path: '/evolution', label: t('nav.evolution'), icon: '🧬' },
+      { path: '/journal',   label: t('nav.journal'),   icon: '📓' },
     ],
   },
 ])
@@ -176,11 +184,11 @@ const navGroups = computed<NavGroup[]>(() => [
 // --- Collapsible nav groups ---
 const openGroups = reactive<Record<string, boolean>>({})
 
-// Initialize openGroups based on navGroups titles
+// Initialize: auto-expand first group, or whichever matches current route
 watch(navGroups, (newGroups) => {
-  newGroups.forEach(group => {
+  newGroups.forEach((group, idx) => {
     if (openGroups[group.title] === undefined) {
-      openGroups[group.title] = group.title === t('nav.group_autonomous')
+      openGroups[group.title] = idx === 0
     }
   })
 }, { immediate: true })
@@ -547,4 +555,78 @@ function applyTheme() {
   .layout { grid-template-columns: minmax(0, 1fr); }
   .sidebar { border-right: none; border-bottom: 1px solid rgba(30, 64, 175, 0.6); }
 }
+
+/* ── Command Room (指挥室) special style ── */
+.nav-button.command-room {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(99, 102, 241, 0.08));
+  border-color: rgba(56, 189, 248, 0.35);
+  padding: 10px 14px;
+  margin-bottom: 4px;
+}
+.nav-button.command-room:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(99, 102, 241, 0.15));
+  border-color: rgba(56, 189, 248, 0.65);
+}
+.nav-button.command-room.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.18));
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+.nav-label-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.nav-subdesc {
+  font-size: 0.68rem;
+  color: #6b7280;
+  font-weight: 400;
+}
+.nav-button.command-room .nav-subdesc { color: rgba(56, 189, 248, 0.55); }
+
+/* ── Module group header with desc ── */
+.group-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.3;
+}
+.group-desc {
+  font-size: 0.65rem;
+  color: #4b5563;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── System section (底部弱化区域) ── */
+.nav-system-section {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(55, 65, 81, 0.35);
+}
+.system-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4b5563;
+  user-select: none;
+}
+.system-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-button.sub.sys {
+  opacity: 0.7;
+  font-size: 0.78rem;
+  padding: 6px 14px 6px 24px;
+}
+.nav-button.sub.sys:hover { opacity: 1; }
+.nav-button.sub.sys.active { opacity: 1; }
 </style>

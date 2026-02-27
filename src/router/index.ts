@@ -18,6 +18,20 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/AutonomyPage.vue'),
     meta: { title: 'AI 自主中枢' }
   },
+  // V10.2-M1: 市场体制感知
+  {
+    path: '/regime',
+    name: 'Regime',
+    component: () => import('../views/RegimePage.vue'),
+    meta: { title: '市场体制感知' }
+  },
+  // V10.2-M2: 事件日历 & 盈利围栏
+  {
+    path: '/events',
+    name: 'EventCalendar',
+    component: () => import('../views/EventCalendarPage.vue'),
+    meta: { title: '事件日历' }
+  },
   {
     path: '/copilot',
     name: 'Copilot',
@@ -107,6 +121,20 @@ const routes: RouteRecordRaw[] = [
     name: 'Journal',
     component: () => import('../views/JournalPage.vue'),
     meta: { title: '交易日志' }
+  },
+  // V10.2-M5: 交易归因分析
+  {
+    path: '/attribution',
+    name: 'Attribution',
+    component: () => import('../views/AttributionPage.vue'),
+    meta: { title: '交易归因' }
+  },
+  // V10.2-M6: AI 自我进化
+  {
+    path: '/evolution',
+    name: 'Evolution',
+    component: () => import('../views/EvolutionPage.vue'),
+    meta: { title: 'AI 自我进化' }
   },
   {
     path: '/alerts',

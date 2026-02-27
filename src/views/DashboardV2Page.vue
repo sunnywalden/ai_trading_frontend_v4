@@ -153,6 +153,27 @@
             <span class="kpi-dimmed">Max DD {{ store.fullData.risk.max_drawdown.toFixed(1) }}%</span>
           </div>
         </div>
+
+        <!-- V10.2-M1: 市场体制感知 -->
+        <div
+          class="kpi-card kpi-regime"
+          style="cursor:pointer"
+          :style="{ borderColor: regimeCardColor + '55' }"
+          @click="$router.push('/regime')"
+        >
+          <div class="kpi-label">🧠 市场体制</div>
+          <div
+            class="kpi-value"
+            style="font-size:18px; letter-spacing:0.04em"
+            :style="{ color: regimeCardColor }"
+          >
+            {{ regimeCardLabel }}
+          </div>
+          <div class="kpi-sub">
+            <span class="kpi-dimmed">置信度 {{ regimeCardConf }}</span>
+            <span style="margin-left:8px" :style="{ color: varMultColor }">VaR ×{{ regimeVarMult }}</span>
+          </div>
+        </div>
       </section>
 
       <!-- Section 2: 主要图表区 -->
@@ -279,11 +300,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, computed } from 'vue'
+import { onMounted, onUnmounted, reactive, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import { useAutonomyStore } from '@/stores/autonomy'
+import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
 import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
@@ -300,6 +322,44 @@ const { t, locale } = useI18n()
 
 const moduleLoading = reactive<Record<string, boolean>>({})
 
+// V10.2-M1: 体制 KPI 数据
+const regimeInfo     = ref<RegimeInfo | null>(null)
+const regimeVarMultN = ref<number>(1.0)
+
+const regimeCardLabel = computed(() => {
+  if (!regimeInfo.value) return '—'
+  return REGIME_LABELS[regimeInfo.value.regime] ?? regimeInfo.value.regime
+})
+const regimeCardConf = computed(() => {
+  if (!regimeInfo.value || typeof regimeInfo.value !== 'object') return '—'
+  const conf = regimeInfo.value.confidence
+  if (typeof conf !== 'number') return '—'
+  return (conf * 100).toFixed(0) + '%'
+})
+const regimeCardColor = computed(() => {
+  if (!regimeInfo.value) return '#555555'
+  return REGIME_COLORS[regimeInfo.value.regime as RegimeType] ?? '#aaaaaa'
+})
+const regimeVarMult = computed(() => regimeVarMultN.value.toFixed(2))
+const varMultColor = computed(() => {
+  if (regimeVarMultN.value > 1.05) return '#00ff88'
+  if (regimeVarMultN.value < 0.75) return '#ff4d4d'
+  return '#aaaaaa'
+})
+
+async function fetchRegime() {
+  try {
+    const res = await regimeApi.getCurrent()
+    if (res.data && 'regime' in res.data) {
+      regimeInfo.value     = res.data.regime
+      regimeVarMultN.value = res.data.var_multiplier ?? 1.0
+    } else {
+      regimeInfo.value     = res.data as any
+      regimeVarMultN.value = 1.0
+    }
+  } catch { /* silent */ }
+}
+
 // AI Engine Banner 背景样式
 const autonomyBannerClass = computed(() => {
   if (autonomy.circuitBreakerActive) return 'banner-critical'
@@ -313,7 +373,8 @@ const autonomyBannerClass = computed(() => {
 onMounted(async () => {
   await Promise.all([
     store.loadFull(),
-    autonomy.fetchStatus()
+    autonomy.fetchStatus(),
+    fetchRegime(),          // V10.2-M1
   ])
   store.startAutoRefresh()
 })

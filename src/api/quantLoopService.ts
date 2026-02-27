@@ -1,7 +1,5 @@
 // 量化交易闭环 API Service  
-import axios, { AxiosInstance } from 'axios'
-import { globalConfig } from '@/config/global'
-import { getAuthToken } from './client'
+import { api } from './client'
 import { logger } from '@/utils/logger'
 
 export interface SystemStatus {
@@ -127,43 +125,9 @@ export interface OptimizationOpportunities {
 
 class QuantLoopService {
   private static instance: QuantLoopService
-  private client: AxiosInstance
 
   private constructor() {
-    // 创建专用的量化闭环API客户端
-    const backendUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_BACKEND_URL ?? '')
-    this.client = axios.create({
-      baseURL: backendUrl + '/api/v1',
-      timeout: 30000
-    })
-
-    // 请求拦截器 - 添加认证token
-    this.client.interceptors.request.use(config => {
-      const token = getAuthToken()
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      
-      const fullUrl = `${config.baseURL || ''}${config.url || ''}`
-      logger.info(`QuantLoop API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {})
-      
-      return config
-    })
-
-    // 响应拦截器 - 处理401自动跳转  
-    this.client.interceptors.response.use(
-      response => {
-        logger.info(`QuantLoop API Response: ${response.status} ${response.config?.url}`)
-        return response
-      },
-      error => {
-        logger.error(`QuantLoop API Error: ${error?.config?.url} | ${error?.message || error}`)
-        if (error.response?.status === 401) {
-          window.location.href = '/login'
-        }
-        return Promise.reject(error)
-      }
-    )
+    // 使用全局 api 实例
   }
 
   public static getInstance(): QuantLoopService {
@@ -175,13 +139,13 @@ class QuantLoopService {
 
   // 获取系统状态
   async getStatus(): Promise<SystemStatus> {
-    const response = await this.client.get('/quant-loop/status')
+    const response = await api.get('/v1/quant-loop/status')
     return response.data.data
   }
   
   // 获取仪表盘概览
   async getDashboardOverview(accountId?: string): Promise<DashboardOverview> {
-    const response = await this.client.get('/quant-loop/dashboard/overview', {
+    const response = await api.get('/v1/quant-loop/dashboard/overview', {
       params: { account_id: accountId }
     })
     return response.data.data
@@ -189,7 +153,7 @@ class QuantLoopService {
   
   // 获取待执行信号
   async getPendingSignals(limit: number = 20, filterByPosition: boolean = false, accountId?: string): Promise<TradingSignal[]> {
-    const response = await this.client.get('/quant-loop/signals/pending', {
+    const response = await api.get('/v1/quant-loop/signals/pending', {
       params: { 
         limit,
         filter_by_position: filterByPosition,
@@ -200,7 +164,7 @@ class QuantLoopService {
   }
   // 获取最近信号
   async getRecentSignals(limit: number = 20): Promise<TradingSignal[]> {
-    const response = await this.client.get('/quant-loop/signals/recent', {
+    const response = await api.get('/v1/quant-loop/signals/recent', {
       params: { limit }
     })
     return response.data.data
@@ -208,7 +172,7 @@ class QuantLoopService {
   
   // 运行交易周期
   async runCycle(config: CycleConfig): Promise<CycleResult> {
-    const response = await this.client.post('/quant-loop/run-cycle', config)
+    const response = await api.post('/v1/quant-loop/run-cycle', config)
     return response.data.data
   }
   
@@ -219,13 +183,13 @@ class QuantLoopService {
       signal_ids: request.signal_ids,
       dry_run: request.dry_run !== undefined ? request.dry_run : true
     }
-    const response = await this.client.post('/quant-loop/execute-signals', payload)
+    const response = await api.post('/v1/quant-loop/execute-signals', payload)
     return response.data.data
   }
   
   // 获取每日性能
   async getDailyPerformance(days: number = 7): Promise<DailyPerformance> {
-    const response = await this.client.get('/quant-loop/performance/daily', {
+    const response = await api.get('/v1/quant-loop/performance/daily', {
       params: { days }
     })
     return response.data.data
@@ -233,7 +197,7 @@ class QuantLoopService {
   
   // 获取优化建议
   async getOptimizationOpportunities(days: number = 30): Promise<OptimizationOpportunities> {
-    const response = await this.client.get('/quant-loop/optimization/opportunities', {
+    const response = await api.get('/v1/quant-loop/optimization/opportunities', {
       params: { days }
     })
     return response.data.data
@@ -241,13 +205,13 @@ class QuantLoopService {
   
   // 运行优化
   async runOptimization() {
-    const response = await this.client.post('/quant-loop/optimization/run')
+    const response = await api.post('/v1/quant-loop/optimization/run')
     return response.data.data
   }
   
   // 获取性能图表数据
   async getPerformanceChart(days: number = 30) {
-    const response = await this.client.get('/quant-loop/dashboard/performance-chart', {
+    const response = await api.get('/v1/quant-loop/dashboard/performance-chart', {
       params: { days }
     })
     return response.data.data
@@ -255,19 +219,19 @@ class QuantLoopService {
   
   // 获取信号详情
   async getSignalDetails(signalId: string) {
-    const response = await this.client.get(`/quant-loop/signals/${signalId}`)
+    const response = await api.get(`/v1/quant-loop/signals/${signalId}`)
     return response.data.data
   }
 
   // 获取信号AI摘要
   async getSignalSummary(signalId: string) {
-    const response = await this.client.get(`/quant-loop/signals/${signalId}/summary`)
+    const response = await api.get(`/v1/quant-loop/signals/${signalId}/summary`)
     return response.data
   }
   
   // 拒绝信号
   async rejectSignals(signalIds: string[], reason?: string) {
-    const response = await this.client.post('/quant-loop/reject-signals', {
+    const response = await api.post('/v1/quant-loop/reject-signals', {
       signal_ids: signalIds,
       reason
     })
@@ -278,7 +242,7 @@ class QuantLoopService {
 
   // 获取Alpha/Beta性能指标
   async getAlphaBetaMetrics(accountId: string, periodDays: number = 90, benchmark: string = 'SPY') {
-    const response = await this.client.get(`/performance/alpha-beta/${accountId}`, {
+    const response = await api.get(`/v1/performance/alpha-beta/${accountId}`, {
       params: { period_days: periodDays, benchmark }
     })
     return response.data.data
@@ -286,7 +250,7 @@ class QuantLoopService {
 
   // 获取信号质量指标
   async getSignalQualityMetrics(accountId: string, periodDays: number = 30) {
-    const response = await this.client.get(`/performance/signal-quality/${accountId}`, {
+    const response = await api.get(`/v1/performance/signal-quality/${accountId}`, {
       params: { period_days: periodDays }
     })
     return response.data.data
@@ -294,13 +258,13 @@ class QuantLoopService {
 
   // 获取VaR风险指标
   async getVaRRiskMetrics(accountId: string) {
-    const response = await this.client.get(`/performance/var-risk/${accountId}`)
+    const response = await api.get(`/v1/performance/var-risk/${accountId}`)
     return response.data.data
   }
 
   // 获取压力测试结果
   async getStressTestResults(accountId: string) {
-    const response = await this.client.get(`/performance/stress-test/${accountId}`)
+    const response = await api.get(`/v1/performance/stress-test/${accountId}`)
     return response.data.data
   }
 }

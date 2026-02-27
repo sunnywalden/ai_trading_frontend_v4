@@ -24,6 +24,15 @@ export interface ConfirmAction {
   expires_at: string
 }
 
+export interface DeepResearchReport {
+  symbol: string
+  rating?: string
+  price_target?: number
+  body: string
+  sources?: string[]
+  generated_at?: string
+}
+
 export const copilotApi = {
   chat: (message: string, sessionId?: string) =>
     api.post<CopilotMessage>('/v1/copilot/chat', { message, session_id: sessionId }),
@@ -36,4 +45,10 @@ export const copilotApi = {
 
   confirmAction: (actionId: string) =>
     api.post(`/v1/copilot/confirm/${actionId}`),
+
+  deepResearch: (symbol: string, query?: string) =>
+    api.post<{ report: DeepResearchReport }>('/v1/copilot/deep-research', { symbol, query }),
 }
+
+/** Alias for convenience */
+export const copilotService = copilotApi
