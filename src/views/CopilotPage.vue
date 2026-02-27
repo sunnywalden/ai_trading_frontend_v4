@@ -5,7 +5,7 @@
       <div class="card brief-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="margin: 0;">📋 早间简报</h3>
-          <button class="refresh-button" @click="copilotStore.fetchMorningBrief()" style="font-size: 12px; padding: 4px 10px;">刷新</button>
+          <button class="refresh-button" @click="copilotStore.fetchMorningBrief(true)" style="font-size: 12px; padding: 4px 10px;">刷新</button>
         </div>
         <div v-if="copilotStore.loading" class="loading-message">加载中...</div>
         <div v-else-if="brief">

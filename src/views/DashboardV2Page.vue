@@ -51,6 +51,42 @@
     <!-- 主内容 -->
     <div v-else-if="store.fullData" class="dashboard-content">
 
+      <!-- ═══ V10.1 核心能力快捷入口 ═══ -->
+      <section class="section-capabilities">
+        <div class="capability-item" @click="$router.push('/options')">
+          <div class="cap-icon">💎</div>
+          <div class="cap-text">
+            <span class="cap-title">期权分析中心</span>
+            <span class="cap-desc">IV 曲面与异常大单监测</span>
+          </div>
+          <div class="cap-tag">V10.1</div>
+        </div>
+        <div class="capability-item" @click="$router.push('/paper')">
+          <div class="cap-icon">🧪</div>
+          <div class="cap-text">
+            <span class="cap-title">Paper Trading</span>
+            <span class="cap-desc">零风险实盘模拟训练</span>
+          </div>
+          <div class="cap-tag">LIVE</div>
+        </div>
+        <div class="capability-item" @click="$router.push('/etf-pool')">
+          <div class="cap-icon">📊</div>
+          <div class="cap-text">
+            <span class="cap-title">ETF 标的池管理</span>
+            <span class="cap-desc">多维度 ETF 机会筛选</span>
+          </div>
+          <div class="cap-tag">NEW</div>
+        </div>
+        <div class="capability-item" @click="$router.push('/backtest')">
+          <div class="cap-icon">📈</div>
+          <div class="cap-text">
+            <span class="cap-title">回测验证中心</span>
+            <span class="cap-desc">Walk-Forward 稳健性测试</span>
+          </div>
+          <div class="cap-tag">HOT</div>
+        </div>
+      </section>
+
       <!-- ═══ Section 1: KPI 核心指标带 ═══ -->
       <section class="section-kpi">
         <!-- 总资产 (最突出) -->
@@ -579,6 +615,81 @@ function riskLevelLabel(level: string): string {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* ════════════════════════════════════════
+   Capabilities Section (V10.1 Quick Access)
+   ════════════════════════════════════════ */
+.section-capabilities {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 1400px) {
+  .section-capabilities { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .section-capabilities { grid-template-columns: 1fr; }
+}
+
+.capability-item {
+  position: relative;
+  background: var(--d-bg);
+  border: 1px solid var(--d-border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.capability-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--d-accent);
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
+  background: rgba(56,189,248,0.03);
+}
+
+.cap-icon {
+  font-size: 1.8rem;
+}
+
+.cap-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cap-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--d-text);
+  margin-bottom: 2px;
+  font-family: 'SF Pro Display', sans-serif;
+}
+
+.cap-desc {
+  font-size: 0.72rem;
+  color: var(--d-text-dim);
+}
+
+.cap-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--d-accent);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-bottom-left-radius: 5px;
+  opacity: 0.9;
+  letter-spacing: 0.05em;
+  font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ═══ KPI Section ═══ */

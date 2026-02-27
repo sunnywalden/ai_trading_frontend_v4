@@ -19,22 +19,22 @@
     <div v-if="summary" class="overview-grid" style="margin-bottom: 24px;">
       <div class="stat-card">
         <div class="stat-label">IV Rank (52W)</div>
-        <div class="stat-value" :class="ivRankColor(summary.iv_rank)">{{ summary.iv_rank.toFixed(0) }}%</div>
+        <div class="stat-value" :class="ivRankColor(summary.iv_rank ?? 0)">{{ (summary.iv_rank ?? 0).toFixed(0) }}%</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">ATM IV</div>
-        <div class="stat-value">{{ (summary.atm_iv * 100).toFixed(1) }}%</div>
+        <div class="stat-value">{{ ((summary.atm_iv ?? 0) * 100).toFixed(1) }}%</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">P/C Ratio</div>
-        <div class="stat-value" :class="summary.put_call_ratio > 1.2 ? 'text-warning' : ''">
-          {{ summary.put_call_ratio.toFixed(2) }}
+        <div class="stat-value" :class="(summary.put_call_ratio ?? 0) > 1.2 ? 'text-warning' : ''">
+          {{ (summary.put_call_ratio ?? 0).toFixed(2) }}
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-label">异常大单</div>
-        <div class="stat-value" :class="summary.unusual_count > 0 ? 'text-warning' : ''">
-          {{ summary.unusual_count }}
+        <div class="stat-value" :class="(summary.unusual_count ?? 0) > 0 ? 'text-warning' : ''">
+          {{ summary.unusual_count ?? 0 }}
         </div>
       </div>
       <div class="stat-card span-2">
@@ -54,11 +54,11 @@
           <tr v-for="(u, i) in unusual" :key="i">
             <td>{{ u.expiration }}</td>
             <td>{{ u.strike }}</td>
-            <td><span :class="u.option_type === 'call' ? 'badge-call' : 'badge-put'">{{ u.option_type.toUpperCase() }}</span></td>
-            <td>{{ u.volume.toLocaleString() }}</td>
-            <td>{{ u.open_interest.toLocaleString() }}</td>
-            <td class="text-warning">{{ u.volume_oi_ratio.toFixed(1) }}x</td>
-            <td>{{ (u.iv * 100).toFixed(1) }}%</td>
+            <td><span :class="u.option_type === 'call' ? 'badge-call' : 'badge-put'">{{ (u.option_type || '').toUpperCase() }}</span></td>
+            <td>{{ (u.volume || 0).toLocaleString() }}</td>
+            <td>{{ (u.open_interest || 0).toLocaleString() }}</td>
+            <td class="text-warning">{{ (u.volume_oi_ratio || 0).toFixed(1) }}x</td>
+            <td>{{ ((u.iv || 0) * 100).toFixed(1) }}%</td>
           </tr>
         </tbody>
       </table>
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onUnmounted } from 'vue'
 import { optionsAnalysisApi, type OptionsSummary, type IVSurfaceData, type UnusualActivity } from '@/api/optionsAnalysisService'
 
 const symbol = ref('AAPL')
@@ -87,6 +87,14 @@ const summary = ref<OptionsSummary | null>(null)
 const unusual = ref<UnusualActivity[]>([])
 const ivSurface = ref<IVSurfaceData | null>(null)
 const ivChartDom = ref<HTMLElement>()
+let chartInst: any = null
+
+onUnmounted(() => {
+  if (chartInst) {
+    chartInst.dispose()
+    chartInst = null
+  }
+})
 
 async function handleSearch() {
   const sym = symbol.value.trim().toUpperCase()
@@ -117,15 +125,24 @@ async function renderIVChart(data: IVSurfaceData) {
   if (!ivChartDom.value || !data?.surface?.length) return
   try {
     const echarts = await import('echarts')
-    const chart = echarts.init(ivChartDom.value)
-    const xData = [...new Set(data.surface.map(d => d.strike))].sort((a, b) => a - b)
-    const yData = [...new Set(data.surface.map(d => d.expiration))].sort()
-    const heatData = data.surface.map(d => [
+    if (chartInst) {
+      chartInst.dispose()
+    }
+    chartInst = echarts.init(ivChartDom.value)
+    
+    // 过滤掉数据不完整的项
+    const validSurface = data.surface.filter(d => d && d.strike != null && d.expiration)
+    if (!validSurface.length) return
+
+    const xData = [...new Set(validSurface.map(d => d.strike))].sort((a, b) => a - b)
+    const yData = [...new Set(validSurface.map(d => d.expiration))].sort()
+    const heatData = validSurface.map(d => [
       xData.indexOf(d.strike),
       yData.indexOf(d.expiration),
       d.call_iv ? Math.round(d.call_iv * 1000) / 10 : null,
     ]).filter(d => d[2] !== null)
-    chart.setOption({
+    
+    chartInst.setOption({
       backgroundColor: 'transparent',
       tooltip: { formatter: (p: any) => `行权价: ${xData[p.data[0]]}<br/>到期: ${yData[p.data[1]]}<br/>IV: ${p.data[2]}%` },
       xAxis: { type: 'category', data: xData, name: '行权价' },
@@ -133,7 +150,9 @@ async function renderIVChart(data: IVSurfaceData) {
       visualMap: { min: 10, max: 80, calculable: true, orient: 'horizontal', left: 'center', bottom: 5, inRange: { color: ['#4a90e2', '#f5a623', '#c62828'] } },
       series: [{ type: 'heatmap', data: heatData, emphasis: { itemStyle: { shadowBlur: 10 } } }],
     })
-  } catch {}
+  } catch (err) {
+    console.error('Failed to render IV chart:', err)
+  }
 }
 
 function ivRankColor(rank: number) {

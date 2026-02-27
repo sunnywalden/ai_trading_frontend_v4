@@ -83,6 +83,27 @@ export const useStrategyStore = defineStore('strategy', () => {
     }
   }
 
+  /**
+   * 批量拉取多个策略的表现（单次请求，替代 N 次逐条请求）
+   */
+  async function loadAllPerformances(strategyIds: string[]) {
+    if (!strategyIds.length) return
+    try {
+      const ids = strategyIds.join(',')
+      const response = await api.get<{
+        status: string
+        count: number
+        performances: Record<string, StrategyPerformance>
+      }>(`/v1/strategies/performance/batch`, { params: { ids } })
+      const map = response.data.performances || {}
+      Object.entries(map).forEach(([id, perf]) => {
+        performances.value[id] = perf
+      })
+    } catch (error) {
+      console.error('Failed to batch load performances:', error)
+    }
+  }
+
   async function runStrategy(strategyId: string, request: StrategyRunRequest) {
     try {
       const response = await api.post<StrategyRunResponse>(
@@ -176,6 +197,7 @@ export const useStrategyStore = defineStore('strategy', () => {
     loadStrategies,
     loadStrategy,
     loadPerformance,
+    loadAllPerformances,
     runStrategy,
     toggleStrategy,
     updateParams,

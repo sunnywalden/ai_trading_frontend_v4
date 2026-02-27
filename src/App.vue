@@ -137,6 +137,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
       { path: '/macro',         label: t('nav.macro'),         icon: '🌍' },
       { path: '/strategies',    label: t('nav.strategies'),    icon: '📚' },
+      { path: '/etf-pool',      label: t('nav.etf_pool'),      icon: '📊' },
     ],
   },
   {
@@ -144,6 +145,7 @@ const navGroups = computed<NavGroup[]>(() => [
     items: [
       { path: '/backtest',  label: t('nav.backtest'),  icon: '📈' },
       { path: '/portfolio', label: t('nav.portfolio'), icon: '⚖️' },
+      { path: '/options',    label: t('nav.options'),    icon: '💎' },
     ],
   },
   {
