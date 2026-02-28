@@ -963,11 +963,16 @@ function riskLevelLabel(level: string): string {
 .signals-list,
 .insights-list,
 .todos-list,
-.positions-list,
-.plans-list {
+.positions-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.plans-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 
 /* ════════════════════════════════════════
