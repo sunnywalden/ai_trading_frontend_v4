@@ -97,10 +97,21 @@ export const useAutonomyStore = defineStore('autonomy', () => {
     }
   }
 
+  async function triggerFullCycle() {
+    triggerLoading.value = true
+    try {
+      const res = await autonomyApi.triggerFullCycle()
+      await fetchStatus()
+      return res.data
+    } finally {
+      triggerLoading.value = false
+    }
+  }
+
   return {
     status, auditLogs, auditTotal, signalPipeline, loading, triggerLoading, error,
     isPaused, currentLevel, circuitBreakerActive,
     fetchStatus, setLevel, pause, resume, fetchAuditLog,
-    fetchSignalPipeline, revokeOrder, triggerRebalance, triggerDecisionCycle,
+    fetchSignalPipeline, revokeOrder, triggerRebalance, triggerDecisionCycle, triggerFullCycle,
   }
 })

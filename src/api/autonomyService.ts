@@ -3,6 +3,14 @@ import { api } from './client'
 
 export type AutonomyLevel = 'FULL' | 'SEMI' | 'ADVISORY'
 
+export interface CooldownSymbol {
+  symbol: string
+  direction: string
+  executed_at: string
+  expires_at: string
+  remaining_minutes: number
+}
+
 export interface AutonomyStatus {
   level: AutonomyLevel
   paused: boolean
@@ -12,6 +20,8 @@ export interface AutonomyStatus {
   revoke_window_minutes: number
   signal_pipeline?: Record<string, number>  // 各状态信号数量
   failed_trades_today?: number
+  cooldown_symbols?: CooldownSymbol[]
+  cooldown_minutes?: number
 }
 
 export interface SignalPipelineItem {
@@ -36,6 +46,7 @@ export interface AuditLogEntry {
   direction?: string
   quantity?: number
   risk_gate_passed: boolean
+  ai_reasoning?: string
   order_id?: string
   revoked_at?: string
   circuit_breaker_triggered: boolean
@@ -69,4 +80,7 @@ export const autonomyApi = {
 
   triggerDecisionCycle: () =>
     api.post<{ success: boolean; decisions: number; executed: number; details: any[] }>('/v1/autonomy/trigger-decision-cycle'),
+
+  triggerFullCycle: () =>
+    api.post<{ success: boolean; signals_generated: number; signals_validated: number; executed: number; details: any }>('/v1/autonomy/trigger-full-cycle'),
 }
