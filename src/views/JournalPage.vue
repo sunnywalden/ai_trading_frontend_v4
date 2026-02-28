@@ -87,6 +87,7 @@ import { storeToRefs } from 'pinia'
 import { useJournalStore } from '@/stores/journal'
 import { useQuantLoopStore } from '@/stores/quantLoop'
 import type { JournalEntry } from '@/api/client'
+import { formatClientTime } from '@/utils/datetime'
 
 const store = useJournalStore()
 const quantLoopStore = useQuantLoopStore()
@@ -125,22 +126,8 @@ function selectJournal(_j: any) { /* future: open detail panel */ }
 function formatEntryAt(j: JournalEntry): string {
   const datePart = j.entry_date || '-'
   if (!j.created_at) return datePart
-  const d = parseBackendTimestampToClientLocal(j.created_at)
-  if (Number.isNaN(d.getTime())) return datePart
-  const hhmm = new Intl.DateTimeFormat('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  }).format(d)
+  const hhmm = formatClientTime(j.created_at, { withSeconds: false })
   return `${datePart} ${hhmm}`
-}
-
-function parseBackendTimestampToClientLocal(raw: string): Date {
-  const s = String(raw).trim()
-  const hasTimezone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)
-  // 后端当前是无时区 DateTime（如 2026-02-28T09:35:50），这里按 UTC 解释，再转客户端本地时区显示
-  return hasTimezone ? new Date(s) : new Date(`${s}Z`)
 }
 
 onMounted(reload)
