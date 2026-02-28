@@ -266,7 +266,7 @@
         </div>
         <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
           <PlanCard
-            v-for="plan in store.fullData.active_plans.slice(0, 6)"
+            v-for="plan in store.fullData.active_plans"
             :key="plan.plan_id"
             :plan="plan"
           />
