@@ -103,12 +103,10 @@ const form = reactive({
 })
 
 async function reload() { 
-  const accountId = systemStatus.value?.account_id
-  await store.load(1, 20, undefined, filterStatus.value || undefined, accountId) 
+  await store.load(1, 20, undefined, filterStatus.value || undefined) 
 }
 async function goPage(p: number) { 
-  const accountId = systemStatus.value?.account_id
-  await store.load(p, 20, undefined, filterStatus.value || undefined, accountId) 
+  await store.load(p, 20, undefined, filterStatus.value || undefined) 
 }
 
 // 监听账户变化
