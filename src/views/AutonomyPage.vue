@@ -140,7 +140,7 @@
             </td>
             <td>{{ sig.direction ?? '—' }}</td>
             <td>{{ sig.quantity ?? '—' }}</td>
-            <td>{{ (sig.strength * 100).toFixed(0) + '%' }}</td>
+            <td>{{ (sig.strength * 100).toFixed(2) + '%' }}</td>
             <td>
               <span :class="signalStatusClass(sig.status)">{{ sig.status }}</span>
             </td>
@@ -226,7 +226,7 @@ const regimeBannerConf = computed(() => {
   if (!regimeInfo.value || typeof regimeInfo.value !== 'object') return '—'
   const conf = regimeInfo.value.confidence
   if (typeof conf !== 'number') return '—'
-  return (conf * 100).toFixed(0) + '%'
+  return (conf * 100).toFixed(2) + '%'
 })
 const regimeBannerColor = computed(() => {
   if (!regimeInfo.value) return '#555555'
