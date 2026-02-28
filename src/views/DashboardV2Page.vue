@@ -314,6 +314,7 @@ import PositionCard from '@/components/dashboard/PositionCard.vue'
 import PlanCard from '@/components/dashboard/PlanCard.vue'
 import HotspotCard from '@/components/dashboard/HotspotCard.vue'
 import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
+import { formatClientTime } from '@/utils/datetime'
 
 const store = useDashboardV2Store()
 const autonomy = useAutonomyStore()
@@ -414,7 +415,7 @@ function formatPnL(value: number): string {
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return formatClientTime(date, { locale: locale.value, withSeconds: true })
 }
 
 function riskLevelLabel(level: string): string {

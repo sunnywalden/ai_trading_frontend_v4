@@ -261,6 +261,7 @@ import { useAutonomyStore } from '@/stores/autonomy'
 import type { AutonomyLevel, CooldownSymbol } from '@/api/autonomyService'
 import { storeToRefs } from 'pinia'
 import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
@@ -370,7 +371,7 @@ async function handleRevoke(execId: string) {
 }
 
 function formatDate(s: string) {
-  return new Date(s).toLocaleString('zh-CN')
+  return formatClientDateTime(s)
 }
 
 onMounted(async () => {
