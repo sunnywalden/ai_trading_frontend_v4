@@ -53,6 +53,9 @@
         <div class="stat-value" :class="status.paused ? 'text-warning' : 'text-success'">
           {{ status.paused ? '已暂停' : '运行中' }}
         </div>
+        <div v-if="!status.paused && cooldownActive" class="stat-sub text-warning">
+          {{ cooldownSymbols.length }} 标的冷却限速中
+        </div>
       </div>
       <div class="stat-card">
         <div class="stat-label">今日交易次数</div>
@@ -63,8 +66,44 @@
         <div class="stat-value" :class="status.circuit_breaker_triggered ? 'text-danger' : 'text-success'">
           {{ status.circuit_breaker_triggered ? '已触发' : '正常' }}
         </div>
-      </div>
-    </div>
+      </div>      <!-- 冷却保护卡片 -->
+      <div
+        class="stat-card"
+        :class="{ 'stat-card--warn': cooldownActive }"
+        style="cursor: pointer; position: relative;"
+        @click="showCooldownDetail = !showCooldownDetail"
+      >
+        <div class="stat-label">冷却保护</div>
+        <div class="stat-value" :class="cooldownActive ? 'text-warning' : 'text-success'">
+          {{ cooldownActive ? cooldownSymbols.length + ' 标的限速中' : '无限制' }}
+        </div>
+        <div v-if="cooldownActive" class="stat-sub text-muted">
+          点击查看详情
+        </div>
+        <!-- 冷却详情展开牌 -->
+        <div
+          v-if="showCooldownDetail && cooldownActive"
+          class="cooldown-detail"
+          @click.stop
+        >
+          <div class="cooldown-detail-title">❄️ 冷却保护中（重复下单防护）</div>
+          <table class="cooldown-table">
+            <thead><tr><th>标的</th><th>方向</th><th>剩余冷却</th></tr></thead>
+            <tbody>
+              <tr v-for="cd in cooldownSymbols" :key="cd.symbol + cd.direction">
+                <td>{{ cd.symbol }}</td>
+                <td :style="{ color: cd.direction === 'BUY' ? '#00ff88' : '#ff4d4d' }">
+                  {{ cd.direction }}
+                </td>
+                <td>{{ cd.remaining_minutes }}分钟</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="cooldown-detail-note">
+            冷却时长: {{ status.cooldown_minutes ?? 120 }}分钟，到期后自动解除
+          </div>
+        </div>
+      </div>    </div>
 
     <!-- 级别切换 -->
     <div class="card" style="margin-bottom: 24px;">
@@ -101,6 +140,14 @@
           @click="handleTriggerDecisionCycle"
         >
           {{ autonomyStore.triggerLoading ? '执行中...' : '⚡ 触发决策周期' }}
+        </button>
+        <button
+          class="trigger-button trigger-button--primary"
+          :disabled="autonomyStore.triggerLoading"
+          @click="handleTriggerFullCycle"
+          title="生成信号 + 验证 + 执行，等同于每日完整交易闭环"
+        >
+          {{ autonomyStore.triggerLoading ? '执行中...' : '🚀 触发完整周期（含信号生成）' }}
         </button>
         <button class="refresh-button" @click="autonomyStore.fetchSignalPipeline()">刷新信号流</button>
       </div>
@@ -168,6 +215,7 @@
             <th>方向</th>
             <th>数量</th>
             <th>Risk Gate</th>
+            <th>备注/原因</th>
             <th>订单 ID</th>
             <th>撤销状态</th>
             <th>操作</th>
@@ -185,6 +233,9 @@
                 {{ log.risk_gate_passed ? '通过' : '拦截' }}
               </span>
             </td>
+            <td style="max-width:180px; font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" :title="log.ai_reasoning ?? ''">
+              {{ log.ai_reasoning ?? '—' }}
+            </td>
             <td>{{ log.order_id ? log.order_id.substring(0, 12) + '…' : '—' }}</td>
             <td>{{ log.revoked_at ? '已撤销' : '—' }}</td>
             <td>
@@ -196,7 +247,7 @@
             </td>
           </tr>
           <tr v-if="autonomyStore.auditLogs.length === 0">
-            <td colspan="9" style="text-align: center; color: #666;">暂无审计记录</td>
+            <td colspan="10" style="text-align: center; color: #666;">暂无审计记录</td>
           </tr>
         </tbody>
       </table>
@@ -207,7 +258,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useAutonomyStore } from '@/stores/autonomy'
-import type { AutonomyLevel } from '@/api/autonomyService'
+import type { AutonomyLevel, CooldownSymbol } from '@/api/autonomyService'
 import { storeToRefs } from 'pinia'
 import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 
@@ -217,6 +268,13 @@ const { status } = storeToRefs(autonomyStore)
 // V10.2-M1: 体制感知
 const regimeInfo     = ref<RegimeInfo | null>(null)
 const regimeVarMultN = ref<number>(1.0)
+
+// 冷却保护
+const showCooldownDetail = ref(false)
+const cooldownSymbols = computed<CooldownSymbol[]>(
+  () => status.value?.cooldown_symbols ?? []
+)
+const cooldownActive = computed(() => cooldownSymbols.value.length > 0)
 
 const regimeBannerLabel = computed(() => {
   if (!regimeInfo.value) return '—'
@@ -301,6 +359,12 @@ async function handleTriggerDecisionCycle() {
   await autonomyStore.fetchStatus()
 }
 
+async function handleTriggerFullCycle() {
+  await autonomyStore.triggerFullCycle()
+  await autonomyStore.fetchSignalPipeline()
+  await autonomyStore.fetchStatus()
+}
+
 async function handleRevoke(execId: string) {
   await autonomyStore.revokeOrder(execId)
 }
@@ -369,6 +433,68 @@ onMounted(async () => {
 }
 .trigger-button:hover:not(:disabled) { background: rgba(74,144,226,0.3); }
 .trigger-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.trigger-button--primary {
+  background: rgba(80,200,120,0.15); color: #50c878;
+  border-color: rgba(80,200,120,0.5);
+}
+.trigger-button--primary:hover:not(:disabled) { background: rgba(80,200,120,0.3); }
+
+/* 状态卡片副文本 */
+.stat-sub {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+.text-muted { color: #888; }
+
+/* 冷却保护卡片高亮边框 */
+.stat-card--warn {
+  border-color: rgba(255,165,0,0.45);
+  background: linear-gradient(135deg, rgba(255,165,0,0.07) 0%, transparent 60%);
+}
+
+/* 冷却保护详情面板 */
+.cooldown-detail {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 260px;
+  background: #1a1e2e;
+  border: 1px solid rgba(255,165,0,0.4);
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 200;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+.cooldown-detail-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffaa33;
+  margin-bottom: 8px;
+}
+.cooldown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.cooldown-table th {
+  color: #888;
+  font-weight: 500;
+  text-align: left;
+  padding: 2px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.cooldown-table td {
+  padding: 4px 6px;
+  color: #ccc;
+}
+.cooldown-detail-note {
+  font-size: 11px;
+  color: #666;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 6px;
+}
 
 /* V10.2-M1: 体制感知横幅 */
 .regime-banner {
