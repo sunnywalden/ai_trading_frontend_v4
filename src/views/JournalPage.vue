@@ -24,7 +24,7 @@
           <span class="j-status" :class="'s-' + (j.journal_status || '').toLowerCase()">{{ j.journal_status }}</span>
         </div>
         <div class="j-body">
-          <span>{{ $t('journal.entry') }} {{ j.entry_date || '-' }} @ ${{ j.entry_price || '-' }}</span>
+          <span>{{ $t('journal.entry') }} {{ formatEntryAt(j) }} @ ${{ j.entry_price || '-' }}</span>
           <span>{{ $t('journal.exit') }} {{ j.exit_date || '-' }} @ ${{ j.exit_price || '-' }}</span>
           <span class="j-pnl" :class="(j.realized_pnl ?? 0) >= 0 ? 'pnl-pos' : 'pnl-neg'">
             {{ $t('journal.pnl') }}: ${{ (j.realized_pnl ?? 0).toFixed(2) }}
@@ -86,6 +86,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useJournalStore } from '@/stores/journal'
 import { useQuantLoopStore } from '@/stores/quantLoop'
+import type { JournalEntry } from '@/api/client'
 
 const store = useJournalStore()
 const quantLoopStore = useQuantLoopStore()
@@ -120,6 +121,27 @@ async function submitCreate() {
 }
 async function doAiReview(id: number) { await store.aiReview(id) }
 function selectJournal(_j: any) { /* future: open detail panel */ }
+
+function formatEntryAt(j: JournalEntry): string {
+  const datePart = j.entry_date || '-'
+  if (!j.created_at) return datePart
+  const d = parseBackendTimestampToClientLocal(j.created_at)
+  if (Number.isNaN(d.getTime())) return datePart
+  const hhmm = new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  }).format(d)
+  return `${datePart} ${hhmm}`
+}
+
+function parseBackendTimestampToClientLocal(raw: string): Date {
+  const s = String(raw).trim()
+  const hasTimezone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)
+  // 后端当前是无时区 DateTime（如 2026-02-28T09:35:50），这里按 UTC 解释，再转客户端本地时区显示
+  return hasTimezone ? new Date(s) : new Date(`${s}Z`)
+}
 
 onMounted(reload)
 </script>
