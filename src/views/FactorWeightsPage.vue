@@ -153,7 +153,7 @@ function renderMomentum() {
       indicator: DIMS.map((d) => ({ name: dimLabel(d), max: 0.5 })),
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.3)' } },
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.1)' } },
-      name: { textStyle: { color: '#ccc' } },
+      axisName: { color: '#ccc' },
     },
     series: [{
       type: 'radar',

@@ -372,6 +372,7 @@
       "extreme": "Extreme",
       "critical": "Critical",
       "high": "High",
+      "warning": "Warning",
       "medium": "Medium",
       "low": "Low",
       "stable": "Stable",
@@ -1159,6 +1160,7 @@
       "submitting": "Submitting...",
       "error_submit": "Submission failed, please try again",
       "universes": {
+        "AUTO_MARKET_TIME": "Auto by trading session (full US/HK)",
         "US_LARGE_MID_TECH": "US Large/Mid Tech",
         "PRECIOUS_METALS": "Precious Metals",
         "US_SMALL_TECH": "US Small Tech",

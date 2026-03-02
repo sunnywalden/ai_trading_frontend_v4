@@ -29,6 +29,7 @@
           <div class="field-group">
             <label>{{ $t('execution_list.run_modal.target_universe') }}</label>
             <select v-model="form.target_universe">
+              <option value="AUTO_MARKET_TIME">{{ $t('execution_list.run_modal.universes.AUTO_MARKET_TIME') }}</option>
               <option value="US_LARGE_MID_TECH">{{ $t('execution_list.run_modal.universes.US_LARGE_MID_TECH') }}</option>
               <option value="PRECIOUS_METALS">{{ $t('execution_list.run_modal.universes.PRECIOUS_METALS') }}</option>
               <option value="US_SMALL_TECH">{{ $t('execution_list.run_modal.universes.US_SMALL_TECH') }}</option>
@@ -80,7 +81,7 @@ const emit = defineEmits<{ (e: 'close'): void; (e: 'submit', payload: StrategyRu
 
 const form = reactive<StrategyRunRequest>({
   direction: undefined,
-  target_universe: 'US_LARGE_MID_TECH',
+  target_universe: 'AUTO_MARKET_TIME',
   min_score: 75,
   max_results: 3
 });
@@ -94,7 +95,7 @@ watch(
   (show) => {
     if (show && props.strategy) {
       form.direction = undefined;
-      form.target_universe = props.strategy.default_params?.universe || 'US_LARGE_MID_TECH';
+      form.target_universe = 'AUTO_MARKET_TIME';
       form.min_score = 75;
       form.max_results = 3;
       form.priority = undefined;
