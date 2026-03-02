@@ -40,13 +40,13 @@ export interface FillHeatmapCell {
 
 export interface DimensionIntelligence {
   dimension: string
-  ic_5d: number
-  ic_20d: number
-  ic_60d: number
-  alpha_halflife_days: number
-  ic_half_life_days?: number        // alias for alpha_halflife_days
-  ic_stddev: number
-  crowding_score: number
+  ic_5d: number | null
+  ic_20d: number | null
+  ic_60d: number | null
+  alpha_halflife_days: number | null
+  ic_half_life_days?: number | null        // alias for alpha_halflife_days
+  ic_stddev: number | null
+  crowding_score: number | null
   is_crowded: boolean
   sample_count: number
   weight_reduce_triggered: boolean
@@ -63,7 +63,7 @@ export interface SignalIntelligenceResponse {
 export interface CorrelationMatrix {
   symbols: string[]
   dimensions?: string[]   // alias for symbols (used by signal intelligence chart)
-  matrix: number[][]
+  matrix: Array<Array<number | null>>
   updated_at: string
 }
 
