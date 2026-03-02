@@ -31,6 +31,8 @@ export interface SignalPipelineItem {
   status: string
   direction: string
   quantity: number | null
+  quantity_mode?: string | null
+  quantity_value?: number | null
   strength: number
   priority: number
   notes: string | null
