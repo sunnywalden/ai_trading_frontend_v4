@@ -21,12 +21,12 @@
     <div class="metrics-row" v-if="store.signalIntelligence">
       <div class="metric-card" v-for="dim in store.signalIntelligence.dimensions" :key="dim.dimension">
         <div class="mc-label">{{ dimLabel(dim.dimension) }}</div>
-        <div class="mc-value" :class="icColor(dim.ic_5d)">{{ (dim.ic_5d * 100).toFixed(1) }}%</div>
+        <div class="mc-value" :class="icColor(dim.ic_5d)">{{ fmtPct(dim.ic_5d, 1) }}</div>
         <div class="mc-sub">IC(5d)</div>
         <div class="crowding-bar">
-          <div class="crowding-fill" :style="{ width: (dim.crowding_score * 100) + '%', background: crowdingColor(dim.crowding_score) }" />
+          <div class="crowding-fill" :style="{ width: pctWidth(dim.crowding_score), background: crowdingColor(dim.crowding_score) }" />
         </div>
-        <div class="mc-sub" :style="{ color: crowdingColor(dim.crowding_score) }">拥挤 {{ (dim.crowding_score * 100).toFixed(0) }}%</div>
+        <div class="mc-sub" :style="{ color: crowdingColor(dim.crowding_score) }">拥挤 {{ fmtPct(dim.crowding_score, 0) }}</div>
       </div>
     </div>
 
@@ -63,11 +63,11 @@
         <tbody>
           <tr v-for="d in store.crowdingAlerts" :key="d.dimension">
             <td class="symbol-cell">{{ dimLabel(d.dimension) }}</td>
-            <td class="danger">{{ (d.crowding_score * 100).toFixed(1) }}%</td>
-            <td :class="icColor(d.ic_5d)">{{ (d.ic_5d * 100).toFixed(2) }}%</td>
-            <td :class="icColor(d.ic_20d)">{{ (d.ic_20d * 100).toFixed(2) }}%</td>
-            <td>{{ d.alpha_halflife_days?.toFixed(0) ?? '-' }} 天</td>
-            <td class="warn">降低权重 {{ ((d.crowding_score - 0.75) * (0.15 / 0.25) * 100).toFixed(0) }}%</td>
+            <td class="danger">{{ fmtPct(d.crowding_score, 1) }}</td>
+            <td :class="icColor(d.ic_5d)">{{ fmtPct(d.ic_5d, 2) }}</td>
+            <td :class="icColor(d.ic_20d)">{{ fmtPct(d.ic_20d, 2) }}</td>
+            <td>{{ fmtDays(d.alpha_halflife_days) }}</td>
+            <td class="warn">降低权重 {{ fmtWeightReducePct(d.crowding_score) }}</td>
           </tr>
         </tbody>
       </table>
@@ -93,8 +93,33 @@ const DIM_LABELS: Record<string, string> = {
   technical: '技术面', fundamental: '基本面', ml: 'ML', sentiment: '情绪', macro: '宏观', event: '事件'
 }
 function dimLabel(d: string) { return DIM_LABELS[d] || d }
-function icColor(v: number) { return v > 0.05 ? 'good' : v > 0 ? 'warn' : 'danger' }
-function crowdingColor(v: number) { return v > 0.75 ? '#ff4444' : v > 0.5 ? '#ffd700' : '#00ff88' }
+function toNum(v: number | null | undefined, fallback = 0): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : fallback
+}
+function fmtPct(v: number | null | undefined, digits = 1): string {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return '-'
+  return `${(v * 100).toFixed(digits)}%`
+}
+function pctWidth(v: number | null | undefined): string {
+  return `${(toNum(v) * 100).toFixed(1)}%`
+}
+function fmtDays(v: number | null | undefined): string {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return '-'
+  return `${v.toFixed(0)} 天`
+}
+function fmtWeightReducePct(crowding: number | null | undefined): string {
+  const c = toNum(crowding, 0.75)
+  const pct = Math.max(0, (c - 0.75) * (0.15 / 0.25) * 100)
+  return `${pct.toFixed(0)}%`
+}
+function icColor(v: number | null | undefined) {
+  const n = toNum(v)
+  return n > 0.05 ? 'good' : n > 0 ? 'warn' : 'danger'
+}
+function crowdingColor(v: number | null | undefined) {
+  const n = toNum(v)
+  return n > 0.75 ? '#ff4444' : n > 0.5 ? '#ffd700' : '#00ff88'
+}
 
 function renderIC() {
   if (!icChartEl.value || !store.signalIntelligence) return
@@ -108,9 +133,9 @@ function renderIC() {
     xAxis: { type: 'category', data: labels, axisLabel: { color: '#999' } },
     yAxis: { type: 'value', axisLabel: { formatter: (v: number) => (v * 100).toFixed(1) + '%', color: '#999' } },
     series: [
-      { name: 'IC(5d)', type: 'bar', data: dims.map((d) => d.ic_5d), itemStyle: { color: '#00ff88' } },
-      { name: 'IC(20d)', type: 'bar', data: dims.map((d) => d.ic_20d), itemStyle: { color: '#4dffb8' } },
-      { name: 'IC(60d)', type: 'bar', data: dims.map((d) => d.ic_60d), itemStyle: { color: '#99ffd4' } },
+      { name: 'IC(5d)', type: 'bar', data: dims.map((d) => toNum(d.ic_5d)), itemStyle: { color: '#00ff88' } },
+      { name: 'IC(20d)', type: 'bar', data: dims.map((d) => toNum(d.ic_20d)), itemStyle: { color: '#4dffb8' } },
+      { name: 'IC(60d)', type: 'bar', data: dims.map((d) => toNum(d.ic_60d)), itemStyle: { color: '#99ffd4' } },
     ],
   })
   icChart.on('click', (p) => {
@@ -138,7 +163,11 @@ function renderCorr() {
   const mat = store.correlationMatrix
   const labels = (mat.dimensions ?? mat.symbols).map(dimLabel)
   const data: [number, number, number][] = []
-  mat.matrix.forEach((row, i) => row.forEach((v, j) => data.push([j, i, +v.toFixed(3)])))
+  mat.matrix.forEach((row, i) => row.forEach((v, j) => {
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      data.push([j, i, +v.toFixed(3)])
+    }
+  }))
   corrChart.setOption({
     backgroundColor: 'transparent',
     tooltip: { formatter: (p: { value: [number, number, number] }) => `${labels[p.value[1]]} × ${labels[p.value[0]]}: ${p.value[2]}` },

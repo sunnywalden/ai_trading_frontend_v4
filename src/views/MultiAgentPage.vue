@@ -29,7 +29,7 @@
             <textarea v-model="form.context" class="form-textarea" rows="4" placeholder="描述当前市场情况、你的交易假设..." />
           </div>
           <button class="run-button" :disabled="store.runningAgent || !form.symbol.trim() || !form.context.trim()" @click="triggerRun">
-            {{ store.runningAgent ? '⏳ Agent 协商中...' : '▶ 启动 5-Agent 合议' }}
+            {{ store.runningAgent ? runningLabel : '▶ 启动 5-Agent 合议' }}
           </button>
         </div>
 
@@ -45,12 +45,17 @@
               :key="run.run_id"
               class="run-item"
               :class="{ active: selectedRunId === run.run_id }"
-              @click="selectRun(run.run_id)"
+              @click="run.status !== 'pending' && run.status !== 'running' && selectRun(run.run_id)"
             >
               <div class="run-symbol">{{ run.symbol }}</div>
               <div class="run-meta">
-                <span :class="recCss(run.final_recommendation)">{{ run.final_recommendation ?? '-' }}</span>
-                <span class="run-conf">{{ run.confidence != null ? (run.confidence * 100).toFixed(0) + '%' : '' }}</span>
+                <span v-if="run.status === 'pending' || run.status === 'running'" class="run-status-badge">
+                  {{ run.status === 'pending' ? '⏳ 排队' : '🤖 运行中' }}
+                </span>
+                <template v-else>
+                  <span :class="recCss(run.final_recommendation)">{{ run.final_recommendation ?? '-' }}</span>
+                  <span class="run-conf">{{ run.confidence != null ? (run.confidence * 100).toFixed(0) + '%' : '' }}</span>
+                </template>
               </div>
               <div class="run-time">{{ fmtTime(run.created_at) }}</div>
             </div>
@@ -117,13 +122,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useAiHubStore } from '@/stores/aiHub'
 
 const store = useAiHubStore()
 const selectedRunId = ref<string | null>(null)
 
 const form = reactive({ symbol: '', size_usd: 50000, context: '' })
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: '⏳ 任务排队中...',
+  running: '🤖 Agent 协商中...',
+  completed: '✅ 完成',
+  failed: '❌ 失败',
+}
+const runningLabel = computed(() => STATUS_LABELS[store.pollingStatus] ?? '⏳ Agent 协商中...')
 
 function fmtTime(ts: string | null) {
   if (!ts) return ''
@@ -185,6 +198,7 @@ onMounted(() => store.fetchAgentRuns())
 .rec-buy { color: #00ff88; font-weight: 700; }
 .rec-sell { color: #ff4444; font-weight: 700; }
 .rec-hold { color: #ffd700; font-weight: 700; }
+.run-status-badge { color: #aaa; font-size: 0.78rem; font-style: italic; }
 .result-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .result-symbol { font-size: 1.4rem; font-weight: 700; color: #00ff88; }
 .result-badge { padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 1rem; }

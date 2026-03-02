@@ -45,6 +45,7 @@ export interface AgentRunResult {
   challenge_points: string[]
   messages: AgentMessage[]
   latency_ms?: number
+  error?: string
   // Alias fields (UI convenience)
   final_recommendation?: string   // alias for final_decision
   confidence?: number             // alias for final_confidence
@@ -148,13 +149,37 @@ export async function triggerAgentRun(
   symbol: string,
   context: Record<string, unknown> = {},
   sizeUsd = 10000
-): Promise<AgentRunResult> {
+): Promise<{ run_id: string; status: string; symbol: string }> {
   const { data } = await api.post('/v1/ai-hub/agent-runs', {
     symbol,
     context,
     size_usd: sizeUsd,
   })
   return data
+}
+
+export async function getAgentRunStatus(runId: string): Promise<AgentRunResult> {
+  const { data } = await api.get(`/v1/ai-hub/agent-runs/${runId}/status`)
+  return data
+}
+
+/** 轮询 agent run 直至 completed/failed，最多等 maxWaitMs（默认 300s）。*/
+export async function pollAgentRun(
+  runId: string,
+  onProgress?: (status: string) => void,
+  intervalMs = 3000,
+  maxWaitMs = 300_000,
+): Promise<AgentRunResult> {
+  const deadline = Date.now() + maxWaitMs
+  while (Date.now() < deadline) {
+    const result = await getAgentRunStatus(runId)
+    onProgress?.(result.status)
+    if (result.status === 'completed' || result.status === 'failed') {
+      return result
+    }
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+  throw new Error(`Agent run ${runId} did not complete within ${maxWaitMs / 1000}s`)
 }
 
 export async function getAgentRun(runId: string): Promise<AgentRunDetail> {

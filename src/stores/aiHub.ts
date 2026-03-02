@@ -6,6 +6,7 @@ import {
   listAgentRuns,
   getAgentRunSummary,
   triggerAgentRun,
+  pollAgentRun,
   getLatestCalibration,
   getCalibrationHistory,
   getFactorWeights,
@@ -49,6 +50,7 @@ export const useAiHubStore = defineStore('aiHub', () => {
   const currentRunResult = ref<AgentRunResult | null>(null)
   const loadingRuns = ref(false)
   const runningAgent = ref(false)
+  const pollingStatus = ref<string>('')   // pending / running / completed / failed
 
   async function fetchAgentRuns(limit = 20) {
     loadingRuns.value = true
@@ -67,22 +69,55 @@ export const useAiHubStore = defineStore('aiHub', () => {
 
   async function startAgentRun(params: TriggerAgentRunParams): Promise<AgentRunResult> {
     runningAgent.value = true
+    pollingStatus.value = 'pending'
     try {
       // service context param is Record<string,unknown>; wrap plain-string context
       const contextPayload: Record<string, unknown> =
         typeof params.context === 'string' ? { description: params.context } : (params.context as Record<string, unknown>)
-      const result = await triggerAgentRun(params.symbol, contextPayload, params.size_usd)
-      currentRunResult.value = result
-      // prepend to list
+
+      // Step 1: 立即提交，后端返回 run_id + status:pending
+      const submitted = await triggerAgentRun(params.symbol, contextPayload, params.size_usd)
+      const runId = submitted.run_id
+
+      // 先插入列表占位
       agentRuns.value.unshift({
-        run_id: result.run_id,
+        run_id: runId,
         symbol: params.symbol,
-        status: result.status,
-        final_recommendation: result.final_recommendation,
-        confidence: result.confidence,
+        status: 'pending',
+        final_recommendation: undefined,
+        confidence: undefined,
         created_at: new Date().toISOString(),
-        message_count: result.messages?.length ?? 0,
+        message_count: 0,
       })
+
+      // Step 2: 轮询直到完成
+      const result = await pollAgentRun(
+        runId,
+        (status) => { pollingStatus.value = status },
+        3000,
+        300_000,
+      )
+
+      // 规范化 alias 字段
+      result.final_recommendation = result.final_recommendation ?? result.final_decision
+      result.confidence = result.confidence ?? result.final_confidence
+      result.final_reasoning = result.final_reasoning ?? result.orchestrator_summary
+
+      currentRunResult.value = result
+
+      // 更新列表中的占位项
+      const idx = agentRuns.value.findIndex((r) => r.run_id === runId)
+      if (idx !== -1) {
+        agentRuns.value[idx] = {
+          run_id: runId,
+          symbol: params.symbol,
+          status: result.status,
+          final_recommendation: result.final_recommendation,
+          confidence: result.confidence,
+          created_at: agentRuns.value[idx].created_at,
+          message_count: result.messages?.length ?? 0,
+        }
+      }
       return result
     } finally {
       runningAgent.value = false
@@ -209,6 +244,7 @@ export const useAiHubStore = defineStore('aiHub', () => {
     currentRunResult,
     loadingRuns,
     runningAgent,
+    pollingStatus,
     fetchAgentRuns,
     fetchRunSummary,
     startAgentRun,
