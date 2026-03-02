@@ -186,7 +186,7 @@
               <span :class="signalTypeClass(sig.type)">{{ sig.type }}</span>
             </td>
             <td>{{ sig.direction ?? '—' }}</td>
-            <td>{{ sig.quantity ?? '—' }}</td>
+            <td :title="sig.quantity_mode ?? ''">{{ formatSignalQuantity(sig) }}</td>
             <td>{{ (sig.strength * 100).toFixed(2) + '%' }}</td>
             <td>
               <span :class="signalStatusClass(sig.status)">{{ sig.status }}</span>
@@ -258,7 +258,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useAutonomyStore } from '@/stores/autonomy'
-import type { AutonomyLevel, CooldownSymbol } from '@/api/autonomyService'
+import type { AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
 import { storeToRefs } from 'pinia'
 import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import { formatClientDateTime } from '@/utils/datetime'
@@ -322,6 +322,25 @@ function signalStatusClass(s: string) {
   if (s === 'FAILED' || s === 'REJECTED') return 'badge-danger'
   if (s === 'VALIDATED') return 'badge-info'
   return 'badge-default'
+}
+
+function formatSignalQuantity(sig: SignalPipelineItem): string {
+  const mode = (sig.quantity_mode || '').toUpperCase()
+  const value = sig.quantity_value ?? sig.quantity
+  if (value == null || Number.isNaN(Number(value))) return '—'
+
+  if (mode === 'PCT_EQUITY') {
+    const pct = Number(value) <= 1 ? Number(value) * 100 : Number(value)
+    return `${pct.toFixed(2)}%`
+  }
+
+  if (mode === 'ABS_SHARES') {
+    const n = Number(value)
+    if (Math.abs(n - Math.round(n)) < 1e-6) return `${Math.round(n)}`
+    return n.toFixed(4)
+  }
+
+  return `${Number(value)}`
 }
 
 const levelLabels: Record<string, string> = {
