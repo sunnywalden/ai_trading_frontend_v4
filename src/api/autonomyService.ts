@@ -47,6 +47,8 @@ export interface AuditLogEntry {
   symbol?: string
   direction?: string
   quantity?: number
+  quantity_mode?: string | null
+  quantity_value?: number | null
   risk_gate_passed: boolean
   ai_reasoning?: string
   order_id?: string
