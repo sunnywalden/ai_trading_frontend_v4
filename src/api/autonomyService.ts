@@ -16,6 +16,8 @@ export interface AutonomyStatus {
   paused: boolean
   circuit_breaker_triggered: boolean
   daily_trades_today: number
+  daily_trades_today_autonomous?: number
+  daily_trades_today_broker?: number | null
   max_daily_trades: number
   revoke_window_minutes: number
   signal_pipeline?: Record<string, number>  // 各状态信号数量
