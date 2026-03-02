@@ -91,12 +91,12 @@ export interface AlertStats {
 // ─── War Room APIs ────────────────────────────────────────────────────────────
 
 export async function getWarRoomSnapshot(): Promise<WarRoomSnapshot> {
-  const { data } = await api.get('/api/v1/war-room/snapshot')
+  const { data } = await api.get('/v1/war-room/snapshot')
   return data
 }
 
 export async function getPnLTicker(): Promise<PnLTicker> {
-  const { data } = await api.get('/api/v1/war-room/pnl-ticker')
+  const { data } = await api.get('/v1/war-room/pnl-ticker')
   return data
 }
 
@@ -106,12 +106,12 @@ export async function getIntelligenceFeed(
 ): Promise<IntelligenceFeedItem[]> {
   const params: Record<string, unknown> = { limit }
   if (category) params.category = category
-  const { data } = await api.get('/api/v1/war-room/intelligence-feed', { params })
+  const { data } = await api.get('/v1/war-room/intelligence-feed', { params })
   return data
 }
 
 export async function getPortfolioExposure(): Promise<PortfolioExposure> {
-  const { data } = await api.get('/api/v1/war-room/exposure')
+  const { data } = await api.get('/v1/war-room/exposure')
   return data
 }
 
@@ -124,24 +124,24 @@ export async function getAlerts(
 ): Promise<SmartAlert[]> {
   const params: Record<string, unknown> = { include_dismissed: includeDismissed, limit }
   if (grade) params.grade = grade
-  const { data } = await api.get('/api/v1/war-room/alerts', { params })
+  const { data } = await api.get('/v1/war-room/alerts', { params })
   return data
 }
 
 export async function getAlertStats(): Promise<AlertStats> {
-  const { data } = await api.get('/api/v1/war-room/alerts/stats')
+  const { data } = await api.get('/v1/war-room/alerts/stats')
   return data
 }
 
 export async function acknowledgeAlert(alertId: number | string): Promise<SmartAlert> {
-  const { data } = await api.patch(`/api/v1/war-room/alerts/${alertId}`, {
+  const { data } = await api.patch(`/v1/war-room/alerts/${alertId}`, {
     action: 'acknowledge',
   })
   return data.alert
 }
 
 export async function dismissAlert(alertId: number | string): Promise<SmartAlert> {
-  const { data } = await api.patch(`/api/v1/war-room/alerts/${alertId}`, {
+  const { data } = await api.patch(`/v1/war-room/alerts/${alertId}`, {
     action: 'dismiss',
   })
   return data.alert

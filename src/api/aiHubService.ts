@@ -140,7 +140,7 @@ export interface PostMortemPatterns {
 // ─── Multi-Agent APIs ─────────────────────────────────────────────────────────
 
 export async function listAgentRuns(limit = 20): Promise<AgentRunSummary[]> {
-  const { data } = await api.get('/api/v1/ai-hub/agent-runs', { params: { limit } })
+  const { data } = await api.get('/v1/ai-hub/agent-runs', { params: { limit } })
   return data
 }
 
@@ -149,7 +149,7 @@ export async function triggerAgentRun(
   context: Record<string, unknown> = {},
   sizeUsd = 10000
 ): Promise<AgentRunResult> {
-  const { data } = await api.post('/api/v1/ai-hub/agent-runs', {
+  const { data } = await api.post('/v1/ai-hub/agent-runs', {
     symbol,
     context,
     size_usd: sizeUsd,
@@ -158,36 +158,36 @@ export async function triggerAgentRun(
 }
 
 export async function getAgentRun(runId: string): Promise<AgentRunDetail> {
-  const { data } = await api.get(`/api/v1/ai-hub/agent-runs/${runId}`)
+  const { data } = await api.get(`/v1/ai-hub/agent-runs/${runId}`)
   return data
 }
 
 export async function getAgentChallenge(runId: string): Promise<ChallengeResult> {
-  const { data } = await api.get(`/api/v1/ai-hub/agent-runs/${runId}/challenge`)
+  const { data } = await api.get(`/v1/ai-hub/agent-runs/${runId}/challenge`)
   return data
 }
 
 // ─── Calibration APIs ─────────────────────────────────────────────────────────
 
 export async function getCalibration(): Promise<CalibrationSnapshot | { message: string }> {
-  const { data } = await api.get('/api/v1/ai-hub/calibration')
+  const { data } = await api.get('/v1/ai-hub/calibration')
   return data
 }
 
 export async function getCalibrationHistory(days = 30): Promise<CalibrationSnapshot[]> {
-  const { data } = await api.get('/api/v1/ai-hub/calibration/history', { params: { days } })
+  const { data } = await api.get('/v1/ai-hub/calibration/history', { params: { days } })
   return data
 }
 
 export async function runCalibration(): Promise<{ message: string; snapshot_date: string; ece: number }> {
-  const { data } = await api.post('/api/v1/ai-hub/calibration/run')
+  const { data } = await api.post('/v1/ai-hub/calibration/run')
   return data
 }
 
 // ─── Factor Weights APIs ──────────────────────────────────────────────────────
 
 export async function getFactorWeights(): Promise<Record<string, number>> {
-  const { data } = await api.get('/api/v1/ai-hub/factor-weights')
+  const { data } = await api.get('/v1/ai-hub/factor-weights')
   return data
 }
 
@@ -197,29 +197,29 @@ export async function getFactorWeightsHistory(
 ): Promise<FactorWeightRecord[]> {
   const params: Record<string, unknown> = { days }
   if (dimension) params.dimension = dimension
-  const { data } = await api.get('/api/v1/ai-hub/factor-weights/history', { params })
+  const { data } = await api.get('/v1/ai-hub/factor-weights/history', { params })
   return data
 }
 
 export async function getFactorMomentum(): Promise<FactorWeightRecord[]> {
-  const { data } = await api.get('/api/v1/ai-hub/factor-momentum')
+  const { data } = await api.get('/v1/ai-hub/factor-momentum')
   return data
 }
 
 // ─── Post-Mortem APIs ─────────────────────────────────────────────────────────
 
 export async function getPostMortems(limit = 20): Promise<PostMortemReport[]> {
-  const { data } = await api.get('/api/v1/ai-hub/post-mortems', { params: { limit } })
+  const { data } = await api.get('/v1/ai-hub/post-mortems', { params: { limit } })
   return data
 }
 
 export async function getPostMortemPatterns(days = 90): Promise<PostMortemPatterns> {
-  const { data } = await api.get('/api/v1/ai-hub/post-mortems/patterns', { params: { days } })
+  const { data } = await api.get('/v1/ai-hub/post-mortems/patterns', { params: { days } })
   return data
 }
 
 export async function getPostMortemByTrade(tradeId: string): Promise<PostMortemReport> {
-  const { data } = await api.get(`/api/v1/ai-hub/post-mortems/${tradeId}`)
+  const { data } = await api.get(`/v1/ai-hub/post-mortems/${tradeId}`)
   return data
 }
 
@@ -233,7 +233,7 @@ export async function createPostMortem(payload: {
   hold_days: number
   trade_context?: string
 }): Promise<PostMortemReport> {
-  const { data } = await api.post('/api/v1/ai-hub/post-mortems', payload)
+  const { data } = await api.post('/v1/ai-hub/post-mortems', payload)
   return data
 }
 
