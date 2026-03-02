@@ -97,24 +97,24 @@ export interface RiskCluster {
 // ─── Execution Microscope ─────────────────────────────────────────────────────
 
 export async function getExecutionQuality(limit = 50): Promise<ExecutionQualityRecord[]> {
-  const { data } = await api.get('/api/v1/observability/execution-quality', { params: { limit } })
+  const { data } = await api.get('/v1/observability/execution-quality', { params: { limit } })
   return data
 }
 
 export async function getExecutionQualityTrend(days = 30): Promise<ExecutionTrendPoint[]> {
-  const { data } = await api.get('/api/v1/observability/execution-quality/trend', { params: { days } })
+  const { data } = await api.get('/v1/observability/execution-quality/trend', { params: { days } })
   return data
 }
 
 export async function getFillHeatmap(days = 30): Promise<FillHeatmapCell[]> {
-  const { data } = await api.get('/api/v1/observability/fill-heatmap', { params: { days } })
+  const { data } = await api.get('/v1/observability/fill-heatmap', { params: { days } })
   return data
 }
 
 // ─── Signal Intelligence Observatory ─────────────────────────────────────────
 
 export async function getSignalIntelligence(): Promise<SignalIntelligenceResponse> {
-  const { data } = await api.get('/api/v1/observability/signal-intelligence')
+  const { data } = await api.get('/v1/observability/signal-intelligence')
   return data
 }
 
@@ -122,30 +122,30 @@ export async function getSignalCorrelation(
   symbols: string[] = [],
   days = 20
 ): Promise<CorrelationMatrix> {
-  const { data } = await api.get('/api/v1/observability/signal-correlation', {
+  const { data } = await api.get('/v1/observability/signal-correlation', {
     params: { symbols: symbols.join(','), days },
   })
   return data
 }
 
 export async function getCrowdingAlerts(): Promise<DimensionIntelligence[]> {
-  const { data } = await api.get('/api/v1/observability/crowding-alerts')
+  const { data } = await api.get('/v1/observability/crowding-alerts')
   return data
 }
 
 // ─── Risk Observability Cluster ───────────────────────────────────────────────
 
 export async function getRiskCluster(): Promise<RiskCluster> {
-  const { data } = await api.get('/api/v1/observability/risk-cluster')
+  const { data } = await api.get('/v1/observability/risk-cluster')
   return data
 }
 
 export async function getFactorExposureHistory(hours = 24): Promise<FactorExposureSnapshot[]> {
-  const { data } = await api.get('/api/v1/observability/factor-exposure', { params: { hours } })
+  const { data } = await api.get('/v1/observability/factor-exposure', { params: { hours } })
   return data
 }
 
 export async function getCorrelationAlerts(limit = 20): Promise<FactorExposureSnapshot[]> {
-  const { data } = await api.get('/api/v1/observability/correlation-alerts', { params: { limit } })
+  const { data } = await api.get('/v1/observability/correlation-alerts', { params: { limit } })
   return data
 }
