@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.3 | 更新日期：2026-02-27  
+> 版本：V10.3.3 | 更新日期：2026-03-02  
+> 变更摘要（V10.3.3）：**可观测性 2.0** ——新增 `/observability` 路由体系（`/observability/execution-microscope` 执行显微镜：IS 四分解色码热力图 + Fill Rate 时段视图 + Execution Alpha 曲线；`/observability/signal-intelligence` 信号情报观察站：六维 IC 衰减曲线 + Factor Correlation Matrix 热力图 + Crowding Score 仪表；`/observability/risk-cluster` 风险可观测集群：五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图）；**AI 中枢 2.0** ——新增 `/ai-hub` 路由体系（`/ai-hub/agents` 多智能体协作中心：五 Agent 状态看板 + AgentMessage 通信日志流 + RiskChallenger 反驳面板；`/ai-hub/calibration` 置信度校准仪表盘：Reliability Diagram + Brier/ECE 趋势 + 校准因子状态；`/ai-hub/factor-weights` 自适应因子框架：Kalman 权重演变曲线 + 因子动量排名；`/ai-hub/post-mortems` 决策事后剖析库：反事实三路径对比 + 洞察自动提炼卡）；**War Room Dashboard** ——新增 `/war-room` 路由，全屏六格可配置指挥视图（P&L Ticker + Intelligence Feed + Portfolio Heatmap + Risk Gauges + Signal Pulse + Execution Queue），全局键盘快捷键体系；**Smart Alert Center** ——DashboardV2 新增智能告警分级面板组件；i18n 补全 observability / aiHub / warRoom / alertCenter 四个命名空间  
 > 变更摘要（V10.3）：**Trade Lifecycle Center（交易生命周期中枢）**——新增 `/trade-lifecycle` 路由，PipelineKanban 17阶段泳道（任务卡片 + 阶段耗时色码 + 统计行）、DualFSMPanel 双状态机可视化（Plan FSM + Position FSM + 转换事件日志滚动流）、DecisionProvenanceDrawer（六维信号表 + 风险门禁链 + 执行进度 + AI摘要）；**智能订单簿（Intelligent Order Book）**——新增 `/order-book` 路由，高密度信息列表（17阶段徽章 + 六维雷达迷你图 + 价格偏差标记 + 风险徽章 + AI摘要截断）、分组视图（活跃执行/持仓监控/已完成）、批量操作；**全局态势感知栏（Situational Awareness Bar）**——顶部 36px 粘性状态栏复用至所有页面（体制/VaR水位/围栏/执行队列/待确认/自主模式）、WebSocket 实时推送驱动；导航组新增"交易可观测性"分组；i18n 补全 V10.3 所有命名空间  
 > 变更摘要（V10.2-M2~M8）：**事件日历页（EventCalendarPage）**——风险色环格、EPS 与反应标注、围栏覆盖弹窗；**归因分析页（AttributionPage）**——三层 ECharts 饼图、明细表、JSON 抽屉；**AI 进化页（EvolutionPage）**——洞察知识库 Tab + A/B 实验管理 Tab；**CopilotPage 深度研究**——Standard/Deep Research 模式切换、结构化报告展示；导航组与路由同步新增 `/events`、`/attribution`、`/evolution`；i18n 补全 M2-M8 所有命名空间  
 > 变更摘要（V10.2-M1）：**市场体制感知页（RegimePage）** ——新增 `/regime` 路由、RegimeStatusCard（当前体制+置信度）、RegimeRadarChart（五维雷达图）、RegimeStrategyWeights（策略权重水平柱状图）、RegimeTimeline（体制历史时间轴）；DashboardV2 新增体制感知 KPI 卡；AutonomyPage 新增体制感知横幅 Banner  
@@ -43,7 +44,7 @@
 
 ## 3. 信息架构
 
-### 3.1 导航结构（V10.2 更新）
+### 3.1 导航结构（V10.3.3 更新）
 
 ```
 交易仪表盘 (Dashboard) ← 首页
@@ -58,9 +59,43 @@
 │   │   ├── Pipeline Kanban ← 17阶段实时泳道，任务卡片色码 + 阶段耗时统计
 │   │   ├── Dual FSM Panel ← Plan FSM + Position FSM 双状态机实时图
 │   │   └── Decision Provenance Drawer ← 单笔交易决策因果链溯源
-│   └── 📋 智能订单簿 (Order Book) ★ V10.3 新增
-│       ├── 全量交易列表 ← 17阶段徽章 + 六维雷达小图 + 价格偏差 + AI摘要
-│       └── 分组视图 ← 活跃执行 / 持仓监控 / 今日完成
+│   ├── 📋 智能订单簿 (Order Book) ★ V10.3 新增
+│   │   ├── 全量交易列表 ← 17阶段徽章 + 六维雷达小图 + 价格偏差 + AI摘要
+│   │   └── 分组视图 ← 活跃执行 / 持仓监控 / 今日完成
+│   ├── 🔬 执行显微镜 (Execution Microscope) ★ V10.3.3 新增
+│   │   ├── IS 四分解热力图 ← 迟延/市场冲击/机会/时机成本
+│   │   ├── Fill Rate 时段视图 ← 按时段×标的成交率矩阵
+│   │   └── Execution Alpha 曲线 ← 到达价 vs 成交价偏差历史
+│   ├── 📡 信号情报观察站 (Signal Intelligence) ★ V10.3.3 新增
+│   │   ├── Alpha Decay 曲线 ← 六维 IC 滚动衰减 + 半衰期
+│   │   ├── Factor Correlation Matrix ← 六维因子相关性热力图
+│   │   └── Crowding Score 仪表 ← 信号拥挤度预警
+│   └── ⚡ 风险可观测集群 (Risk Cluster) ★ V10.3.3 新增
+│       ├── 五因子实时敞口条 ← Market/HML/SMB/MOM/QMJ z-score
+│       ├── ES@97.5% 仪表 ← 实时期望损失水位
+│       └── 相关性骤升时序图 ← 组合内相关均值 + 骤升事件标注
+├── 🧬 AI 中枢 ★ V10.3.3 新增分组
+│   ├── 🤝 多智能体协作 (Multi-Agent) ★ V10.3.3 新增
+│   │   ├── Agent 状态看板 ← 五 Agent 实时状态 + 当前任务
+│   │   ├── 通信日志流 ← AgentMessage 链时间线 + 冲突裁决标记
+│   │   └── Risk Challenger 反驳面板 ← 最新 BUY 信号反驳理由
+│   ├── 🎯 置信度校准仪表盘 (Calibration) ★ V10.3.3 新增
+│   │   ├── Reliability Diagram ← 预测置信度 vs 实际胜率曲线
+│   │   ├── Brier Score & ECE 趋势 ← 按体制分组的校准误差历史
+│   │   └── 校准因子状态 ← 当前降评因子 + 触发条件
+│   ├── ⚖️ 自适应因子框架 (Factor Weights) ★ V10.3.3 新增
+│   │   ├── Kalman 权重演变曲线 ← 六维权重历史 + 当前值
+│   │   ├── 因子动量排名 ← 近5/20/60日 IC 排名 + 加成状态
+│   │   └── 因子拥挤度 ← Crowding Score 趋势
+│   └── 🪞 决策事后剖析库 (Post-Mortem) ★ V10.3.3 新增
+│       ├── 剖析列表 ← 按平仓时间排序，标注洞察激活状态
+│       ├── 单笔剖析详情 ← 反事实三路径 + AI 教训卡
+│       └── 模式归纳视图 ← 跨剖析重复模式摘要
+├── 🖥️ 指挥室 (War Room) ★ V10.3.3 新增
+│   ├── 全屏六格视图 ← 可配置面板：P&L Ticker / Intel Feed / 敞口热图 / 风险仪表 / 信号脉冲 / 执行队列
+│   ├── Intelligence Feed 情报流 ← urgency_score 排序 + 实时 WebSocket 追加
+│   ├── Portfolio Exposure Center ← 行业/因子/地理敞口 + 相关矩阵
+│   └── Smart Alert Center 智能告警 ← AI分级 + 聚合 + 建议行动
 ├── 核心功能
 │   ├── 持仓评估 (Positions)  ← V10.1 港股视图（US/HK 市场标签）
 │   ├── AI 交易决策 (AI Advisor)
@@ -84,16 +119,26 @@
     └── 系统监控 (System)
 ```
 
-### 3.2 页面层级（V10.2 更新）
+### 3.2 页面层级（V10.3.3 更新）
 
 | 页面 | 路由 | 说明 |
 |------|------|------|
-| 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态、VaR/宏观风险水位（V10.1 真实数据）；V10.2 新增体制感知 KPI 卡|
+| 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态、VaR/宏观风险水位（V10.1 真实数据）；V10.2 新增体制感知 KPI 卡；V10.3.3 新增智能告警分级面板|
 | **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志；V10.2 新增体制感知横幅 Banner |
 | **市场体制感知** | `/regime` | 当前体制卡、五维雷达图、策略权重柱状图、体制历史时间轴 ★ V10.2-M1 新增 |
 | **事件日历** | `/events` | 盈利/FOMC/CPI/NFP 风险色环格、EPS 实际与估计对比、围栏状态徽章、人工覆盖模态框 ★ V10.2-M2 新增 |
 | **Trading Copilot** | `/copilot` | 对话式人机接口；V10.1 `action_intent` 执行闭环；V10.2-M7 Standard/Deep Research 模式切换 |
 | 量化交易闭环 | `/quant-loop` | 闭环可视化 |
+| **交易生命周期中枢** | `/trade-lifecycle` | 17阶段 PipelineKanban + DualFSMPanel + DecisionProvenanceDrawer ★ V10.3 |
+| **智能订单簿** | `/order-book` | 全量交易列表（17阶段徽章 + 六维迷你雷达图 + AI摘要 + 价格偏差 + 风险徽章）★ V10.3 |
+| **执行显微镜** | `/observability/execution-microscope` | IS 四分解热力图 + Fill Rate 时段矩阵 + Execution Alpha 曲线 ★ V10.3.3 新增 |
+| **信号情报观察站** | `/observability/signal-intelligence` | 六维 IC 衰减曲线 + Factor Correlation Matrix + Crowding Score ★ V10.3.3 新增 |
+| **风险可观测集群** | `/observability/risk-cluster` | 五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图 ★ V10.3.3 新增 |
+| **多智能体协作中心** | `/ai-hub/agents` | 五 Agent 状态看板 + AgentMessage 通信日志流 + Risk Challenger 面板 ★ V10.3.3 新增 |
+| **置信度校准仪表盘** | `/ai-hub/calibration` | Reliability Diagram + Brier Score/ECE 趋势 + 校准因子状态 ★ V10.3.3 新增 |
+| **自适应因子框架** | `/ai-hub/factor-weights` | Kalman 权重演变曲线 + 因子动量排名 + 拥挤度 ★ V10.3.3 新增 |
+| **决策事后剖析库** | `/ai-hub/post-mortems` | 反事实三路径对比 + 洞察自动提炼 + 模式归纳视图 ★ V10.3.3 新增 |
+| **指挥室** | `/war-room` | 全屏六格可配置指挥视图，含 P&L Ticker/Intel Feed/Heatmap 等 ★ V10.3.3 新增 |
 | 持仓评估 | `/positions` | 技术+基本面评估；V10.1 港股持仓视图（US/HK 市场标签，Tiger API）|
 | AI 交易决策 | `/ai-advisor` | AI 决策历史+手动触发 |
 | 交易日志 | `/journal` | 交易复盘与 AI 自动复盘 |
@@ -1983,6 +2028,474 @@ export default {
 
 ---
 
+## 14. V10.3.3 新增页面设计详述 ★
+
+### 14.1 执行显微镜 (ExecutionMicroscopePage) — V10.3.3
+
+**路由**：`/observability/execution-microscope`  
+**API 服务**：`src/api/observabilityService.ts`  
+**分组**：交易可观测性
+
+**功能概述**：将每笔执行的成本来源拆解至四个分量（Implementation Shortfall），帮助判断执行策略（市价单/TWAP/VWAP）的优劣，量化 Execution Alpha。
+
+**UI 布局**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 🔬 执行显微镜   [7D 30D 90D]  [标的▼] [算法▼ 全部/MARKET/TWAP/VWAP] │
+├──────────┬──────────────┬──────────────┬───────────────────────┤
+│ 平均IS   │ 执行Alpha     │ 平均Fill Rate│ P95 滑点              │
+│ 8.2 bps  │ +3.1 bps     │ 98.4%        │ 14.7 bps              │
+│ 近30日   │ to arrival   │ (目标>99%)   │ (目标<15bps)          │
+├──────────┴──────────────┴──────────────┴───────────────────────┤
+│ IS 四分解堆叠柱图（ECharts stacked bar，按标的或按日期聚合）      │
+│                                                                  │
+│  IS Cost (bps) ▲                                                │
+│  14 ┤    ████                                                   │
+│  12 ┤  ████████       ████                                      │
+│  10 ┤████████████   ██████████                                  │
+│   8 ┤████████████████████████████                               │
+│     └──────────────────────────────→ 标的/日期                  │
+│  ■ Delay Cost  ■ Market Impact  ■ Opportunity  ■ Timing          │
+├─────────────────────────────────────────────────────────────────┤
+│ Fill Rate 时段热力图（横轴：30分钟时段，纵轴：标的）              │
+│ 颜色：绿（100%）→ 黄（95%）→ 红（<90%）                         │
+├─────────────────────────────────────────────────────────────────┤
+│ Execution Alpha 曲线（到达价 vs 实际成交价，负值=好于到达价）      │
+│ ECharts line：Execution Alpha (bps) 历史走势 + 0基准线           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**IS 四分解说明**（提示气泡，悬停显示）：
+| 分量 | 颜色 | 定义 |
+|------|------|------|
+| Delay Cost | `#4facfe` | 决策价 → 信号发出时价格的偏移成本 |
+| Market Impact | `#ff6b6b` | 因自身下单引起的价格移动成本 |
+| Opportunity Cost | `#ffd93d` | 未能完全成交部分的机会损失 |
+| Timing Cost | `#a29bfe` | 实际成交 vs VWAP 的时机偏差 |
+
+**API 调用**：
+- `GET /api/v1/observability/execution-quality?days&symbol&algo`
+- `GET /api/v1/observability/fill-heatmap?days`
+
+---
+
+### 14.2 信号情报观察站 (SignalIntelligencePage) — V10.3.3
+
+**路由**：`/observability/signal-intelligence`  
+**API 服务**：`src/api/observabilityService.ts`
+
+**功能概述**：实时监控六维信号的预测能力衰减（IC 曲线）、维度间相关性（过度相关→有效多样化下降），以及信号拥挤度（超阈值自动降权告警）。
+
+**UI 布局**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ 📡 信号情报观察站    [滚动窗口：5D 20D 60D]               │
+├──────────────────────────────────────────────────────────┤
+│ 六维 IC 曲线（ECharts multi-line，各维度独立线条）         │
+│  IC ▲                                                    │
+│  0.15 ┤──── Tech(25%) ─────────                         │
+│  0.10 ┤       ─── Fundamental(20%)                       │
+│  0.05 ┤                     ──── Vol(15%)                │
+│  0.00 ┤────────────────────────────────→ 日期             │
+│ -0.05 ┤            ─── Macro(15%)                        │
+│  图例：Tech / Fundamental / Macro / Vol / Options / Sent │
+├──────────────────────────────────────────────────────────┤
+│ 左半：Alpha 半衰期 & 拥挤度仪表盘                          │
+│ ┌───────────────────────────────────────┐               │
+│ │  维度   │ 半衰期  │ 拥挤度  │ 状态     │               │
+│ │  Tech   │ 8.2d   │ 0.61   │ 🟢 正常  │               │
+│ │  Macro  │ 22.5d  │ 0.43   │ 🟢 正常  │               │
+│ │  Options│ 3.1d   │ 0.79   │ 🔴 拥挤⚠ │               │
+│ │  Sent   │ 1.8d   │ 0.71   │ 🟡 警戒  │               │
+│ └───────────────────────────────────────┘               │
+│ 右半：Factor Correlation Matrix 热力图（6×6）             │
+│  Color: -1.0（深蓝）→ 0（白）→ +1.0（深红）              │
+│  对角线 = 1.0（白色跳过）                                │
+└──────────────────────────────────────────────────────────┘
+```
+
+**拥挤度告警卡片**（当任一维度 Crowding Score > 0.75 时展示）：
+```
+┌─────────────────────────────────────────────────┐
+│ ⚠️  信号拥挤告警                                 │
+│ Options 维度 Crowding = 0.79（阈值 0.75）         │
+│ 已自动将本日期权维度融合权重下调 15% → 12.75%     │
+│ [查看期权信号详情] [人工覆盖权重]                  │
+└─────────────────────────────────────────────────┘
+```
+
+**API 调用**：
+- `GET /api/v1/observability/signal-intelligence?window=20`
+- `GET /api/v1/observability/signal-correlation?window=60`
+- `GET /api/v1/observability/crowding-alerts`
+
+---
+
+### 14.3 风险可观测集群 (RiskClusterPage) — V10.3.3
+
+**路由**：`/observability/risk-cluster`  
+**API 服务**：`src/api/observabilityService.ts`
+
+**功能概述**：从因子敞口、尾部风险（ES）、组合内相关性三个维度提供实时风险可见性，补充 VaR 之外的风险视角。
+
+**UI 布局**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ ⚡ 风险可观测集群                         [刷新: 5min]   │
+├─────────────────────────────┬────────────────────────────┤
+│ 五因子实时敞口条（z-score）  │ ES@97.5% 仪表             │
+│                              │                            │
+│ Market  ████████████ +1.2σ  │     ▶ -$4,820              │
+│ HML     ██░░░░░░░░░ +0.3σ  │   ES@97.5%               │
+│ SMB     ░░░░░░░░░░░ -0.8σ  │  ██████████░░ 78%水位      │
+│ MOM     ████████░░░ +1.0σ  │  目标上限：-$6,200          │
+│ QMJ     ████░░░░░░░ +0.4σ  │                            │
+│                              │ 状态: 🟡 警戒（>70%）      │
+│ Bar颜色：+σ红 / -σ蓝 / 0白  │                            │
+├─────────────────────────────┴────────────────────────────┤
+│ 组合内相关性均值时序图（ECharts line）                     │
+│                                                          │
+│ Corr ▲ 0.65 ─────────────────────────── ⚠️ 骤升告警线   │
+│       0.45                                               │
+│       0.35 ────┐                 ┌────                   │
+│       0.25     └─────────────────┘                      │
+│            └──────────────────────────────→ 日期         │
+│ 红色标注（●）：CORRELATION_SPIKE 触发点                   │
+└──────────────────────────────────────────────────────────┘
+```
+
+**相关性骤升告警浮窗**（`CORRELATION_SPIKE` 事件触发时）：
+```
+┌────────────────────────────────────────────────┐
+│ 🔴 组合相关性骤升告警                            │
+│ 当前组合内 Pearson 相关均值 = 0.71（阈值 0.65）  │
+│ 风险意涵：分散化效果下降，实际风险可能被低估     │
+│ 建议：减少同向敞口，核查 Sector Concentration    │
+│ [跳转至敞口中枢] [知道了]                        │
+└────────────────────────────────────────────────┘
+```
+
+**API 调用**：
+- `GET /api/v1/observability/risk-cluster`
+- `GET /api/v1/observability/factor-exposure?days=30`
+- `GET /api/v1/observability/correlation-alerts`
+
+---
+
+### 14.4 多智能体协作中心 (MultiAgentPage) — V10.3.3
+
+**路由**：`/ai-hub/agents`  
+**API 服务**：`src/api/aiHubService.ts`
+
+**功能概述**：可视化五个专职 Agent 的实时状态、历史通信日志和最新 RiskChallenger 反驳内容，让 AI 协作过程完全透明。
+
+**UI 布局**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ 🤝 多智能体协作中心          [最近运行▼]  [实时 WS: ●]  │
+├──────────────────────────────────────────────────────────┤
+│ Agent 状态看板（横向五格）                                │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐      │
+│ │ 🔍 Market     │ │ ⚠️ Risk      │ │ ⚙️ Execution │      │
+│ │ Analyst       │ │ Challenger   │ │ Optimizer    │      │
+│ │ 🟢 ACTIVE     │ │ 🟡 STANDBY  │ │ 🟢 ACTIVE    │      │
+│ │ 分析 NVDA...  │ │ 等待 BUY信号 │ │ 优化TWAP参数 │      │
+│ └──────────────┘ └──────────────┘ └──────────────┘      │
+│ ┌──────────────┐ ┌──────────────┐                        │
+│ │ 🔬 Research  │ │ 🎯 Orchestr- │                        │
+│ │ Agent        │ │ ator          │                        │
+│ │ ⚫ IDLE      │ │ 🟢 SUPERVISE │                        │
+│ │ 待命         │ │ 本轮协作中...  │                        │
+│ └──────────────┘ └──────────────┘                        │
+├──────────────────────────────────────────────────────────┤
+│ 最新运行：AgentMessage 通信日志流（时间线，最近50条）      │
+│                                                          │
+│ 09:31:12 [MarketAnalyst] 📊 NVDA 技术面评分 81/100，     │
+│          多头趋势确认，建议 BUY confidence=78             │
+│                                                          │
+│ 09:31:15 [RiskChallenger] ⚠️ 反驳：NVDA 期权隐含波动率   │
+│          处于近90日高位（IV=68%），隐含潜在大幅波动风险   │
+│          challenge_points: ["高IV环境入场成本高","季报     │
+│          临近存在跳空风险","近期机构减持信号"]             │
+│                                                          │
+│ 09:31:22 [Orchestrator] ✅ 裁决：综合挑战后维持 BUY，    │
+│          但降低仓位 15%→10%，并添加耳鸣保护止损          │
+├──────────────────────────────────────────────────────────┤
+│ RiskChallenger 最新完整反驳报告（展开区域）               │
+│ [标的: NVDA] [信号: BUY @$875] [反驳点: 3条] [展开▾]    │
+└──────────────────────────────────────────────────────────┘
+```
+
+**颜色映射**：
+- Agent 状态 `ACTIVE` → `#00ff88` 绿点
+- `STANDBY` → `#ffd93d` 黄点
+- `IDLE` → `#6c757d` 灰点
+- `ERROR` → `#ff4444` 红点
+
+**API 调用**：
+- `GET /api/v1/ai-hub/agent-runs?limit=20`
+- `GET /api/v1/ai-hub/agent-runs/{run_id}`
+- `GET /api/v1/ai-hub/agent-runs/{run_id}/challenge`
+- `WS /ws/agent-status`（实时 Agent 状态推送）
+
+---
+
+### 14.5 置信度校准仪表盘 (CalibrationPage) — V10.3.3
+
+**路由**：`/ai-hub/calibration`  
+**API 服务**：`src/api/aiHubService.ts`
+
+**功能概述**：显示 AI 预测置信度是否"言出必行"（Reliability），绘制 Reliability Diagram 并持续追踪 Brier Score/ECE，当模型过度自信时自动降评。
+
+**UI 布局**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ 🎯 AI 置信度校准仪表盘    [90D 180D 365D] [按体制▼]      │
+├─────────────────────────┬────────────────────────────────┤
+│ Reliability Diagram      │ 校准评估指标                   │
+│                          │                               │
+│ 实际胜率▲ 1.0            │  Brier Score          0.183   │
+│         ┤  .         ●   │  (越低越好，对角=0.25)        │
+│     0.7 ┤   ●         ╱  │                               │
+│     0.5 ┤    ●      ╱    │  ECE                  0.087   │
+│     0.3 ┤     ●   ╱      │  (本轮轮状态: 🟢 校准良好)   │
+│     0.1 ┤       ╱        │  阈值 0.12                    │
+│         └────────────→   │                               │
+│       0.3 0.5 0.7 1.0    │  校准因子（当前）            │
+│       预测置信度         │  1.000  （未触发降评）        │
+│                          │                               │
+│  ● 实际观测  — 理想对角线 │  [降评历史] [体制分组对比]    │
+├─────────────────────────┴────────────────────────────────┤
+│ Brier Score & ECE 历史趋势（双 Y 轴 ECharts line）        │
+│ 按市场体制分色（BULL_TREND/BEAR_TREND/HIGH_VOL/CRISIS）   │
+└──────────────────────────────────────────────────────────┘
+```
+
+**降评触发告警卡片**（ECE > 0.12 时展示）：
+```
+┌─────────────────────────────────────────────────────┐
+│ 🟡 置信度校准警告                                    │
+│ ECE = 0.137（超过阈值 0.12）                         │
+│ AI 当前在 HIGH_VOL 体制下存在过度自信倾向            │
+│ 已自动应用降评因子 0.94（所有置信度 ×0.94）          │
+│ 效果：置信度 80 → 75；置信度 60 → 56               │
+│ [查看详细校准数据] [手动调整降评因子]                 │
+└─────────────────────────────────────────────────────┘
+```
+
+**API 调用**：
+- `GET /api/v1/ai-hub/calibration?days=90&regime`
+- `GET /api/v1/ai-hub/calibration/history?days=365`
+
+---
+
+### 14.6 自适应因子框架页 (FactorWeightsPage) — V10.3.3
+
+**路由**：`/ai-hub/factor-weights`  
+**API 服务**：`src/api/aiHubService.ts`
+
+**功能概述**：展示六维信号权重的 Kalman Filter 实时演变，IC 因子动量排名，以及拥挤度驱动的权重调整状态。
+
+**UI 布局**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ ⚖️ 自适应因子权重框架                    [更新于: 收盘后]  │
+├──────────────────────────────────────────────────────────┤
+│ 当前权重（Kalman 更新后）vs 基准权重对比                  │
+│                                                          │
+│ Tech          ████████████████░░░░░ 23% ← 25%（基准）   │
+│ Fundamental   ███████████████░░░░░░ 20% ↔ 20%           │
+│ Macro         ████░░░░░░░░░░░░░░░░░  8% ↓ 15%（弱势期）│
+│ Volatility    █████████████████░░░░ 22% ↑ 15%（强势期）│
+│ Options       ████████████░░░░░░░░░ 15% ↔ 15%           │
+│ Sentiment     ████████████░░░░░░░░░ 12% ↑ 10%           │
+│ 颜色：↑加成-绿 / ↓降权-橙 / ↔持平-白                    │
+├──────────────────────────────────────────────────────────┤
+│ 权重历史演变曲线（ECharts stacked area，近90日）           │
+│ 六维区域图，可按维度勾选显示/隐藏                         │
+├──────────────────────────────────────────────────────────┤
+│ 因子动量排名（近5/20/60日 IC 排名）                       │
+│ ┌───────────┬──────┬──────┬──────┬───────────────────┐  │
+│ │ 维度      │ IC5d │ IC20d│ IC60d│ 动量状态          │  │
+│ ├───────────┼──────┼──────┼──────┼───────────────────┤  │
+│ │ Volatility│ 0.18 │ 0.14 │ 0.11 │ 🟢 +5% 动量加成   │  │
+│ │ Sentiment │ 0.15 │ 0.12 │ 0.09 │ 🟢 +5% 动量加成   │  │
+│ │ Tech      │ 0.12 │ 0.13 │ 0.14 │ ⬜ 持平            │  │
+│ │ Macro     │ 0.04 │ 0.06 │ 0.08 │ 🟠 -5% 动量降权   │  │
+│ └───────────┴──────┴──────┴──────┴───────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+```
+
+**API 调用**：
+- `GET /api/v1/ai-hub/factor-weights`
+- `GET /api/v1/ai-hub/factor-weights/history?days=90`
+- `GET /api/v1/ai-hub/factor-momentum`
+
+---
+
+### 14.7 决策事后剖析库 (PostMortemPage) — V10.3.3
+
+**路由**：`/ai-hub/post-mortems`  
+**API 服务**：`src/api/aiHubService.ts`
+
+**功能概述**：每笔平仓后 AI 自动生成的结构化事后剖析，包含反事实三路径对比和自动洞察提炼，是 AI 从自身错误持续进化的核心入口。
+
+**列表视图**：
+```
+┌──────────────────────────────────────────────────────────┐
+│ 🪞 决策事后剖析库    [标的▼] [结果▼ 盈利/亏损]  [洞察已生成▼] │
+├──────────┬────────┬────────┬────────┬──────────────────┤
+│ 标的     │ 方向   │ PnL    │ 剖析结果│ 洞察             │
+├──────────┼────────┼────────┼────────┼──────────────────┤
+│ NVDA     │ LONG   │ +$2,340│ ✅ 正确  │ 💡 已提炼1条    │
+│ 平仓 3/1 │        │ +4.1%  │         │ [查看剖析]       │
+├──────────┼────────┼────────┼────────┼──────────────────┤
+│ TSLA     │ LONG   │ -$890  │ ❌ 错误  │ 💡 已提炼1条    │
+│ 平仓 2/28│        │ -1.7%  │         │ [查看剖析]       │
+├──────────┼────────┼────────┼────────┼──────────────────┤
+│ AAPL     │ LONG   │ +$450  │ ⚠️ 次优 │ ⬜ 未提炼        │
+│ 平仓 2/27│        │ +0.9%  │         │ [查看剖析]       │
+└──────────┴────────┴────────┴────────┴──────────────────┘
+```
+
+**单笔剖析详情**（点击 [查看剖析] 弹出全屏抽屉）：
+```
+┌──────────────────────────────────────────────────────────────┐
+│ 🪞 TSLA 事后剖析    平仓: 2026-02-28   PnL: -$890 (-1.7%)   │
+├──────────────────────────────────────────────────────────────┤
+│ 📄 事实摘要                                                   │
+│ 入场 $265.40 (2026-02-24)，止损触发平仓 $260.50，持仓4天      │
+│ 入场置信度：72；实际体制：HIGH_VOL（入场时误判为 BULL_TREND）  │
+├──────────────────────────────────────────────────────────────┤
+│ 反事实三路径对比                                              │
+│                                                              │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────────┐  │
+│ │  AS DID      │ │  IF HOLD     │ │  IF SELL (reverse)   │  │
+│ │  BUY @265.4  │ │  No action   │ │  SHORT @265.4        │  │
+│ │  ──────────  │ │  ──────────  │ │  ──────────────────  │  │
+│ │  -$890       │ │  cash +0%    │ │  +$890 (hypothetical)│  │
+│ │  -1.7%       │ │  0%          │ │  +1.7%               │  │
+│ │  ❌ 亏损      │ │  ⬜ 保本      │ │  ✅ 最优（事后诸葛亮）│  │
+│ └──────────────┘ └──────────────┘ └──────────────────────┘  │
+├──────────────────────────────────────────────────────────────┤
+│ 💡 AI 生成的关键教训                                          │
+│ 1. 在 HIGH_VOL 体制下，TSLA 的 Beta 敞口会被放大              │
+│ 2. 入场时 Macro 维度 IC 为负（-0.08），应降低整体置信度       │
+│ 3. 止损位设置合理，止损执行正确（本属好的风险管理）           │
+│                                                              │
+│ 自动提炼洞察：[💡 LESSON: 高波动率体制避免 TSLA 高 Beta 入场]  │
+│ [已激活 ✓]   [查看洞察知识库]                                 │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**模式归纳视图**（Tab 切换）：
+```
+┌──────────────────────────────────────────────────────────┐
+│ 🔍 跨剖析重复模式归纳（AI 每周自动更新）                   │
+│ ┌──────────────────────────────────────────────────────┐ │
+│ │ 模式 #1 — 体制误判亏损（出现 7 次）                   │ │
+│ │ 在 HIGH_VOL 体制下按 BULL_TREND 参数入场，            │ │
+│ │ 导致亏损的出现率 71%                                  │ │
+│ │ [相关洞察: 已激活 2 条]                               │ │
+│ ├──────────────────────────────────────────────────────┤ │
+│ │ 模式 #2 — 止盈过早（出现 5 次）                       │ │
+│ │ 价格继续上涨超 3% 的情况在止盈后出现 60%              │ │
+│ │ [建议：考虑半仓止盈 + 移动止损替代固定止盈]           │ │
+│ └──────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
+```
+
+**API 调用**：
+- `GET /api/v1/ai-hub/post-mortems?limit=20&symbol&is_profit`
+- `GET /api/v1/ai-hub/post-mortems/{trade_id}`
+- `GET /api/v1/ai-hub/post-mortems/patterns`
+
+---
+
+### 14.8 指挥室 (WarRoomPage) — V10.3.3
+
+**路由**：`/war-room`  
+**API 服务**：`src/api/warRoomService.ts`  
+**特殊设计**：全屏沉浸式、Bloomberg Terminal 风格、无顶部导航栏、无左侧边栏
+
+**功能概述**：高强度监控场景下的全屏指挥视图，六格可配置面板，实时 P&L Ticker，键盘驱动，AI 情报流实时滚动。
+
+**全屏布局**：
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ 📈 P&L Ticker ██████████████████████████████████████████████████████ │
+│  LIVE: +$3,240 (+2.58%)  |  1H: +$890  |  SPY α: +1.23%  |  TOP: NVDA +$1,450  BOT: TSLA -$210  [●LIVE] 14:23:05 ET │
+├──────────────────────────┬───────────────────────────────────────────┤
+│ 面板 1 (2×1)              │ 面板 2 (1×1)                             │
+│                           │                                          │
+│  🗞️ AI 情报流              │  🔥 行业热力图                           │
+│  ──────────────────────  │  Tech  ████████ +2.1%                   │
+│  [CRIT] 09:31 NVDA BUY   │  FinTech ██████ +1.8%                  │
+│  置信度73, 仓位10%决策    │  Energy ██░░░░ +0.3%                   │
+│  [HIGH] 09:28 ES@97.5%   │  Health ░░░░░░ -0.4%                   │
+│  上升至 -$5,200          │  Cons. ░░░░░░░ -0.9%                   │
+│  [MED] 09:15 Macro 宏观  │                                          │
+│  风险评分升至 65（中等）  │  持仓间相关矩阵                           │
+│  [MED] 09:00 盘前摘要    │  NVDA AAPL META TSLA MSFT               │
+│  今日4笔计划待执行        │  NVDA  1.0  .62  .71  .53  .68         │
+│                           │  AAPL  .62  1.0  .59  .49  .74         │
+│  [+]更多                  │                                          │
+├──────────────────────────┼───────────────────────────────────────────┤
+│ 面板 3 (1×1)              │ 面板 4 (1×1)          面板5(1×1) 面板6(1×1) │
+│                           │                                          │
+│  📊 风险仪表组             │ 信号脉冲     /   执行队列监控             │
+│                           │                                          │
+│  VaR@95% ████████░ 78%   │ Tech  ●●●○○ 3 fires/5min               │
+│  -$2,340 / -$3,000 上限  │ Macro ●○○○○ 1 fire/5min                │
+│                           │                                          │
+│  ES@97.5% ██████░░ 62%   │ NVDA TWAP  ██████░░░░ 62%  12min left  │
+│  -$4,820 / -$7,800 上限  │ AAPL MKT   ████████████ 已完成          │
+│                           │                                          │
+│  Sharpe MTD  1.48 ✅      │ 待执行: 2    执行中: 1    排队: 0        │
+│  Max DD MTD -3.2% ✅      │                                          │
+└──────────────────────────┴───────────────────────────────────────────┘
+```
+
+**全局键盘快捷键**（`useWarRoomKeyboard` Composable）：
+
+| 快捷键 | 功能 |
+|--------|------|
+| `W` | 进入 War Room（全屏） |
+| `Esc` | 退出 War Room |
+| `` ` `` | 全局 Copilot 对话框 |
+| `1`–`6` | 聚焦对应面板（放大+高亮） |
+| `R` | 全部面板手动刷新 |
+| `A` | 打开智能告警中枢 |
+| `P` | 暂停/恢复 AI 自动交易（二次确认） |
+
+**面板配置抽屉**（右上角 `⚙️` 图标）：
+- 拖拽调整面板类型（从面板库选择）
+- 可用面板类型：`PnL_DETAIL` / `INTEL_FEED` / `SECTOR_HEATMAP` / `RISK_GAUGES` / `SIGNAL_PULSE` / `EXEC_QUEUE` / `FACTOR_EXPOSURE` / `ORDER_BOOK_MINI`
+- 布局方案支持保存（localStorage）
+
+**实时 P&L Ticker WebSocket 推送格式**：
+```typescript
+interface PnLTickerFrame {
+  total_pnl: number;          // 当日总盈亏
+  total_pnl_pct: number;       
+  change_1h: number;           // 近1小时变化额
+  vs_spy_alpha: number;        // 相对 SPY 的 Alpha
+  top_contributor: { symbol: string; pnl: number };
+  top_detractor: { symbol: string; pnl: number };
+  timestamp: string;           // ISO datetime ET
+}
+```
+
+**API 调用**：
+- `GET /api/v1/war-room/pnl-ticker`
+- `GET /api/v1/war-room/intelligence-feed?limit=50`
+- `POST /api/v1/war-room/intelligence-feed/{event_id}/ack`
+- `GET /api/v1/war-room/exposure`
+- `WS /ws/pnl-ticker`
+- `WS /ws/intelligence-feed`
+
+---
+
 ## 附录
 
 ### A. 设计规范
@@ -2027,12 +2540,32 @@ export default {
 
 ### C. 参考文档
 
-- PRODUCT.md - 产品需求文档（V10.3）
+- PRODUCT.md - 产品需求文档（V10.3.3）
 - API.md - API 接口文档
 - BACKEND_DESIGN.md - 后端设计文档（V10.3）
 - RELEASE_PLAN_V10.3.md - V10.3 版本规划
 
-### D. V10.3 变更一览
+### D. V10.3.3 变更一览
+
+| 章节 | 变更类型 | 说明 |
+|------|---------|------|
+| §1 文档头 | 更新 | 版本升至 V10.3.3；变更摘要新增可观测性2.0/AI中枢2.0/War Room 三大方向 |
+| §3.1 导航结构 | 更新 | 交易可观测性分组新增：执行显微镜/信号情报观察站/风险可观测集群；新增"AI 中枢"分组（多智能体/校准/因子权重/剖析库）；新增"指挥室"分组（War Room/Intel Feed/敞口中枢/告警）|
+| §3.2 页面层级 | 更新 | 新增10个路由条目：`/observability/*`（3个）/ `/ai-hub/*`（4个）/ `/war-room`（1个及子视图）|
+| §4.1 Dashboard | 增强 | 新增 Smart Alert Center 告警分级面板 |
+| **§14.1 ExecutionMicroscopePage** | 新增 | IS 四分解堆叠柱图 + Fill Rate 时段热力图 + Execution Alpha 曲线 ★ V10.3.3 |
+| **§14.2 SignalIntelligencePage** | 新增 | 六维 IC 衰减曲线 + Factor Correlation Matrix(6×6) + 拥挤度告警卡片 ★ V10.3.3 |
+| **§14.3 RiskClusterPage** | 新增 | 五因子 z-score 敞口条 + ES@97.5% 仪表 + 相关性均值时序图 + 骤升浮窗 ★ V10.3.3 |
+| **§14.4 MultiAgentPage** | 新增 | 五 Agent 状态看板 + AgentMessage 通信日志流 + RiskChallenger 反驳面板 ★ V10.3.3 |
+| **§14.5 CalibrationPage** | 新增 | Reliability Diagram + Brier/ECE 趋势双Y轴 + 降评触发告警卡 ★ V10.3.3 |
+| **§14.6 FactorWeightsPage** | 新增 | 当前权重vs基准对比条 + Kalman 历史演变 stacked area + IC动量排名表 ★ V10.3.3 |
+| **§14.7 PostMortemPage** | 新增 | 反事实三路径对比卡片 + 教训卡 + 模式归纳视图 Tab ★ V10.3.3 |
+| **§14.8 WarRoomPage** | 新增 | 全屏六格配置指挥视图 + 实时 P&L Ticker WS + 键盘快捷键体系 + 面板库 ★ V10.3.3 |
+| §5 组件库 | 新增 | ExecutionMicroscopeChart / SignalICDecayCurves / FactorCorrelationMatrix / RiskGaugeCluster / AgentStatusBoard / AgentMessageTimeline / ReliabilityDiagram / PostMortemDrawer / WarRoomGrid / PnLTicker / IntelligenceFeed / SmartAlertPanel |
+| §6 Pinia Stores | 新增 | useObservabilityStore / useAIHubStore / useWarRoomStore / useAlertStore |
+| i18n | 更新 | 补全 observability / aiHub / warRoom / alertCenter 四个命名空间（中英双语）|
+
+### E. V10.3 变更一览（归档）
 
 | 章节 | 变更类型 | 说明 |
 |------|---------|------|

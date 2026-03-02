@@ -789,7 +789,7 @@ export interface StrategySummaryView {
   description?: string | null;
   is_builtin: boolean;
   is_active: boolean;
-  tags: string[];
+  tags?: string[];
   last_run_status?: string | null;
   last_run_at?: string | null;
 }
@@ -844,6 +844,10 @@ export interface StrategyRunStatusView {
   started_at?: string | null;
   finished_at?: string | null;
   timeline?: StrategyTimeline | null;
+  // optional run params (may be echoed back by backend)
+  target_universe?: string | null;
+  min_score?: number | null;
+  max_results?: number | null;
 }
 
 export interface StrategyRunLatestResponse {
