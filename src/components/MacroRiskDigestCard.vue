@@ -27,6 +27,7 @@ const summary = computed(() => props.data.overall_risk?.summary || t('macro.no_s
 const levelClass = computed(() => {
   const lv = level.value.toLowerCase();
   if (lv === 'low') return 'low';
+  if (lv === 'warning') return 'warning';
   if (lv === 'medium') return 'medium';
   if (lv === 'high' || lv === 'extreme') return 'high';
   if (lv === 'critical') return 'critical';
@@ -68,6 +69,11 @@ const levelClass = computed(() => {
 .level.low {
   background: rgba(34, 197, 94, 0.2);
   color: #86efac;
+}
+
+.level.warning {
+  background: rgba(250, 204, 21, 0.2);
+  color: #fbbf24;
 }
 
 .level.medium {

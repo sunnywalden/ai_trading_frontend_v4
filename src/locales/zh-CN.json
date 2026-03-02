@@ -377,6 +377,7 @@
       "extreme": "极端",
       "critical": "严重",
       "high": "高",
+      "warning": "警告",
       "medium": "中",
       "stable": "稳定",
       "unknown": "未知"
@@ -1162,6 +1163,7 @@
       "submitting": "提交中...",
       "error_submit": "提交失败，请稍后重试",
       "universes": {
+        "AUTO_MARKET_TIME": "按交易时段自动选择（美股/港股全量）",
         "US_LARGE_MID_TECH": "美股中大型科技",
         "PRECIOUS_METALS": "黄金白银贵金属",
         "US_SMALL_TECH": "美股科技潜力股",
