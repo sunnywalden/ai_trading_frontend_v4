@@ -227,7 +227,7 @@
             <td>{{ log.decision_type }}</td>
             <td>{{ log.symbol ?? '—' }}</td>
             <td>{{ log.direction ?? '—' }}</td>
-            <td>{{ log.quantity ?? '—' }}</td>
+            <td :title="log.quantity_mode ?? ''">{{ formatAuditQuantity(log) }}</td>
             <td>
               <span :class="log.risk_gate_passed ? 'badge-success' : 'badge-danger'">
                 {{ log.risk_gate_passed ? '通过' : '拦截' }}
@@ -258,7 +258,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useAutonomyStore } from '@/stores/autonomy'
-import type { AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
+import type { AutonomyLevel, AuditLogEntry, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
 import { storeToRefs } from 'pinia'
 import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import { formatClientDateTime } from '@/utils/datetime'
@@ -327,6 +327,25 @@ function signalStatusClass(s: string) {
 function formatSignalQuantity(sig: SignalPipelineItem): string {
   const mode = (sig.quantity_mode || '').toUpperCase()
   const value = sig.quantity_value ?? sig.quantity
+  if (value == null || Number.isNaN(Number(value))) return '—'
+
+  if (mode === 'PCT_EQUITY') {
+    const pct = Number(value) <= 1 ? Number(value) * 100 : Number(value)
+    return `${pct.toFixed(2)}%`
+  }
+
+  if (mode === 'ABS_SHARES') {
+    const n = Number(value)
+    if (Math.abs(n - Math.round(n)) < 1e-6) return `${Math.round(n)}`
+    return n.toFixed(4)
+  }
+
+  return `${Number(value)}`
+}
+
+function formatAuditQuantity(log: AuditLogEntry): string {
+  const mode = (log.quantity_mode || '').toUpperCase()
+  const value = log.quantity_value ?? log.quantity
   if (value == null || Number.isNaN(Number(value))) return '—'
 
   if (mode === 'PCT_EQUITY') {
