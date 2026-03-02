@@ -46,7 +46,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
 
-type StrategyLike = Strategy | { id: string; name: string; style?: string | null; description?: string | null; is_builtin: boolean; is_active: boolean; tags: string[]; last_run_status?: string | null; last_run_at?: string | null; };
+type StrategyLike = Strategy | { id: string; name: string; style?: string | null; description?: string | null; is_builtin: boolean; is_active: boolean; tags?: string[]; last_run_status?: string | null; last_run_at?: string | null; };
 
 const props = defineProps<{ 
   strategy: StrategyLike;

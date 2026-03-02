@@ -177,6 +177,60 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '智能订单簿' }
   },
 
+  // ── V10.3.3 可观测性 2.0 ──────────────────────────────────
+  {
+    path: '/observability/execution',
+    name: 'ExecutionMicroscope',
+    component: () => import('../views/ExecutionMicroscopePage.vue'),
+    meta: { title: '执行显微镜' }
+  },
+  {
+    path: '/observability/signal',
+    name: 'SignalIntelligence',
+    component: () => import('../views/SignalIntelligencePage.vue'),
+    meta: { title: '信号观测台' }
+  },
+  {
+    path: '/observability/risk',
+    name: 'RiskCluster',
+    component: () => import('../views/RiskClusterPage.vue'),
+    meta: { title: '风险拓扑聚类' }
+  },
+
+  // ── V10.3.3 AI 中枢 2.0 ──────────────────────────────────
+  {
+    path: '/ai-hub/agents',
+    name: 'MultiAgent',
+    component: () => import('../views/MultiAgentPage.vue'),
+    meta: { title: '多 Agent 协同' }
+  },
+  {
+    path: '/ai-hub/calibration',
+    name: 'Calibration',
+    component: () => import('../views/CalibrationPage.vue'),
+    meta: { title: '置信度校准' }
+  },
+  {
+    path: '/ai-hub/weights',
+    name: 'FactorWeights',
+    component: () => import('../views/FactorWeightsPage.vue'),
+    meta: { title: '自适应因子权重' }
+  },
+  {
+    path: '/ai-hub/post-mortem',
+    name: 'PostMortem',
+    component: () => import('../views/PostMortemPage.vue'),
+    meta: { title: '决策事后剖析' }
+  },
+
+  // ── V10.3.3 War Room ──────────────────────────────────────
+  {
+    path: '/war-room',
+    name: 'WarRoom',
+    component: () => import('../views/WarRoomPage.vue'),
+    meta: { title: 'War Room 作战室' }
+  },
+
   // ── 已合并页面重定向（向后兼容） ────────────────────────────
   { path: '/system',           redirect: '/service-health' },
   { path: '/dashboard-v1',     redirect: '/dashboard' },
