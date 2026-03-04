@@ -64,6 +64,7 @@ export const attributionApi = {
   listTrades: (params: {
     limit?: number
     offset?: number
+    days?: number
     symbol?: string
     category?: AttributionCategory
   }) => api.get<TradeAttributionListResponse>('/v1/attribution/trades', { params }),
