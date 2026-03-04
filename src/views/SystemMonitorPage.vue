@@ -14,6 +14,7 @@
     <div class="tab-bar">
       <button :class="['tab-btn', { active: tab === 'health' }]" @click="tab = 'health'">🩺 服务健康</button>
       <button :class="['tab-btn', { active: tab === 'api' }]" @click="tab = 'api'">📡 API 监控</button>
+      <button :class="['tab-btn', { active: tab === 'tasks' }]" @click="tab = 'tasks'">📋 任务管理</button>
     </div>
 
     <!-- ===== 服务健康 Tab ===== -->
@@ -71,6 +72,11 @@
       <p v-else class="info-message">暂无监控数据</p>
     </div>
 
+    <!-- ===== 任务管理 Tab ===== -->
+    <div v-if="tab === 'tasks'">
+      <TaskManagementPage />
+    </div>
+
     <!-- 成功提示 -->
     <div v-if="successMsg" class="success-toast">{{ successMsg }}</div>
   </div>
@@ -82,6 +88,7 @@ import SystemHealthCard from '../components/SystemHealthCard.vue'
 import HealthStatusBar from '../components/HealthStatusBar.vue'
 import ApiProviderCard from '../components/ApiProviderCard.vue'
 import AlertsPanel from '../components/AlertsPanel.vue'
+import TaskManagementPage from './TaskManagementPage.vue'
 import {
   fetchMonitoringReport,
   fetchMonitoringHealth,
@@ -90,7 +97,7 @@ import {
   type ApiStats,
 } from '../api/client'
 
-const tab = ref<'health' | 'api'>('health')
+const tab = ref<'health' | 'api' | 'tasks'>('health')
 
 // --- Health ---
 const loadingHealth = ref(false)

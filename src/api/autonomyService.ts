@@ -47,6 +47,10 @@ export interface SignalPipelineItem {
   strategy_name?: string | null
   strategy_version?: number | null
   target_universe?: string | null
+  resolved_market?: string | null
+  selection_mode?: string | null
+  fallback_reason?: string | null
+  fallback_to_default_symbols?: boolean | null
   executed_at: string | null
   created_at: string
 }

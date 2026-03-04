@@ -144,4 +144,46 @@ onMounted(async () => {
 .form-grid label { display: flex; flex-direction: column; font-size: 0.85rem; }
 .form-grid input, .form-grid select { margin-top: 4px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; }
+
+/* ── V10.4 M5: 375px 移动端适配 ── */
+@media (max-width: 375px) {
+  .page-container {
+    padding: 8px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-bar select,
+  .filter-bar input {
+    width: 100%;
+    font-size: 0.8rem;
+  }
+
+  .alert-card,
+  table {
+    font-size: 0.78rem;
+  }
+
+  table th,
+  table td {
+    padding: 6px;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    padding: 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

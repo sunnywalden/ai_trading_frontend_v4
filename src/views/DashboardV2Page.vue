@@ -1036,4 +1036,63 @@ function riskLevelLabel(level: string): string {
 
 .spinning { animation: spin 1s linear infinite; }
 .clickable-kpi { cursor: pointer; }
+
+/* ── V10.4 M5: 375px 移动端适配 ── */
+@media (max-width: 375px) {
+  .dashboard-v2 {
+    padding: 6px;
+  }
+
+  .dash-kpi-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .dash-kpi-card {
+    padding: 10px 8px;
+  }
+
+  .kpi-value {
+    font-size: 1.2rem;
+  }
+
+  .kpi-label {
+    font-size: 0.65rem;
+  }
+
+  .dash-main-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-header h2 {
+    font-size: 1rem;
+  }
+
+  .tab-bar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  .chart-container {
+    height: 200px;
+  }
+
+  table th,
+  table td {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+}
 </style>

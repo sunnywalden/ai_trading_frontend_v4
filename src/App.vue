@@ -57,9 +57,7 @@
             <div v-show="openGroups['__system__']" class="system-items">
               <router-link to="/regime"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🌊</span><span class="nav-label">{{ $t('nav.regime') }}</span></router-link>
               <router-link to="/alerts"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🔔</span><span class="nav-label">{{ $t('nav.alerts') }}</span></router-link>
-              <router-link to="/task-management" class="nav-button sub sys" active-class="active"><span class="nav-icon">📋</span><span class="nav-label">{{ $t('nav.task_management') }}</span></router-link>
-              <router-link to="/service-health"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🩺</span><span class="nav-label">{{ $t('nav.service_health') }}</span></router-link>
-              <router-link to="/api-monitoring"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🔌</span><span class="nav-label">{{ $t('nav.api_monitoring') }}</span></router-link>
+              <router-link to="/system-monitor" class="nav-button sub sys" active-class="active"><span class="nav-icon">🖥️</span><span class="nav-label">系统监控</span></router-link>
             </div>
           </transition>
         </div>
@@ -132,6 +130,9 @@
       </section>
     </main>
   </div>
+
+  <!-- V10.4 M3: 全局 Copilot 悬浮助手（任何页面均可 ⌘K 唤起） -->
+  <CopilotFloatingWidget />
 </template>
 
 <script setup lang="ts">
@@ -142,6 +143,7 @@ import { useRoute } from 'vue-router';
 import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken, getTokenPayload, isTokenExpired } from './api/client';
 import AdminInfoModal from './components/AdminInfoModal.vue';
 import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
+import CopilotFloatingWidget from './components/CopilotFloatingWidget.vue';
 
 const { t, locale } = useI18n();
 const route = useRoute()
@@ -221,7 +223,7 @@ function toggleGroup(title: string) {
 }
 
 // Auto-expand the group containing the current route
-const SYSTEM_PATHS = ['/regime', '/alerts', '/task-management', '/service-health', '/api-monitoring']
+const SYSTEM_PATHS = ['/regime', '/alerts', '/system-monitor', '/task-management', '/service-health', '/api-monitoring']
 function autoExpandGroup() {
   const currentPath = route.path
   for (const group of navGroups.value) {

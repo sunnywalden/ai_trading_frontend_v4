@@ -143,25 +143,17 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '告警中心' }
   },
 
-  // ── 系统 ─────────────────────────────────────────────────────
+  // ── 系统监控（V10.4 M2 合并：服务健康 + API 监控 + 任务管理 → 单页三Tab） ──
   {
-    path: '/api-monitoring',
-    name: 'ApiMonitoring',
-    component: () => import('../views/ExternalApiMonitoringPage.vue'),
-    meta: { title: '外部API监控' }
+    path: '/system-monitor',
+    name: 'SystemMonitor',
+    component: () => import('../views/SystemMonitorPage.vue'),
+    meta: { title: '系统监控' }
   },
-  {
-    path: '/service-health',
-    name: 'ServiceHealth',
-    component: () => import('../views/ServiceHealthPage.vue'),
-    meta: { title: '服务健康' }
-  },
-  {
-    path: '/task-management',
-    name: 'TaskManagement',
-    component: () => import('../views/TaskManagementPage.vue'),
-    meta: { title: '任务管理' }
-  },
+  // 旧路由重定向（保持后向兼容）
+  { path: '/api-monitoring',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'api'    } }) },
+  { path: '/service-health',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'health' } }) },
+  { path: '/task-management', redirect: (to) => ({ path: '/system-monitor', query: { tab: 'tasks'  } }) },
 
   // ── V10.3 交易可观测性 ────────────────────────────────────
   {
@@ -232,7 +224,7 @@ const routes: RouteRecordRaw[] = [
   },
 
   // ── 已合并页面重定向（向后兼容） ────────────────────────────
-  { path: '/system',           redirect: '/service-health' },
+  { path: '/system',           redirect: '/system-monitor' },
   { path: '/dashboard-v1',     redirect: '/dashboard' },
   { path: '/hotspots',         redirect: '/opportunities' },
   { path: '/behavior',         redirect: '/opportunities' },
@@ -242,7 +234,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/execution-algo',   redirect: '/quant-loop' },
   { path: '/execution-center', redirect: '/autonomy' },
   { path: '/plans',            redirect: '/autonomy' },
-  { path: '/monitoring',       redirect: '/service-health' },
+  { path: '/monitoring',       redirect: '/system-monitor' },
 
   // ── 认证 ─────────────────────────────────────────────────────
   {
