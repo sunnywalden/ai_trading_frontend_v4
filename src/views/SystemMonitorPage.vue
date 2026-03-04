@@ -410,7 +410,7 @@ onMounted(() => {
 .llm-breakdown { margin-top: 16px; }
 .llm-breakdown-title { font-size: 0.85rem; font-weight: 600; color: #9ca3af; margin-bottom: 10px; }
 .llm-model-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.llm-model-name { width: 160px; font-size: 0.85rem; color: #d1d5db; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+.llm-model-name { width: 160px; font-size: 0.85rem; color: #d1d5db; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
 .llm-model-bar-wrap { flex: 1; height: 8px; background: rgba(55,65,81,0.6); border-radius: 4px; overflow: hidden; }
 .llm-model-bar { height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9); border-radius: 4px; transition: width .4s ease; min-width: 2px; }
 .llm-model-count { width: 40px; text-align: right; font-size: 0.85rem; color: #9ca3af; }
