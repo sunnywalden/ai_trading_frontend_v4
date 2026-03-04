@@ -293,7 +293,10 @@ export async function createPostMortem(payload: {
   hold_days: number
   trade_context?: string
 }): Promise<PostMortemReport> {
-  const { data } = await api.post('/v1/ai-hub/post-mortems', payload)
+  const { data } = await api.post('/v1/ai-hub/post-mortems', payload, {
+    // 事后剖析包含 LLM 深度推理，允许更长等待时间
+    timeout: 300000,
+  })
   return data
 }
 
