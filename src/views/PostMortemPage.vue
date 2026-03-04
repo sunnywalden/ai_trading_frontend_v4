@@ -177,6 +177,7 @@
             {{ store.generatingPostMortem ? '推理中...' : '生成剖析' }}
           </button>
         </div>
+        <div v-if="submitError" class="submit-error">{{ submitError }}</div>
       </div>
     </div>
   </div>
@@ -190,6 +191,7 @@ const store = useAiHubStore()
 const showTriggerForm = ref(false)
 const selectedTradeId = ref('')
 const candidateQuery = ref('')
+const submitError = ref('')
 
 const trigForm = reactive({ trade_id: '', symbol: '', direction: 'long' as 'long' | 'short', entry_price: 0, exit_price: 0, realized_pnl: 0, hold_days: 1, trade_context: '' })
 
@@ -203,8 +205,13 @@ function fmtDate(ts: string | null) { return ts ? new Date(ts).toLocaleDateStrin
 async function selectPM(tradeId: string) { await store.fetchPostMortem(tradeId) }
 
 async function submitTrigger() {
-  await store.generatePostMortem({ ...trigForm })
-  showTriggerForm.value = false
+  submitError.value = ''
+  try {
+    await store.generatePostMortem({ ...trigForm })
+    showTriggerForm.value = false
+  } catch (e: unknown) {
+    submitError.value = e instanceof Error ? e.message : '生成失败，请稍后重试'
+  }
 }
 
 async function loadCandidates() {
@@ -240,6 +247,7 @@ function resetTriggerForm() {
   trigForm.realized_pnl = 0
   trigForm.hold_days = 1
   trigForm.trade_context = ''
+  submitError.value = ''
 }
 
 // 打开弹窗前加载候选交易
@@ -321,4 +329,5 @@ async function openTriggerModal() {
 .cancel-btn { padding: 7px 18px; background: transparent; border: 1px solid #555; color: #999; border-radius: 4px; cursor: pointer; }
 .submit-btn { padding: 7px 18px; background: rgba(0,255,136,0.2); border: 1px solid #00ff88; color: #00ff88; border-radius: 4px; cursor: pointer; font-weight: 600; }
 .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.submit-error { margin-top: 10px; color: #ff8080; font-size: 0.8rem; }
 </style>
