@@ -108,6 +108,36 @@
         </div>
       </div>    </div>
 
+    <div v-if="autonomyStore.marketUniverseStatus" class="card" style="margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px;">📚 本地全量池健康</h3>
+      <div class="full-cycle-summary__meta" style="margin-bottom: 10px;">
+        <span>
+          状态：
+          <b :class="autonomyStore.marketUniverseStatus.degraded ? 'text-warning' : 'text-success'">
+            {{ autonomyStore.marketUniverseStatus.degraded ? '降级风险' : '正常' }}
+          </b>
+        </span>
+        <span>24h降级回退次数: {{ autonomyStore.marketUniverseStatus.recent_fallback_runs_24h }}</span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 8px;">
+        <span
+          v-for="m in autonomyStore.marketUniverseStatus.markets"
+          :key="m.market"
+          class="full-cycle-summary__chip"
+          :style="m.stale ? 'border-color: rgba(255, 152, 0, .45); color:#ffd18a;' : ''"
+        >
+          {{ m.market }}: {{ m.active_symbols }}
+          <em>{{ m.stale ? 'STALE' : 'FRESH' }}</em>
+        </span>
+      </div>
+      <div
+        v-if="autonomyStore.marketUniverseStatus.degraded_reasons?.length"
+        style="font-size: 12px; color: #ffb366;"
+      >
+        风险原因：{{ autonomyStore.marketUniverseStatus.degraded_reasons.join(' · ') }}
+      </div>
+    </div>
+
     <!-- 级别切换 -->
     <div class="card" style="margin-bottom: 24px;">
       <h3 style="margin: 0 0 16px;">自主级别设置</h3>
@@ -154,6 +184,38 @@
         </button>
         <button class="refresh-button" @click="autonomyStore.fetchSignalPipeline()">刷新信号流</button>
       </div>
+      <div v-if="autonomyStore.lastFullCycleSummary" class="full-cycle-summary">
+        <div class="full-cycle-summary__title">🧭 最近一次完整周期的策略范围</div>
+        <div class="full-cycle-summary__meta">
+          <span>{{ autonomyStore.lastFullCycleSummary.strategy_scope_note || '策略范围说明未提供' }}</span>
+          <span>参与策略运行: {{ autonomyStore.lastFullCycleSummary.strategy_runs_processed }}</span>
+          <span>去重前信号: {{ autonomyStore.lastFullCycleSummary.signals_before_dedup }}</span>
+        </div>
+        <div class="full-cycle-summary__chips">
+          <span
+            v-for="run in autonomyStore.lastFullCycleSummary.strategy_runs_used"
+            :key="run.run_id"
+            class="full-cycle-summary__chip"
+            :title="`run_id=${run.run_id}`"
+          >
+            {{ run.strategy_name }} · {{ run.signals_generated }}条
+            <em v-if="run.target_universe">({{ run.target_universe }})</em>
+          </span>
+        </div>
+        <div v-if="autonomyStore.lastFullCycleSummary.runtime_scan" class="full-cycle-summary__runtime">
+          本轮时段扫描：
+          <span :class="autonomyStore.lastFullCycleSummary.runtime_scan.triggered ? 'text-success' : 'text-warning'">
+            {{ autonomyStore.lastFullCycleSummary.runtime_scan.triggered ? '已触发' : '未触发' }}
+          </span>
+          <template v-if="autonomyStore.lastFullCycleSummary.runtime_scan.triggered">
+            · {{ autonomyStore.lastFullCycleSummary.runtime_scan.strategy_name }}
+            · {{ autonomyStore.lastFullCycleSummary.runtime_scan.target_universe }}
+          </template>
+          <template v-else-if="autonomyStore.lastFullCycleSummary.runtime_scan.reason">
+            · 原因：{{ autonomyStore.lastFullCycleSummary.runtime_scan.reason }}
+          </template>
+        </div>
+      </div>
     </div>
 
     <!-- 信号流水线 -->
@@ -174,6 +236,7 @@
             <th>时间</th>
             <th>标的</th>
             <th>类型</th>
+            <th>来源/策略</th>
             <th>方向</th>
             <th>数量</th>
             <th>置信度</th>
@@ -188,6 +251,14 @@
             <td>
               <span :class="signalTypeClass(sig.type)">{{ sig.type }}</span>
             </td>
+            <td style="min-width: 180px;">
+              <div style="font-size: 12px;">
+                <span :class="sourceBadgeClass(sig.source)">{{ sourceLabel(sig.source) }}</span>
+              </div>
+              <div style="font-size: 11px; color: #888;" :title="sig.strategy_run_id ?? ''">
+                {{ sig.strategy_name ?? (sig.strategy_id ? `策略#${sig.strategy_id.slice(0, 8)}` : '未关联策略') }}
+              </div>
+            </td>
             <td>{{ sig.direction ?? '—' }}</td>
             <td :title="sig.quantity_mode ?? ''">{{ formatSignalQuantity(sig) }}</td>
             <td>{{ (sig.strength * 100).toFixed(2) + '%' }}</td>
@@ -199,7 +270,7 @@
             </td>
           </tr>
           <tr v-if="autonomyStore.signalPipeline.length === 0">
-            <td colspan="8" style="text-align: center; color: #666;">暂无信号记录</td>
+            <td colspan="9" style="text-align: center; color: #666;">暂无信号记录</td>
           </tr>
         </tbody>
       </table>
@@ -327,6 +398,30 @@ function signalStatusClass(s: string) {
   return 'badge-default'
 }
 
+function sourceLabel(source?: string | null) {
+  const key = (source || '').toUpperCase()
+  const labels: Record<string, string> = {
+    STRATEGY: '策略信号',
+    RESEARCH: '研究信号',
+    AI_ADVICE: 'AI建议',
+    MANUAL: '手动',
+    RISK_MGMT: '风控',
+    ARBITRAGE: '套利',
+  }
+  return labels[key] || (source ?? '未知来源')
+}
+
+function sourceBadgeClass(source?: string | null) {
+  const key = (source || '').toUpperCase()
+  if (key === 'STRATEGY') return 'badge-source badge-source-strategy'
+  if (key === 'AI_ADVICE') return 'badge-source badge-source-ai'
+  if (key === 'RISK_MGMT') return 'badge-source badge-source-risk'
+  if (key === 'MANUAL') return 'badge-source badge-source-manual'
+  if (key === 'RESEARCH') return 'badge-source badge-source-research'
+  if (key === 'ARBITRAGE') return 'badge-source badge-source-arb'
+  return 'badge-source badge-default'
+}
+
 function formatSignalQuantity(sig: SignalPipelineItem): string {
   const mode = (sig.quantity_mode || '').toUpperCase()
   const value = sig.quantity_value ?? sig.quantity
@@ -393,18 +488,21 @@ async function handleTriggerRebalance() {
   await autonomyStore.triggerRebalance()
   await autonomyStore.fetchSignalPipeline()
   await autonomyStore.fetchStatus()
+  await autonomyStore.fetchMarketUniverseStatus()
 }
 
 async function handleTriggerDecisionCycle() {
   await autonomyStore.triggerDecisionCycle()
   await autonomyStore.fetchSignalPipeline()
   await autonomyStore.fetchStatus()
+  await autonomyStore.fetchMarketUniverseStatus()
 }
 
 async function handleTriggerFullCycle() {
   await autonomyStore.triggerFullCycle()
   await autonomyStore.fetchSignalPipeline()
   await autonomyStore.fetchStatus()
+  await autonomyStore.fetchMarketUniverseStatus()
 }
 
 async function handleRevoke(execId: string) {
@@ -419,6 +517,7 @@ onMounted(async () => {
   await autonomyStore.fetchStatus()
   await autonomyStore.fetchAuditLog({ limit: 50 })
   await autonomyStore.fetchSignalPipeline()
+  await autonomyStore.fetchMarketUniverseStatus()
   fetchRegime()  // V10.2-M1: 异步获取体制，不阻塞主查询
 })
 </script>
@@ -480,6 +579,102 @@ onMounted(async () => {
   border-color: rgba(80,200,120,0.5);
 }
 .trigger-button--primary:hover:not(:disabled) { background: rgba(80,200,120,0.3); }
+
+.full-cycle-summary {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(74, 144, 226, 0.35);
+  border-radius: 8px;
+  background: rgba(74, 144, 226, 0.08);
+}
+
+.full-cycle-summary__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.full-cycle-summary__meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #9fb0c7;
+  margin-bottom: 8px;
+}
+
+.full-cycle-summary__chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.full-cycle-summary__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(80, 200, 120, 0.4);
+  color: #aef5c8;
+  background: rgba(80, 200, 120, 0.1);
+  font-size: 11px;
+}
+
+.full-cycle-summary__chip em {
+  color: #8fb8ff;
+  font-style: normal;
+}
+
+.full-cycle-summary__runtime {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9fb0c7;
+}
+
+.badge-source {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.badge-source-strategy {
+  color: #7fc3ff;
+  background: rgba(74, 144, 226, 0.2);
+  border: 1px solid rgba(74, 144, 226, 0.45);
+}
+
+.badge-source-ai {
+  color: #c9a6ff;
+  background: rgba(154, 120, 255, 0.18);
+  border: 1px solid rgba(154, 120, 255, 0.4);
+}
+
+.badge-source-risk {
+  color: #ffb366;
+  background: rgba(255, 152, 0, 0.18);
+  border: 1px solid rgba(255, 152, 0, 0.38);
+}
+
+.badge-source-manual {
+  color: #a8d8ff;
+  background: rgba(120, 180, 240, 0.16);
+  border: 1px solid rgba(120, 180, 240, 0.36);
+}
+
+.badge-source-research {
+  color: #8ff2ca;
+  background: rgba(80, 200, 120, 0.14);
+  border: 1px solid rgba(80, 200, 120, 0.35);
+}
+
+.badge-source-arb {
+  color: #ffd36e;
+  background: rgba(255, 211, 110, 0.14);
+  border: 1px solid rgba(255, 211, 110, 0.35);
+}
 
 /* 状态卡片副文本 */
 .stat-sub {
