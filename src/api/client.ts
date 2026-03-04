@@ -1266,6 +1266,29 @@ export async function fetchMonitoringHealth(): Promise<MonitoringHealthResponse>
   return data;
 }
 
+export interface LlmStats {
+  window_hours: number;
+  since: string;
+  total: number;
+  success: number;
+  timeout: number;
+  rate_limited: number;
+  error: number;
+  degraded: number;
+  error_rate_pct: number;
+  avg_latency_ms: number | null;
+  p50_latency_ms: number | null;
+  p95_latency_ms: number | null;
+  by_model: { model: string; count: number }[];
+  by_caller: { caller: string; count: number }[];
+  _note?: string;
+}
+
+export async function fetchLlmStats(hours = 24): Promise<LlmStats> {
+  const { data } = await api.get<LlmStats>('/v1/llm-stats', { params: { hours } });
+  return data;
+}
+
 // ========== 市场热点 API ==========
 
 export interface Hotspot {

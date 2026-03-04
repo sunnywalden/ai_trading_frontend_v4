@@ -67,6 +67,73 @@
             :recent-errors="report.recent_errors"
           />
         </section>
+
+        <!-- LLM 调用统计 -->
+        <section class="llm-stats-section">
+          <div class="sub-header">
+            <h3 class="section-title">🤖 LLM 调用统计</h3>
+            <select v-model="llmHours" class="time-range-select" @change="loadLlmStats">
+              <option :value="6">近 6h</option>
+              <option :value="24">近 24h</option>
+              <option :value="72">近 72h</option>
+              <option :value="168">近 7d</option>
+            </select>
+          </div>
+          <div v-if="llmStats" class="llm-stats-body">
+            <div class="llm-kpi-row">
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">总调用</div>
+                <div class="llm-kpi-value">{{ llmStats.total }}</div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">成功率</div>
+                <div class="llm-kpi-value" :class="llmStats.total ? (llmStats.success / llmStats.total >= 0.95 ? 'ok' : 'warn') : ''">
+                  {{ llmStats.total ? ((llmStats.success / llmStats.total) * 100).toFixed(1) + '%' : '-' }}
+                </div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">超时</div>
+                <div class="llm-kpi-value" :class="llmStats.timeout > 0 ? 'warn' : ''">
+                  {{ llmStats.timeout }}
+                </div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">错误</div>
+                <div class="llm-kpi-value" :class="llmStats.error > 0 ? 'err' : ''">
+                  {{ llmStats.error }}
+                </div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">降级</div>
+                <div class="llm-kpi-value" :class="llmStats.degraded > 0 ? 'warn' : ''">
+                  {{ llmStats.degraded }}
+                </div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">P50 延迟</div>
+                <div class="llm-kpi-value">{{ llmStats.p50_latency_ms != null ? llmStats.p50_latency_ms + 'ms' : '-' }}</div>
+              </div>
+              <div class="llm-kpi">
+                <div class="llm-kpi-label">P95 延迟</div>
+                <div class="llm-kpi-value" :class="llmStats.p95_latency_ms != null && llmStats.p95_latency_ms > 5000 ? 'warn' : ''">
+                  {{ llmStats.p95_latency_ms != null ? llmStats.p95_latency_ms + 'ms' : '-' }}
+                </div>
+              </div>
+            </div>
+            <div v-if="llmStats.total === 0" class="llm-empty">⏳ 暂无 LLM 调用记录（近 {{ llmHours }}h），首次 LLM 调用后将自动入库。</div>
+            <div v-else-if="llmStats.by_model?.length" class="llm-breakdown">
+              <div class="llm-breakdown-title">按模型分布</div>
+              <div class="llm-model-row" v-for="m in llmStats.by_model" :key="m.model">
+                <span class="llm-model-name">{{ m.model }}</span>
+                <div class="llm-model-bar-wrap">
+                  <div class="llm-model-bar" :style="{ width: (m.count / llmStats.total * 100).toFixed(1) + '%' }"></div>
+                </div>
+                <span class="llm-model-count">{{ m.count }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="llm-loading">加载中...</div>
+        </section>
       </template>
 
       <p v-else class="info-message">暂无监控数据</p>
@@ -93,8 +160,10 @@ import {
   fetchMonitoringReport,
   fetchMonitoringHealth,
   fetchMonitoringStats,
+  fetchLlmStats,
   type MonitoringReport,
   type ApiStats,
+  type LlmStats,
 } from '../api/client'
 
 const tab = ref<'health' | 'api' | 'tasks'>('health')
@@ -135,12 +204,26 @@ const timeRange = ref<'day' | 'hour' | 'minute'>('day')
 const providerStats = ref<ApiStats[] | null>(null)
 const successMsg = ref('')
 
+// --- LLM Stats ---
+const llmStats = ref<LlmStats | null>(null)
+const llmHours = ref(24)
+
+async function loadLlmStats() {
+  try {
+    llmStats.value = await fetchLlmStats(llmHours.value)
+  } catch {
+    llmStats.value = { window_hours: llmHours.value, since: '', total: 0, success: 0, timeout: 0,
+      rate_limited: 0, error: 0, degraded: 0, error_rate_pct: 0,
+      avg_latency_ms: null, p50_latency_ms: null, p95_latency_ms: null, by_model: [], by_caller: [] }
+  }
+}
+
 async function loadMonitoringData() {
   loadingApi.value = true
   apiError.value = ''
   try {
     report.value = await fetchMonitoringReport()
-    await loadStats()
+    await Promise.all([loadStats(), loadLlmStats()])
   } catch (e: any) {
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
       apiError.value = '⏱️ 请求超时，请稍后再试！'
@@ -208,6 +291,25 @@ onMounted(() => {
 .providers-section { margin: 24px 0; }
 .providers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
 .alerts-section { margin: 24px 0; }
+
+/* LLM stats */
+.llm-stats-section { margin: 24px 0; background: rgba(17,24,39,0.7); border: 1px solid rgba(55,65,81,0.6); border-radius: 14px; padding: 20px; }
+.llm-kpi-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.llm-kpi { background: rgba(31,41,55,0.8); border: 1px solid rgba(55,65,81,0.5); border-radius: 10px; padding: 14px 20px; min-width: 100px; flex: 1; text-align: center; }
+.llm-kpi-label { font-size: 0.75rem; color: #6b7280; margin-bottom: 6px; }
+.llm-kpi-value { font-size: 1.4rem; font-weight: 700; color: #e5e7eb; }
+.llm-kpi-value.ok { color: #34d399; }
+.llm-kpi-value.warn { color: #fbbf24; }
+.llm-kpi-value.err { color: #f87171; }
+.llm-empty { text-align: center; padding: 20px; color: #6b7280; font-size: 0.9rem; }
+.llm-loading { text-align: center; padding: 20px; color: #6b7280; }
+.llm-breakdown { margin-top: 16px; }
+.llm-breakdown-title { font-size: 0.85rem; font-weight: 600; color: #9ca3af; margin-bottom: 10px; }
+.llm-model-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.llm-model-name { width: 160px; font-size: 0.85rem; color: #d1d5db; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+.llm-model-bar-wrap { flex: 1; height: 8px; background: rgba(55,65,81,0.6); border-radius: 4px; overflow: hidden; }
+.llm-model-bar { height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9); border-radius: 4px; transition: width .4s ease; min-width: 2px; }
+.llm-model-count { width: 40px; text-align: right; font-size: 0.85rem; color: #9ca3af; }
 
 .loading-message, .info-message {
   text-align: center; padding: 48px 20px; font-size: 1rem; color: #9ca3af;
