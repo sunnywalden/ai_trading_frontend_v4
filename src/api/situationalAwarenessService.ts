@@ -37,6 +37,8 @@ export interface ActiveExecutionEntry {
 
 export interface ActiveExecutionsBlock {
   count: number
+  running_count?: number
+  recent_executed_count?: number
   entries: ActiveExecutionEntry[]
 }
 

@@ -56,9 +56,12 @@
     <div class="sa-block exec-block">
       <span class="sa-icon">⑥</span>
       <span class="sa-label">执行中</span>
-      <span class="sa-value">{{ snapshot.active_executions.count }}</span>
+      <span class="sa-value">{{ snapshot.active_executions.running_count ?? snapshot.active_executions.count }}</span>
       <span class="sa-sub" v-if="snapshot.active_executions.entries.length > 0">
         {{ snapshot.active_executions.entries.slice(0, 2).map(e => e.symbol).join('·') }}
+      </span>
+      <span class="sa-sub" v-else-if="(snapshot.active_executions.recent_executed_count ?? 0) > 0">
+        24h已执行 {{ snapshot.active_executions.recent_executed_count }}
       </span>
     </div>
 
