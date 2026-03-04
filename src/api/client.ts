@@ -645,6 +645,18 @@ export interface MacroRiskOverviewResponse {
   key_concerns: string[];
   recommendations: string[] | string;
   ai_analysis: string;
+  market_calibration?: {
+    enabled: boolean;
+    window: string;
+    penalty: number;
+    regime: 'NEUTRAL' | 'CAUTIOUS' | 'RISK_OFF' | string;
+    factors: {
+      vix_change_pct: number;
+      oil_change_pct: number;
+      dxy_change_pct: number;
+    };
+    drivers: string[];
+  };
   recent_events: any[];
   _meta?: {
     response_time_ms?: number;

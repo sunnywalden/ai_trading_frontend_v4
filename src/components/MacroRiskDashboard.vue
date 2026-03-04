@@ -20,6 +20,28 @@
       <p class="summary-content">{{ data.ai_analysis }}</p>
     </div>
 
+    <!-- 市场体感校准解释 -->
+    <div class="calibration-section" v-if="calibrationVisible">
+      <div class="calibration-header">
+        <div>
+          <h3>🧭 市场体感校准</h3>
+          <p class="calibration-sub">窗口：最近{{ calibration.window || '5d' }}，用于解释风险分数的“冲击修正”</p>
+        </div>
+        <div class="calibration-penalty" :class="calibrationPenaltyClass">
+          -{{ calibration.penalty.toFixed(1) }}
+        </div>
+      </div>
+      <div class="calibration-factors">
+        <span>VIX: {{ formatSigned(calibration.factors.vix_change_pct) }}%</span>
+        <span>原油: {{ formatSigned(calibration.factors.oil_change_pct) }}%</span>
+        <span>DXY: {{ formatSigned(calibration.factors.dxy_change_pct) }}%</span>
+        <span>状态: {{ calibration.regime }}</span>
+      </div>
+      <ul class="calibration-drivers" v-if="calibration.drivers?.length">
+        <li v-for="(driver, idx) in calibration.drivers" :key="idx">{{ driver }}</li>
+      </ul>
+    </div>
+
     <!-- 风险警报 -->
     <div class="alerts-section" v-if="data.alerts && data.alerts.length > 0">
       <h3>⚠️ {{ $t('macro.risk_alerts') }}</h3>
@@ -154,6 +176,20 @@ const recommendationsList = computed(() => {
   return Array.isArray(raw) ? raw : [raw];
 });
 
+const calibration = computed(() => props.data.market_calibration);
+
+const calibrationVisible = computed(() => {
+  const c = calibration.value;
+  return !!(c && c.enabled);
+});
+
+const calibrationPenaltyClass = computed(() => {
+  const p = calibration.value?.penalty ?? 0;
+  if (p >= 12) return 'penalty-high';
+  if (p >= 6) return 'penalty-medium';
+  return 'penalty-low';
+});
+
 function formatLevel(level: string) {
   return t(`macro.levels.${(level || 'unknown').toLowerCase()}`);
 }
@@ -163,6 +199,11 @@ function getScoreClass(score: number): string {
   if (score >= 50) return 'score-caution';
   if (score >= 30) return 'score-warning';
   return 'score-danger';
+}
+
+function formatSigned(value: number): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '0.00';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}`;
 }
 
 function formatDate(dateStr: string): string {
@@ -277,6 +318,77 @@ function formatDate(dateStr: string): string {
   font-size: 0.9rem;
   color: #d1d5db;
   line-height: 1.6;
+}
+
+.calibration-section {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.calibration-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.calibration-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e5e7eb;
+}
+
+.calibration-sub {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.calibration-penalty {
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.calibration-penalty.penalty-low {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.calibration-penalty.penalty-medium {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.calibration-penalty.penalty-high {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.calibration-factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: #d1d5db;
+}
+
+.calibration-drivers {
+  margin: 0;
+  padding-left: 18px;
+  color: #d1d5db;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.calibration-drivers li {
+  margin-bottom: 4px;
 }
 
 .alerts-section {
