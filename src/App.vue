@@ -45,19 +45,23 @@
           </transition>
         </div>
 
-        <!-- 系统区（底部分隔，弱化呈现）-->
+        <!-- 系统区（底部分隔，与其他模块保持一致的折叠/展开）-->
         <div class="nav-system-section">
-          <div class="system-section-label">
-            <span class="nav-icon">⚙️</span>
-            <span>{{ $t('nav.module_system') }}</span>
-          </div>
-          <div class="system-items">
-            <router-link to="/regime"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🌊</span><span class="nav-label">{{ $t('nav.regime') }}</span></router-link>
-            <router-link to="/alerts"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🔔</span><span class="nav-label">{{ $t('nav.alerts') }}</span></router-link>
-            <router-link to="/task-management" class="nav-button sub sys" active-class="active"><span class="nav-icon">📋</span><span class="nav-label">{{ $t('nav.task_management') }}</span></router-link>
-            <router-link to="/service-health"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🩺</span><span class="nav-label">{{ $t('nav.service_health') }}</span></router-link>
-            <router-link to="/api-monitoring"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🔌</span><span class="nav-label">{{ $t('nav.api_monitoring') }}</span></router-link>
-          </div>
+          <button class="group-header" @click="toggleGroup('__system__')">
+            <div class="group-title-block">
+              <span class="group-title">⚙️ {{ $t('nav.module_system') }}</span>
+            </div>
+            <span class="group-arrow" :class="{ open: openGroups['__system__'] }">▸</span>
+          </button>
+          <transition name="slide">
+            <div v-show="openGroups['__system__']" class="system-items">
+              <router-link to="/regime"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🌊</span><span class="nav-label">{{ $t('nav.regime') }}</span></router-link>
+              <router-link to="/alerts"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🔔</span><span class="nav-label">{{ $t('nav.alerts') }}</span></router-link>
+              <router-link to="/task-management" class="nav-button sub sys" active-class="active"><span class="nav-icon">📋</span><span class="nav-label">{{ $t('nav.task_management') }}</span></router-link>
+              <router-link to="/service-health"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🩺</span><span class="nav-label">{{ $t('nav.service_health') }}</span></router-link>
+              <router-link to="/api-monitoring"  class="nav-button sub sys" active-class="active"><span class="nav-icon">🔌</span><span class="nav-label">{{ $t('nav.api_monitoring') }}</span></router-link>
+            </div>
+          </transition>
         </div>
       </nav>
 
@@ -200,7 +204,8 @@ const navGroups = computed<NavGroup[]>(() => [
 ])
 
 // --- Collapsible nav groups ---
-const openGroups = reactive<Record<string, boolean>>({})
+// '__system__' 作为系统模块的静态 key，默认展开
+const openGroups = reactive<Record<string, boolean>>({ '__system__': true })
 
 // Initialize: auto-expand first group, or whichever matches current route
 watch(navGroups, (newGroups) => {
@@ -216,12 +221,17 @@ function toggleGroup(title: string) {
 }
 
 // Auto-expand the group containing the current route
+const SYSTEM_PATHS = ['/regime', '/alerts', '/task-management', '/service-health', '/api-monitoring']
 function autoExpandGroup() {
   const currentPath = route.path
   for (const group of navGroups.value) {
     if (group.items.some(item => currentPath.startsWith(item.path))) {
       openGroups[group.title] = true
     }
+  }
+  // 系统模块路由自动展开
+  if (SYSTEM_PATHS.some(p => currentPath.startsWith(p))) {
+    openGroups['__system__'] = true
   }
 }
 watch(() => route.path, autoExpandGroup, { immediate: true })
@@ -617,23 +627,11 @@ function applyTheme() {
   text-transform: none;
 }
 
-/* ── System section (底部弱化区域) ── */
+/* ── System section (底部弱化区域，折叠/展开与其他模块一致) ── */
 .nav-system-section {
   margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid rgba(55, 65, 81, 0.35);
-}
-.system-section-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #4b5563;
-  user-select: none;
 }
 .system-items {
   display: flex;
