@@ -1,7 +1,7 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.4（规划中）| 更新日期：2026-03-04  
+> 版本：V10.4.1（已发布）| 更新日期：2026-03-04  
 > 变更摘要（V10.4）：**UI 大清洗 + Copilot 全局化 + 移动触达**——M2 页面整合（47→≤38 页：双仪表盘合并 / 执行三页→Order Book+Tab / 系统监控五页→单页三Tab / AI建议双页合并）+ 导航重组（6组→4组：首页仪表盘 / 交易中枢 / 研究&分析 / AI洞察&系统）；M3 全局 Copilot 浮窗（Cmd+K 任意页面，右下角常驻按钮，页面上下文注入，快捷操作动态渲染）；M5 移动响应式（Dashboard/SmartAlert/Copilot 竖屏 375px 可用，无横向溢出）；废弃路由 301 重定向，无感知迁移  
 > 变更摘要（V10.3.4）：**冷启动稳态 + 市场全量池**——各核心页面补全冷启动占位视图（Dashboard / MultiAgentPage Agent 状态看板 / ExecutionMicroscopePage / CalibrationPage 在零数据时展示引导占位而非空白/404 抖动）；PostMortemPage 从手工输入升级为交易选择驱动（选择历史交易 → 自动触发 LLM 事后剖析）；市场全量池状态视图接入（`/api/v1/market-universe/status`），标的同步进度可追踪；告警面板 / 归因页多账户 ID 兼容修复；事件日历去重修复（排除重复事件展示）  
 > 变更摘要（V10.3.3）：**可观测性 2.0** ——新增 `/observability` 路由体系（`/observability/execution-microscope` 执行显微镜：IS 四分解色码热力图 + Fill Rate 时段视图 + Execution Alpha 曲线；`/observability/signal-intelligence` 信号情报观察站：六维 IC 衰减曲线 + Factor Correlation Matrix 热力图 + Crowding Score 仪表；`/observability/risk-cluster` 风险可观测集群：五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图）；**AI 中枢 2.0** ——新增 `/ai-hub` 路由体系（`/ai-hub/agents` 多智能体协作中心：五 Agent 状态看板 + AgentMessage 通信日志流 + RiskChallenger 反驳面板；`/ai-hub/calibration` 置信度校准仪表盘：Reliability Diagram + Brier/ECE 趋势 + 校准因子状态；`/ai-hub/factor-weights` 自适应因子框架：Kalman 权重演变曲线 + 因子动量排名；`/ai-hub/post-mortems` 决策事后剖析库：反事实三路径对比 + 洞察自动提炼卡）；**War Room Dashboard** ——新增 `/war-room` 路由，全屏六格可配置指挥视图（P&L Ticker + Intelligence Feed + Portfolio Heatmap + Risk Gauges + Signal Pulse + Execution Queue），全局键盘快捷键体系；**Smart Alert Center** ——DashboardV2 新增智能告警分级面板组件；i18n 补全 observability / aiHub / warRoom / alertCenter 四个命名空间  
@@ -46,7 +46,49 @@
 
 ## 3. 信息架构
 
-### 3.1 导航结构（V10.3.3 更新）
+### 3.1 导航结构（V10.4.1 更新：6组→4组）
+
+```
+🏛️ 指挥室 (Dashboard) ← 独立顶级入口（首页仪表盘）
+
+📦 交易中枢（V10.4 合并：交易台 + 可观测性 & War Room）
+├── 📊 持仓监控 (Positions)
+├── 🔬 持仓评估 (Position Evaluation)
+├── 📅 事件日历 (Events)
+├── 🔄 量化交易闭环 (Quant Loop)
+├── 🧪 模拟盘 (Paper Trading)
+├── 🎯 交易归因 (Attribution)
+├── 🔄 交易生命周期中枢 (Trade Lifecycle)
+├── 📋 智能订单簿 (Order Book)
+├── 🔬 执行显微镜 (Execution Microscope)
+├── 📡 信号情报观察站 (Signal Intelligence)
+├── ⚡ 风险可观测集群 (Risk Cluster)
+└── ⚔️ War Room 作战室
+
+📚 研究 & 分析
+├── 🔍 机会扫描 (Opportunities)
+├── 🌍 宏观分析 (Macro)
+├── 📚 策略库 (Strategies)
+├── 📊 ETF 标的池 (ETF Pool)
+├── 📈 回测中心 (Backtest)
+├── ⚖️ 组合优化 (Portfolio)
+└── 💎 期权分析 (Options)
+
+🤖 AI 洞察 & 系统（V10.4 合并：AI中枢 + 系统区）
+├── 🤖 AI 自主控制 (Autonomy) ← AI 运行状态 + 自主度配置（V10.2 体制感知 Banner）
+├── 💬 Trading Copilot ← 对话式人机接口（V10.1 意图执行闭环 | V10.2-M7 深度研究）
+├── 🧬 AI 自我进化 (Evolution)
+├── 📓 交易日志 (Journal)
+├── 🤝 多智能体协作 (Multi-Agent)
+├── 🎯 置信度校准 (Calibration)
+├── ⚖️ 自适应因子权重 (Factor Weights)
+├── 🔭 决策事后剖析 (Post-Mortem)
+├── 🌊 市场体制感知 (Regime)
+├── 🔔 价格告警 (Alerts)
+└── 🖥️ 系统监控 (System Monitor)
+```
+
+### 3.1.legacy 旧导航结构（V10.3.3，仅归档）
 
 ```
 交易仪表盘 (Dashboard) ← 首页
@@ -133,13 +175,13 @@
 | 量化交易闭环 | `/quant-loop` | 闭环可视化 |
 | **交易生命周期中枢** | `/trade-lifecycle` | 17阶段 PipelineKanban + DualFSMPanel + DecisionProvenanceDrawer ★ V10.3 |
 | **智能订单簿** | `/order-book` | 全量交易列表（17阶段徽章 + 六维迷你雷达图 + AI摘要 + 价格偏差 + 风险徽章）★ V10.3 |
-| **执行显微镜** | `/observability/execution-microscope` | IS 四分解热力图 + Fill Rate 时段矩阵 + Execution Alpha 曲线 ★ V10.3.3 新增 |
-| **信号情报观察站** | `/observability/signal-intelligence` | 六维 IC 衰减曲线 + Factor Correlation Matrix + Crowding Score ★ V10.3.3 新增 |
-| **风险可观测集群** | `/observability/risk-cluster` | 五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图 ★ V10.3.3 新增 |
+| **执行显微镜** | `/observability/execution`<br>_alias: `/observability/execution-microscope`_ | IS 四分解热力图 + Fill Rate 时段矩阵 + Execution Alpha 曲线 ★ V10.3.3 新增 |
+| **信号情报观察站** | `/observability/signal`<br>_alias: `/observability/signal-intelligence`_ | 六维 IC 衰减曲线 + Factor Correlation Matrix + Crowding Score ★ V10.3.3 新增 |
+| **风险可观测集群** | `/observability/risk`<br>_alias: `/observability/risk-cluster`_ | 五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图 ★ V10.3.3 新增 |
 | **多智能体协作中心** | `/ai-hub/agents` | 五 Agent 状态看板 + AgentMessage 通信日志流 + Risk Challenger 面板 ★ V10.3.3 新增 |
 | **置信度校准仪表盘** | `/ai-hub/calibration` | Reliability Diagram + Brier Score/ECE 趋势 + 校准因子状态 ★ V10.3.3 新增 |
-| **自适应因子框架** | `/ai-hub/factor-weights` | Kalman 权重演变曲线 + 因子动量排名 + 拥挤度 ★ V10.3.3 新增 |
-| **决策事后剖析库** | `/ai-hub/post-mortems` | 反事实三路径对比 + 洞察自动提炼 + 模式归纳视图 ★ V10.3.3 新增 |
+| **自适应因子框架** | `/ai-hub/weights`<br>_alias: `/ai-hub/factor-weights`_ | Kalman 权重演变曲线 + 因子动量排名 + 拥挤度 ★ V10.3.3 新增 |
+| **决策事后剖析库** | `/ai-hub/post-mortem`<br>_alias: `/ai-hub/post-mortems`_ | 反事实三路径对比 + 洞察自动提炼 + 模式归纳视图 ★ V10.3.3 新增 |
 | **指挥室** | `/war-room` | 全屏六格可配置指挥视图，含 P&L Ticker/Intel Feed/Heatmap 等 ★ V10.3.3 新增 |
 | 持仓评估 | `/positions` | 技术+基本面评估；V10.1 港股持仓视图（US/HK 市场标签，Tiger API）|
 | AI 交易决策 | `/ai-advisor` | AI 决策历史+手动触发 |
@@ -2595,6 +2637,23 @@ interface PnLTickerFrame {
 | **§13.4 CopilotPage DeepResearch** | 增强 | Standard/Deep Research 模式切换；结构化报告展示 ★ V10.2-M7 |
 | i18n | 更新 | zh-CN/en-US 补全 events/attribution/evolution/signals/insights 命名空间 |
 | §4.X RegimePage | 新增（M1）| 体制感知主页：4块布局（状态卡+雷达图+策略权重+历史时间轴）|
+
+### G. V10.4.1 变更一览（已发布）
+
+| 章节 | 变更类型 | 说明 |
+|------|---------|------|
+| §3.1 导航结构 | **重构** | 6组→4组：**指挥室**独立顶级入口 + **交易中枢**（交易台+可观测性合并）+ **研究&分析** + **AI洞察&系统**（AI中枢+系统区合并）|
+| §3.2 页面层级 | 更新 | 路由 URL 纠正：5条 spec URL 与实现 URL 对齐（`execution-microscope`→`execution` 等），已添加 redirect 别名 |
+| §4.1 Dashboard | **新增** | Smart Alert Center 告警分级面板（V10.3.3 spec补全）：4级统计条 + 筛选 + 最多8条明细 + 直达 War Room 链接 |
+| §系统监控 M1 | 新增 | LLM 调用统计 Tab（`/system-monitor?tab=api`）：模型明细 + 24h/7d 成本曲线 |
+| §系统监控 M2 | 新增 | 页面整合（服务健康/API监控/任务管理 → 三Tab）；旧路由 301 重定向 |
+| §CopilotFloatingWidget M3 | 新增 | 全局悬浮 Copilot（⌘K / 右下常驻；页面上下文注入；快捷操作；480px 移动适配）|
+| §SystemMonitorPage M4 | 新增 | 自主循环健康检查面板（8项检查）+ WebSocket 状态栏（reconnect 指数退避状态）|
+| §移动适配 M5 | 新增 | Dashboard / AlertsPage / CopilotFloatingWidget 375px 响应式 |
+| §War Room 键盘 | **补全** | 新增 `` ` `` 键（唤起Copilot）+ `P` 键（暂停/恢复AI，二次确认弹窗）|
+| §War Room 面板配置 | **新增** | ⚙️ 面板配置抽屉：6槽位 × 11种面板类型，localStorage 持久化布局 |
+| §App.vue WS | 新增 | 登录后自动 `wsStore.connect()`，离开时 `disconnect()` |
+| i18n | 更新 | `module_desk`→交易中枢 / `module_research`→研究&分析 / `module_ai`→AI洞察&系统 |
 
 ### F. V10.1 变更一览（归档）
 

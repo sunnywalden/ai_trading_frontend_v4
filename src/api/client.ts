@@ -1289,6 +1289,26 @@ export async function fetchLlmStats(hours = 24): Promise<LlmStats> {
   return data;
 }
 
+// ---------- V10.4 M4: 自主循环健康 ----------
+export interface AutonomyHealthCheck {
+  name: string;
+  status: 'OK' | 'WARN' | 'CRITICAL' | 'ERROR';
+  message: string;
+  detail?: Record<string, any>;
+  checked_at?: string;
+}
+
+export interface AutonomyHealthReport {
+  checks: AutonomyHealthCheck[];
+  overall_status: 'OK' | 'WARN' | 'CRITICAL';
+  generated_at: string;
+}
+
+export async function fetchAutonomyHealth(): Promise<AutonomyHealthReport> {
+  const { data } = await api.get<AutonomyHealthReport>('/v1/autonomy/health');
+  return data;
+}
+
 // ========== 市场热点 API ==========
 
 export interface Hotspot {
