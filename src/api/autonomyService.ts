@@ -32,6 +32,7 @@ export interface SignalPipelineItem {
   signal_id: string
   symbol: string
   type: string
+  source?: string | null
   status: string
   direction: string
   quantity: number | null
@@ -41,8 +42,65 @@ export interface SignalPipelineItem {
   priority: number
   notes: string | null
   order_id: string | null
+  strategy_id?: string | null
+  strategy_run_id?: string | null
+  strategy_name?: string | null
+  strategy_version?: number | null
+  target_universe?: string | null
   executed_at: string | null
   created_at: string
+}
+
+export interface SignalGenerationStrategyRun {
+  run_id: string
+  strategy_id: string
+  strategy_name: string
+  strategy_version?: number | null
+  target_universe?: string | null
+  finished_at?: string | null
+  signals_generated: number
+}
+
+export interface SignalGenerationSummary {
+  strategy_scope_note?: string | null
+  strategy_runs_processed: number
+  signals_before_dedup: number
+  signals_by_strategy: Record<string, number>
+  strategy_runs_used: SignalGenerationStrategyRun[]
+  runtime_scan?: {
+    triggered?: boolean
+    run_id?: string
+    strategy_id?: string
+    strategy_name?: string
+    target_universe?: string
+    reason?: string
+    error?: string
+  }
+}
+
+export interface TriggerFullCycleResponse {
+  success: boolean
+  signals_generated: number
+  signals_validated: number
+  executed: number
+  signal_generation_summary?: SignalGenerationSummary
+  details: any
+}
+
+export interface MarketUniverseMarketStatus {
+  market: 'US' | 'HK' | string
+  active_symbols: number
+  last_synced_at?: string | null
+  stale: boolean
+}
+
+export interface MarketUniverseStatusResponse {
+  status: string
+  degraded: boolean
+  degraded_reasons: string[]
+  markets: MarketUniverseMarketStatus[]
+  recent_fallback_runs_24h: number
+  checked_at: string
 }
 
 export interface AuditLogEntry {
@@ -90,5 +148,8 @@ export const autonomyApi = {
     api.post<{ success: boolean; decisions: number; executed: number; details: any[] }>('/v1/autonomy/trigger-decision-cycle'),
 
   triggerFullCycle: () =>
-    api.post<{ success: boolean; signals_generated: number; signals_validated: number; executed: number; details: any }>('/v1/autonomy/trigger-full-cycle'),
+    api.post<TriggerFullCycleResponse>('/v1/autonomy/trigger-full-cycle'),
+
+  getMarketUniverseStatus: () =>
+    api.get<MarketUniverseStatusResponse>('/v1/market-universe/status'),
 }

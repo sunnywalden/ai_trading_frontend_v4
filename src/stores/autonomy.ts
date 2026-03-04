@@ -1,12 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { autonomyApi, type AutonomyLevel, type AutonomyStatus, type AuditLogEntry, type SignalPipelineItem } from '@/api/autonomyService'
+import {
+  autonomyApi,
+  type AutonomyLevel,
+  type AutonomyStatus,
+  type AuditLogEntry,
+  type SignalPipelineItem,
+  type SignalGenerationSummary,
+  type MarketUniverseStatusResponse,
+} from '@/api/autonomyService'
 
 export const useAutonomyStore = defineStore('autonomy', () => {
   const status = ref<AutonomyStatus | null>(null)
   const auditLogs = ref<AuditLogEntry[]>([])
   const auditTotal = ref(0)
   const signalPipeline = ref<SignalPipelineItem[]>([])
+  const lastFullCycleSummary = ref<SignalGenerationSummary | null>(null)
+  const marketUniverseStatus = ref<MarketUniverseStatusResponse | null>(null)
   const loading = ref(false)
   const triggerLoading = ref(false)
   const error = ref<string | null>(null)
@@ -101,6 +111,7 @@ export const useAutonomyStore = defineStore('autonomy', () => {
     triggerLoading.value = true
     try {
       const res = await autonomyApi.triggerFullCycle()
+      lastFullCycleSummary.value = res.data.signal_generation_summary ?? null
       await fetchStatus()
       return res.data
     } finally {
@@ -108,10 +119,19 @@ export const useAutonomyStore = defineStore('autonomy', () => {
     }
   }
 
+  async function fetchMarketUniverseStatus() {
+    try {
+      const res = await autonomyApi.getMarketUniverseStatus()
+      marketUniverseStatus.value = res.data
+    } catch (e: any) {
+      error.value = e.message
+    }
+  }
+
   return {
-    status, auditLogs, auditTotal, signalPipeline, loading, triggerLoading, error,
+    status, auditLogs, auditTotal, signalPipeline, lastFullCycleSummary, marketUniverseStatus, loading, triggerLoading, error,
     isPaused, currentLevel, circuitBreakerActive,
     fetchStatus, setLevel, pause, resume, fetchAuditLog,
-    fetchSignalPipeline, revokeOrder, triggerRebalance, triggerDecisionCycle, triggerFullCycle,
+    fetchSignalPipeline, fetchMarketUniverseStatus, revokeOrder, triggerRebalance, triggerDecisionCycle, triggerFullCycle,
   }
 })
