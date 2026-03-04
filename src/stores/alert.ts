@@ -7,6 +7,7 @@ import {
   fetchAlerts, createAlert, updateAlert, deleteAlert, fetchAlertHistory,
   type AlertRule, type AlertHistoryEntry
 } from '@/api/client'
+import { logger } from '@/utils/logger'
 
 export const useAlertStore = defineStore('alert', () => {
   const alerts = ref<AlertRule[]>([])
@@ -19,7 +20,7 @@ export const useAlertStore = defineStore('alert', () => {
       const resp = await fetchAlerts(status)
       alerts.value = resp?.items || []
     } catch (e) {
-      console.error('Failed to load alerts:', e)
+      logger.warn('Failed to load alerts', e)
       alerts.value = []
     } finally {
       loading.value = false
@@ -49,7 +50,7 @@ export const useAlertStore = defineStore('alert', () => {
       const resp = await fetchAlertHistory(limit)
       history.value = resp?.items || []
     } catch (e) {
-      console.error('Failed to load alert history:', e)
+      logger.warn('Failed to load alert history', e)
       history.value = []
     }
   }

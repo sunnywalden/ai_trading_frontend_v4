@@ -152,6 +152,7 @@ import { PieChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { attributionApi, CATEGORY_LABELS, CATEGORY_COLORS, type TradeAttributionItem, type AttributionSummaryResponse } from '@/api/attributionService'
+import { logger } from '@/utils/logger'
 
 echarts.use([PieChart, TitleComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -204,7 +205,7 @@ async function loadData() {
     summaryRaw.value = summaryRes.data
     updatePieChart()
   } catch (e) {
-    console.error('[Attribution] loadData failed', e)
+    logger.warn('[Attribution] loadData failed', e)
   } finally {
     loading.value = false
   }

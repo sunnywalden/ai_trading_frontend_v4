@@ -1,6 +1,28 @@
 import axios from "axios";
 import { logger } from "@/utils/logger";
 
+function normalizeUrl(url?: string): string {
+  return String(url || '').toLowerCase()
+}
+
+function isExpectedApiNoise(err: any): boolean {
+  const url = normalizeUrl(err?.config?.url)
+  const msg = String(err?.message || '').toLowerCase()
+  const code = err?.response?.status
+
+  // 请求被主动取消 / 超时 / 短暂网络抖动
+  if (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('timeout')) return true
+  if (msg.includes('network error') && !code) return true
+
+  // Multi-Agent 轮询窗口：run刚创建尚未落库时 status 404
+  if (code === 404 && /\/v1\/ai-hub\/agent-runs\/.+\/status/.test(url)) return true
+
+  // Post-mortem 轮询窗口：结果尚未生成时按 trade_id 查询 404
+  if (code === 404 && /\/v1\/ai-hub\/post-mortems\//.test(url)) return true
+
+  return false
+}
+
 // 后端基础 URL
 const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL ?? "");
 
@@ -37,7 +59,9 @@ api.interceptors.response.use(
     return resp;
   },
   (err) => {
-    logger.error(`API Error: ${err?.config?.url} | ${err?.message || err}`);
+    const text = `API Error: ${err?.config?.url} | ${err?.message || err}`
+    if (isExpectedApiNoise(err)) logger.warn(text)
+    else logger.error(text);
     return Promise.reject(err);
   }
 );
@@ -56,7 +80,9 @@ systemApi.interceptors.response.use(
     return resp;
   },
   (err) => {
-    logger.error(`System API Error: ${err?.config?.url} | ${err?.message || err}`);
+    const text = `System API Error: ${err?.config?.url} | ${err?.message || err}`
+    if (isExpectedApiNoise(err)) logger.warn(text)
+    else logger.error(text);
     // 如果后端返回 401，清除本地 token 并派发登出事件（由前端决定如何导航）
     if (err?.response?.status === 401) {
       try {
