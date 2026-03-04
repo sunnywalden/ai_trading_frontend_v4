@@ -16,6 +16,8 @@ import {
   getPostMortem,
   getPostMortemPatterns,
   triggerPostMortem,
+  getPostMortemTradeCandidates,
+  getPostMortemTradePrefill,
 } from '@/api/aiHubService'
 import type {
   AgentRunSummary,
@@ -25,6 +27,8 @@ import type {
   FactorMomentum,
   PostMortemReport,
   PostMortemPatterns,
+  PostMortemTradeCandidate,
+  PostMortemTradePrefill,
 } from '@/api/aiHubService'
 
 export interface TriggerAgentRunParams {
@@ -176,6 +180,8 @@ export const useAiHubStore = defineStore('aiHub', () => {
   const postMortemPatterns = ref<PostMortemPatterns | null>(null)
   const loadingPostMortems = ref(false)
   const generatingPostMortem = ref(false)
+  const postMortemCandidates = ref<PostMortemTradeCandidate[]>([])
+  const loadingPostMortemCandidates = ref(false)
 
   async function fetchPostMortems(limit = 20) {
     loadingPostMortems.value = true
@@ -219,6 +225,19 @@ export const useAiHubStore = defineStore('aiHub', () => {
     } finally {
       generatingPostMortem.value = false
     }
+  }
+
+  async function fetchPostMortemCandidates(limit = 120, query = '') {
+    loadingPostMortemCandidates.value = true
+    try {
+      postMortemCandidates.value = await getPostMortemTradeCandidates(limit, query)
+    } finally {
+      loadingPostMortemCandidates.value = false
+    }
+  }
+
+  async function fetchPostMortemPrefill(tradeId: string): Promise<PostMortemTradePrefill> {
+    return await getPostMortemTradePrefill(tradeId)
   }
 
   // ─── Global error ─────────────────────────────────────────────────────────
@@ -265,9 +284,13 @@ export const useAiHubStore = defineStore('aiHub', () => {
     postMortemPatterns,
     loadingPostMortems,
     generatingPostMortem,
+    postMortemCandidates,
+    loadingPostMortemCandidates,
     fetchPostMortems,
     fetchPostMortem,
     generatePostMortem,
+    fetchPostMortemCandidates,
+    fetchPostMortemPrefill,
     // global
     error,
     fetchAll,

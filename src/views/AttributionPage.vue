@@ -194,6 +194,7 @@ async function loadData() {
     const [tradesRes, summaryRes] = await Promise.all([
       attributionApi.listTrades({
         limit: 100,
+        days: filterDays.value,
         symbol: filterSymbol.value || undefined,
         category: (filterCategory.value || undefined) as any
       }),

@@ -138,6 +138,29 @@ export interface PostMortemPatterns {
   lookback_days: number
 }
 
+export interface PostMortemTradeCandidate {
+  trade_id: string
+  symbol: string
+  direction: 'long' | 'short'
+  entry_price: number
+  exit_price: number
+  realized_pnl: number
+  hold_days: number
+  created_at: string | null
+  display: string
+}
+
+export interface PostMortemTradePrefill {
+  trade_id: string
+  symbol: string
+  direction: 'long' | 'short'
+  entry_price: number
+  exit_price: number
+  realized_pnl: number
+  hold_days: number
+  trade_context?: string
+}
+
 // ─── Multi-Agent APIs ─────────────────────────────────────────────────────────
 
 export async function listAgentRuns(limit = 20): Promise<AgentRunSummary[]> {
@@ -240,6 +263,18 @@ export async function getPostMortems(limit = 20): Promise<PostMortemReport[]> {
 
 export async function getPostMortemPatterns(days = 90): Promise<PostMortemPatterns> {
   const { data } = await api.get('/v1/ai-hub/post-mortems/patterns', { params: { days } })
+  return data
+}
+
+export async function getPostMortemTradeCandidates(limit = 100, q?: string): Promise<PostMortemTradeCandidate[]> {
+  const params: Record<string, unknown> = { limit }
+  if (q && q.trim()) params.q = q.trim()
+  const { data } = await api.get('/v1/ai-hub/post-mortems/trade-candidates', { params })
+  return data
+}
+
+export async function getPostMortemTradePrefill(tradeId: string): Promise<PostMortemTradePrefill> {
+  const { data } = await api.get(`/v1/ai-hub/post-mortems/trade-candidates/${tradeId}`)
   return data
 }
 

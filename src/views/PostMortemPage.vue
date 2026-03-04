@@ -10,7 +10,7 @@
           <button class="refresh-button" :disabled="store.loadingPostMortems" @click="store.fetchPostMortems()">
             {{ store.loadingPostMortems ? '加载中...' : '刷新' }}
           </button>
-          <button class="trigger-button" @click="showTriggerForm = true">+ 生成剖析</button>
+          <button class="trigger-button" @click="openTriggerModal">+ 生成剖析</button>
         </div>
       </div>
     </section>
@@ -129,28 +129,51 @@
     <div v-if="showTriggerForm" class="modal-overlay" @click.self="showTriggerForm = false">
       <div class="modal-box">
         <div class="modal-title">🔭 生成事后剖析</div>
-        <div class="form-group"><label class="form-label">交易 ID</label><input v-model="trigForm.trade_id" class="form-input" placeholder="唯一标识" /></div>
+
+        <div class="form-group">
+          <label class="form-label">选择交易（自动填充）</label>
+          <div class="candidate-row">
+            <input
+              v-model="candidateQuery"
+              class="form-input"
+              placeholder="按标的搜索，如 AAPL"
+              @keyup.enter="loadCandidates"
+            />
+            <button class="refresh-button" :disabled="store.loadingPostMortemCandidates" @click="loadCandidates">
+              {{ store.loadingPostMortemCandidates ? '加载中...' : '查询' }}
+            </button>
+          </div>
+          <select v-model="selectedTradeId" class="form-input" @change="onSelectTrade">
+            <option value="">请选择一笔已平仓交易</option>
+            <option v-for="c in store.postMortemCandidates" :key="c.trade_id" :value="c.trade_id">
+              {{ c.display }}
+            </option>
+          </select>
+          <div class="form-help">选择后将自动带出方向、价格、盈亏和持仓天数。</div>
+        </div>
+
+        <div class="form-group"><label class="form-label">交易 ID</label><input v-model="trigForm.trade_id" class="form-input" readonly /></div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">标的</label><input v-model="trigForm.symbol" class="form-input" /></div>
+          <div class="form-group"><label class="form-label">标的</label><input v-model="trigForm.symbol" class="form-input" readonly /></div>
           <div class="form-group">
             <label class="form-label">方向</label>
-            <select v-model="trigForm.direction" class="form-input">
+            <select v-model="trigForm.direction" class="form-input" disabled>
               <option value="long">多</option><option value="short">空</option>
             </select>
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">入场价</label><input v-model.number="trigForm.entry_price" class="form-input" type="number" /></div>
-          <div class="form-group"><label class="form-label">出场价</label><input v-model.number="trigForm.exit_price" class="form-input" type="number" /></div>
+          <div class="form-group"><label class="form-label">入场价</label><input v-model.number="trigForm.entry_price" class="form-input" type="number" readonly /></div>
+          <div class="form-group"><label class="form-label">出场价</label><input v-model.number="trigForm.exit_price" class="form-input" type="number" readonly /></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">实现盈亏</label><input v-model.number="trigForm.realized_pnl" class="form-input" type="number" /></div>
-          <div class="form-group"><label class="form-label">持仓天数</label><input v-model.number="trigForm.hold_days" class="form-input" type="number" /></div>
+          <div class="form-group"><label class="form-label">实现盈亏</label><input v-model.number="trigForm.realized_pnl" class="form-input" type="number" readonly /></div>
+          <div class="form-group"><label class="form-label">持仓天数</label><input v-model.number="trigForm.hold_days" class="form-input" type="number" readonly /></div>
         </div>
-        <div class="form-group"><label class="form-label">交易背景（可选）</label><textarea v-model="trigForm.trade_context" class="form-textarea" rows="3" /></div>
+        <div class="form-group"><label class="form-label">交易背景（可选，可补充）</label><textarea v-model="trigForm.trade_context" class="form-textarea" rows="3" /></div>
         <div class="modal-actions">
           <button class="cancel-btn" @click="showTriggerForm = false">取消</button>
-          <button class="submit-btn" :disabled="store.generatingPostMortem || !trigForm.trade_id" @click="submitTrigger">
+          <button class="submit-btn" :disabled="store.generatingPostMortem || !trigForm.trade_id || !trigForm.symbol" @click="submitTrigger">
             {{ store.generatingPostMortem ? '推理中...' : '生成剖析' }}
           </button>
         </div>
@@ -165,6 +188,8 @@ import { useAiHubStore } from '@/stores/aiHub'
 
 const store = useAiHubStore()
 const showTriggerForm = ref(false)
+const selectedTradeId = ref('')
+const candidateQuery = ref('')
 
 const trigForm = reactive({ trade_id: '', symbol: '', direction: 'long' as 'long' | 'short', entry_price: 0, exit_price: 0, realized_pnl: 0, hold_days: 1, trade_context: '' })
 
@@ -182,7 +207,47 @@ async function submitTrigger() {
   showTriggerForm.value = false
 }
 
-onMounted(() => store.fetchPostMortems())
+async function loadCandidates() {
+  await store.fetchPostMortemCandidates(120, candidateQuery.value)
+}
+
+async function onSelectTrade() {
+  if (!selectedTradeId.value) return
+  const prefill = await store.fetchPostMortemPrefill(selectedTradeId.value)
+  trigForm.trade_id = prefill.trade_id
+  trigForm.symbol = prefill.symbol
+  trigForm.direction = prefill.direction
+  trigForm.entry_price = prefill.entry_price
+  trigForm.exit_price = prefill.exit_price
+  trigForm.realized_pnl = prefill.realized_pnl
+  trigForm.hold_days = prefill.hold_days
+  if (!trigForm.trade_context) {
+    trigForm.trade_context = prefill.trade_context || ''
+  }
+}
+
+onMounted(() => {
+  store.fetchPostMortems()
+})
+
+function resetTriggerForm() {
+  selectedTradeId.value = ''
+  trigForm.trade_id = ''
+  trigForm.symbol = ''
+  trigForm.direction = 'long'
+  trigForm.entry_price = 0
+  trigForm.exit_price = 0
+  trigForm.realized_pnl = 0
+  trigForm.hold_days = 1
+  trigForm.trade_context = ''
+}
+
+// 打开弹窗前加载候选交易
+async function openTriggerModal() {
+  resetTriggerForm()
+  showTriggerForm.value = true
+  await loadCandidates()
+}
 </script>
 
 <style scoped>
@@ -248,6 +313,10 @@ onMounted(() => store.fetchPostMortems())
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-label { display: block; font-size: 0.78rem; color: #888; margin-bottom: 4px; }
 .form-input, .form-textarea { width: 100%; background: #0d0d1a; border: 1px solid rgba(0,255,136,0.25); color: #e0e0e0; padding: 7px 10px; border-radius: 4px; font-size: 0.84rem; resize: vertical; box-sizing: border-box; }
+.form-input[readonly] { opacity: 0.9; }
+.form-input:disabled { opacity: 0.75; }
+.candidate-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px; }
+.form-help { margin-top: 6px; color: #6f7685; font-size: 0.74rem; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .cancel-btn { padding: 7px 18px; background: transparent; border: 1px solid #555; color: #999; border-radius: 4px; cursor: pointer; }
 .submit-btn { padding: 7px 18px; background: rgba(0,255,136,0.2); border: 1px solid #00ff88; color: #00ff88; border-radius: 4px; cursor: pointer; font-weight: 600; }
