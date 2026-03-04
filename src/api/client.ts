@@ -1683,10 +1683,16 @@ export interface AlertRule {
 export interface AlertListResponse {
   items: AlertRule[];
   total: number;
+  alerts?: AlertRule[];
 }
 export async function fetchAlerts(status?: string): Promise<AlertListResponse> {
   const { data } = await api.get<AlertListResponse>('/v1/alerts', { params: { status } });
-  return data;
+  const normalizedItems = data?.items ?? data?.alerts ?? [];
+  return {
+    ...data,
+    items: normalizedItems,
+    total: typeof data?.total === 'number' ? data.total : normalizedItems.length,
+  };
 }
 export async function createAlert(payload: Partial<AlertRule>): Promise<AlertRule> {
   const { data } = await api.post<AlertRule>('/v1/alerts', payload);
@@ -1714,10 +1720,16 @@ export interface AlertHistoryEntry {
 export interface AlertHistoryResponse {
   items: AlertHistoryEntry[];
   total: number;
+  history?: AlertHistoryEntry[];
 }
 export async function fetchAlertHistory(limit: number = 20): Promise<AlertHistoryResponse> {
   const { data } = await api.get<AlertHistoryResponse>('/v1/alerts/history', { params: { limit } });
-  return data;
+  const normalizedItems = data?.items ?? data?.history ?? [];
+  return {
+    ...data,
+    items: normalizedItems,
+    total: typeof data?.total === 'number' ? data.total : normalizedItems.length,
+  };
 }
 
 // ---------- Orders ----------

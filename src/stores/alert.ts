@@ -21,7 +21,7 @@ export const useAlertStore = defineStore('alert', () => {
       alerts.value = resp?.items || []
     } catch (e) {
       logger.warn('Failed to load alerts', e)
-      alerts.value = []
+      // 保留已有列表，避免临时网络/鉴权抖动导致页面看起来“数据丢失”
     } finally {
       loading.value = false
     }
@@ -51,7 +51,7 @@ export const useAlertStore = defineStore('alert', () => {
       history.value = resp?.items || []
     } catch (e) {
       logger.warn('Failed to load alert history', e)
-      history.value = []
+      // 保留已有历史，避免刷新时瞬时失败导致空白
     }
   }
 
