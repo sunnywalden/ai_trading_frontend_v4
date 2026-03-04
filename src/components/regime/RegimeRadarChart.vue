@@ -127,7 +127,7 @@ function buildOption(): echarts.EChartsOption {
 
 function initChart() {
   if (!chartRef.value) return
-  chartInstance = echarts.init(chartRef.value, 'dark')
+  chartInstance = echarts.init(chartRef.value)
   chartInstance.setOption(buildOption())
 }
 

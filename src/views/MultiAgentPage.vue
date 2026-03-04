@@ -31,6 +31,7 @@
           <button class="run-button" :disabled="store.runningAgent || !form.symbol.trim() || !form.context.trim()" @click="triggerRun">
             {{ store.runningAgent ? runningLabel : '▶ 启动 5-Agent 合议' }}
           </button>
+          <div v-if="submitError" class="submit-error">{{ submitError }}</div>
         </div>
 
         <!-- 历史 Run 列表 -->
@@ -127,6 +128,7 @@ import { useAiHubStore } from '@/stores/aiHub'
 
 const store = useAiHubStore()
 const selectedRunId = ref<string | null>(null)
+const submitError = ref('')
 
 const form = reactive({ symbol: '', size_usd: 50000, context: '' })
 
@@ -161,7 +163,12 @@ function roleLabel(role: string) { return ROLE_LABELS[role] || role }
 
 async function triggerRun() {
   if (!form.symbol.trim() || !form.context.trim()) return
-  await store.startAgentRun({ symbol: form.symbol.trim(), context: form.context, size_usd: form.size_usd })
+  submitError.value = ''
+  try {
+    await store.startAgentRun({ symbol: form.symbol.trim(), context: form.context, size_usd: form.size_usd })
+  } catch (e: unknown) {
+    submitError.value = e instanceof Error ? e.message : 'Agent 运行失败，请稍后重试'
+  }
 }
 
 async function selectRun(runId: string) {
@@ -187,6 +194,7 @@ onMounted(() => store.fetchAgentRuns())
 .form-input, .form-textarea { width: 100%; background: #0d0d1a; border: 1px solid rgba(0,255,136,0.25); color: #e0e0e0; padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; resize: vertical; box-sizing: border-box; }
 .run-button { width: 100%; padding: 10px; background: rgba(0,255,136,0.2); border: 1px solid #00ff88; color: #00ff88; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
 .run-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.submit-error { margin-top: 10px; color: #ff8080; font-size: 0.8rem; }
 .run-list { max-height: 360px; overflow-y: auto; }
 .run-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; margin-bottom: 4px; background: rgba(255,255,255,0.02); }
 .run-item:hover { border-color: rgba(0,255,136,0.3); }

@@ -182,8 +182,35 @@ export async function triggerAgentRun(
 }
 
 export async function getAgentRunStatus(runId: string): Promise<AgentRunResult> {
-  const { data } = await api.get(`/v1/ai-hub/agent-runs/${runId}/status`)
-  return data
+  try {
+    const { data } = await api.get(`/v1/ai-hub/agent-runs/${runId}/status`)
+    return data
+  } catch (e: unknown) {
+    // 回退到详情接口（某些版本后端仅有 /agent-runs/{run_id}）
+    const maybeStatus = (e as { response?: { status?: number } })?.response?.status
+    if (maybeStatus === 404) {
+      try {
+        const detail = await getAgentRun(runId)
+        return {
+          run_id: runId,
+          symbol: (detail as unknown as { symbol?: string }).symbol || '',
+          status: (detail as unknown as { status?: string }).status || 'pending',
+          challenge_points: [],
+          messages: detail.messages || [],
+        }
+      } catch {
+        // 状态写入窗口内可能仍查不到，先按 pending 继续轮询
+        return {
+          run_id: runId,
+          symbol: '',
+          status: 'pending',
+          challenge_points: [],
+          messages: [],
+        }
+      }
+    }
+    throw e
+  }
 }
 
 /** 轮询 agent run 直至 completed/failed，最多等 maxWaitMs（默认 300s）。*/
