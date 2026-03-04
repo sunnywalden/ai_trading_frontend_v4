@@ -55,7 +55,7 @@
     <!-- Block 4: 算法执行 -->
     <div class="sa-block exec-block">
       <span class="sa-icon">⑥</span>
-      <span class="sa-label">执行中</span>
+      <span class="sa-label">执行中/24h</span>
       <span class="sa-value">{{ snapshot.active_executions.running_count ?? snapshot.active_executions.count }}</span>
       <span class="sa-sub" v-if="snapshot.active_executions.entries.length > 0">
         {{ snapshot.active_executions.entries.slice(0, 2).map(e => e.symbol).join('·') }}
