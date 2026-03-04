@@ -17,13 +17,33 @@ export const useCopilotStore = defineStore('copilot', () => {
     expires_at?: string
   }>>([])
 
+  function normalizeMessage<T extends Partial<CopilotMessage>>(msg: T): CopilotMessage {
+    const content =
+      typeof msg.content === 'string'
+        ? msg.content
+        : msg.content == null
+          ? ''
+          : typeof msg.content === 'object'
+            ? JSON.stringify(msg.content, null, 2)
+            : String(msg.content)
+
+    return {
+      id: msg.id,
+      role: (msg.role as CopilotMessage['role']) ?? 'assistant',
+      content,
+      model_used: msg.model_used,
+      action_intent: msg.action_intent,
+      created_at: msg.created_at,
+    }
+  }
+
   async function sendMessage(content: string) {
     messages.value.push({ role: 'user', content })
     try {
       streaming.value = true
       error.value = null
       const res = await copilotApi.chat(content, sessionId.value)
-      const reply = res.data
+      const reply = normalizeMessage(res.data)
       messages.value.push(reply)
       // 如果 AI 返回了需要确认的 action
       if (reply.action_intent?.action_id) {
@@ -46,7 +66,7 @@ export const useCopilotStore = defineStore('copilot', () => {
     try {
       loading.value = true
       const res = await copilotApi.getHistory({ limit, session_id: sessionId.value })
-      messages.value = res.data.messages
+      messages.value = (res.data.messages || []).map(m => normalizeMessage(m))
     } catch (e: any) {
       error.value = e.message
     } finally {

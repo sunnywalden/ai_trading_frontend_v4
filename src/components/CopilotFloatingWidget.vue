@@ -226,8 +226,17 @@ function resetInputHeight() {
 }
 
 // ── 消息格式化（简单 markdown → HTML） ───────────────────────
-function formatMessage(content: string): string {
-  return content
+function formatMessage(content: unknown): string {
+  const raw =
+    typeof content === 'string'
+      ? content
+      : content == null
+        ? ''
+        : typeof content === 'object'
+          ? JSON.stringify(content, null, 2)
+          : String(content)
+
+  return raw
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
