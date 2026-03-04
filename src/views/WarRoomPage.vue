@@ -65,7 +65,7 @@
             <div class="fi-header">
               <span class="fi-cat">{{ item.category }}</span>
               <span class="fi-urgency" :style="{ color: urgencyColor(item.urgency_score) }">
-                ▲{{ (item.urgency_score * 100).toFixed(0) }}
+                ▲{{ item.urgency_score.toFixed(0) }}
               </span>
               <span class="fi-time">{{ fmtTs(item.created_at) }}</span>
             </div>
@@ -186,7 +186,7 @@ const filteredFeed = computed(() => feedFilter.value === 'ALL' ? store.feed : st
 const latestRun = computed(() => aiHub.agentRuns[0] ?? null)
 const recentRuns = computed(() => aiHub.agentRuns.slice(1, 5))
 
-function urgencyColor(v: number) { return v > 0.8 ? '#ff4444' : v > 0.5 ? '#ffd700' : '#00ff88' }
+function urgencyColor(v: number) { return v > 80 ? '#ff4444' : v > 50 ? '#ffd700' : '#00ff88' }
 function recCss(r: string | null | undefined) { if (!r) return ''; if (r.includes('BUY')) return 'rec-buy'; if (r.includes('SELL')) return 'rec-sell'; return 'rec-hold' }
 function fmtTs(ts: string | null) { return ts ? new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '' }
 function setFeedFilter(cat: string) { feedFilter.value = cat }
