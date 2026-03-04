@@ -111,7 +111,7 @@ function fmtTs(ts: string | null) {
 
 function renderRadar() {
   if (!radarEl.value || !store.latestFactorSnap) return
-  if (!radarChart) radarChart = echarts.init(radarEl.value, 'dark')
+  if (!radarChart) radarChart = echarts.init(radarEl.value)
   const s = store.latestFactorSnap
   const maxVal = 2
   radarChart.setOption({
@@ -123,7 +123,7 @@ function renderRadar() {
       ],
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.3)' } },
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.1)' } },
-      name: { textStyle: { color: '#ccc' } },
+      axisName: { color: '#ccc' },
     },
     series: [{
       type: 'radar',
@@ -135,7 +135,7 @@ function renderRadar() {
 
 function renderES() {
   if (!esChartEl.value) return
-  if (!esChart) esChart = echarts.init(esChartEl.value, 'dark')
+  if (!esChart) esChart = echarts.init(esChartEl.value)
   const hist = store.factorHistory
   esChart.setOption({
     backgroundColor: 'transparent',
@@ -150,7 +150,7 @@ function renderES() {
 
 function renderFactorTrend() {
   if (!factorTrendEl.value) return
-  if (!factorChart) factorChart = echarts.init(factorTrendEl.value, 'dark')
+  if (!factorChart) factorChart = echarts.init(factorTrendEl.value)
   const hist = store.factorHistory
   const dates = hist.map((h) => fmtTs(h.snapshot_at))
   const mk = (name: string, key: keyof typeof hist[0], color: string) => ({

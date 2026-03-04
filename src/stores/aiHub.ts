@@ -123,6 +123,10 @@ export const useAiHubStore = defineStore('aiHub', () => {
         }
       }
       return result
+    } catch (e: unknown) {
+      pollingStatus.value = 'failed'
+      const message = e instanceof Error ? e.message : 'Agent run failed'
+      throw new Error(`Agent 运行失败：${message}`)
     } finally {
       runningAgent.value = false
     }
