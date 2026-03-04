@@ -88,15 +88,21 @@ const chartHeight = height - padding.top - padding.bottom
 const equityValues = computed(() => props.data.map(d => d.equity))
 const minEquity = computed(() => Math.min(...equityValues.value))
 const maxEquity = computed(() => Math.max(...equityValues.value))
+const equityRange = computed(() => {
+  const r = maxEquity.value - minEquity.value
+  return Number.isFinite(r) && r > 0 ? r : 0
+})
 
 const points = computed(() => {
   if (!props.data.length) return []
-  
+
+  const xDenominator = Math.max(props.data.length - 1, 1)
   return props.data.map((d, i) => {
-    const x = padding.left + (chartWidth / (props.data.length - 1)) * i
-    const y = padding.top + chartHeight - 
-      ((d.equity - minEquity.value) / (maxEquity.value - minEquity.value)) * chartHeight
-    
+    const x = padding.left + (chartWidth / xDenominator) * i
+    const y = equityRange.value === 0
+      ? (padding.top + chartHeight / 2)
+      : (padding.top + chartHeight - ((d.equity - minEquity.value) / equityRange.value) * chartHeight)
+
     return { x, y }
   })
 })
@@ -106,19 +112,25 @@ const equityPoints = computed(() => {
 })
 
 const xLabels = computed(() => {
+  if (!props.data.length) return []
+  const xDenominator = Math.max(props.data.length - 1, 1)
   const step = Math.max(1, Math.floor(props.data.length / 6))
   return props.data
-    .filter((_, i) => i % step === 0)
-    .map((d, idx) => ({
-      x: padding.left + (chartWidth / (props.data.length - 1)) * idx * step,
+    .map((d, i) => ({ d, i }))
+    .filter(({ i }) => i % step === 0 || i === props.data.length - 1)
+    .map(({ d, i }) => ({
+      x: padding.left + (chartWidth / xDenominator) * i,
       text: new Date(d.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
     }))
 })
 
 const yLabels = computed(() => {
+  if (!props.data.length) return []
   const labels = []
   for (let i = 0; i < 5; i++) {
-    const value = minEquity.value + (maxEquity.value - minEquity.value) * (i / 4)
+    const value = equityRange.value === 0
+      ? minEquity.value
+      : (minEquity.value + equityRange.value * (i / 4))
     labels.push({
       y: padding.top + chartHeight - (chartHeight / 4) * i,
       text: `$${(value / 1000).toFixed(0)}k`
