@@ -177,6 +177,7 @@ import {
   type ABExperimentItem,
   type InsightRepositoryStatus,
 } from '@/api/insightService'
+import { logger } from '@/utils/logger'
 
 const { t } = useI18n()
 
@@ -218,7 +219,7 @@ async function loadInsights() {
       repositoryStatus.value = null
     }
   } catch (e) {
-    console.error('[Evolution] loadInsights failed', e)
+    logger.warn('[Evolution] loadInsights failed', e)
   } finally {
     insightsLoading.value = false
   }
@@ -231,7 +232,7 @@ async function generateInsights() {
     await new Promise(r => setTimeout(r, 1500))
     await loadInsights()
   } catch (e) {
-    console.error('[Evolution] generate failed', e)
+    logger.warn('[Evolution] generate failed', e)
   } finally {
     generating.value = false
   }
@@ -242,7 +243,7 @@ async function toggleInsight(ins: AIInsightItem) {
     await insightApi.toggleActive(ins.id, !ins.active)
     ins.active = !ins.active
   } catch (e) {
-    console.error('[Evolution] toggleInsight failed', e)
+    logger.warn('[Evolution] toggleInsight failed', e)
   }
 }
 
@@ -268,7 +269,7 @@ async function loadExperiments() {
     const res = await insightApi.listExperiments()
     experiments.value = res.data.items
   } catch (e) {
-    console.error('[Evolution] loadExperiments failed', e)
+    logger.warn('[Evolution] loadExperiments failed', e)
   } finally {
     experimentsLoading.value = false
   }
@@ -289,7 +290,7 @@ async function createExperiment() {
     showCreateModal.value = false
     await loadExperiments()
   } catch (e) {
-    console.error('[Evolution] createExperiment failed', e)
+    logger.warn('[Evolution] createExperiment failed', e)
   }
 }
 
