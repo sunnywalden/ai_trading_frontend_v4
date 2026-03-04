@@ -18,6 +18,8 @@ export interface AutonomyStatus {
   daily_trades_today: number
   daily_trades_today_autonomous?: number
   daily_trades_today_broker?: number | null
+  daily_trades_today_broker_tz?: string | null
+  daily_trades_today_broker_date?: string | null
   max_daily_trades: number
   revoke_window_minutes: number
   signal_pipeline?: Record<string, number>  // 各状态信号数量

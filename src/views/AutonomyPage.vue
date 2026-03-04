@@ -61,7 +61,7 @@
         <div class="stat-label">今日 AI 交易次数</div>
         <div class="stat-value">{{ status.daily_trades_today_autonomous ?? status.daily_trades_today }} / {{ status.max_daily_trades }}</div>
         <div v-if="status.daily_trades_today_broker != null" class="stat-sub text-muted">
-          券商今日已成交: {{ status.daily_trades_today_broker }}
+          券商已成交（{{ status.daily_trades_today_broker_tz ?? 'UTC' }} {{ status.daily_trades_today_broker_date ?? '' }}）: {{ status.daily_trades_today_broker }}
         </div>
       </div>
       <div class="stat-card">
