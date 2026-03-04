@@ -277,6 +277,65 @@
       </div>
     </div>
 
+      <!-- Section 4.5: Smart Alert Center（V10.3.3 新增）-->
+      <section class="section-smart-alerts" v-if="warRoom.alerts.length > 0 || warRoom.loadingAlerts">
+        <div class="card">
+          <div class="card-header">
+            <h3>
+              <span class="icon">🚨</span>
+              Smart Alert Center
+              <span class="alert-grade-badge" v-if="warRoom.criticalAlerts.length > 0">CRIT {{ warRoom.criticalAlerts.length }}</span>
+            </h3>
+            <button @click="warRoom.fetchAlerts()" class="btn-icon" :title="$t('common.refresh')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+            </button>
+            <router-link to="/war-room" class="see-all-link">War Room →</router-link>
+          </div>
+          <!-- 告警等级统计 -->
+          <div class="alert-grade-stats" v-if="warRoom.alertStats">
+            <div class="ags-item ags-crit" @click="filterGrade = filterGrade === 'CRITICAL' ? null : 'CRITICAL'">
+              <span class="ags-label">CRITICAL</span>
+              <span class="ags-count">{{ warRoom.alertStats.critical ?? 0 }}</span>
+            </div>
+            <div class="ags-item ags-high" @click="filterGrade = filterGrade === 'HIGH' ? null : 'HIGH'">
+              <span class="ags-label">HIGH</span>
+              <span class="ags-count">{{ warRoom.alertStats.high ?? 0 }}</span>
+            </div>
+            <div class="ags-item ags-med" @click="filterGrade = filterGrade === 'MEDIUM' ? null : 'MEDIUM'">
+              <span class="ags-label">MEDIUM</span>
+              <span class="ags-count">{{ warRoom.alertStats.medium ?? 0 }}</span>
+            </div>
+            <div class="ags-item ags-low" @click="filterGrade = filterGrade === 'LOW' ? null : 'LOW'">
+              <span class="ags-label">LOW</span>
+              <span class="ags-count">{{ warRoom.alertStats.low ?? 0 }}</span>
+            </div>
+            <span v-if="filterGrade" class="ags-clear-filter" @click="filterGrade = null">✕ 清除筛选</span>
+          </div>
+          <!-- 告警列表 -->
+          <div v-if="warRoom.loadingAlerts" class="alert-loading">加载中...</div>
+          <div v-else-if="!filteredAlerts.length" class="alert-empty">暂无活跃告警</div>
+          <div v-else class="alert-list-compact">
+            <div
+              v-for="alert in filteredAlerts.slice(0, 8)"
+              :key="alert.id"
+              class="alert-row"
+              :class="`alert-grade-${alert.grade.toLowerCase()}`"
+            >
+              <span class="ar-grade">{{ alert.grade }}</span>
+              <div class="ar-body">
+                <div class="ar-title">{{ alert.title }}</div>
+                <div class="ar-action">→ {{ alert.recommended_action_text }}</div>
+              </div>
+              <span class="ar-time">{{ formatAlertTime(alert.created_at) }}</span>
+              <div class="ar-actions">
+                <button v-if="!alert.acknowledged" @click="warRoom.ackAlert(String(alert.id))" class="ar-btn-ack" title="确认">✓</button>
+                <button @click="warRoom.dsmAlert(String(alert.id))" class="ar-btn-dsm" title="关闭">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Section 5: 市场热点 -->
       <div class="section-hotspots" v-if="store.fullData.market_hotspots.length > 0">
         <div class="card">
@@ -305,6 +364,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import { useAutonomyStore } from '@/stores/autonomy'
+import { useWarRoomStore } from '@/stores/warRoom'
 import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
@@ -318,10 +378,24 @@ import { formatClientTime } from '@/utils/datetime'
 
 const store = useDashboardV2Store()
 const autonomy = useAutonomyStore()
+const warRoom = useWarRoomStore()
 const router = useRouter()
 const { t, locale } = useI18n()
 
 const moduleLoading = reactive<Record<string, boolean>>({})
+
+// V10.3.3 Smart Alert Center
+const filterGrade = ref<string | null>(null)
+const filteredAlerts = computed(() => {
+  const active = warRoom.alerts.filter(a => !a.dismissed)
+  if (!filterGrade.value) return active
+  return active.filter(a => a.grade === filterGrade.value)
+})
+function formatAlertTime(ts: string): string {
+  try {
+    return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  } catch { return '' }
+}
 
 // V10.2-M1: 体制 KPI 数据
 const regimeInfo     = ref<RegimeInfo | null>(null)
@@ -376,6 +450,7 @@ onMounted(async () => {
     store.loadFull(),
     autonomy.fetchStatus(),
     fetchRegime(),          // V10.2-M1
+    warRoom.fetchAlerts(),  // V10.3.3 Smart Alert Center
   ])
   store.startAutoRefresh()
 })
@@ -985,6 +1060,45 @@ function riskLevelLabel(level: string): string {
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 16px;
 }
+
+/* ════════════════════════════════════════
+   Smart Alert Center (V10.3.3)
+   ════════════════════════════════════════ */
+.section-smart-alerts { margin-bottom: 0; }
+.section-smart-alerts .card-header h3 { display: flex; align-items: center; gap: 8px; }
+.alert-grade-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); animation: pulse-red 1.5s infinite; font-weight: 700; }
+@keyframes pulse-red { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.see-all-link { font-size: 0.75rem; color: var(--d-accent); text-decoration: none; margin-left: auto; opacity: 0.8; }
+.see-all-link:hover { opacity: 1; }
+.alert-grade-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.ags-item { display: flex; flex-direction: column; align-items: center; padding: 6px 14px; border-radius: 6px; cursor: pointer; user-select: none; transition: opacity 0.15s; }
+.ags-item:hover { opacity: 0.82; }
+.ags-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 3px; }
+.ags-count { font-size: 1.1rem; font-weight: 700; }
+.ags-crit { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; }
+.ags-high { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); color: #f97316; }
+.ags-med  { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; }
+.ags-low  { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc; }
+.ags-clear-filter { font-size: 0.73rem; color: var(--d-text-dim); cursor: pointer; padding: 2px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; margin-left: 4px; }
+.ags-clear-filter:hover { color: var(--d-text); }
+.alert-loading, .alert-empty { text-align: center; color: var(--d-text-dim); font-size: 0.82rem; padding: 16px; }
+.alert-list-compact { display: flex; flex-direction: column; gap: 6px; }
+.alert-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 7px; border-left: 3px solid transparent; }
+.alert-grade-critical { background: rgba(239,68,68,0.06); border-left-color: #ef4444; }
+.alert-grade-high     { background: rgba(249,115,22,0.06); border-left-color: #f97316; }
+.alert-grade-medium   { background: rgba(245,158,11,0.05); border-left-color: #f59e0b; }
+.alert-grade-low      { background: rgba(99,102,241,0.05); border-left-color: #a5b4fc; }
+.ar-grade { font-size: 0.63rem; font-weight: 700; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.05); min-width: 52px; text-align: center; margin-top: 2px; flex-shrink: 0; }
+.ar-body { flex: 1; min-width: 0; }
+.ar-title { font-size: 0.82rem; color: var(--d-text-bright); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar-action { font-size: 0.73rem; color: var(--d-warn); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar-time { font-size: 0.68rem; color: var(--d-text-dim); flex-shrink: 0; margin-top: 2px; }
+.ar-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.ar-btn-ack, .ar-btn-dsm { font-size: 0.68rem; padding: 2px 6px; border-radius: 3px; cursor: pointer; border: none; transition: background 0.12s; }
+.ar-btn-ack { background: rgba(16,185,129,0.15); color: #10b981; }
+.ar-btn-ack:hover { background: rgba(16,185,129,0.3); }
+.ar-btn-dsm { background: rgba(255,255,255,0.06); color: var(--d-text-dim); }
+.ar-btn-dsm:hover { background: rgba(255,255,255,0.12); }
 
 /* ════════════════════════════════════════
    Hotspots

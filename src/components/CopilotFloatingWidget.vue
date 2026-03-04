@@ -256,9 +256,12 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  // War Room ` 键或其他页面触发的全局 Copilot 打开事件
+  window.addEventListener('copilot:open', open as EventListener)
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('copilot:open', open as EventListener)
 })
 
 // 消息更新时自动滚动

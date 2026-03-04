@@ -20,161 +20,278 @@
         <span class="crit-count" v-if="store.criticalAlerts.length > 0">
           🔴 CRIT {{ store.criticalAlerts.length }}
         </span>
+        <span class="ai-paused-badge" v-if="autonomy.isPaused">⏸ AI PAUSED</span>
       </div>
       <div class="wr-controls">
-        <span class="hotkey-hint">W=全屏 R=刷新 A=警报 1-6=跳转 Esc=退出</span>
+        <span class="hotkey-hint">W=全屏 R=刷新 A=警报 P=暂停AI ` =Copilot 1-6=跳转 Esc=退出</span>
+        <button class="wr-btn" @click="showConfigDrawer = true" title="面板配置">⚙️</button>
         <button class="wr-btn" @click="toggleFullscreen">{{ isFullscreen ? '⊡' : '⊞' }}</button>
         <button class="wr-btn" @click="manualRefresh">↺</button>
       </div>
     </div>
 
-    <!-- 六面板网格 -->
+    <!-- 六面板网格（动态面板类型）-->
     <div class="wr-grid">
-
-      <!-- Panel 1: PnL Ticker -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 1 }" id="panel-1" @click="focusedPanel = 1">
-        <div class="wp-title">📊 P1 · 实时 P&L Ticker</div>
-        <div class="ticker-list">
-          <div v-if="!store.exposure?.positions?.length" class="empty">暂无持仓</div>
-          <div v-else v-for="t in store.exposure.positions" :key="t.symbol" class="ticker-row">
-            <span class="t-symbol">{{ t.symbol }}</span>
-            <span class="t-dir" :class="t.direction === 'long' ? 'long' : 'short'">{{ t.direction === 'long' ? '多' : '空' }}</span>
-            <span class="t-qty">{{ t.quantity }}</span>
-            <span class="t-pnl" :class="t.unrealized_pnl >= 0 ? 'good' : 'bad'">
-              {{ t.unrealized_pnl >= 0 ? '+' : '' }}{{ t.unrealized_pnl?.toFixed(0) }}
-            </span>
-            <span class="t-pct" :class="(t.unrealized_pnl_pct ?? 0) >= 0 ? 'good' : 'bad'">
-              {{ t.unrealized_pnl_pct?.toFixed(2) }}%
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel 2: Intelligence Feed -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 2 }" id="panel-2" @click="focusedPanel = 2">
-        <div class="wp-title">📡 P2 · 情报流</div>
-        <div class="feed-filters">
-          <button v-for="cat in FEED_CATS" :key="cat" class="feed-filter-btn"
-            :class="{ active: feedFilter === cat }"
-            @click.stop="setFeedFilter(cat)">{{ cat }}</button>
-        </div>
-        <div class="feed-list">
-          <div v-if="store.loadingFeed" class="empty">更新中...</div>
-          <div v-else-if="!store.feed.length" class="empty">暂无情报</div>
-          <div v-else v-for="item in filteredFeed" :key="item.id" class="feed-item" :class="`category-${item.category}`">
-            <div class="fi-header">
-              <span class="fi-cat">{{ item.category }}</span>
-              <span class="fi-urgency" :style="{ color: urgencyColor(item.urgency_score) }">
-                ▲{{ item.urgency_score.toFixed(0) }}
+      <div
+        v-for="(panelType, idx) in panelLayout"
+        :key="idx"
+        class="wr-panel"
+        :class="{ focused: focusedPanel === idx + 1 }"
+        :id="`panel-${idx + 1}`"
+        @click="focusedPanel = idx + 1"
+      >
+        <!-- 面板内容按类型渲染 -->
+        <template v-if="panelType === 'PNL_DETAIL'">
+          <div class="wp-title">📊 P{{ idx + 1 }} · 实时 P&L Ticker</div>
+          <div class="ticker-list">
+            <div v-if="!store.exposure?.positions?.length" class="empty">暂无持仓</div>
+            <div v-else v-for="t in store.exposure.positions" :key="t.symbol" class="ticker-row">
+              <span class="t-symbol">{{ t.symbol }}</span>
+              <span class="t-dir" :class="t.direction === 'long' ? 'long' : 'short'">{{ t.direction === 'long' ? '多' : '空' }}</span>
+              <span class="t-qty">{{ t.quantity }}</span>
+              <span class="t-pnl" :class="t.unrealized_pnl >= 0 ? 'good' : 'bad'">
+                {{ t.unrealized_pnl >= 0 ? '+' : '' }}{{ t.unrealized_pnl?.toFixed(0) }}
               </span>
-              <span class="fi-time">{{ fmtTs(item.created_at) }}</span>
+              <span class="t-pct" :class="(t.unrealized_pnl_pct ?? 0) >= 0 ? 'good' : 'bad'">
+                {{ t.unrealized_pnl_pct?.toFixed(2) }}%
+              </span>
             </div>
-            <div class="fi-title">{{ item.title }}</div>
-            <div class="fi-body">{{ item.content }}</div>
           </div>
-        </div>
-      </div>
+        </template>
 
-      <!-- Panel 3: 因子敞口快照 -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 3 }" id="panel-3" @click="focusedPanel = 3">
-        <div class="wp-title">⚡ P3 · 因子敞口</div>
-        <div ref="radarEl" class="chart-container" />
-        <div class="exposure-metrics" v-if="store.exposure">
-          <div class="em-row" v-if="store.exposure.latest_snapshot">
-            <span>ES@97.5%</span><span class="danger">{{ store.exposure.latest_snapshot.es_97_5?.toFixed(2) }}%</span>
+        <template v-else-if="panelType === 'INTEL_FEED'">
+          <div class="wp-title">📡 P{{ idx + 1 }} · 情报流</div>
+          <div class="feed-filters">
+            <button v-for="cat in FEED_CATS" :key="cat" class="feed-filter-btn"
+              :class="{ active: feedFilter === cat }"
+              @click.stop="setFeedFilter(cat)">{{ cat }}</button>
           </div>
-          <div class="em-row" v-if="store.exposure.latest_snapshot">
-            <span>相关性</span>
-            <span :class="(store.exposure.latest_snapshot.avg_pairwise_corr ?? 0) > 0.65 ? 'danger' : 'warn'">
-              {{ store.exposure.latest_snapshot.avg_pairwise_corr?.toFixed(3) }}
-              {{ store.exposure.latest_snapshot.correlation_spike ? ' ⚠️' : '' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel 4: 智能警报中心 -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 4 }" id="panel-4" @click="focusedPanel = 4">
-        <div class="wp-title">🚨 P4 · 智能警报</div>
-        <div class="alert-stats-row" v-if="store.alertStats">
-          <div class="as-item crit"><span>CRIT</span><span>{{ store.alertStats.critical ?? 0 }}</span></div>
-          <div class="as-item high"><span>HIGH</span><span>{{ store.alertStats.high ?? 0 }}</span></div>
-          <div class="as-item med"><span>MED</span><span>{{ store.alertStats.medium ?? 0 }}</span></div>
-          <div class="as-item low"><span>LOW</span><span>{{ store.alertStats.low ?? 0 }}</span></div>
-        </div>
-        <div class="alerts-list">
-          <div v-if="store.loadingAlerts" class="empty">加载中...</div>
-          <div v-else-if="!store.alerts.length" class="empty">暂无警报</div>
-          <div
-            v-else
-            v-for="a in store.alerts.filter((x) => !x.dismissed)"
-            :key="a.id"
-            class="alert-item"
-            :class="`grade-${a.grade}`"
-          >
-            <div class="ai-header">
-              <span class="ai-grade">{{ a.grade }}</span>
-              <span class="ai-type">{{ a.alert_type }}</span>
-              <div class="ai-actions">
-                <button v-if="!a.acknowledged" @click.stop="store.ackAlert(String(a.id))" class="ack-btn">✓</button>
-                <button @click.stop="store.dsmAlert(String(a.id))" class="dsm-btn">✕</button>
+          <div class="feed-list">
+            <div v-if="store.loadingFeed" class="empty">更新中...</div>
+            <div v-else-if="!store.feed.length" class="empty">暂无情报</div>
+            <div v-else v-for="item in filteredFeed" :key="item.id" class="feed-item" :class="`category-${item.category}`">
+              <div class="fi-header">
+                <span class="fi-cat">{{ item.category }}</span>
+                <span class="fi-urgency" :style="{ color: urgencyColor(item.urgency_score) }">
+                  ▲{{ item.urgency_score.toFixed(0) }}
+                </span>
+                <span class="fi-time">{{ fmtTs(item.created_at) }}</span>
               </div>
+              <div class="fi-title">{{ item.title }}</div>
+              <div class="fi-body">{{ item.content }}</div>
             </div>
-            <div class="ai-content">{{ a.content }}</div>
-            <div class="ai-action">→ {{ a.recommended_action_text }}</div>
           </div>
-        </div>
-      </div>
+        </template>
 
-      <!-- Panel 5: 权重仪表盘 -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 5 }" id="panel-5" @click="focusedPanel = 5">
-        <div class="wp-title">⚖️ P5 · 当前因子权重</div>
-        <div ref="weightsEl" class="chart-container" />
-      </div>
+        <template v-else-if="panelType === 'FACTOR_EXPOSURE'">
+          <div class="wp-title">⚡ P{{ idx + 1 }} · 因子敞口</div>
+          <div :ref="el => setChartEl('radar', idx, el)" class="chart-container" />
+          <div class="exposure-metrics" v-if="store.exposure">
+            <div class="em-row" v-if="store.exposure.latest_snapshot">
+              <span>ES@97.5%</span><span class="danger">{{ store.exposure.latest_snapshot.es_97_5?.toFixed(2) }}%</span>
+            </div>
+            <div class="em-row" v-if="store.exposure.latest_snapshot">
+              <span>相关性</span>
+              <span :class="(store.exposure.latest_snapshot.avg_pairwise_corr ?? 0) > 0.65 ? 'danger' : 'warn'">
+                {{ store.exposure.latest_snapshot.avg_pairwise_corr?.toFixed(3) }}
+                {{ store.exposure.latest_snapshot.correlation_spike ? ' ⚠️' : '' }}
+              </span>
+            </div>
+          </div>
+        </template>
 
-      <!-- Panel 6: Agent 快讯 -->
-      <div class="wr-panel" :class="{ focused: focusedPanel === 6 }" id="panel-6" @click="focusedPanel = 6">
-        <div class="wp-title">🤖 P6 · Agent 最新建议</div>
-        <div v-if="!latestRun" class="empty">暂无 Agent 运行结果</div>
-        <div v-else class="agent-summary">
-          <div class="as-symbol">{{ latestRun.symbol }}</div>
-          <div class="as-rec" :class="recCss(latestRun.final_recommendation)">{{ latestRun.final_recommendation }}</div>
-          <div class="as-conf">置信度 {{ ((latestRun.confidence ?? 0) * 100).toFixed(1) }}%</div>
-          <div class="as-time">{{ fmtTs(latestRun.created_at) }}</div>
-          <div class="as-msgs" v-if="latestRun.message_count">{{ latestRun.message_count }} 条 Agent 消息</div>
-        </div>
-        <div class="panel-divider" />
-        <div class="wp-subtitle">📋 最近运行列表</div>
-        <div v-for="run in recentRuns" :key="run.run_id" class="mini-run">
-          <span class="mr-symbol">{{ run.symbol }}</span>
-          <span :class="recCss(run.final_recommendation)" class="mr-rec">{{ run.final_recommendation }}</span>
-          <span class="mr-time">{{ fmtTs(run.created_at) }}</span>
-        </div>
+        <template v-else-if="panelType === 'SMART_ALERTS'">
+          <div class="wp-title">🚨 P{{ idx + 1 }} · 智能警报</div>
+          <div class="alert-stats-row" v-if="store.alertStats">
+            <div class="as-item crit"><span>CRIT</span><span>{{ store.alertStats.critical ?? 0 }}</span></div>
+            <div class="as-item high"><span>HIGH</span><span>{{ store.alertStats.high ?? 0 }}</span></div>
+            <div class="as-item med"><span>MED</span><span>{{ store.alertStats.medium ?? 0 }}</span></div>
+            <div class="as-item low"><span>LOW</span><span>{{ store.alertStats.low ?? 0 }}</span></div>
+          </div>
+          <div class="alerts-list">
+            <div v-if="store.loadingAlerts" class="empty">加载中...</div>
+            <div v-else-if="!store.alerts.length" class="empty">暂无警报</div>
+            <div v-else v-for="a in store.alerts.filter((x) => !x.dismissed)" :key="a.id"
+              class="alert-item" :class="`grade-${a.grade}`">
+              <div class="ai-header">
+                <span class="ai-grade">{{ a.grade }}</span>
+                <span class="ai-type">{{ a.alert_type }}</span>
+                <div class="ai-actions">
+                  <button v-if="!a.acknowledged" @click.stop="store.ackAlert(String(a.id))" class="ack-btn">✓</button>
+                  <button @click.stop="store.dsmAlert(String(a.id))" class="dsm-btn">✕</button>
+                </div>
+              </div>
+              <div class="ai-content">{{ a.content }}</div>
+              <div class="ai-action">→ {{ a.recommended_action_text }}</div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="panelType === 'FACTOR_WEIGHTS'">
+          <div class="wp-title">⚖️ P{{ idx + 1 }} · 当前因子权重</div>
+          <div :ref="el => setChartEl('weights', idx, el)" class="chart-container" />
+        </template>
+
+        <template v-else-if="panelType === 'AGENT_BRIEF'">
+          <div class="wp-title">🤖 P{{ idx + 1 }} · Agent 最新建议</div>
+          <div v-if="!latestRun" class="empty">暂无 Agent 运行结果</div>
+          <div v-else class="agent-summary">
+            <div class="as-symbol">{{ latestRun.symbol }}</div>
+            <div class="as-rec" :class="recCss(latestRun.final_recommendation)">{{ latestRun.final_recommendation }}</div>
+            <div class="as-conf">置信度 {{ ((latestRun.confidence ?? 0) * 100).toFixed(1) }}%</div>
+            <div class="as-time">{{ fmtTs(latestRun.created_at) }}</div>
+            <div class="as-msgs" v-if="latestRun.message_count">{{ latestRun.message_count }} 条 Agent 消息</div>
+          </div>
+          <div class="panel-divider" />
+          <div class="wp-subtitle">📋 最近运行列表</div>
+          <div v-for="run in recentRuns" :key="run.run_id" class="mini-run">
+            <span class="mr-symbol">{{ run.symbol }}</span>
+            <span :class="recCss(run.final_recommendation)" class="mr-rec">{{ run.final_recommendation }}</span>
+            <span class="mr-time">{{ fmtTs(run.created_at) }}</span>
+          </div>
+        </template>
+
+        <!-- 规划中面板类型占位 -->
+        <template v-else>
+          <div class="wp-title">🔧 P{{ idx + 1 }} · {{ PANEL_LABELS[panelType] }}</div>
+          <div class="empty placeholder-panel">
+            <div class="ph-icon">🚧</div>
+            <div>{{ PANEL_LABELS[panelType] }}</div>
+            <div class="ph-sub">即将上线</div>
+          </div>
+        </template>
       </div>
     </div>
+
+    <!-- ⚙️ 面板配置抽屉 -->
+    <transition name="drawer-slide">
+      <div v-if="showConfigDrawer" class="config-drawer-overlay" @click.self="closeConfigDrawer">
+        <div class="config-drawer">
+          <div class="drawer-header">
+            <span class="drawer-title">⚙️ 面板布局配置</span>
+            <button class="drawer-close" @click="closeConfigDrawer">✕</button>
+          </div>
+          <p class="drawer-hint">为 6 个面板槽位选择要显示的内容类型，配置自动保存至本地。</p>
+          <div class="drawer-slots">
+            <div v-for="(slot, idx) in panelLayoutDraft" :key="idx" class="drawer-slot">
+              <div class="slot-label">面板 P{{ idx + 1 }}</div>
+              <select
+                :value="slot"
+                @change="e => panelLayoutDraft[idx] = (e.target as HTMLSelectElement).value as PanelType"
+                class="slot-select"
+              >
+                <option v-for="pt in ALL_PANEL_TYPES" :key="pt" :value="pt">{{ PANEL_LABELS[pt] }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="drawer-actions">
+            <button class="btn-apply" @click="applyPanelLayout">✓ 应用布局</button>
+            <button class="btn-reset" @click="resetPanelLayout">↺ 恢复默认</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- P键暂停确认对话框 -->
+    <transition name="fade">
+      <div v-if="showPauseConfirm" class="pause-overlay" @click.self="showPauseConfirm = false">
+        <div class="pause-modal">
+          <div class="pm-icon">{{ autonomy.isPaused ? '▶️' : '⏸' }}</div>
+          <div class="pm-title">{{ autonomy.isPaused ? '恢复 AI 自主引擎' : '暂停 AI 自主引擎' }}</div>
+          <div class="pm-body">
+            {{ autonomy.isPaused
+              ? 'AI 引擎将立即恢复自主决策，当前所有挂起计划将被重新调度。'
+              : '所有自主交易计划将立即暂停。已提交的板块订单不受影响。' }}
+          </div>
+          <div class="pm-actions">
+            <button class="pm-confirm" @click="confirmPauseToggle">
+              {{ autonomy.isPaused ? '确认恢复' : '确认暂停' }}
+            </button>
+            <button class="pm-cancel" @click="showPauseConfirm = false">取消</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useWarRoomStore } from '@/stores/warRoom'
 import { useAiHubStore } from '@/stores/aiHub'
+import { useAutonomyStore } from '@/stores/autonomy'
 import * as echarts from 'echarts'
+
+// ── 面板类型定义（设计文档 V10.4 8-type spec）
+type PanelType = 'PNL_DETAIL' | 'INTEL_FEED' | 'FACTOR_EXPOSURE' | 'SMART_ALERTS' | 'FACTOR_WEIGHTS' | 'AGENT_BRIEF' | 'SECTOR_HEATMAP' | 'RISK_GAUGES' | 'SIGNAL_PULSE' | 'EXEC_QUEUE' | 'ORDER_BOOK_MINI'
+
+const ALL_PANEL_TYPES: PanelType[] = [
+  'PNL_DETAIL', 'INTEL_FEED', 'FACTOR_EXPOSURE', 'SMART_ALERTS',
+  'FACTOR_WEIGHTS', 'AGENT_BRIEF', 'SECTOR_HEATMAP', 'RISK_GAUGES',
+  'SIGNAL_PULSE', 'EXEC_QUEUE', 'ORDER_BOOK_MINI',
+]
+
+const PANEL_LABELS: Record<PanelType, string> = {
+  PNL_DETAIL:      '实时 P&L Ticker',
+  INTEL_FEED:      '情报流',
+  FACTOR_EXPOSURE: '因子敞口快照',
+  SMART_ALERTS:    '智能警报中心',
+  FACTOR_WEIGHTS:  '因子权重仪表盘',
+  AGENT_BRIEF:     'Agent 最新建议',
+  SECTOR_HEATMAP:  '板块热力图',
+  RISK_GAUGES:     '风险仪表盘',
+  SIGNAL_PULSE:    '信号脉冲',
+  EXEC_QUEUE:      '执行队列',
+  ORDER_BOOK_MINI: '迷你订单簿',
+}
+
+const DEFAULT_LAYOUT: PanelType[] = [
+  'PNL_DETAIL', 'INTEL_FEED', 'FACTOR_EXPOSURE',
+  'SMART_ALERTS', 'FACTOR_WEIGHTS', 'AGENT_BRIEF',
+]
+const LAYOUT_LS_KEY = 'war_room_panel_layout_v1'
+
+function loadLayout(): PanelType[] {
+  try {
+    const raw = localStorage.getItem(LAYOUT_LS_KEY)
+    if (!raw) return [...DEFAULT_LAYOUT]
+    const parsed = JSON.parse(raw) as PanelType[]
+    if (Array.isArray(parsed) && parsed.length === 6) return parsed
+  } catch {}
+  return [...DEFAULT_LAYOUT]
+}
 
 const store = useWarRoomStore()
 const aiHub = useAiHubStore()
+const autonomy = useAutonomyStore()
 
 const rootEl = ref<HTMLElement | null>(null)
-const radarEl = ref<HTMLElement | null>(null)
-const weightsEl = ref<HTMLElement | null>(null)
 const isFullscreen = ref(false)
 const focusedPanel = ref(0)
 const clock = ref('')
 const feedFilter = ref('ALL')
+const showPauseConfirm = ref(false)
+const showConfigDrawer = ref(false)
+
+// Panel layout
+const panelLayout = ref<PanelType[]>(loadLayout())
+const panelLayoutDraft = ref<PanelType[]>([...panelLayout.value])
+
+// Dynamic chart element refs via callback ref
+const chartEls = ref<Record<string, HTMLElement | null>>({})
+const chartInstances = new Map<string, echarts.ECharts>()
+
+function setChartEl(
+  type: 'radar' | 'weights',
+  idx: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  el: any,
+) {
+  chartEls.value[`${type}_${idx}`] = el instanceof HTMLElement ? el : null
+}
 
 let clockTimer: ReturnType<typeof setInterval> | null = null
-let radarChart: echarts.ECharts | null = null
-let weightsChart: echarts.ECharts | null = null
 
 const FEED_CATS = ['ALL', 'DECISION', 'RISK', 'EVENT', 'SIGNAL']
 const DIMS = ['technical', 'fundamental', 'ml', 'sentiment', 'macro', 'event']
@@ -197,40 +314,93 @@ function toggleFullscreen() {
   else document.body.classList.remove('war-room-fullscreen')
 }
 
+// ── 键盘快捷键（完整 spec: W/Esc/R/A/1-6/`/P）
 function onKeyDown(e: KeyboardEvent) {
   const key = e.key.toUpperCase()
+  // 配置抽屉/暂停弹窗打开时忽略大部分快捷键
+  if (showConfigDrawer.value || showPauseConfirm.value) {
+    if (key === 'ESCAPE') { showConfigDrawer.value = false; showPauseConfirm.value = false }
+    return
+  }
   if (key === 'W') { toggleFullscreen(); e.preventDefault() }
   else if (key === 'ESCAPE') { isFullscreen.value = false; document.body.classList.remove('war-room-fullscreen') }
   else if (key === 'R') manualRefresh()
   else if (key === 'A') focusedPanel.value = 4
+  else if (key === 'P') { showPauseConfirm.value = true; e.preventDefault() }
+  else if (e.key === '`') {
+    // ` 键唤起全局 Copilot
+    e.preventDefault()
+    window.dispatchEvent(new CustomEvent('copilot:open', { detail: { context: 'war-room' } }))
+  }
   else if (['1','2','3','4','5','6'].includes(key)) {
     focusedPanel.value = parseInt(key)
     document.getElementById(`panel-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
 
-async function manualRefresh() {
-  await Promise.all([store.fetchSnapshot(), store.fetchAlerts()])
-  renderRadar(); renderWeights()
+async function confirmPauseToggle() {
+  if (autonomy.isPaused) {
+    await autonomy.resume()
+  } else {
+    await autonomy.pause()
+  }
+  showPauseConfirm.value = false
 }
 
-function renderRadar() {
-  if (!radarEl.value) return
-  if (!radarChart) radarChart = echarts.init(radarEl.value, 'dark')
+async function manualRefresh() {
+  await Promise.all([store.fetchSnapshot(), store.fetchAlerts()])
+  await nextTick()
+  renderAllCharts()
+}
+
+// ── 面板配置抽屉操作
+function closeConfigDrawer() {
+  panelLayoutDraft.value = [...panelLayout.value]
+  showConfigDrawer.value = false
+}
+
+function applyPanelLayout() {
+  panelLayout.value = [...panelLayoutDraft.value]
+  try { localStorage.setItem(LAYOUT_LS_KEY, JSON.stringify(panelLayout.value)) } catch {}
+  showConfigDrawer.value = false
+  nextTick(() => renderAllCharts())
+}
+
+function resetPanelLayout() {
+  panelLayoutDraft.value = [...DEFAULT_LAYOUT]
+}
+
+// ── 图表渲染
+function renderAllCharts() {
+  panelLayout.value.forEach((type, idx) => {
+    if (type === 'FACTOR_EXPOSURE') renderRadarAt(idx)
+    if (type === 'FACTOR_WEIGHTS') renderWeightsAt(idx)
+  })
+}
+
+function renderRadarAt(idx: number) {
+  const el = chartEls.value[`radar_${idx}`]
+  if (!el) return
+  const key = `radar_${idx}`
+  if (!chartInstances.has(key)) chartInstances.set(key, echarts.init(el, 'dark'))
+  const chart = chartInstances.get(key)!
   const s = store.exposure?.latest_snapshot
-  if (!s) { radarChart.setOption({ title: { text: '无数据', textStyle: { color: '#555' } } }); return }
-  radarChart.setOption({
+  if (!s) { chart.setOption({ title: { text: '无数据', textStyle: { color: '#555' } } }); return }
+  chart.setOption({
     backgroundColor: 'transparent',
     radar: { indicator: [{ name: 'β Market', max: 2 }, { name: 'HML', max: 2 }, { name: 'SMB', max: 2 }, { name: 'MOM', max: 2 }, { name: 'QMJ', max: 2 }], radius: '65%', axisLine: { lineStyle: { color: 'rgba(0,255,136,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,255,136,0.08)' } }, axisName: { color: '#aaa', fontSize: 10 } },
     series: [{ type: 'radar', data: [{ value: [Math.abs(s.beta_market ?? 0), Math.abs(s.beta_hml ?? 0), Math.abs(s.beta_smb ?? 0), Math.abs(s.beta_mom ?? 0), Math.abs(s.beta_qmj ?? 0)], itemStyle: { color: '#00ff88' }, areaStyle: { color: 'rgba(0,255,136,0.12)' } }] }],
   })
 }
 
-function renderWeights() {
-  if (!weightsEl.value || !aiHub.factorWeights) return
-  if (!weightsChart) weightsChart = echarts.init(weightsEl.value, 'dark')
+function renderWeightsAt(idx: number) {
+  const el = chartEls.value[`weights_${idx}`]
+  if (!el || !aiHub.factorWeights) return
+  const key = `weights_${idx}`
+  if (!chartInstances.has(key)) chartInstances.set(key, echarts.init(el, 'dark'))
+  const chart = chartInstances.get(key)!
   const w = aiHub.factorWeights
-  weightsChart.setOption({
+  chart.setOption({
     backgroundColor: 'transparent',
     tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
     series: [{
@@ -241,8 +411,16 @@ function renderWeights() {
   })
 }
 
-watch(() => store.exposure, renderRadar, { deep: true })
-watch(() => aiHub.factorWeights, renderWeights, { deep: true })
+watch(() => store.exposure, () => {
+  panelLayout.value.forEach((type, idx) => { if (type === 'FACTOR_EXPOSURE') renderRadarAt(idx) })
+}, { deep: true })
+
+watch(() => aiHub.factorWeights, () => {
+  panelLayout.value.forEach((type, idx) => { if (type === 'FACTOR_WEIGHTS') renderWeightsAt(idx) })
+}, { deep: true })
+
+// Re-render charts when layout changes
+watch(panelLayout, () => nextTick(() => renderAllCharts()))
 
 onMounted(async () => {
   rootEl.value?.focus()
@@ -251,13 +429,17 @@ onMounted(async () => {
   await store.initWarRoom()
   await aiHub.fetchFactorWeights()
   await aiHub.fetchAgentRuns(5)
-  renderRadar(); renderWeights()
+  await autonomy.fetchStatus()
+  await nextTick()
+  renderAllCharts()
 })
 
 onUnmounted(() => {
   store.cleanup()
   if (clockTimer) clearInterval(clockTimer)
   document.body.classList.remove('war-room-fullscreen')
+  chartInstances.forEach(c => c.dispose())
+  chartInstances.clear()
 })
 </script>
 
@@ -345,4 +527,47 @@ onUnmounted(() => {
 .mr-rec { font-size: 0.7rem; font-weight: 700; min-width: 60px; }
 .mr-time { color: #555; font-size: 0.68rem; min-width: 80px; text-align: right; }
 .empty { color: #444; font-size: 0.78rem; text-align: center; padding: 20px; }
+.placeholder-panel { flex-direction: column; gap: 6px; }
+.ph-icon { font-size: 1.6rem; }
+.ph-sub { font-size: 0.68rem; color: #333; }
+.ai-paused-badge { color: #ffd700; font-size: 0.78rem; font-weight: 700; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); padding: 2px 6px; border-radius: 3px; }
+
+/* ── 面板配置抽屉 */
+.config-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: flex-end; align-items: stretch; }
+.config-drawer { width: 340px; background: #0d1117; border-left: 1px solid rgba(0,255,136,0.25); display: flex; flex-direction: column; padding: 20px; gap: 12px; overflow-y: auto; }
+.drawer-header { display: flex; align-items: center; justify-content: space-between; }
+.drawer-title { font-size: 0.9rem; font-weight: 700; color: #00ff88; letter-spacing: 0.5px; }
+.drawer-close { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #888; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+.drawer-close:hover { color: #ff4444; border-color: rgba(255,68,68,0.4); }
+.drawer-hint { font-size: 0.73rem; color: #555; line-height: 1.5; margin: 0; }
+.drawer-slots { display: flex; flex-direction: column; gap: 10px; }
+.drawer-slot { display: flex; flex-direction: column; gap: 4px; }
+.slot-label { font-size: 0.72rem; color: #666; font-family: 'Courier New', monospace; }
+.slot-select { background: #0a0a15; border: 1px solid rgba(0,255,136,0.2); color: #d0d0d0; padding: 5px 8px; border-radius: 4px; font-size: 0.78rem; cursor: pointer; outline: none; }
+.slot-select:focus { border-color: rgba(0,255,136,0.5); }
+.drawer-actions { display: flex; gap: 8px; margin-top: 8px; }
+.btn-apply { flex: 1; background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.4); color: #00ff88; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+.btn-apply:hover { background: rgba(0,255,136,0.25); }
+.btn-reset { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #666; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; }
+.btn-reset:hover { color: #aaa; }
+
+/* ── 面板配置抽屉动画 */
+.drawer-slide-enter-active, .drawer-slide-leave-active { transition: transform 0.25s ease; }
+.drawer-slide-enter-from, .drawer-slide-leave-to { transform: translateX(100%); }
+
+/* ── P键暂停确认弹窗 */
+.pause-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1001; display: flex; align-items: center; justify-content: center; }
+.pause-modal { background: #0d1117; border: 1px solid rgba(255,215,0,0.35); border-radius: 8px; padding: 28px 32px; width: 360px; text-align: center; }
+.pm-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.pm-title { font-size: 1rem; font-weight: 700; color: #ffd700; margin-bottom: 12px; }
+.pm-body { font-size: 0.8rem; color: #888; line-height: 1.55; margin-bottom: 20px; }
+.pm-actions { display: flex; gap: 12px; justify-content: center; }
+.pm-confirm { background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.5); color: #ffd700; padding: 8px 24px; border-radius: 5px; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
+.pm-confirm:hover { background: rgba(255,215,0,0.25); }
+.pm-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #666; padding: 8px 24px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
+.pm-cancel:hover { color: #aaa; }
+
+/* ── fade 过渡 */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

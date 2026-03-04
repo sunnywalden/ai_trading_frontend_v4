@@ -27,6 +27,48 @@
         :last-updated="lastUpdated"
         @retry="loadHealth"
       />
+
+      <!-- WebSocket 连接状态 -->
+      <section class="autonomy-health-section">
+        <div class="sub-header">
+          <h3 class="section-title">🔌 WebSocket 连接状态</h3>
+        </div>
+        <div class="ws-status-bar" :class="wsStore.connected ? 'ws-ok' : 'ws-err'">
+          <span class="ws-dot"></span>
+          <span v-if="wsStore.connected">已连接</span>
+          <span v-else>
+            已断线
+            <template v-if="wsStore.reconnectAttempt > 0">
+              &nbsp;· 第 {{ wsStore.reconnectAttempt }} 次重连
+              <template v-if="wsStore.nextReconnectInMs > 0">（{{ (wsStore.nextReconnectInMs / 1000).toFixed(0) }}s 后）</template>
+            </template>
+          </span>
+        </div>
+      </section>
+
+      <!-- 自主循环健康检查 -->
+      <section class="autonomy-health-section">
+        <div class="sub-header">
+          <h3 class="section-title">🤖 自主循环健康检查（M4）</h3>
+          <span v-if="autonomyHealth" class="overall-badge" :class="'overall-' + autonomyHealth.overall_status.toLowerCase()">
+            {{ autonomyHealth.overall_status }}
+          </span>
+        </div>
+        <div v-if="autonomyHealthLoading" class="loading-message">正在加载健康检查结果...</div>
+        <div v-else-if="autonomyHealth" class="health-checks-grid">
+          <div
+            v-for="check in autonomyHealth.checks"
+            :key="check.name"
+            class="health-check-card"
+            :class="'check-' + check.status.toLowerCase()"
+          >
+            <div class="check-name">{{ check.name }}</div>
+            <div class="check-status-badge">{{ check.status }}</div>
+            <div class="check-message">{{ check.message }}</div>
+          </div>
+        </div>
+        <div v-else class="info-message">暂无健康检查数据（Job 每 2 分钟刷新）</div>
+      </section>
     </div>
 
     <!-- ===== API 监控 Tab ===== -->
@@ -156,16 +198,20 @@ import HealthStatusBar from '../components/HealthStatusBar.vue'
 import ApiProviderCard from '../components/ApiProviderCard.vue'
 import AlertsPanel from '../components/AlertsPanel.vue'
 import TaskManagementPage from './TaskManagementPage.vue'
+import { useWebSocketStore } from '../stores/websocket'
 import {
   fetchMonitoringReport,
   fetchMonitoringHealth,
   fetchMonitoringStats,
   fetchLlmStats,
+  fetchAutonomyHealth,
   type MonitoringReport,
   type ApiStats,
   type LlmStats,
+  type AutonomyHealthReport,
 } from '../api/client'
 
+const wsStore = useWebSocketStore()
 const tab = ref<'health' | 'api' | 'tasks'>('health')
 
 // --- Health ---
@@ -218,6 +264,21 @@ async function loadLlmStats() {
   }
 }
 
+// --- Autonomy Health ---
+const autonomyHealth = ref<AutonomyHealthReport | null>(null)
+const autonomyHealthLoading = ref(false)
+
+async function loadAutonomyHealth() {
+  autonomyHealthLoading.value = true
+  try {
+    autonomyHealth.value = await fetchAutonomyHealth()
+  } catch {
+    autonomyHealth.value = null
+  } finally {
+    autonomyHealthLoading.value = false
+  }
+}
+
 async function loadMonitoringData() {
   loadingApi.value = true
   apiError.value = ''
@@ -246,13 +307,14 @@ async function loadStats() {
 }
 
 async function onRefreshAll() {
-  await Promise.all([loadHealth(), loadMonitoringData()])
+  await Promise.all([loadHealth(), loadAutonomyHealth(), loadMonitoringData()])
   successMsg.value = '✅ 刷新成功'
   setTimeout(() => { successMsg.value = '' }, 2000)
 }
 
 onMounted(() => {
   loadHealth()
+  loadAutonomyHealth()
   loadMonitoringData()
 })
 </script>
@@ -291,6 +353,48 @@ onMounted(() => {
 .providers-section { margin: 24px 0; }
 .providers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
 .alerts-section { margin: 24px 0; }
+
+/* Autonomy health & WS status */
+.autonomy-health-section { margin: 24px 0; background: rgba(17,24,39,0.7); border: 1px solid rgba(55,65,81,0.6); border-radius: 14px; padding: 20px; }
+.ws-status-bar {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-radius: 10px; font-size: 0.95rem; font-weight: 500;
+}
+.ws-ok { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+.ws-err { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.ws-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  background: currentColor; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.health-checks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 4px; }
+.health-check-card {
+  border-radius: 10px; padding: 14px 16px;
+  border-left: 4px solid transparent;
+}
+.check-ok     { background: rgba(52,211,153,0.08); border-left-color: #34d399; }
+.check-warn   { background: rgba(251,191,36,0.10); border-left-color: #fbbf24; }
+.check-critical,
+.check-error  { background: rgba(248,113,113,0.10); border-left-color: #f87171; }
+
+.check-name { font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+.check-status-badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 6px; margin-bottom: 8px; letter-spacing: .05em;
+}
+.check-ok     .check-status-badge { background: rgba(52,211,153,0.2); color: #34d399; }
+.check-warn   .check-status-badge { background: rgba(251,191,36,0.2); color: #fbbf24; }
+.check-critical .check-status-badge,
+.check-error    .check-status-badge { background: rgba(248,113,113,0.2); color: #f87171; }
+.check-message { font-size: 0.85rem; color: #d1d5db; line-height: 1.4; }
+
+.overall-badge {
+  padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+}
+.overall-ok       { background: rgba(52,211,153,0.2); color: #34d399; }
+.overall-warn     { background: rgba(251,191,36,0.2); color: #fbbf24; }
+.overall-critical { background: rgba(248,113,113,0.2); color: #f87171; }
 
 /* LLM stats */
 .llm-stats-section { margin: 24px 0; background: rgba(17,24,39,0.7); border: 1px solid rgba(55,65,81,0.6); border-radius: 14px; padding: 20px; }

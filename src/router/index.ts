@@ -155,6 +155,13 @@ const routes: RouteRecordRaw[] = [
   { path: '/service-health',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'health' } }) },
   { path: '/task-management', redirect: (to) => ({ path: '/system-monitor', query: { tab: 'tasks'  } }) },
 
+  // V10.4.1 设计文档 spec URL → 实现 URL 对齐重定向
+  { path: '/observability/execution-microscope', redirect: '/observability/execution' },
+  { path: '/observability/signal-intelligence',  redirect: '/observability/signal' },
+  { path: '/observability/risk-cluster',         redirect: '/observability/risk' },
+  { path: '/ai-hub/factor-weights',              redirect: '/ai-hub/weights' },
+  { path: '/ai-hub/post-mortems',                redirect: '/ai-hub/post-mortem' },
+
   // ── V10.3 交易可观测性 ────────────────────────────────────
   {
     path: '/trade-lifecycle',

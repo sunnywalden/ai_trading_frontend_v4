@@ -45,22 +45,6 @@
           </transition>
         </div>
 
-        <!-- 系统区（底部分隔，与其他模块保持一致的折叠/展开）-->
-        <div class="nav-system-section">
-          <button class="group-header" @click="toggleGroup('__system__')">
-            <div class="group-title-block">
-              <span class="group-title">⚙️ {{ $t('nav.module_system') }}</span>
-            </div>
-            <span class="group-arrow" :class="{ open: openGroups['__system__'] }">▸</span>
-          </button>
-          <transition name="slide">
-            <div v-show="openGroups['__system__']" class="system-items">
-              <router-link to="/regime"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🌊</span><span class="nav-label">{{ $t('nav.regime') }}</span></router-link>
-              <router-link to="/alerts"          class="nav-button sub sys" active-class="active"><span class="nav-icon">🔔</span><span class="nav-label">{{ $t('nav.alerts') }}</span></router-link>
-              <router-link to="/system-monitor" class="nav-button sub sys" active-class="active"><span class="nav-icon">🖥️</span><span class="nav-label">系统监控</span></router-link>
-            </div>
-          </transition>
-        </div>
       </nav>
 
       <div v-if="showExpiryBanner" class="expiry-banner">
@@ -144,15 +128,37 @@ import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken,
 import AdminInfoModal from './components/AdminInfoModal.vue';
 import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
 import CopilotFloatingWidget from './components/CopilotFloatingWidget.vue';
+import { useWebSocketStore } from './stores/websocket';
 
 const { t, locale } = useI18n();
 const route = useRoute()
+const wsStore = useWebSocketStore();
 
 interface NavItem { path: string; label: string; icon: string }
 interface NavGroup { title: string; desc?: string; items: NavItem[] }
 
 const navGroups = computed<NavGroup[]>(() => [
   {
+    // 交易中枢：交易台 + 可观测性 & War Room（V10.4 4-group spec）
+    title: t('nav.module_desk'),
+    desc: t('nav.module_desk_desc'),
+    items: [
+      { path: '/positions',                label: t('nav.positions'),           icon: '📊' },
+      { path: '/position-evaluation',      label: t('nav.position_evaluation'), icon: '🔬' },
+      { path: '/events',                   label: t('nav.events'),              icon: '📅' },
+      { path: '/quant-loop',               label: t('nav.quant_loop'),          icon: '🔄' },
+      { path: '/paper',                    label: t('nav.paper'),               icon: '🧪' },
+      { path: '/attribution',              label: t('nav.attribution'),         icon: '🎯' },
+      { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),     icon: '🔄' },
+      { path: '/order-book',               label: t('nav.order_book'),          icon: '📋' },
+      { path: '/observability/execution',  label: t('nav.exec_microscope'),     icon: '🔬' },
+      { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
+      { path: '/observability/risk',       label: t('nav.risk_cluster'),        icon: '⚡' },
+      { path: '/war-room',                 label: t('nav.war_room'),            icon: '⚔️' },
+    ],
+  },
+  {
+    // 研究 & 分析
     title: t('nav.module_research'),
     desc: t('nav.module_research_desc'),
     items: [
@@ -166,48 +172,27 @@ const navGroups = computed<NavGroup[]>(() => [
     ],
   },
   {
-    title: t('nav.module_desk'),
-    desc: t('nav.module_desk_desc'),
-    items: [
-      { path: '/positions',          label: t('nav.positions'),          icon: '📊' },
-      { path: '/position-evaluation', label: t('nav.position_evaluation'), icon: '🔬' },
-      { path: '/events',             label: t('nav.events'),             icon: '📅' },
-      { path: '/quant-loop',         label: t('nav.quant_loop'),         icon: '🔄' },
-      { path: '/paper',              label: t('nav.paper'),              icon: '🧪' },
-      { path: '/attribution',        label: t('nav.attribution'),        icon: '🎯' },
-    ],
-  },
-  {
+    // AI 洞察 & 系统：AI中枢 + 系统区（regime / alerts / system-monitor）
     title: t('nav.module_ai'),
     desc: t('nav.module_ai_desc'),
     items: [
-      { path: '/autonomy',        label: t('nav.autonomy'),        icon: '🤖' },
-      { path: '/copilot',         label: t('nav.copilot'),         icon: '💬' },
-      { path: '/evolution',       label: t('nav.evolution'),       icon: '🧬' },
-      { path: '/journal',         label: t('nav.journal'),         icon: '📓' },
-      { path: '/ai-hub/agents',   label: t('nav.multi_agent'),     icon: '🤝' },
-      { path: '/ai-hub/calibration', label: t('nav.calibration'),  icon: '🎯' },
-      { path: '/ai-hub/weights',  label: t('nav.factor_weights'),  icon: '⚖️' },
-      { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'),  icon: '🔭' },
-    ],
-  },
-  {
-    title: t('nav.module_observability'),
-    desc: t('nav.module_observability_desc'),
-    items: [
-      { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),    icon: '🔄' },
-      { path: '/order-book',               label: t('nav.order_book'),         icon: '📋' },
-      { path: '/observability/execution',  label: t('nav.exec_microscope'),    icon: '🔬' },
-      { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
-      { path: '/observability/risk',       label: t('nav.risk_cluster'),        icon: '⚡' },
-      { path: '/war-room',                 label: t('nav.war_room'),            icon: '⚔️' },
+      { path: '/autonomy',           label: t('nav.autonomy'),        icon: '🤖' },
+      { path: '/copilot',            label: t('nav.copilot'),         icon: '💬' },
+      { path: '/evolution',          label: t('nav.evolution'),       icon: '🧬' },
+      { path: '/journal',            label: t('nav.journal'),         icon: '📓' },
+      { path: '/ai-hub/agents',      label: t('nav.multi_agent'),     icon: '🤝' },
+      { path: '/ai-hub/calibration', label: t('nav.calibration'),     icon: '🎯' },
+      { path: '/ai-hub/weights',     label: t('nav.factor_weights'),  icon: '⚖️' },
+      { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'),     icon: '🔭' },
+      { path: '/regime',             label: t('nav.regime'),          icon: '🌊' },
+      { path: '/alerts',             label: t('nav.alerts'),          icon: '🔔' },
+      { path: '/system-monitor',     label: '系统监控',               icon: '🖥️' },
     ],
   },
 ])
 
 // --- Collapsible nav groups ---
-// '__system__' 作为系统模块的静态 key，默认展开
-const openGroups = reactive<Record<string, boolean>>({ '__system__': true })
+const openGroups = reactive<Record<string, boolean>>({})
 
 // Initialize: auto-expand first group, or whichever matches current route
 watch(navGroups, (newGroups) => {
@@ -223,17 +208,12 @@ function toggleGroup(title: string) {
 }
 
 // Auto-expand the group containing the current route
-const SYSTEM_PATHS = ['/regime', '/alerts', '/system-monitor', '/task-management', '/service-health', '/api-monitoring']
 function autoExpandGroup() {
   const currentPath = route.path
   for (const group of navGroups.value) {
     if (group.items.some(item => currentPath.startsWith(item.path))) {
       openGroups[group.title] = true
     }
-  }
-  // 系统模块路由自动展开
-  if (SYSTEM_PATHS.some(p => currentPath.startsWith(p))) {
-    openGroups['__system__'] = true
   }
 }
 watch(() => route.path, autoExpandGroup, { immediate: true })
@@ -349,9 +329,14 @@ onMounted(() => {
 
   // Listen for auth-logout events dispatched by API layer and navigate via router
   try { window.addEventListener('auth-logout', handleAuthLogout); } catch (e) {}
+
+  // V10.4 M4: 启动 WebSocket 指数退避重连（已登录时连接）
+  if (isLoggedIn()) {
+    wsStore.connect();
+  }
 });
 
-onUnmounted(() => { if (timer) clearInterval(timer); try { window.removeEventListener('auth-logout', handleAuthLogout); } catch (e) {} });
+onUnmounted(() => { if (timer) clearInterval(timer); wsStore.disconnect(); try { window.removeEventListener('auth-logout', handleAuthLogout); } catch (e) {} });
 
 function onLogout() { logout(); router.push('/login'); }
 function toggleTheme() {
