@@ -258,6 +258,13 @@
               <div style="font-size: 11px; color: #888;" :title="sig.strategy_run_id ?? ''">
                 {{ sig.strategy_name ?? (sig.strategy_id ? `策略#${sig.strategy_id.slice(0, 8)}` : '未关联策略') }}
               </div>
+              <div
+                v-if="sig.resolved_market || sig.selection_mode || sig.fallback_reason"
+                style="font-size: 10px; color: #6ea8ff; margin-top: 2px;"
+                :title="formatUniverseMeta(sig)"
+              >
+                {{ formatUniverseMeta(sig) }}
+              </div>
             </td>
             <td>{{ sig.direction ?? '—' }}</td>
             <td :title="sig.quantity_mode ?? ''">{{ formatSignalQuantity(sig) }}</td>
@@ -439,6 +446,15 @@ function formatSignalQuantity(sig: SignalPipelineItem): string {
   }
 
   return `${Number(value)}`
+}
+
+function formatUniverseMeta(sig: SignalPipelineItem): string {
+  const parts: string[] = []
+  if (sig.resolved_market) parts.push(`市场:${sig.resolved_market}`)
+  if (sig.selection_mode) parts.push(`模式:${sig.selection_mode}`)
+  if (sig.fallback_reason) parts.push(`回退:${sig.fallback_reason}`)
+  else if (sig.fallback_to_default_symbols) parts.push('回退:DEFAULT_SYMBOLS')
+  return parts.join(' · ')
 }
 
 function formatAuditQuantity(log: AuditLogEntry): string {

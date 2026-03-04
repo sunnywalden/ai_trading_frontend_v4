@@ -286,4 +286,41 @@ onMounted(async () => {
 .dr-loading { display: flex; align-items: center; gap: 10px; color: #60a5fa; font-size: 0.85rem; }
 .dr-spinner { display: inline-block; animation: spin 1s linear infinite; font-size: 1.2rem; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── V10.4 M5: 375px 移动端适配 ── */
+@media (max-width: 375px) {
+  .copilot-page,
+  .page-container {
+    padding: 8px;
+    flex-direction: column;
+  }
+
+  .chat-panel,
+  .side-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chat-messages {
+    max-height: 55vh;
+  }
+
+  .input-wrap {
+    flex-direction: column;
+  }
+
+  .send-btn {
+    width: 100%;
+  }
+
+  .section-tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+}
 </style>
