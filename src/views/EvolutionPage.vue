@@ -65,7 +65,16 @@
             >{{ ins.active ? t('evolution.deactivate') : t('evolution.activate') }}</button>
           </div>
         </div>
-        <div v-if="insights.length === 0" class="empty-state">{{ t('evolution.no_insights') }}</div>
+        <div v-if="insights.length === 0" class="empty-state">
+          <div>{{ t('evolution.no_insights') }}</div>
+          <div v-if="repositoryStatus" class="empty-hint-card">
+            <div class="eh-title">数据状态诊断</div>
+            <div class="eh-line">洞察库：{{ repositoryStatus.insight_count }} 条</div>
+            <div class="eh-line">近30天归因样本：{{ repositoryStatus.attribution_count_30d }} 条</div>
+            <div class="eh-line">近30天交易日志样本：{{ repositoryStatus.journal_count_30d }} 条</div>
+            <div class="eh-hint">{{ repositoryStatus.hint }}</div>
+          </div>
+        </div>
       </div>
       <div v-else class="loading-state">{{ t('common.loading') }}...</div>
     </div>
@@ -161,7 +170,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { insightApi, INSIGHT_TYPE_COLORS, type AIInsightItem, type ABExperimentItem } from '@/api/insightService'
+import {
+  insightApi,
+  INSIGHT_TYPE_COLORS,
+  type AIInsightItem,
+  type ABExperimentItem,
+  type InsightRepositoryStatus,
+} from '@/api/insightService'
 
 const { t } = useI18n()
 
@@ -178,6 +193,7 @@ const tabs = computed<{ key: TabKey; label: string }[]>(() => [
 const insightsLoading = ref(false)
 const generating      = ref(false)
 const insights        = ref<AIInsightItem[]>([])
+const repositoryStatus = ref<InsightRepositoryStatus | null>(null)
 const insightTypes    = ['PATTERN', 'TRAP', 'EXECUTION', 'PARAM_SUGGESTION']
 const insightFilter   = ref({ type: '', active: '' })
 
@@ -191,6 +207,16 @@ async function loadInsights() {
       active_only
     })
     insights.value = res.data.items
+    if (insights.value.length === 0) {
+      try {
+        const statusRes = await insightApi.getRepositoryStatus()
+        repositoryStatus.value = statusRes.data
+      } catch {
+        repositoryStatus.value = null
+      }
+    } else {
+      repositoryStatus.value = null
+    }
   } catch (e) {
     console.error('[Evolution] loadInsights failed', e)
   } finally {
@@ -348,4 +374,34 @@ onMounted(async () => {
 .btn-cancel  { background: transparent; border: 1px solid #334155; color: #888; border-radius: 6px; padding: 6px 16px; cursor: pointer; }
 .btn-confirm { background: #00ff88; color: #001; border: none; border-radius: 6px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
 .empty-state, .loading-state { padding: 40px; text-align: center; color: #444; }
+
+.empty-hint-card {
+  margin: 12px auto 0;
+  max-width: 520px;
+  text-align: left;
+  background: #111827;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.eh-title {
+  color: #cbd5e1;
+  font-size: 0.86rem;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.eh-line {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.eh-hint {
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  margin-top: 8px;
+  line-height: 1.55;
+}
 </style>

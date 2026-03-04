@@ -50,6 +50,14 @@ export interface InsightListResponse {
   page: number
 }
 
+export interface InsightRepositoryStatus {
+  insight_count: number
+  attribution_count_30d: number
+  journal_count_30d: number
+  has_data_source: boolean
+  hint: string
+}
+
 export interface ABExperimentItem {
   id: number
   insight_id: number | null
@@ -100,6 +108,10 @@ export const insightApi = {
   /** 触发每周洞察生成 */
   triggerWeeklyGeneration: () =>
     api.post<InsightListResponse>('/v1/insights/generate_weekly'),
+
+  /** 洞察库状态（用于空状态原因提示） */
+  getRepositoryStatus: () =>
+    api.get<InsightRepositoryStatus>('/v1/insights/repository/status'),
 
   /** 查询 A/B 实验列表 */
   listExperiments: (params?: { status?: ExperimentStatus; limit?: number }) =>
