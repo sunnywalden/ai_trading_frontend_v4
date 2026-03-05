@@ -86,8 +86,12 @@ async function onSubmit() {
       error.value = t('login.login_failed');
     }
   } catch (e: any) {
-    const detail = e?.response?.data?.detail || e?.message;
-    error.value = detail ? t('login.run_result', { detail }) : t('login.login_error');
+    const rawDetail = e?.response?.data?.detail || e?.message;
+    // FastAPI 422 的 detail 是数组，取第一条 msg；其余情况转成字符串
+    const detail = Array.isArray(rawDetail)
+      ? (rawDetail[0]?.msg || rawDetail[0]?.type || t('login.login_error'))
+      : (rawDetail ? String(rawDetail) : '');
+    error.value = detail ? t('login.error_detail', { detail }) : t('login.login_error');
   } finally {
     loading.value = false;
   }

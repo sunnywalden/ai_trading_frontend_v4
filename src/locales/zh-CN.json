@@ -379,6 +379,7 @@
       "high": "高",
       "warning": "警告",
       "medium": "中",
+      "low": "低",
       "stable": "稳定",
       "unknown": "未知"
     },
@@ -428,7 +429,8 @@
         "leverage": "杠杆水平：保证金债务、企业杠杆率",
         "solid": "0-30：金融稳健",
         "stress": "30-60：压力显现",
-        "systemic": "60-100：系统性风险"
+        "systemic": "60-100：系统性风险",
+        "level_label": "金融风险"
       },
       "technical": {
         "name": "🔬 技术风险 (Technical Risk)",
@@ -1313,6 +1315,7 @@
     "dev_hint": "开发模式默认：{auth}",
     "login_failed": "登录失败，请检查用户名/密码",
     "login_error": "登录出错",
+    "error_detail": "登录失败：{detail}",
     "help_msg": "请在后端 .env 中重置 ADMIN_PASSWORD 或联系运维（仅限内部管理员）。",
     "hide_password": "隐藏密码",
     "show_password": "显示密码"
