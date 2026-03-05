@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.4.1（已发布）| 更新日期：2026-03-04  
+> 版本：V10.4.2 | 更新日期：2026-03-05  
+> 变更摘要（V10.4.2）：**信号精英化——Signal Watchtower + SignalBudgetWidget**——新增 `/signal-watchtower` 路由（漏斗实时流向图 + 拒绝信号列表 + 幽灵交易追踪 + 历史精英率折线图 + 参数调优面板）；新增 `SignalBudgetWidget` 组件（今日已推进/总配额环形图 + 漏斗各层通过数瀑布条状图）并嵌入 DashboardV2 和 War Room；导航"交易中枢"组新增"📡 信号哨所"入口；信号质量参数热更新 UI（参数滑块 + 权限确认弹窗）  
 > 变更摘要（V10.4）：**UI 大清洗 + Copilot 全局化 + 移动触达**——M2 页面整合（47→≤38 页：双仪表盘合并 / 执行三页→Order Book+Tab / 系统监控五页→单页三Tab / AI建议双页合并）+ 导航重组（6组→4组：首页仪表盘 / 交易中枢 / 研究&分析 / AI洞察&系统）；M3 全局 Copilot 浮窗（Cmd+K 任意页面，右下角常驻按钮，页面上下文注入，快捷操作动态渲染）；M5 移动响应式（Dashboard/SmartAlert/Copilot 竖屏 375px 可用，无横向溢出）；废弃路由 301 重定向，无感知迁移  
 > 变更摘要（V10.3.4）：**冷启动稳态 + 市场全量池**——各核心页面补全冷启动占位视图（Dashboard / MultiAgentPage Agent 状态看板 / ExecutionMicroscopePage / CalibrationPage 在零数据时展示引导占位而非空白/404 抖动）；PostMortemPage 从手工输入升级为交易选择驱动（选择历史交易 → 自动触发 LLM 事后剖析）；市场全量池状态视图接入（`/api/v1/market-universe/status`），标的同步进度可追踪；告警面板 / 归因页多账户 ID 兼容修复；事件日历去重修复（排除重复事件展示）  
 > 变更摘要（V10.3.3）：**可观测性 2.0** ——新增 `/observability` 路由体系（`/observability/execution-microscope` 执行显微镜：IS 四分解色码热力图 + Fill Rate 时段视图 + Execution Alpha 曲线；`/observability/signal-intelligence` 信号情报观察站：六维 IC 衰减曲线 + Factor Correlation Matrix 热力图 + Crowding Score 仪表；`/observability/risk-cluster` 风险可观测集群：五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图）；**AI 中枢 2.0** ——新增 `/ai-hub` 路由体系（`/ai-hub/agents` 多智能体协作中心：五 Agent 状态看板 + AgentMessage 通信日志流 + RiskChallenger 反驳面板；`/ai-hub/calibration` 置信度校准仪表盘：Reliability Diagram + Brier/ECE 趋势 + 校准因子状态；`/ai-hub/factor-weights` 自适应因子框架：Kalman 权重演变曲线 + 因子动量排名；`/ai-hub/post-mortems` 决策事后剖析库：反事实三路径对比 + 洞察自动提炼卡）；**War Room Dashboard** ——新增 `/war-room` 路由，全屏六格可配置指挥视图（P&L Ticker + Intelligence Feed + Portfolio Heatmap + Risk Gauges + Signal Pulse + Execution Queue），全局键盘快捷键体系；**Smart Alert Center** ——DashboardV2 新增智能告警分级面板组件；i18n 补全 observability / aiHub / warRoom / alertCenter 四个命名空间  
@@ -63,6 +64,7 @@
 ├── 🔬 执行显微镜 (Execution Microscope)
 ├── 📡 信号情报观察站 (Signal Intelligence)
 ├── ⚡ 风险可观测集群 (Risk Cluster)
+├── 🎯 信号哨所 (Signal Watchtower) ★ V10.4.2 新增
 └── ⚔️ War Room 作战室
 
 📚 研究 & 分析
@@ -178,6 +180,7 @@
 | **执行显微镜** | `/observability/execution`<br>_alias: `/observability/execution-microscope`_ | IS 四分解热力图 + Fill Rate 时段矩阵 + Execution Alpha 曲线 ★ V10.3.3 新增 |
 | **信号情报观察站** | `/observability/signal`<br>_alias: `/observability/signal-intelligence`_ | 六维 IC 衰减曲线 + Factor Correlation Matrix + Crowding Score ★ V10.3.3 新增 |
 | **风险可观测集群** | `/observability/risk`<br>_alias: `/observability/risk-cluster`_ | 五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图 ★ V10.3.3 新增 |
+| **信号哨所** | `/signal-watchtower` | 五层漏斗流向图 + 拒绝信号列表 + 幽灵追踪表格 + 精英率趋势 + 参数调优面板 ★ V10.4.2 新增 |
 | **多智能体协作中心** | `/ai-hub/agents` | 五 Agent 状态看板 + AgentMessage 通信日志流 + Risk Challenger 面板 ★ V10.3.3 新增 |
 | **置信度校准仪表盘** | `/ai-hub/calibration` | Reliability Diagram + Brier Score/ECE 趋势 + 校准因子状态 ★ V10.3.3 新增 |
 | **自适应因子框架** | `/ai-hub/weights`<br>_alias: `/ai-hub/factor-weights`_ | Kalman 权重演变曲线 + 因子动量排名 + 拥挤度 ★ V10.3.3 新增 |

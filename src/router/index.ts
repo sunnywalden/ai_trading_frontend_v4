@@ -230,6 +230,14 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'War Room 作战室' }
   },
 
+  // ── V10.4.2 Signal Watchtower 信号哨所 ────────────────────
+  {
+    path: '/signal-watchtower',
+    name: 'SignalWatchtower',
+    component: () => import('../views/SignalWatchtowerPage.vue'),
+    meta: { title: '信号哨所 · Signal Watchtower' }
+  },
+
   // ── 已合并页面重定向（向后兼容） ────────────────────────────
   { path: '/system',           redirect: '/system-monitor' },
   { path: '/dashboard-v1',     redirect: '/dashboard' },

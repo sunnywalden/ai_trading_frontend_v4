@@ -53,6 +53,7 @@
     "factor_weights": "自适应因子权重",
     "post_mortem": "决策事后剖析",
     "war_room": "War Room 作战室",
+    "signal_watchtower": "信号哨所",
     "module_observability_desc": "生命周期 · 订单簿 · 可观测性 2.0 · War Room",
     "module_system": "系统",
     "module_system_desc": "任务配置 · 服务健康 · 告警",
