@@ -1310,6 +1310,7 @@
     "dev_hint": "Dev Default: {auth}",
     "login_failed": "Login failed, please check username/password",
     "login_error": "Login error",
+    "error_detail": "Login failed: {detail}",
     "help_msg": "Please reset ADMIN_PASSWORD in .env or contact Ops (Admin only).",
     "hide_password": "Hide Password",
     "show_password": "Show Password"

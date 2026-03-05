@@ -164,7 +164,7 @@ watch(result, async (r) => {
   await nextTick()
   try {
     const echarts = await import('echarts')
-    const chart = echarts.init(chartDom.value)
+    const chart = echarts.getInstanceByDom(chartDom.value) || echarts.init(chartDom.value)
     chart.setOption({
       backgroundColor: 'transparent',
       tooltip: { trigger: 'item', formatter: (p: any) => `波动率: ${(p.data[0]*100).toFixed(1)}%<br/>收益: ${(p.data[1]*100).toFixed(1)}%<br/>Sharpe: ${p.data[2].toFixed(2)}` },

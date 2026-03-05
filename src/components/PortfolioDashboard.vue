@@ -68,8 +68,8 @@ let chartInstance: echarts.ECharts | null = null;
 
 const initChart = () => {
   if (!chartRef.value) return;
-  
-  chartInstance = echarts.init(chartRef.value);
+  // 避免重复 init 产生 ECharts "already inited" 警告
+  chartInstance = echarts.getInstanceByDom(chartRef.value) || echarts.init(chartRef.value);
   const data = Object.entries(props.analysis.sector_ratios).map(([name, value]) => ({
     name,
     value: Math.round(value * 1000) / 10
