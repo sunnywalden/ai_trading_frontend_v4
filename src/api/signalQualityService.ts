@@ -131,7 +131,7 @@ export const signalQualityService = {
   // ── 漏斗参数 ──────────────────────────────────────────────────────────────
 
   async getConfig(): Promise<QualityConfig> {
-    const res = await api.get('/api/v1/signals/quality-config')
+    const res = await api.get('/v1/signals/quality-config')
     return res.data
   },
 
@@ -140,12 +140,12 @@ export const signalQualityService = {
     applied: Partial<QualityConfigPatch>
     current: Partial<QualityConfig>
   }> {
-    const res = await api.patch('/api/v1/signals/quality-config', updates)
+    const res = await api.patch('/v1/signals/quality-config', updates)
     return res.data
   },
 
   async resetConfig(): Promise<{ reset: boolean; message: string }> {
-    const res = await api.delete('/api/v1/signals/quality-config/overrides')
+    const res = await api.delete('/v1/signals/quality-config/overrides')
     return res.data
   },
 
@@ -158,14 +158,14 @@ export const signalQualityService = {
     symbol?:       string | null
     since_days?:   number
   }): Promise<AuditLogListResponse> {
-    const res = await api.get('/api/v1/signals/audit-log', { params })
+    const res = await api.get('/v1/signals/audit-log', { params })
     return res.data
   },
 
   // ── 漏斗统计 ──────────────────────────────────────────────────────────────
 
   async getFunnelStats(since_days = 7): Promise<FunnelStats> {
-    const res = await api.get('/api/v1/signals/funnel-stats', {
+    const res = await api.get('/v1/signals/funnel-stats', {
       params: { since_days },
     })
     return res.data
@@ -180,12 +180,12 @@ export const signalQualityService = {
     symbol?:       string | null
     since_days?:   number
   }): Promise<GhostTradeListResponse> {
-    const res = await api.get('/api/v1/signals/ghost-trades', { params })
+    const res = await api.get('/v1/signals/ghost-trades', { params })
     return res.data
   },
 
   async getGhostAnalysis(since_days = 30): Promise<GhostAnalysis> {
-    const res = await api.get('/api/v1/signals/ghost-trades/analysis', {
+    const res = await api.get('/v1/signals/ghost-trades/analysis', {
       params: { since_days },
     })
     return res.data
