@@ -8,7 +8,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { createWsUrl } from '@/api/client'
+import { createWsUrl, getAuthToken, isTokenExpired } from '@/api/client'
 
 export interface WsMessage {
   event: string
@@ -42,6 +42,12 @@ export const useWebSocketStore = defineStore('websocket', () => {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
     const url = createWsUrl()
+    if (!url) {
+      connected.value = false
+      clearReconnect()
+      nextReconnectInMs.value = 0
+      return
+    }
     ws = new WebSocket(url)
 
     ws.onopen = () => {
@@ -72,7 +78,9 @@ export const useWebSocketStore = defineStore('websocket', () => {
       cleanupTimers()
 
       // 非主动关闭时自动重连
-      if (event.code !== 1000) {
+      const hasToken = !!getAuthToken()
+      const tokenExpired = isTokenExpired()
+      if (event.code !== 1000 && hasToken && !tokenExpired) {
         const delay = calcDelay(reconnectAttempt.value)
         nextReconnectInMs.value = delay
         console.log(
@@ -82,6 +90,9 @@ export const useWebSocketStore = defineStore('websocket', () => {
           reconnectAttempt.value++
           connect()
         }, delay)
+      } else {
+        clearReconnect()
+        nextReconnectInMs.value = 0
       }
     }
 

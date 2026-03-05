@@ -23,7 +23,9 @@ export default defineConfig({
         target: "http://127.0.0.1:8088",
         changeOrigin: true,
         secure: false,
-        ws: true
+        // 前端业务 WebSocket 已改为直连后端，不再通过 Vite 代理转发
+        // 关闭 ws 代理可避免开发时终端出现 `[vite] ws proxy error` 噪音
+        ws: false
       },
       "/health": {
         target: "http://127.0.0.1:8088",

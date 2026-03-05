@@ -80,9 +80,16 @@ export function connectSaWebSocket(
   onError?: (err: Event) => void,
   interval = 3,
 ): WebSocket {
-  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const host  = import.meta.env.VITE_WS_HOST || window.location.host
-  const url   = `${proto}://${host}/api/v1/ws/situational-awareness?token=${token}&interval=${interval}`
+  const wsBaseRaw =
+    (import.meta.env.VITE_WS_BASE_URL as string | undefined) ||
+    (import.meta.env.VITE_BACKEND_URL as string | undefined) ||
+    (import.meta.env.DEV ? 'http://127.0.0.1:8088' : '')
+
+  const wsBase = wsBaseRaw
+    ? wsBaseRaw.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://').replace(/\/$/, '')
+    : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
+
+  const url = `${wsBase}/api/v1/ws/situational-awareness?token=${encodeURIComponent(token)}&interval=${interval}`
 
   const ws = new WebSocket(url)
 
