@@ -80,7 +80,12 @@ function buildOption(): echarts.EChartsOption {
   return {
     backgroundColor: 'transparent',
     radar: {
-      indicator: DIMENSIONS.map((d) => ({ name: d.label, max: 100 })),
+      indicator: DIMENSIONS.map((d) => ({ 
+        name: d.label, 
+        max: 100,
+        min: 0,
+        axisLabel: { show: false } 
+      })),
       center: ['50%', '50%'],
       radius: '68%',
       splitNumber: 4,
