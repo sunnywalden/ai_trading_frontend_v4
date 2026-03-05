@@ -53,6 +53,7 @@
     "factor_weights": "Adaptive Factor Weights",
     "post_mortem": "Decision Post-Mortem",
     "war_room": "War Room",
+    "signal_watchtower": "Signal Watchtower",
     "module_observability_desc": "Lifecycle · Order Book · Observability 2.0 · War Room",
     "module_system": "System",
     "module_system_desc": "Task Config · Health · Alerts",

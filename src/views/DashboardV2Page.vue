@@ -251,6 +251,11 @@
         <VaRRiskMonitor :account-id="store.fullData.account_id" />
       </div>
 
+      <!-- Section: 信号配额 (V10.4.2) -->
+      <div class="section-signal-budget">
+        <SignalBudgetWidget :since-days="7" />
+      </div>
+
     <!-- Section 4: 交易计划 -->
     <div class="section-plans">
       <!-- 活跃计划 -->
@@ -374,6 +379,7 @@ import PositionCard from '@/components/dashboard/PositionCard.vue'
 import PlanCard from '@/components/dashboard/PlanCard.vue'
 import HotspotCard from '@/components/dashboard/HotspotCard.vue'
 import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
+import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'  // V10.4.2
 import { formatClientTime } from '@/utils/datetime'
 
 const store = useDashboardV2Store()

@@ -155,6 +155,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
       { path: '/observability/risk',       label: t('nav.risk_cluster'),        icon: '⚡' },
       { path: '/war-room',                 label: t('nav.war_room'),            icon: '⚔️' },
+      { path: '/signal-watchtower',           label: t('nav.signal_watchtower'),   icon: '🔭' },  // V10.4.2
     ],
   },
   {

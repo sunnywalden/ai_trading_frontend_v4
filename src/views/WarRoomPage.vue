@@ -152,6 +152,12 @@
         </template>
 
         <!-- 规划中面板类型占位 -->
+        <template v-else-if="panelType === 'SIGNAL_BUDGET'">
+          <!-- V10.4.2: 信号配额小组件 -->
+          <SignalBudgetWidget style="height:100%;box-sizing:border-box;border-radius:0;" />
+        </template>
+
+        <!-- 其他未实现面板占位 -->
         <template v-else>
           <div class="wp-title">🔧 P{{ idx + 1 }} · {{ PANEL_LABELS[panelType] }}</div>
           <div class="empty placeholder-panel">
@@ -218,18 +224,19 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'  // V10.4.2
 import { useWarRoomStore } from '@/stores/warRoom'
 import { useAiHubStore } from '@/stores/aiHub'
 import { useAutonomyStore } from '@/stores/autonomy'
 import * as echarts from 'echarts'
 
 // ── 面板类型定义（设计文档 V10.4 8-type spec）
-type PanelType = 'PNL_DETAIL' | 'INTEL_FEED' | 'FACTOR_EXPOSURE' | 'SMART_ALERTS' | 'FACTOR_WEIGHTS' | 'AGENT_BRIEF' | 'SECTOR_HEATMAP' | 'RISK_GAUGES' | 'SIGNAL_PULSE' | 'EXEC_QUEUE' | 'ORDER_BOOK_MINI'
+type PanelType = 'PNL_DETAIL' | 'INTEL_FEED' | 'FACTOR_EXPOSURE' | 'SMART_ALERTS' | 'FACTOR_WEIGHTS' | 'AGENT_BRIEF' | 'SECTOR_HEATMAP' | 'RISK_GAUGES' | 'SIGNAL_PULSE' | 'EXEC_QUEUE' | 'ORDER_BOOK_MINI' | 'SIGNAL_BUDGET'
 
 const ALL_PANEL_TYPES: PanelType[] = [
   'PNL_DETAIL', 'INTEL_FEED', 'FACTOR_EXPOSURE', 'SMART_ALERTS',
   'FACTOR_WEIGHTS', 'AGENT_BRIEF', 'SECTOR_HEATMAP', 'RISK_GAUGES',
-  'SIGNAL_PULSE', 'EXEC_QUEUE', 'ORDER_BOOK_MINI',
+  'SIGNAL_PULSE', 'EXEC_QUEUE', 'ORDER_BOOK_MINI', 'SIGNAL_BUDGET',
 ]
 
 const PANEL_LABELS: Record<PanelType, string> = {
@@ -244,6 +251,7 @@ const PANEL_LABELS: Record<PanelType, string> = {
   SIGNAL_PULSE:    '信号脉冲',
   EXEC_QUEUE:      '执行队列',
   ORDER_BOOK_MINI: '迷你订单簿',
+  SIGNAL_BUDGET:   '信号配额 (V10.4.2)',  // V10.4.2
 }
 
 const DEFAULT_LAYOUT: PanelType[] = [
