@@ -3,25 +3,89 @@
     <!-- 左栏: 早间简报 + 快捷动作 -->
     <div class="side-panel">
       <div class="card brief-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="margin: 0;">📋 早间简报 <small style="font-weight: normal; color: #888; font-size: 11px;">(美股/港股)</small></h3>
-          <button class="refresh-button" @click="copilotStore.fetchMorningBrief(true)" style="font-size: 12px; padding: 4px 10px;">刷新</button>
-        </div>
-        <div v-if="copilotStore.loading" class="loading-message">加载中...</div>
-        <div v-else-if="brief">
-          <p class="brief-date">{{ brief.date }}</p>
-          <p class="brief-summary">{{ brief.summary }}</p>
-          <div v-if="brief.risk_alerts && brief.risk_alerts.length" class="risk-alerts">
-            <div v-for="alert in brief.risk_alerts" :key="alert" class="risk-alert-item">⚠️ {{ alert }}</div>
+        <!-- Header -->
+        <div class="brief-header">
+          <div class="brief-title-row">
+            <span class="brief-title">📋 早间简报</span>
+            <small class="brief-subtitle">(美股/港股)</small>
           </div>
-          <div v-if="brief.top_signals && brief.top_signals.length" class="signal-list">
-            <div v-for="sig in brief.top_signals" :key="sig.symbol" class="signal-item">
-              <span class="signal-symbol">{{ sig.symbol }}</span>
-              <span class="signal-action" :class="(sig.action || 'BUY') === 'BUY' ? 'buy' : 'sell'">{{ sig.action }}</span>
-              <span class="signal-reason">{{ sig.reason }}</span>
+          <button class="refresh-button brief-refresh" @click="copilotStore.fetchMorningBrief(true)">刷新</button>
+        </div>
+
+        <div v-if="copilotStore.loading" class="brief-loading">
+          <div class="loading-bar"></div>
+          <div class="loading-bar short"></div>
+          <div class="loading-bar"></div>
+        </div>
+
+        <div v-else-if="brief" class="brief-content">
+          <!-- Date & Regime -->
+          <div class="brief-meta">
+            <span class="brief-date">{{ brief.date }}</span>
+            <span v-if="brief.market_regime" class="regime-badge" :class="`regime-${(brief.market_regime || '').toLowerCase()}`">
+              {{ regimeLabel(brief.market_regime) }}
+            </span>
+          </div>
+
+          <!-- Portfolio Snapshot -->
+          <div v-if="brief.portfolio_snapshot" class="snapshot-row">
+            <div class="snap-item">
+              <span class="snap-label">持仓</span>
+              <span class="snap-value">{{ brief.portfolio_snapshot.positions_count }}</span>
+            </div>
+            <div v-if="brief.portfolio_snapshot.unrealized_pnl_pct != null" class="snap-item">
+              <span class="snap-label">浮盈</span>
+              <span class="snap-value" :class="(brief.portfolio_snapshot.unrealized_pnl_pct ?? 0) >= 0 ? 'positive' : 'negative'">
+                {{ (brief.portfolio_snapshot.unrealized_pnl_pct ?? 0) >= 0 ? '+' : '' }}{{ brief.portfolio_snapshot.unrealized_pnl_pct?.toFixed(1) }}%
+              </span>
+            </div>
+            <div v-if="brief.portfolio_snapshot.beta_exposure != null" class="snap-item">
+              <span class="snap-label">Beta</span>
+              <span class="snap-value">{{ brief.portfolio_snapshot.beta_exposure?.toFixed(1) }}</span>
+            </div>
+            <div v-if="brief.portfolio_snapshot.top_contributor" class="snap-item">
+              <span class="snap-label">贡献</span>
+              <span class="snap-value highlight">{{ brief.portfolio_snapshot.top_contributor }}</span>
             </div>
           </div>
+
+          <!-- Summary -->
+          <p class="brief-summary">{{ brief.summary }}</p>
+
+          <!-- Key Themes -->
+          <div v-if="brief.key_themes && brief.key_themes.length" class="brief-section">
+            <div class="section-label">💡 关注点</div>
+            <ul class="themes-list">
+              <li v-for="theme in brief.key_themes" :key="theme">{{ theme }}</li>
+            </ul>
+          </div>
+
+          <!-- Signals -->
+          <div v-if="brief.top_signals && brief.top_signals.length" class="brief-section">
+            <div class="section-label">🎯 主要信号</div>
+            <div v-for="sig in brief.top_signals" :key="sig.symbol" class="signal-card">
+              <div class="signal-top-row">
+                <span class="signal-symbol">{{ sig.symbol }}</span>
+                <span class="signal-action" :class="signalActionClass(sig.action)">{{ sig.action }}</span>
+                <span v-if="sig.confidence" class="signal-conf">{{ Math.round(sig.confidence * 100) }}%</span>
+              </div>
+              <p class="signal-reason">{{ sig.reason }}</p>
+            </div>
+          </div>
+
+          <!-- Risk Alerts -->
+          <div v-if="brief.risk_alerts && brief.risk_alerts.length" class="brief-section">
+            <div class="section-label">⚠️ 风险提示</div>
+            <div v-for="alert in brief.risk_alerts" :key="alert" class="risk-alert-item">{{ alert }}</div>
+          </div>
+
+          <!-- Market Outlook -->
+          <div v-if="brief.market_outlook" class="brief-section market-outlook-section">
+            <div class="section-label">📈 市场展望</div>
+            <p class="outlook-text">{{ brief.market_outlook }}</p>
+          </div>
         </div>
+
         <p v-else class="info-message">点击刷新获取早间简报</p>
       </div>
 
@@ -212,6 +276,23 @@ onMounted(async () => {
   await copilotStore.fetchMorningBrief()
   await copilotStore.loadHistory(30)
 })
+
+// ── 早间简报辅助函数 ────────────────────────────────────────────────────────
+function regimeLabel(regime: string | undefined): string {
+  const map: Record<string, string> = {
+    BULL: '● 牛市', BEAR: '● 熊市', NEUTRAL: '● 震荡',
+    RISK_OFF: '● 避险', CRISIS: '● 危机', UNKNOWN: '未知',
+  }
+  return map[(regime || '').toUpperCase()] ?? regime ?? ''
+}
+
+function signalActionClass(action: string | undefined): string {
+  const a = (action || '').toUpperCase()
+  if (a === 'BUY' || a === 'LONG') return 'buy'
+  if (a === 'SELL' || a === 'SHORT') return 'sell'
+  if (a.includes('HEDGE') || a.includes('MONITOR')) return 'hedge'
+  return 'neutral'
+}
 </script>
 
 <style scoped>
@@ -222,16 +303,70 @@ onMounted(async () => {
 .side-panel { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
 .chat-panel { flex: 1; display: flex; flex-direction: column; height: 100%; }
 .card { background: var(--card-bg, #1a1a2e); border: 1px solid var(--border-color, #2d2d4e); border-radius: 8px; padding: 16px; }
-.brief-date { font-size: 12px; color: #888; margin: 0 0 8px; }
-.brief-summary { font-size: 13px; line-height: 1.6; }
-.risk-alerts { margin-top: 12px; }
-.risk-alert-item { font-size: 12px; color: #ff9800; padding: 4px 0; }
-.signal-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.signal-item { display: flex; gap: 8px; align-items: center; font-size: 12px; }
-.signal-symbol { font-weight: 600; }
-.signal-action.buy { color: #4caf50; }
-.signal-action.sell { color: #f44336; }
-.signal-reason { color: #888; }
+/* ── 早间简报卡片 ──────────────────────────────────────────────────────────── */
+.brief-card { padding: 14px; }
+.brief-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.brief-title-row { display: flex; align-items: baseline; gap: 6px; }
+.brief-title { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+.brief-subtitle { font-size: 11px; color: #666; }
+.brief-refresh { font-size: 11px; padding: 3px 9px; }
+
+/* Loading skeleton */
+.brief-loading { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+.loading-bar { height: 10px; background: rgba(255,255,255,0.07); border-radius: 4px; animation: shimmer 1.4s ease-in-out infinite; }
+.loading-bar.short { width: 60%; }
+@keyframes shimmer { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+
+/* Date + regime */
+.brief-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.brief-date { font-size: 12px; color: #888; }
+.regime-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.3px; }
+.regime-bull    { background: rgba(0,255,136,0.12); color: #00e57a; }
+.regime-bear    { background: rgba(244,67,54,0.12); color: #ef9a9a; }
+.regime-neutral { background: rgba(255,193,7,0.12); color: #ffc107; }
+.regime-risk_off{ background: rgba(158,158,158,0.12); color: #9e9e9e; }
+.regime-crisis  { background: rgba(244,67,54,0.2); color: #ff5252; }
+
+/* Portfolio snapshot row */
+.snapshot-row { display: flex; gap: 0; margin-bottom: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; }
+.snap-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-right: 1px solid rgba(255,255,255,0.06); }
+.snap-item:last-child { border-right: none; }
+.snap-label { font-size: 10px; color: #666; margin-bottom: 2px; }
+.snap-value { font-size: 12px; font-weight: 600; color: #ccc; }
+.snap-value.positive { color: #4caf50; }
+.snap-value.negative { color: #f44336; }
+.snap-value.highlight { color: #64b5f6; }
+
+/* Summary */
+.brief-summary { font-size: 12px; line-height: 1.65; color: #c0c0c0; margin: 0 0 10px; }
+
+/* Sections */
+.brief-section { margin-top: 10px; }
+.section-label { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Key themes */
+.themes-list { margin: 0; padding: 0 0 0 14px; list-style: disc; }
+.themes-list li { font-size: 11.5px; color: #aaa; line-height: 1.6; padding: 1px 0; }
+
+/* Signal cards */
+.signal-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+.signal-top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.signal-symbol { font-size: 13px; font-weight: 700; color: #e0e0e0; }
+.signal-conf { font-size: 10px; color: #888; margin-left: auto; }
+.signal-action { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; }
+.signal-action.buy    { background: rgba(76,175,80,0.15); color: #4caf50; }
+.signal-action.sell   { background: rgba(244,67,54,0.15); color: #f44336; }
+.signal-action.hedge  { background: rgba(255,152,0,0.15); color: #ff9800; }
+.signal-action.neutral{ background: rgba(158,158,158,0.12); color: #9e9e9e; }
+.signal-reason { font-size: 11px; color: #888; margin: 0; line-height: 1.5; }
+
+/* Risk alerts */
+.risk-alert-item { font-size: 11.5px; color: #ffb74d; padding: 3px 0 3px 14px; position: relative; line-height: 1.5; }
+.risk-alert-item::before { content: '▸'; position: absolute; left: 0; color: #ff9800; }
+
+/* Market outlook */
+.market-outlook-section { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+.outlook-text { font-size: 12px; color: #90caf9; line-height: 1.6; margin: 0; font-style: italic; }
 .pending-action { background: rgba(255,152,0,0.05); border: 1px solid rgba(255,152,0,0.3); border-radius: 6px; padding: 10px; margin-bottom: 8px; }
 .chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .chat-header h3 { margin: 0; }

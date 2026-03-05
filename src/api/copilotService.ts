@@ -12,9 +12,18 @@ export interface CopilotMessage {
 
 export interface MorningBrief {
   date: string
+  market_regime?: string
   summary: string
   market_outlook: string
-  top_signals: Array<{ symbol: string; action: string; reason: string }>
+  portfolio_snapshot?: {
+    positions_count: number
+    unrealized_pnl_pct?: number | null
+    top_contributor?: string | null
+    beta_exposure?: number | null
+    mom_exposure?: number | null
+  }
+  key_themes?: string[]
+  top_signals: Array<{ symbol: string; action: string; reason: string; confidence?: number }>
   risk_alerts: string[]
 }
 
