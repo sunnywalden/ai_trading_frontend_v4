@@ -118,9 +118,11 @@ function renderRadar() {
     backgroundColor: 'transparent',
     radar: {
       indicator: [
-        { name: 'Beta', max: maxVal }, { name: 'HML', max: maxVal }, { name: 'SMB', max: maxVal },
-        { name: 'Momentum', max: maxVal }, { name: 'QMJ', max: maxVal },
+        { name: 'Beta', max: maxVal, min: 0 }, { name: 'HML', max: maxVal, min: 0 },
+        { name: 'SMB', max: maxVal, min: 0 }, { name: 'Momentum', max: maxVal, min: 0 },
+        { name: 'QMJ', max: maxVal, min: 0 },
       ],
+      splitNumber: 4,
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.3)' } },
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.1)' } },
       axisName: { color: '#ccc' },
