@@ -1810,11 +1810,21 @@ export async function cancelOrder(orderId: string): Promise<void> {
 }
 
 // ---------- WebSocket 工具 ----------
-export function createWsUrl(): string {
+export function createWsUrl(): string | null {
   const token = getAuthToken();
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const base = `${wsProtocol}//${window.location.host}`;
-  return `${base}/api/v1/ws?token=${token}`;
+  if (!token) return null;
+
+  // 优先级：VITE_WS_BASE_URL > VITE_BACKEND_URL > DEV 默认直连 127.0.0.1:8088 > 当前 host
+  const wsBaseRaw =
+    (import.meta.env.VITE_WS_BASE_URL as string | undefined) ||
+    (import.meta.env.VITE_BACKEND_URL as string | undefined) ||
+    (import.meta.env.DEV ? 'http://127.0.0.1:8088' : '');
+
+  const wsBase = wsBaseRaw
+    ? wsBaseRaw.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://').replace(/\/$/, '')
+    : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`;
+
+  return `${wsBase}/api/v1/ws?token=${encodeURIComponent(token)}`;
 }
 
 // ═══════════════════════════════════════════════════════════
