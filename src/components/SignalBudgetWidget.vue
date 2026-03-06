@@ -80,6 +80,16 @@ const stats            = ref<FunnelStats | null>(null)
 const config           = ref<QualityConfig | null>(null)
 const funnelChartRef   = ref<HTMLElement | null>(null)
 let funnelChart: echarts.ECharts | null = null
+let disposed = false
+
+function handleResize() {
+  if (!funnelChart) return
+  try {
+    funnelChart.resize()
+  } catch {
+    // ignore disposed chart resize during rapid route switches
+  }
+}
 
 const eliteRateBadgeClass = computed(() => {
   const r = stats.value?.elite_rate_pct ?? 0
@@ -89,6 +99,7 @@ const eliteRateBadgeClass = computed(() => {
 })
 
 async function loadData() {
+  if (disposed) return
   loading.value = true
   error.value   = null
   try {
@@ -99,7 +110,7 @@ async function loadData() {
     stats.value  = s
     config.value = c
     await nextTick()
-    renderFunnelChart()
+    if (!disposed) renderFunnelChart()
   } catch (e: any) {
     error.value = e?.message ?? '加载失败'
   } finally {
@@ -109,6 +120,7 @@ async function loadData() {
 
 function renderFunnelChart() {
   if (!funnelChartRef.value || !stats.value) return
+  if (disposed) return
   if (!funnelChart) {
     funnelChart = echarts.init(funnelChartRef.value)
   }
@@ -153,13 +165,22 @@ function renderFunnelChart() {
 }
 
 onMounted(() => {
+  disposed = false
   loadData()
-  window.addEventListener('resize', () => funnelChart?.resize())
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  funnelChart?.dispose()
-  window.removeEventListener('resize', () => funnelChart?.resize())
+  disposed = true
+  window.removeEventListener('resize', handleResize)
+  if (funnelChart) {
+    try {
+      funnelChart.dispose()
+    } catch {
+      // ignore duplicate dispose noise
+    }
+    funnelChart = null
+  }
 })
 </script>
 
