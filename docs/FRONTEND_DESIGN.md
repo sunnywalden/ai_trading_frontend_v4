@@ -949,6 +949,21 @@
 
 **设计目标**：把“系统活着”升级为“系统每条链路都可解释”。运维和交易审计都能在一个页面看到哪里堵了、哪里慢了、哪里在降级。
 
+**页面原型（顶层框架）**：
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🖥️ 系统监控                                                [最近刷新 14:32:18] │
+│ 描述：服务健康、生命周期、主数据流、API 配额、任务执行的一站式作战视图        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ [🩺 服务健康] [🧬 生命周期] [🔀 数据流] [📡 API监控] [📋 任务管理]   [⟳ 刷新] │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 顶部总览条：核心模块健康 / 严重告警数 / 降级服务数 / stuck intents / 队列积压    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Tab 内容区（按当前视图切换）                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
 **信息架构**：在现有 `/system` 单页内扩展为 5 个视图 Tab：
 
 - `🩺 服务健康`：基础健康、自主循环健康检查、WebSocket 状态、核心依赖状态
@@ -956,6 +971,35 @@
 - `🔀 数据流`：主链路 `DataHub → Signal → Decision → Risk → Execution → Monitoring → Attribution/Post-Mortem`
 - `📡 API 监控`：外部 API、LLM 调用、限流、错误摘要
 - `📋 任务管理`：定时任务、手动补跑、失败重试、JobWatchdog 状态
+
+**组件树（定稿）**：
+
+```text
+SystemMonitorPage
+├─ SystemMonitorSummaryStrip
+├─ SystemMonitorTabBar
+├─ SystemHealthOverviewTab
+│  ├─ SystemHealthCard
+│  ├─ AutonomyHealthPanel
+│  └─ WebSocketStatusPanel
+├─ LifecycleMonitorTab
+│  ├─ LifecycleHeadlineBar
+│  ├─ PipelineStageHeatmap
+│  ├─ FsmDistributionPanel
+│  ├─ LifecycleExceptionTable
+│  └─ LifecycleIntentDrawer
+├─ DataFlowMonitorTab
+│  ├─ DataFlowGraph
+│  ├─ DataFlowNodeTable
+│  └─ DataFlowDetailDrawer
+├─ ApiMonitoringTab
+│  ├─ ApiProviderGrid
+│  ├─ AlertsPanel
+│  └─ LlmStatsPanel
+└─ TaskManagementTab
+  ├─ TaskManagementPage
+  └─ JobWatchdogPanel
+```
 
 **生命周期视图布局**：
 
@@ -969,8 +1013,7 @@
 ├───────────────────────┴───────────────────────┴────────────────────┤
 │ 异常列表：intent_id / symbol / 当前阶段 / 停留时长 / 最近错误       │
 └─────────────────────────────────────────────────────────────────────┘
-
-```text
+```
 
 **数据流视图布局**：
 
@@ -1006,6 +1049,33 @@
 - 服务树支持 `仅异常 / 仅降级 / 仅外部依赖` 快速筛选
 - 状态颜色统一：`HEALTHY=绿`、`WARN=黄`、`CRITICAL=红`、`UNKNOWN=灰`
 
+**页面状态机**：
+
+- `idle`：首次进入页面，未发起请求
+- `loading`：Tab 首次装载或全量刷新中
+- `partial-ready`：部分数据成功，部分模块降级显示
+- `ready`：当前 Tab 数据完整可用
+- `error`：当前 Tab 请求失败，保留重试按钮与上次快照时间
+
+**前端 DTO（定稿，文件：`src/types/systemMonitor.ts`）**：
+
+| 接口 | 顶层响应类型 | 核心字段 |
+| --- | --- | --- |
+| 生命周期总览 | `LifecycleOverviewResponse` | `meta`, `headline`, `pipeline[]`, `plan_fsm[]`, `position_fsm[]`, `exceptions[]` |
+| 单 intent 详情 | `LifecycleIntentDetailResponse` | `intent_id`, `current_stage_*`, `timeline[]`, `latest_errors[]` |
+| 数据流总览 | `DataFlowOverviewResponse` | `meta`, `flows[]` |
+| 单数据流详情 | `DataFlowDetailResponse` | `flow_name`, `nodes[]`, `failures[]` |
+| 服务总览 | `ServiceOverviewResponse` | `meta`, `modules[]`, `services[]` |
+| 单服务详情 | `ServiceDetailResponse` | `service`, `timeline[]`, `recent_failures[]` |
+
+**DTO 字段映射约束**：
+
+- 所有时间字段统一为 ISO8601 字符串：`generated_at`, `last_success_at`, `occurred_at`
+- 所有状态字段统一为：`HEALTHY | WARN | CRITICAL | UNKNOWN`
+- 所有统计字段统一使用数字，不返回字符串百分比；百分比由前端展示层格式化
+- `meta.window_minutes` 固定代表当前接口统计窗口；与筛选器绑定
+- `queue_depth`、`lag_seconds`、`throughput_*` 允许为 `null`，表示该节点不适用，而不是报错
+
 **API 调用**：
 
 - `GET /api/v1/system-monitor/lifecycle`
@@ -1014,6 +1084,15 @@
 - `GET /api/v1/system-monitor/data-flows/{flow_name}`
 - `GET /api/v1/system-monitor/services`
 - `GET /api/v1/system-monitor/services/{service_name}`
+
+**接口查询参数（定稿）**：
+
+- 生命周期总览：`window_minutes`, `only_exceptions`, `stage_id?`, `symbol?`
+- 单 intent 详情：无 Query
+- 数据流总览：`window_minutes`, `include_healthy`
+- 单数据流详情：`window_minutes`, `limit_failures`
+- 服务总览：`window_minutes`, `module?`, `status?`, `degraded_only`
+- 单服务详情：`window_minutes`, `limit_failures`
 
 ---
 
@@ -1524,7 +1603,7 @@ interface SAStore {
 
 ## 5. 组件库
 
-#### KPICard - KPI 卡片
+### KPICard - KPI 卡片
 
 ```vue
 <template>
@@ -1550,7 +1629,7 @@ interface SAStore {
 - change?: string - 变化值（可选）
 - variant?: 'default' | 'success' | 'danger' | 'warning'
 
-#### TrendChart - 趋势图表
+### TrendChart - 趋势图表
 
 ```vue
 <template>
@@ -1572,7 +1651,7 @@ import * as echarts from 'echarts';
 - type: 'line' | 'bar' | 'pie' - 图表类型
 - options?: Object - ECharts 配置
 
-#### SignalCard - 信号卡片
+### SignalCard - 信号卡片
 
 ```vue
 <template>
@@ -2331,6 +2410,7 @@ export default {
 ```
 
 **IS 四分解说明**（提示气泡，悬停显示）：
+
 | 分量 | 颜色 | 定义 |
 | ------ | ------ | ------ |
 | Delay Cost | `#4facfe` | 决策价 → 信号发出时价格的偏移成本 |
