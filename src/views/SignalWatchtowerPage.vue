@@ -25,6 +25,19 @@
 
     <!-- ── Tab 1: 漏斗概览 ─────────────────────────────────────────── -->
     <div v-if="activeTab === 'funnel'" class="tab-content">
+      <!-- L2 持仓满载诊断横幅 -->
+      <div v-if="isL2Dominant" class="l2-capacity-alert">
+        <span class="l2-alert-icon">⚠️</span>
+        <div class="l2-alert-body">
+          <strong>组合容量已满 — L2 正在拦截所有新信号</strong>
+          <span class="l2-alert-detail">
+            当前 HELD 持仓 <strong>{{ stats!.current_positions_count }}</strong> 个 &gt;
+            配置上限 <strong>{{ stats!.max_concurrent_positions_cfg }}</strong> 个；
+            须平仓后方可放行新信号
+          </span>
+        </div>
+      </div>
+
       <div class="stat-cards">
         <div class="stat-card">
           <div class="sc-value">{{ stats?.total_evaluated ?? '--' }}</div>
@@ -323,6 +336,19 @@ let trendChart: echarts.ECharts | null = null
 const eliteRatePct = computed(() =>
   stats.value?.elite_rate_pct?.toFixed(1) ?? '--'
 )
+
+// L2 (MAX_POSITIONS_REACHED) 是否为主要拦截原因，且确实超出配置上限
+const isL2Dominant = computed(() => {
+  if (!stats.value) return false
+  const breakdown = stats.value.rejection_breakdown ?? {}
+  const l2Count = breakdown['MAX_POSITIONS_REACHED'] ?? 0
+  const total = stats.value.total_evaluated ?? 0
+  if (total === 0 || l2Count === 0) return false
+  const currentPos = stats.value.current_positions_count ?? 0
+  const maxCfg = stats.value.max_concurrent_positions_cfg ?? Infinity
+  // 超过配置上限 且 L2 拒绝占比 > 30%
+  return currentPos > maxCfg && (l2Count / total) > 0.3
+})
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTs(ts: string | null | undefined): string {
@@ -701,6 +727,23 @@ onUnmounted(() => {
 .ab-conclusion { font-size: 12px; margin-bottom: 4px; }
 .ab-stats { font-size: 11px; color: #94a3b8; }
 .ab-stats strong { color: #e2e8f0; }
+
+/* ── L2 持仓满载诊断横幅 ───────────────────────────────────────────────── */
+.l2-capacity-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.45);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.l2-alert-icon { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+.l2-alert-body { display: flex; flex-direction: column; gap: 3px; }
+.l2-alert-body strong { color: #fca5a5; font-size: 13px; }
+.l2-alert-detail { font-size: 11px; color: #94a3b8; }
+.l2-alert-detail strong { color: #f87171; }
 
 /* ── 调参面板 ────────────────────────────────────────────────────────────── */
 .config-panel {
