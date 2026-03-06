@@ -287,10 +287,10 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="margin: 0;">信号流水线（最近 30 条）</h3>
         <div v-if="status?.signal_pipeline" style="display: flex; gap: 8px; font-size: 12px;">
-          <span class="badge-info">待处理: {{ status.signal_pipeline['GENERATED'] ?? 0 }}</span>
-          <span class="badge-info">已验证: {{ status.signal_pipeline['VALIDATED'] ?? 0 }}</span>
-          <span class="badge-success">已执行: {{ status.signal_pipeline['EXECUTED'] ?? 0 }}</span>
-          <span class="badge-danger">失败: {{ status.signal_pipeline['FAILED'] ?? 0 }}</span>
+          <span class="badge-info">待处理: {{ pendingSignalCount }}</span>
+          <span class="badge-info">已验证: {{ validatedSignalCount }}</span>
+          <span class="badge-success">已执行: {{ executedSignalCount }}</span>
+          <span class="badge-danger">失败: {{ failedSignalCount }}</span>
         </div>
       </div>
       <div v-if="autonomyStore.loading" class="loading-message">加载中...</div>
@@ -345,6 +345,15 @@
             <td>{{ (sig.strength * 100).toFixed(2) + '%' }}</td>
             <td>
               <span :class="signalStatusClass(sig.status)">{{ sig.status }}</span>
+              <div v-if="sig.funnel_result === 'REJECTED'" style="margin-top: 4px;">
+                <span
+                  class="mini-note"
+                  style="color: #ff6b6b; font-size: 10px;"
+                  :title="funnelRejectionLabel(sig.funnel_rejection_reason) + (sig.funnel_rejection_reason ? ' (' + sig.funnel_rejection_reason + ')' : '')"
+                >
+                  漏斗L{{ sig.funnel_rejected_at_layer }}拒绝: {{ funnelRejectionLabel(sig.funnel_rejection_reason) }}
+                </span>
+              </div>
             </td>
             <td style="max-width: 200px; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
               {{ sig.notes ?? '—' }}
@@ -441,6 +450,13 @@ const cooldownSymbols = computed<CooldownSymbol[]>(
   () => status.value?.cooldown_symbols ?? []
 )
 const cooldownActive = computed(() => cooldownSymbols.value.length > 0)
+const signalPipelineCounts = computed(() => status.value?.signal_pipeline ?? {})
+const pendingSignalCount = computed(() =>
+  (signalPipelineCounts.value['GENERATED'] ?? 0) + (signalPipelineCounts.value['QUEUED'] ?? 0)
+)
+const validatedSignalCount = computed(() => signalPipelineCounts.value['VALIDATED'] ?? 0)
+const executedSignalCount = computed(() => signalPipelineCounts.value['EXECUTED'] ?? 0)
+const failedSignalCount = computed(() => signalPipelineCounts.value['FAILED'] ?? 0)
 
 const regimeBannerLabel = computed(() => {
   if (!regimeInfo.value) return '—'
@@ -500,6 +516,25 @@ function sourceLabel(source?: string | null) {
     ARBITRAGE: '套利',
   }
   return labels[key] || (source ?? '未知来源')
+}
+
+const FUNNEL_REJECTION_LABELS: Record<string, string> = {
+  LOW_LIQUIDITY: '流动性不足',
+  REGIME_BLOCKED: '体制拦截',
+  REGIME_DIRECTION: '体制方向限制',
+  MAX_POSITIONS_REACHED: '持仓已满',
+  DAILY_QUOTA_EXHAUSTED: '日配额耗尽',
+  HIGH_CORRELATION: '相关性过高',
+  INSUFFICIENT_RESONANCE: '共振不足',
+  ANTI_RESONANCE_KILL: '反共振一票否决',
+  LOW_CONVICTION: '置信度不足',
+  LOW_EXPECTED_SHARPE: '夏普不足',
+  LOW_CALIBRATED_FLOOR: '校准下界不足',
+}
+
+function funnelRejectionLabel(reason?: string | null): string {
+  if (!reason) return '拒绝'
+  return FUNNEL_REJECTION_LABELS[reason] ?? reason
 }
 
 function sourceBadgeClass(source?: string | null) {

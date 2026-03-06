@@ -73,6 +73,8 @@ export interface FunnelStats {
   }
   rejection_breakdown: Record<string, number>
   daily_trend:         LayerDailyTrend[]
+  current_positions_count?:     number   // 当前 HELD 持仓数
+  max_concurrent_positions_cfg?: number  // 配置的最大并发仓位
 }
 
 export interface GhostTrade {

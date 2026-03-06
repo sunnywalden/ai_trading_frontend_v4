@@ -72,6 +72,9 @@ export interface SignalPipelineItem {
   fallback_to_default_symbols?: boolean | null
   executed_at: string | null
   created_at: string
+  funnel_result?: 'PASSED' | 'REJECTED' | null
+  funnel_rejected_at_layer?: number | null
+  funnel_rejection_reason?: string | null
 }
 
 export interface SignalGenerationStrategyRun {

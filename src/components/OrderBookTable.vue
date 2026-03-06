@@ -53,7 +53,7 @@
       <div class="group-block">
         <div class="group-header green" @click="toggleGroup('active')">
           <span class="group-icon">{{ groupOpen.active ? '▾' : '▸' }}</span>
-          <span class="group-title">活跃中</span>
+          <span class="group-title">活跃中（含持仓）</span>
           <span class="group-badge green-badge">{{ activeRows.length }}</span>
         </div>
         <div v-if="groupOpen.active" class="table-wrap">
