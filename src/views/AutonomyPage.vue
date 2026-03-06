@@ -140,6 +140,38 @@
       </div>
     </div>
 
+    <div v-if="status?.signal_quality" class="card signal-quality-card" style="margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div>
+          <h3 style="margin:0 0 4px;">🏅 信号质量队列</h3>
+          <p style="margin:0; font-size:12px; color:#8b97ad;">先看质量，再进漏斗。精英级信号可越过日配额上限，但不会越过真正的风险边界。</p>
+        </div>
+        <span class="quality-badge quality-badge-elite" v-if="status.signal_quality.pending_elite_signals > 0">
+          待处理精英 {{ status.signal_quality.pending_elite_signals }}
+        </span>
+      </div>
+      <div class="closing-flow-grid">
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">今日精英信号</div>
+          <div class="closing-flow-value">{{ status.signal_quality.elite_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">高质量以上</div>
+          <div class="closing-flow-value text-success">{{ status.signal_quality.high_quality_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">配额豁免</div>
+          <div class="closing-flow-value text-warning">{{ status.signal_quality.quota_exempt_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">待处理精英</div>
+          <div class="closing-flow-value" :class="status.signal_quality.pending_elite_signals > 0 ? 'text-warning' : 'text-success'">
+            {{ status.signal_quality.pending_elite_signals }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="autonomyStore.marketUniverseStatus" class="card" style="margin-bottom: 24px;">
       <h3 style="margin: 0 0 12px;">📚 本地全量池健康</h3>
       <div class="full-cycle-summary__meta" style="margin-bottom: 10px;">
@@ -282,6 +314,12 @@
             <td>{{ sig.symbol }}</td>
             <td>
               <span :class="signalTypeClass(sig.type)">{{ sig.type }}</span>
+              <div v-if="sig.signal_quality_tier" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="qualityBadgeClass(sig.signal_quality_tier)">
+                  {{ qualityBadgeLabel(sig.signal_quality_tier, sig.signal_quality_score) }}
+                </span>
+                <span v-if="sig.signal_quality_quota_exempt" class="mini-note">日配额豁免</span>
+              </div>
               <div v-if="sig.closing_intent" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
                 <span :class="executionPathClass(sig.execution_path)">{{ executionPathLabel(sig.execution_path) }}</span>
                 <span v-if="sig.bypass_reason" class="mini-note">{{ sig.bypass_reason }}</span>
@@ -349,6 +387,12 @@
               <span :class="log.risk_gate_passed ? 'badge-success' : 'badge-danger'">
                 {{ log.risk_gate_passed ? '通过' : '拦截' }}
               </span>
+              <div v-if="log.signal_quality_tier" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="qualityBadgeClass(log.signal_quality_tier)">
+                  {{ qualityBadgeLabel(log.signal_quality_tier, log.signal_quality_score) }}
+                </span>
+                <span v-if="log.signal_quality_quota_exempt" class="mini-note">日配额豁免</span>
+              </div>
               <div v-if="log.closing_intent" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
                 <span :class="executionPathClass(log.execution_path)">{{ executionPathLabel(log.execution_path) }}</span>
                 <span v-if="log.bypass_reason" class="mini-note">{{ log.bypass_reason }}</span>
@@ -528,6 +572,23 @@ function executionPathLabel(path?: string | null) {
   if (normalized === 'FORCE_EXIT') return '强制出场'
   if (normalized === 'FAST_CLOSE') return '快速平仓'
   return '标准路径'
+}
+
+function qualityBadgeClass(tier?: string | null) {
+  const normalized = (tier || 'LOW').toUpperCase()
+  if (normalized === 'ELITE') return 'quality-badge quality-badge-elite'
+  if (normalized === 'HIGH') return 'quality-badge quality-badge-high'
+  if (normalized === 'MEDIUM') return 'quality-badge quality-badge-medium'
+  return 'quality-badge quality-badge-low'
+}
+
+function qualityBadgeLabel(tier?: string | null, score?: number | null) {
+  const normalized = (tier || 'LOW').toUpperCase()
+  const scoreLabel = typeof score === 'number' ? ` ${score.toFixed(1)}` : ''
+  if (normalized === 'ELITE') return `精英${scoreLabel}`
+  if (normalized === 'HIGH') return `高质${scoreLabel}`
+  if (normalized === 'MEDIUM') return `中质${scoreLabel}`
+  return `观察${scoreLabel}`
 }
 
 const levelLabels: Record<string, string> = {
@@ -837,6 +898,11 @@ onMounted(async () => {
   background: linear-gradient(135deg, rgba(80, 200, 120, 0.08) 0%, rgba(74, 144, 226, 0.04) 100%);
 }
 
+.signal-quality-card {
+  border-color: rgba(255, 211, 110, 0.26);
+  background: linear-gradient(135deg, rgba(255, 211, 110, 0.08) 0%, rgba(154, 120, 255, 0.05) 100%);
+}
+
 .closing-flow-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -897,5 +963,39 @@ onMounted(async () => {
   font-size: 10px;
   color: #b8c2d7;
   background: rgba(184, 194, 215, 0.1);
+}
+
+.quality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid transparent;
+}
+
+.quality-badge-elite {
+  color: #ffe08a;
+  background: rgba(255, 208, 77, 0.14);
+  border-color: rgba(255, 208, 77, 0.34);
+}
+
+.quality-badge-high {
+  color: #87e5c2;
+  background: rgba(87, 209, 153, 0.14);
+  border-color: rgba(87, 209, 153, 0.34);
+}
+
+.quality-badge-medium {
+  color: #8fb8ff;
+  background: rgba(74, 144, 226, 0.14);
+  border-color: rgba(74, 144, 226, 0.34);
+}
+
+.quality-badge-low {
+  color: #b8c2d7;
+  background: rgba(184, 194, 215, 0.1);
+  border-color: rgba(184, 194, 215, 0.2);
 }
 </style>

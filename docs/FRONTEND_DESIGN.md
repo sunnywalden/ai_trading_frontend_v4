@@ -2,7 +2,7 @@
 
 > **AI量化交易闭环系统** - Frontend Design  
 > 版本：V10.4.3 | 更新日期：2026-03-06  
-> 变更摘要（V10.4.3）：**风险降低优先执行 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章与 `bypass_reason` 标签，帮助用户识别哪些订单在熔断、冷却或日配额压力下仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。  
+> 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。  
 > 变更摘要（V10.4.2）：**信号精英化——Signal Watchtower + SignalBudgetWidget**——新增 `/signal-watchtower` 路由（漏斗实时流向图 + 拒绝信号列表 + 幽灵交易追踪 + 历史精英率折线图 + 参数调优面板）；新增 `SignalBudgetWidget` 组件（今日已推进/总配额环形图 + 漏斗各层通过数瀑布条状图）并嵌入 DashboardV2 和 War Room；导航"交易中枢"组新增"📡 信号哨所"入口；信号质量参数热更新 UI（参数滑块 + 权限确认弹窗）  
 > 变更摘要（V10.4）：**UI 大清洗 + Copilot 全局化 + 移动触达**——M2 页面整合（47→≤38 页：双仪表盘合并 / 执行三页→Order Book+Tab / 系统监控五页→单页三Tab / AI建议双页合并）+ 导航重组（6组→4组：首页仪表盘 / 交易中枢 / 研究&分析 / AI洞察&系统）；M3 全局 Copilot 浮窗（Cmd+K 任意页面，右下角常驻按钮，页面上下文注入，快捷操作动态渲染）；M5 移动响应式（Dashboard/SmartAlert/Copilot 竖屏 375px 可用，无横向溢出）；废弃路由 301 重定向，无感知迁移  
 > 变更摘要（V10.3.4）：**冷启动稳态 + 市场全量池**——各核心页面补全冷启动占位视图（Dashboard / MultiAgentPage Agent 状态看板 / ExecutionMicroscopePage / CalibrationPage 在零数据时展示引导占位而非空白/404 抖动）；PostMortemPage 从手工输入升级为交易选择驱动（选择历史交易 → 自动触发 LLM 事后剖析）；市场全量池状态视图接入（`/api/v1/market-universe/status`），标的同步进度可追踪；告警面板 / 归因页多账户 ID 兼容修复；事件日历去重修复（排除重复事件展示）  
@@ -639,11 +639,18 @@
 - 审计日志中，Risk Gate 单元格下追加 `bypass_reason` 胶囊（如 `closing_intent` / `force_exit`）
 - 风险管理来源 (`RISK_MGMT`) 信号与策略来源信号视觉区分，防止用户误把风险出场理解为新建仓机会
 
+**V10.4.3 增强（信号质量优先队列）**：
+- 新增 **“🏅 信号质量队列”** 卡片，显示 `elite_signals_today / high_quality_signals_today / quota_exempt_signals_today / pending_elite_signals`
+- 信号流水线中，非减仓/平仓信号展示质量徽章：`精英` / `高质量` / `中质量` / `观察`，并在精英信号旁追加 `日配额豁免` 标记
+- 审计日志同步展示 `signal_quality_tier / signal_quality_score / signal_quality_quota_exempt`，便于运营追踪“先排队后过漏斗”的实际效果
+- 质量标签只影响漏斗排队顺序与 Layer-2 日配额校验，不改变真实风险约束的前端提示文案，避免用户误解为“精英信号无条件放行”——这是 UI 层也必须守住的边界
+
 **API**：
 - `GET /api/v1/autonomy/status`
 - `PUT /api/v1/autonomy/level`
 - `POST /api/v1/autonomy/pause` / `resume`
 - `GET /api/v1/autonomy/audit-log`
+- `GET /api/v1/autonomy/signal-pipeline`
 - `POST /api/v1/autonomy/revoke/{exec_id}`
 
 ---
