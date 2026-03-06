@@ -111,6 +111,7 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useSituationalAwarenessStore } from '@/stores/situationalAwareness'
 import { VAR_LEVEL_COLORS } from '@/api/situationalAwarenessService'
+import { getAuthToken } from '@/api/client'
 
 const store = useSituationalAwarenessStore()
 const snapshot  = computed(() => store.snapshot)
@@ -131,16 +132,15 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-let pollTimer: ReturnType<typeof setInterval> | null = null
-
 onMounted(() => {
   store.fetchSnapshot()
-  // 每 5 秒轮询（WebSocket 建联由 AppLayout 统一处理）
-  pollTimer = setInterval(() => store.fetchSnapshot(), 5000)
+  const token = getAuthToken()
+  if (token) store.connectWS(token)
+  else store.startPolling(15000)
 })
 
 onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer)
+  store.disconnect()
 })
 </script>
 

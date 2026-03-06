@@ -20,22 +20,30 @@ export const useAutonomyStore = defineStore('autonomy', () => {
   const loading = ref(false)
   const triggerLoading = ref(false)
   const error = ref<string | null>(null)
+  let statusPromise: Promise<void> | null = null
 
   const isPaused = computed(() => status.value?.paused ?? false)
   const currentLevel = computed(() => status.value?.level ?? 'SEMI')
   const circuitBreakerActive = computed(() => status.value?.circuit_breaker_triggered ?? false)
 
   async function fetchStatus() {
-    try {
-      loading.value = true
-      error.value = null
-      const res = await autonomyApi.getStatus()
-      status.value = res.data
-    } catch (e: any) {
-      error.value = e.message || 'Failed to load autonomy status'
-    } finally {
-      loading.value = false
-    }
+    if (statusPromise) return statusPromise
+
+    statusPromise = (async () => {
+      try {
+        loading.value = true
+        error.value = null
+        const res = await autonomyApi.getStatus()
+        status.value = res.data
+      } catch (e: any) {
+        error.value = e.message || 'Failed to load autonomy status'
+      } finally {
+        loading.value = false
+        statusPromise = null
+      }
+    })()
+
+    return statusPromise
   }
 
   async function setLevel(level: AutonomyLevel) {
