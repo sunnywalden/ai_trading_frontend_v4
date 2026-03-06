@@ -30,7 +30,7 @@ function nowIso(offsetMinutes = 0): string {
 
 function shouldFallback(error: any): boolean {
   const status = Number(error?.response?.status || 0)
-  return status === 404 || status === 501 || status === 502 || status === 503 || error?.code === 'ERR_NETWORK'
+  return status === 404 || status === 501
 }
 
 const stageLabels = [
@@ -58,50 +58,24 @@ function statusFromIndex(_index: number): MonitorStatus {
 }
 
 function buildLifecycleOverview(windowMinutes = 60): LifecycleOverviewResponse {
-  const pipeline = stageLabels.map((label, index) => ({
-    stage_id: index,
-    stage_key: label.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
-    stage_label: label,
-    active_count: [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16].includes(index) ? 1 : 0,
-    stuck_count: 0,
-    warn_count: 0,
-    critical_count: 0,
-    avg_seconds: index < 8 ? 4 + index : 9 + index,
-    p50_seconds: index < 8 ? 3 + index : 8 + index,
-    p95_seconds: index < 8 ? 8 + index : 16 + index,
-    oldest_entered_at: nowIso(-(index + 2) * 5),
-    last_event_at: nowIso(-(index + 1) * 2),
-  }))
-
   return {
     meta: {
       generated_at: nowIso(),
       window_minutes: windowMinutes,
-      source: 'system-monitor-mock',
+      source: 'system-monitor-fallback',
       refresh_interval_seconds: 30,
     },
     headline: {
-      active_intents: 18,
+      active_intents: 0,
       stuck_intents: 0,
       exception_count: 0,
-      p95_stage_seconds: 16,
+      p95_stage_seconds: 0,
       warn_stage_count: 0,
       critical_stage_count: 0,
     },
-    pipeline,
-    plan_fsm: [
-      { state_key: 'AI_GENERATED', state_label: 'AI Generated', count: 4, status: 'HEALTHY' },
-      { state_key: 'AUTO_EXECUTING', state_label: 'Auto Executing', count: 7, status: 'HEALTHY' },
-      { state_key: 'PENDING_CONFIRM', state_label: 'Pending Confirm', count: 1, status: 'HEALTHY' },
-      { state_key: 'FAILED', state_label: 'Failed', count: 0, status: 'HEALTHY' },
-    ],
-    position_fsm: [
-      { state_key: 'INITIAL', state_label: 'Initial', count: 2, status: 'HEALTHY' },
-      { state_key: 'PARTIAL', state_label: 'Partial', count: 5, status: 'HEALTHY' },
-      { state_key: 'FULL', state_label: 'Full', count: 6, status: 'HEALTHY' },
-      { state_key: 'REDUCING', state_label: 'Reducing', count: 2, status: 'HEALTHY' },
-      { state_key: 'CLOSED', state_label: 'Closed Today', count: 8, status: 'HEALTHY' },
-    ],
+    pipeline: [],
+    plan_fsm: [],
+    position_fsm: [],
     exceptions: [],
   }
 }
@@ -128,25 +102,25 @@ function buildLifecycleDetail(intentId: number): LifecycleIntentDetailResponse {
     meta: {
       generated_at: nowIso(),
       window_minutes: 60,
-      source: 'system-monitor-mock',
+      source: 'system-monitor-fallback',
       refresh_interval_seconds: 30,
     },
     intent_id: intentId,
     idempotency_key: `intent-${intentId}`,
-    plan_id: 918,
-    symbol: intentId % 2 === 0 ? 'AAPL' : 'NVDA',
-    action: intentId % 2 === 0 ? 'SELL' : 'BUY',
-    signal_type: intentId % 2 === 0 ? 'TAKE_PROFIT' : 'BREAKOUT',
-    execution_path: 'TWAP',
-    autonomy_level: 'FULL',
-    current_stage_id: 9,
-    current_stage_key: 'monitoring',
-    current_stage_label: 'Monitoring',
-    plan_fsm_state: 'AUTO_EXECUTING',
-    position_fsm_state: 'PARTIAL',
-    started_at: nowIso(-75),
-    updated_at: nowIso(-4),
-    timeline,
+    plan_id: intentId,
+    symbol: null,
+    action: null,
+    signal_type: null,
+    execution_path: null,
+    autonomy_level: null,
+    current_stage_id: null,
+    current_stage_key: null,
+    current_stage_label: null,
+    plan_fsm_state: null,
+    position_fsm_state: null,
+    started_at: null,
+    updated_at: null,
+    timeline: timeline.slice(0, 0),
     latest_errors: [],
   }
 }
@@ -205,14 +179,10 @@ function buildDataFlowOverview(windowMinutes = 60): DataFlowOverviewResponse {
     meta: {
       generated_at: nowIso(),
       window_minutes: windowMinutes,
-      source: 'system-monitor-mock',
+      source: 'system-monitor-fallback',
       refresh_interval_seconds: 30,
     },
-    flows: [
-      buildFlowSummary('core_trade_pipeline', '主交易流水线'),
-      buildFlowSummary('post_trade_pipeline', '归因与复盘链路'),
-      buildFlowSummary('market_data_pipeline', '市场数据更新链路'),
-    ],
+    flows: [],
   }
 }
 
@@ -412,22 +382,37 @@ function buildServiceOverview(windowMinutes = 60): ServiceOverviewResponse {
     meta: {
       generated_at: nowIso(),
       window_minutes: windowMinutes,
-      source: 'system-monitor-mock',
+      source: 'system-monitor-fallback',
       refresh_interval_seconds: 30,
     },
-    modules,
-    services,
+    modules: [],
+    services: [],
   }
 }
 
 function buildServiceDetail(serviceName: string): ServiceDetailResponse {
   const overview = buildServiceOverview()
-  const service = overview.services.find(item => item.service_key === serviceName) || overview.services[0]
-  const timeline: ServiceHealthTimelineEvent[] = [
-    { occurred_at: nowIso(-55), status: 'HEALTHY', message: 'Service healthy', latency_ms: 120, degraded: false },
-    { occurred_at: nowIso(-25), status: service.status, message: service.last_error_message || 'No recent anomalies', latency_ms: service.latency_ms, degraded: service.degraded },
-    { occurred_at: nowIso(-5), status: service.status, message: 'Latest heartbeat received', latency_ms: service.latency_ms, degraded: service.degraded },
-  ]
+  const service = overview.services.find(item => item.service_key === serviceName) || {
+    service_key: serviceName,
+    service_label: serviceName,
+    module_key: 'observability',
+    service_kind: 'internal',
+    status: 'UNKNOWN' as const,
+    degraded: false,
+    latency_ms: null,
+    p95_latency_ms: null,
+    error_count_1h: 0,
+    error_count_24h: 0,
+    last_heartbeat_at: null,
+    last_success_at: null,
+    last_error_code: null,
+    last_error_message: '后端未提供实时服务详情',
+    last_recovered_at: null,
+    dependencies: [],
+    owners: [],
+    tags: ['fallback'],
+  }
+  const timeline: ServiceHealthTimelineEvent[] = []
 
   return {
     meta: overview.meta,
