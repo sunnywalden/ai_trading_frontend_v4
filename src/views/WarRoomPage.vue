@@ -396,8 +396,35 @@ function renderRadarAt(idx: number) {
   if (!s) { chart.setOption({ title: { text: '无数据', textStyle: { color: '#555' } } }); return }
   chart.setOption({
     backgroundColor: 'transparent',
-    radar: { indicator: [{ name: 'β Market', max: 2 }, { name: 'HML', max: 2 }, { name: 'SMB', max: 2 }, { name: 'MOM', max: 2 }, { name: 'QMJ', max: 2 }], radius: '65%', axisLine: { lineStyle: { color: 'rgba(0,255,136,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,255,136,0.08)' } }, axisName: { color: '#aaa', fontSize: 10 } },
-    series: [{ type: 'radar', data: [{ value: [Math.abs(s.beta_market ?? 0), Math.abs(s.beta_hml ?? 0), Math.abs(s.beta_smb ?? 0), Math.abs(s.beta_mom ?? 0), Math.abs(s.beta_qmj ?? 0)], itemStyle: { color: '#00ff88' }, areaStyle: { color: 'rgba(0,255,136,0.12)' } }] }],
+    radar: { 
+      indicator: [
+        { name: 'β Market', min: 0, max: 2 }, 
+        { name: 'HML', min: 0, max: 2 }, 
+        { name: 'SMB', min: 0, max: 2 }, 
+        { name: 'MOM', min: 0, max: 2 }, 
+        { name: 'QMJ', min: 0, max: 2 }
+      ], 
+      radius: '65%', 
+      axisLine: { lineStyle: { color: 'rgba(0,255,136,0.2)' } }, 
+      splitLine: { lineStyle: { color: 'rgba(0,255,136,0.08)' } }, 
+      axisName: { color: '#aaa', fontSize: 10 },
+      splitNumber: 2, // 显式分段，避免计算密集轴逻辑
+      axisLabel: { show: false } // 隐藏可能引起 tick 冲突的标签
+    },
+    series: [{ 
+      type: 'radar', 
+      data: [{ 
+        value: [
+          Math.abs(s.beta_market ?? 0), 
+          Math.abs(s.beta_hml ?? 0), 
+          Math.abs(s.beta_smb ?? 0), 
+          Math.abs(s.beta_mom ?? 0), 
+          Math.abs(s.beta_qmj ?? 0)
+        ], 
+        itemStyle: { color: '#00ff88' }, 
+        areaStyle: { color: 'rgba(0,255,136,0.12)' } 
+      }] 
+    }],
   })
 }
 
