@@ -108,6 +108,38 @@
         </div>
       </div>    </div>
 
+    <div v-if="status?.closing_flow" class="card closing-flow-card" style="margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div>
+          <h3 style="margin:0 0 4px;">🛟 减仓 / 平仓优先通道</h3>
+          <p style="margin:0; font-size:12px; color:#8b97ad;">风险降低型指令不再与开仓共用同一套阻断链，止损要快，别和风险讲礼貌。</p>
+        </div>
+        <span class="path-badge path-badge-force" v-if="status.closing_flow.force_exit_signals_today > 0">
+          强制出场 {{ status.closing_flow.force_exit_signals_today }}
+        </span>
+      </div>
+      <div class="closing-flow-grid">
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">今日风险出场信号</div>
+          <div class="closing-flow-value">{{ status.closing_flow.closing_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">快速通道执行</div>
+          <div class="closing-flow-value text-success">{{ status.closing_flow.fast_path_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">强制出场</div>
+          <div class="closing-flow-value text-warning">{{ status.closing_flow.force_exit_signals_today }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">失败 / 被拦截</div>
+          <div class="closing-flow-value" :class="status.closing_flow.closing_failures_today > 0 ? 'text-danger' : 'text-success'">
+            {{ status.closing_flow.closing_failures_today }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="autonomyStore.marketUniverseStatus" class="card" style="margin-bottom: 24px;">
       <h3 style="margin: 0 0 12px;">📚 本地全量池健康</h3>
       <div class="full-cycle-summary__meta" style="margin-bottom: 10px;">
@@ -250,6 +282,10 @@
             <td>{{ sig.symbol }}</td>
             <td>
               <span :class="signalTypeClass(sig.type)">{{ sig.type }}</span>
+              <div v-if="sig.closing_intent" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="executionPathClass(sig.execution_path)">{{ executionPathLabel(sig.execution_path) }}</span>
+                <span v-if="sig.bypass_reason" class="mini-note">{{ sig.bypass_reason }}</span>
+              </div>
             </td>
             <td style="min-width: 180px;">
               <div style="font-size: 12px;">
@@ -313,6 +349,10 @@
               <span :class="log.risk_gate_passed ? 'badge-success' : 'badge-danger'">
                 {{ log.risk_gate_passed ? '通过' : '拦截' }}
               </span>
+              <div v-if="log.closing_intent" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="executionPathClass(log.execution_path)">{{ executionPathLabel(log.execution_path) }}</span>
+                <span v-if="log.bypass_reason" class="mini-note">{{ log.bypass_reason }}</span>
+              </div>
             </td>
             <td style="max-width:180px; font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" :title="log.ai_reasoning ?? ''">
               {{ log.ai_reasoning ?? '—' }}
@@ -474,6 +514,20 @@ function formatAuditQuantity(log: AuditLogEntry): string {
   }
 
   return `${Number(value)}`
+}
+
+function executionPathClass(path?: string | null) {
+  const normalized = (path || 'STANDARD').toUpperCase()
+  if (normalized === 'FORCE_EXIT') return 'path-badge path-badge-force'
+  if (normalized === 'FAST_CLOSE') return 'path-badge path-badge-fast'
+  return 'path-badge path-badge-standard'
+}
+
+function executionPathLabel(path?: string | null) {
+  const normalized = (path || 'STANDARD').toUpperCase()
+  if (normalized === 'FORCE_EXIT') return '强制出场'
+  if (normalized === 'FAST_CLOSE') return '快速平仓'
+  return '标准路径'
 }
 
 const levelLabels: Record<string, string> = {
@@ -777,4 +831,71 @@ onMounted(async () => {
   transition: color 0.2s;
 }
 .regime-banner-link:hover { color: #00ff88; }
+
+.closing-flow-card {
+  border-color: rgba(80, 200, 120, 0.28);
+  background: linear-gradient(135deg, rgba(80, 200, 120, 0.08) 0%, rgba(74, 144, 226, 0.04) 100%);
+}
+
+.closing-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.closing-flow-metric {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px;
+  background: rgba(10, 18, 34, 0.34);
+}
+
+.closing-flow-label {
+  font-size: 11px;
+  color: #8b97ad;
+  margin-bottom: 6px;
+}
+
+.closing-flow-value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.path-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid transparent;
+}
+
+.path-badge-standard {
+  color: #8fa8d8;
+  background: rgba(143, 168, 216, 0.12);
+  border-color: rgba(143, 168, 216, 0.24);
+}
+
+.path-badge-fast {
+  color: #7fe0b8;
+  background: rgba(80, 200, 120, 0.14);
+  border-color: rgba(80, 200, 120, 0.3);
+}
+
+.path-badge-force {
+  color: #ffd18a;
+  background: rgba(255, 152, 0, 0.14);
+  border-color: rgba(255, 152, 0, 0.32);
+}
+
+.mini-note {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  color: #b8c2d7;
+  background: rgba(184, 194, 215, 0.1);
+}
 </style>

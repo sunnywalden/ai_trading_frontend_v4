@@ -26,6 +26,12 @@ export interface AutonomyStatus {
   failed_trades_today?: number
   cooldown_symbols?: CooldownSymbol[]
   cooldown_minutes?: number
+  closing_flow?: {
+    closing_signals_today: number
+    fast_path_signals_today: number
+    force_exit_signals_today: number
+    closing_failures_today: number
+  }
 }
 
 export interface SignalPipelineItem {
@@ -42,6 +48,10 @@ export interface SignalPipelineItem {
   priority: number
   notes: string | null
   order_id: string | null
+  execution_path?: 'STANDARD' | 'FAST_CLOSE' | 'FORCE_EXIT' | string
+  closing_intent?: boolean
+  force_exit?: boolean
+  bypass_reason?: string | null
   strategy_id?: string | null
   strategy_run_id?: string | null
   strategy_name?: string | null
@@ -120,6 +130,11 @@ export interface AuditLogEntry {
   order_id?: string
   revoked_at?: string
   circuit_breaker_triggered: boolean
+  execution_path?: 'STANDARD' | 'FAST_CLOSE' | 'FORCE_EXIT' | string
+  closing_intent?: boolean
+  force_exit?: boolean
+  bypass_reason?: string | null
+  risk_gate_detail?: Record<string, any> | null
   created_at: string
 }
 

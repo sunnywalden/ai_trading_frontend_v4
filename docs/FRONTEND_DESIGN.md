@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.4.2 | 更新日期：2026-03-05  
+> 版本：V10.4.3 | 更新日期：2026-03-06  
+> 变更摘要（V10.4.3）：**风险降低优先执行 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章与 `bypass_reason` 标签，帮助用户识别哪些订单在熔断、冷却或日配额压力下仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。  
 > 变更摘要（V10.4.2）：**信号精英化——Signal Watchtower + SignalBudgetWidget**——新增 `/signal-watchtower` 路由（漏斗实时流向图 + 拒绝信号列表 + 幽灵交易追踪 + 历史精英率折线图 + 参数调优面板）；新增 `SignalBudgetWidget` 组件（今日已推进/总配额环形图 + 漏斗各层通过数瀑布条状图）并嵌入 DashboardV2 和 War Room；导航"交易中枢"组新增"📡 信号哨所"入口；信号质量参数热更新 UI（参数滑块 + 权限确认弹窗）  
 > 变更摘要（V10.4）：**UI 大清洗 + Copilot 全局化 + 移动触达**——M2 页面整合（47→≤38 页：双仪表盘合并 / 执行三页→Order Book+Tab / 系统监控五页→单页三Tab / AI建议双页合并）+ 导航重组（6组→4组：首页仪表盘 / 交易中枢 / 研究&分析 / AI洞察&系统）；M3 全局 Copilot 浮窗（Cmd+K 任意页面，右下角常驻按钮，页面上下文注入，快捷操作动态渲染）；M5 移动响应式（Dashboard/SmartAlert/Copilot 竖屏 375px 可用，无横向溢出）；废弃路由 301 重定向，无感知迁移  
 > 变更摘要（V10.3.4）：**冷启动稳态 + 市场全量池**——各核心页面补全冷启动占位视图（Dashboard / MultiAgentPage Agent 状态看板 / ExecutionMicroscopePage / CalibrationPage 在零数据时展示引导占位而非空白/404 抖动）；PostMortemPage 从手工输入升级为交易选择驱动（选择历史交易 → 自动触发 LLM 事后剖析）；市场全量池状态视图接入（`/api/v1/market-universe/status`），标的同步进度可追踪；告警面板 / 归因页多账户 ID 兼容修复；事件日历去重修复（排除重复事件展示）  
@@ -631,6 +632,12 @@
 - 风险边界更改：即时生效，记录到系统日志（V10.1 移除 Telegram 依赖）
 - 允许标的类型：下拉多选（STOCK / ETF / STOCK,ETF）；允许市场：US / US,HK
 - 今日实时风险区：VaR 来自 `VaRCalculator.calculate_var_cvar()`，每次页面加载刷新
+
+**V10.4.3 增强（风险降低优先执行）**：
+- 新增 **“🛟 减仓 / 平仓优先通道”** 卡片，显示 `closing_signals_today / fast_path_signals_today / force_exit_signals_today / closing_failures_today`
+- 信号流水线中，`EXIT/REDUCE` 行展示执行路径徽章：`标准路径` / `快速平仓` / `强制出场`
+- 审计日志中，Risk Gate 单元格下追加 `bypass_reason` 胶囊（如 `closing_intent` / `force_exit`）
+- 风险管理来源 (`RISK_MGMT`) 信号与策略来源信号视觉区分，防止用户误把风险出场理解为新建仓机会
 
 **API**：
 - `GET /api/v1/autonomy/status`
