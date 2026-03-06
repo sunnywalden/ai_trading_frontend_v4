@@ -1,6 +1,20 @@
 import { render, fireEvent } from '@testing-library/vue';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+vi.mock('../router', () => ({
+  default: {
+    push: vi.fn(),
+  },
+}));
+
+vi.mock('vue-router', async () => {
+  const actual = await vi.importActual<typeof import('vue-router')>('vue-router');
+  return {
+    ...actual,
+    useRoute: () => ({ path: '/dashboard' }),
+  };
+});
+
 vi.mock('../api/client', () => {
   return {
     isLoggedIn: () => true,
@@ -12,6 +26,13 @@ vi.mock('../api/client', () => {
     logout: vi.fn(),
   };
 });
+
+vi.mock('../stores/websocket', () => ({
+  useWebSocketStore: () => ({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  }),
+}));
 
 import App from '../App.vue';
 
@@ -33,7 +54,7 @@ describe('App.vue token expiry banner', () => {
   it('shows expiry banner when token is expiring soon', async () => {
     const { container, getByText, findByText } = render(App, {
       global: {
-        stubs: ['router-link', 'router-view']
+        stubs: ['router-link', 'router-view', 'AdminInfoModal', 'SituationalAwarenessBar', 'CopilotFloatingWidget']
       }
     });
 
@@ -46,7 +67,7 @@ describe('App.vue token expiry banner', () => {
     expect(banner).toBeTruthy();
 
     // clicking dismiss hides it
-    const dismiss = getByText('忽略');
+    const dismiss = getByText('确定');
     await fireEvent.click(dismiss);
     expect(container.querySelector('.expiry-banner')).toBeFalsy();
   });

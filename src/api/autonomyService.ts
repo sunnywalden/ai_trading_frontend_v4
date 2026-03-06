@@ -32,6 +32,12 @@ export interface AutonomyStatus {
     force_exit_signals_today: number
     closing_failures_today: number
   }
+  signal_quality?: {
+    elite_signals_today: number
+    high_quality_signals_today: number
+    pending_elite_signals: number
+    quota_exempt_signals_today: number
+  }
 }
 
 export interface SignalPipelineItem {
@@ -52,6 +58,9 @@ export interface SignalPipelineItem {
   closing_intent?: boolean
   force_exit?: boolean
   bypass_reason?: string | null
+  signal_quality_tier?: 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | string | null
+  signal_quality_score?: number | null
+  signal_quality_quota_exempt?: boolean
   strategy_id?: string | null
   strategy_run_id?: string | null
   strategy_name?: string | null
@@ -135,6 +144,9 @@ export interface AuditLogEntry {
   force_exit?: boolean
   bypass_reason?: string | null
   risk_gate_detail?: Record<string, any> | null
+  signal_quality_tier?: 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | string | null
+  signal_quality_score?: number | null
+  signal_quality_quota_exempt?: boolean
   created_at: string
 }
 
