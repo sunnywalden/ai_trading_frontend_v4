@@ -2,7 +2,7 @@
 
 > **AI量化交易闭环系统** - Frontend Design  
 > 版本：V10.4.3 | 更新日期：2026-03-06  
-> 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。  
+> 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。**追加需求**：`/system` 系统监控页新增交易生命周期监测、系统主要数据流转详细状态、主要模块与细粒度服务状态视图。  
 > 变更摘要（V10.4.2）：**信号精英化——Signal Watchtower + SignalBudgetWidget**——新增 `/signal-watchtower` 路由（漏斗实时流向图 + 拒绝信号列表 + 幽灵交易追踪 + 历史精英率折线图 + 参数调优面板）；新增 `SignalBudgetWidget` 组件（今日已推进/总配额环形图 + 漏斗各层通过数瀑布条状图）并嵌入 DashboardV2 和 War Room；导航"交易中枢"组新增"📡 信号哨所"入口；信号质量参数热更新 UI（参数滑块 + 权限确认弹窗）  
 > 变更摘要（V10.4）：**UI 大清洗 + Copilot 全局化 + 移动触达**——M2 页面整合（47→≤38 页：双仪表盘合并 / 执行三页→Order Book+Tab / 系统监控五页→单页三Tab / AI建议双页合并）+ 导航重组（6组→4组：首页仪表盘 / 交易中枢 / 研究&分析 / AI洞察&系统）；M3 全局 Copilot 浮窗（Cmd+K 任意页面，右下角常驻按钮，页面上下文注入，快捷操作动态渲染）；M5 移动响应式（Dashboard/SmartAlert/Copilot 竖屏 375px 可用，无横向溢出）；废弃路由 301 重定向，无感知迁移  
 > 变更摘要（V10.3.4）：**冷启动稳态 + 市场全量池**——各核心页面补全冷启动占位视图（Dashboard / MultiAgentPage Agent 状态看板 / ExecutionMicroscopePage / CalibrationPage 在零数据时展示引导占位而非空白/404 抖动）；PostMortemPage 从手工输入升级为交易选择驱动（选择历史交易 → 自动触发 LLM 事后剖析）；市场全量池状态视图接入（`/api/v1/market-universe/status`），标的同步进度可追踪；告警面板 / 归因页多账户 ID 兼容修复；事件日历去重修复（排除重复事件展示）  
@@ -206,7 +206,7 @@
 | **AI 进化** | `/evolution` | 洞察知识库管理（周报/模式/规则候选）+ A/B 实验列表与创建 ★ V10.2-M6 新增 |
 | **交易生命周期中枢** | `/trade-lifecycle` | 17阶段 Pipeline Kanban + Dual FSM Panel + Decision Provenance Drawer ★ V10.3 新增 |
 | **智能订单簿** | `/order-book` | 全量交易列表（17阶段徽章 + 六维迷你雷达图 + AI摘要 + 价格偏差 + 风险徽章）★ V10.3 新增 |
-| 系统监控 | `/system` | 系统健康 |
+| 系统监控 | `/system` | 系统健康 + 生命周期监测 + 数据流链路 + 服务状态 |
 | 登录 | `/login` | JWT 认证 |
 
 ---
@@ -891,6 +891,74 @@
 ```
 
 **API**：`GET /api/v1/portfolio/batch-decisions?limit=20`；展开详情调用 `GET /api/v1/portfolio/batch-decisions/{batch_id}`
+
+### 4.19 系统监控（System Monitor）—— V10.4.3 追加增强
+
+**设计目标**：把“系统活着”升级为“系统每条链路都可解释”。运维和交易审计都能在一个页面看到哪里堵了、哪里慢了、哪里在降级。
+
+**信息架构**：在现有 `/system` 单页内扩展为 5 个视图 Tab：
+
+- `🩺 服务健康`：基础健康、自主循环健康检查、WebSocket 状态、核心依赖状态
+- `🧬 生命周期`：17 阶段分布、Plan/Position FSM 分布、异常跳转、stuck intents
+- `🔀 数据流`：主链路 `DataHub → Signal → Decision → Risk → Execution → Monitoring → Attribution/Post-Mortem`
+- `📡 API 监控`：外部 API、LLM 调用、限流、错误摘要
+- `📋 任务管理`：定时任务、手动补跑、失败重试、JobWatchdog 状态
+
+**生命周期视图布局**：
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ 🧬 交易生命周期监测        [最近 1h▼] [仅异常] [刷新]              │
+├─────────────────────────────────────────────────────────────────────┤
+│ KPI: 活跃 intents 18 | stuck 2 | 异常跳转 1 | P95 阶段耗时 42s     │
+├───────────────────────┬───────────────────────┬────────────────────┤
+│ 17 阶段分布热力条       │ Plan FSM 分布          │ Position FSM 分布   │
+├───────────────────────┴───────────────────────┴────────────────────┤
+│ 异常列表：intent_id / symbol / 当前阶段 / 停留时长 / 最近错误       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**数据流视图布局**：
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ 🔀 主数据流监测                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ DataHub → SignalFusion → PortfolioDecision → RiskGate → Execution │
+│    ↓           ↓                  ↓                ↓         ↓      │
+│ lag 2s      lag 0s             lag 4s          warn      healthy    │
+├─────────────────────────────────────────────────────────────────────┤
+│ 节点详情：heartbeat / last_success_at / queue_depth / error_rate    │
+│ 最近失败样本：payload_id / stage / error / recovered_at            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**模块 / 细粒度服务状态视图**：
+
+- 采用“模块卡片 + 服务树表格”双层结构
+- 顶层模块建议：`Autonomy`、`Execution`、`Observability`、`Market Data`、`Infrastructure`
+- 服务粒度下钻示例：
+  - `Infrastructure` → `MySQL` / `Redis` / `Scheduler` / `WebSocket Gateway`
+  - `Market Data` → `TigerQuoteClient` / `DataHub` / `MarketUniverseSync`
+  - `Autonomy` → `QuantTradingLoop` / `AutonomyHealthMonitor` / `RiskGateService`
+  - `Observability` → `SituationalAwarenessService` / `ExecutionMicroscopeService` / `SignalIntelligenceService`
+- 每个服务展示：`status`、`latency_ms`、`error_count_24h`、`degraded`、`last_recovered_at`
+
+**交互规范**：
+
+- 生命周期异常行点击后，右侧抽屉展示该 `intent` 的完整阶段轨迹与最近 20 条状态事件
+- 数据流节点点击后，显示近 1h 吞吐趋势、失败样本和上游/下游依赖
+- 服务树支持 `仅异常 / 仅降级 / 仅外部依赖` 快速筛选
+- 状态颜色统一：`HEALTHY=绿`、`WARN=黄`、`CRITICAL=红`、`UNKNOWN=灰`
+
+**API 调用**：
+
+- `GET /api/v1/system-monitor/lifecycle`
+- `GET /api/v1/system-monitor/lifecycle/{intent_id}`
+- `GET /api/v1/system-monitor/data-flows`
+- `GET /api/v1/system-monitor/data-flows/{flow_name}`
+- `GET /api/v1/system-monitor/services`
+- `GET /api/v1/system-monitor/services/{service_name}`
 
 ---
 
@@ -2654,6 +2722,13 @@ interface PnLTickerFrame {
 | **§13.4 CopilotPage DeepResearch** | 增强 | Standard/Deep Research 模式切换；结构化报告展示 ★ V10.2-M7 |
 | i18n | 更新 | zh-CN/en-US 补全 events/attribution/evolution/signals/insights 命名空间 |
 | §4.X RegimePage | 新增（M1）| 体制感知主页：4块布局（状态卡+雷达图+策略权重+历史时间轴）|
+
+### H. V10.4.3 变更一览（开发中）
+
+| 章节 | 变更类型 | 说明 |
+|------|---------|------|
+| §4.10 Autonomy | 增强 | 风险降低优先执行状态卡 + 信号质量优先队列状态卡 + 审计徽章 |
+| §4.19 SystemMonitorPage | 增强 | 新增交易生命周期监测、主数据流链路监测、模块与细粒度服务状态树 |
 
 ### G. V10.4.1 变更一览（已发布）
 
