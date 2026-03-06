@@ -113,6 +113,33 @@ export interface TriggerFullCycleResponse {
   details: any
 }
 
+export interface TriggerCapacityGuardAction {
+  symbol: string
+  score: number
+  recommendation: string
+  risk_level?: string | null
+  target_position?: number | null
+  signal_created: string
+}
+
+export interface TriggerCapacityGuardResult {
+  current_positions: number
+  max_positions: number
+  overflow: number
+  pending_exit_symbols: string[]
+  created_exit_signals: number
+  details: TriggerCapacityGuardAction[]
+  status: string
+}
+
+export interface TriggerCapacityGuardResponse {
+  success: boolean
+  account_id: string
+  regime: string | null
+  max_positions: number
+  result: TriggerCapacityGuardResult
+}
+
 export interface MarketUniverseMarketStatus {
   market: 'US' | 'HK' | string
   active_symbols: number
@@ -177,6 +204,9 @@ export const autonomyApi = {
 
   triggerRebalance: () =>
     api.post<{ success: boolean; result: any }>('/v1/autonomy/trigger-rebalance'),
+
+  triggerCapacityGuard: () =>
+    api.post<TriggerCapacityGuardResponse>('/v1/autonomy/trigger-capacity-guard'),
 
   triggerDecisionCycle: () =>
     api.post<{ success: boolean; decisions: number; executed: number; details: any[] }>('/v1/autonomy/trigger-decision-cycle'),
