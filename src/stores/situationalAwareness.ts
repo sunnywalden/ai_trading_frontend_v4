@@ -16,6 +16,9 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
 
   let _ws: WebSocket | null = null
   let _pollTimer: ReturnType<typeof setInterval> | null = null
+  let _fetchPromise: Promise<void> | null = null
+  let _reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let _manualDisconnect = false
 
   // ── Computed ──────────────────────────────────────────────────────────────
   const regime   = computed(() => snapshot.value?.regime)
@@ -26,18 +29,31 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
 
   // ── Actions ───────────────────────────────────────────────────────────────
   async function fetchSnapshot() {
-    loading.value = true
-    try {
-      snapshot.value = await getSituationalAwarenessSnapshot()
-    } catch (e: any) {
-      error.value = e.message
-    } finally {
-      loading.value = false
-    }
+    if (_fetchPromise) return _fetchPromise
+
+    _fetchPromise = (async () => {
+      loading.value = true
+      try {
+        snapshot.value = await getSituationalAwarenessSnapshot()
+        error.value = null
+      } catch (e: any) {
+        error.value = e.message
+      } finally {
+        loading.value = false
+        _fetchPromise = null
+      }
+    })()
+
+    return _fetchPromise
   }
 
   function connectWS(token: string) {
     if (_ws) return  // already connected
+    _manualDisconnect = false
+    if (_reconnectTimer) {
+      clearTimeout(_reconnectTimer)
+      _reconnectTimer = null
+    }
 
     try {
       _ws = connectSaWebSocket(
@@ -45,27 +61,37 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
         (data) => {
           snapshot.value = data
           connected.value = true
+          error.value = null
+          stopPolling()
         },
         (err) => {
           console.warn('[SA] WS error, falling back to polling')
           connected.value = false
-          startPolling()
+          startPolling(15000)
         },
       )
 
-      _ws.onopen  = () => { connected.value = true }
+      _ws.onopen  = () => {
+        connected.value = true
+        stopPolling()
+      }
       _ws.onclose = () => {
         connected.value = false
         _ws = null
+        if (_manualDisconnect) return
+        startPolling(15000)
         // 5 秒后重连
-        setTimeout(() => connectWS(token), 5000)
+        _reconnectTimer = setTimeout(() => {
+          _reconnectTimer = null
+          connectWS(token)
+        }, 5000)
       }
     } catch (e) {
-      startPolling()
+      startPolling(15000)
     }
   }
 
-  function startPolling(intervalMs = 5000) {
+  function startPolling(intervalMs = 15000) {
     if (_pollTimer) return
     fetchSnapshot()
     _pollTimer = setInterval(fetchSnapshot, intervalMs)
@@ -79,7 +105,12 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
   }
 
   function disconnect() {
+    _manualDisconnect = true
     stopPolling()
+    if (_reconnectTimer) {
+      clearTimeout(_reconnectTimer)
+      _reconnectTimer = null
+    }
     if (_ws) {
       _ws.close()
       _ws = null
