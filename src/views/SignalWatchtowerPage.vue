@@ -78,6 +78,56 @@
         <div class="card-title">精英率历史趋势 <span class="target-hint">（目标范围 5-15%）</span></div>
         <div ref="trendChartRef" class="chart-box h-180"></div>
       </div>
+
+      <div class="chart-card mt-12">
+        <div class="card-title">容量守卫最近动作</div>
+        <div class="capacity-guard-summary">
+          <div class="capacity-guard-metric">
+            <span class="cg-label">最近生成</span>
+            <strong>{{ stats?.capacity_guard?.recent_generated_count ?? 0 }}</strong>
+          </div>
+          <div class="capacity-guard-metric">
+            <span class="cg-label">待执行中</span>
+            <strong>{{ stats?.capacity_guard?.open_signal_count ?? 0 }}</strong>
+          </div>
+          <div class="capacity-guard-metric capacity-guard-last-run">
+            <span class="cg-label">最近动作时间</span>
+            <strong>{{ fmtTs(stats?.capacity_guard?.last_action_at) }}</strong>
+          </div>
+        </div>
+
+        <div v-if="stats?.capacity_guard?.recent_actions?.length" class="table-wrap mt-12">
+          <table class="data-table capacity-guard-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>标的</th>
+                <th>状态</th>
+                <th>建议</th>
+                <th>风险</th>
+                <th>退出数量</th>
+                <th>超限</th>
+                <th>上限</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="action in stats.capacity_guard.recent_actions" :key="action.signal_id">
+                <td>{{ fmtTs(action.created_at) }}</td>
+                <td class="sym-cell">{{ action.symbol }}</td>
+                <td><span :class="capacityGuardStatusClass(action.status)">{{ capacityGuardStatusLabel(action.status) }}</span></td>
+                <td>{{ action.recommendation ?? '--' }}</td>
+                <td>{{ action.risk_level ?? '--' }}</td>
+                <td class="num-cell">{{ action.quantity != null ? action.quantity.toFixed(0) : '--' }}</td>
+                <td class="center-cell">{{ action.overflow ?? '--' }}</td>
+                <td class="center-cell">{{ action.target_max ?? '--' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="empty-guard-state">
+          近期开仓容量守卫尚未生成自动减仓信号。
+        </div>
+      </div>
     </div>
 
     <!-- ── Tab 2: 审计日志 ─────────────────────────────────────────── -->
@@ -402,6 +452,30 @@ function fmtTs(ts: string | null | undefined): string {
   return new Date(ts).toLocaleString('zh-CN', {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
   })
+}
+
+function capacityGuardStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    GENERATED: '已生成',
+    VALIDATED: '已验证',
+    QUEUED: '排队中',
+    EXECUTING: '执行中',
+    EXECUTED: '已执行',
+    FAILED: '失败',
+    CANCELLED: '已取消',
+    EXPIRED: '已过期',
+    SKIPPED: '已跳过',
+    REJECTED: '已拒绝',
+  }
+  return labels[status] ?? status
+}
+
+function capacityGuardStatusClass(status: string): string {
+  const pending = ['GENERATED', 'VALIDATED', 'QUEUED', 'EXECUTING']
+  if (pending.includes(status)) return 'cg-status-pending'
+  if (status === 'EXECUTED') return 'cg-status-done'
+  if (['FAILED', 'CANCELLED', 'EXPIRED', 'REJECTED'].includes(status)) return 'cg-status-failed'
+  return 'cg-status-neutral'
 }
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────────
@@ -790,6 +864,82 @@ onUnmounted(() => {
 .l2-alert-body strong { color: #fca5a5; font-size: 13px; }
 .l2-alert-detail { font-size: 11px; color: #94a3b8; }
 .l2-alert-detail strong { color: #f87171; }
+
+/* ── 容量守卫动作摘要 ───────────────────────────────────────────────────── */
+.capacity-guard-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .capacity-guard-summary { grid-template-columns: 1fr; }
+}
+.capacity-guard-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(30,41,59,0.6);
+  border: 1px solid rgba(100,116,139,0.25);
+}
+.cg-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.capacity-guard-metric strong {
+  font-size: 18px;
+  color: #e2e8f0;
+}
+.capacity-guard-last-run strong {
+  font-size: 13px;
+}
+.capacity-guard-table td,
+.capacity-guard-table th {
+  white-space: nowrap;
+}
+.empty-guard-state {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(30,41,59,0.4);
+  border: 1px dashed rgba(100,116,139,0.35);
+  color: #94a3b8;
+  font-size: 12px;
+}
+.cg-status-pending,
+.cg-status-done,
+.cg-status-failed,
+.cg-status-neutral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.cg-status-pending {
+  color: #93c5fd;
+  background: rgba(59,130,246,0.18);
+  border: 1px solid rgba(59,130,246,0.35);
+}
+.cg-status-done {
+  color: #86efac;
+  background: rgba(34,197,94,0.16);
+  border: 1px solid rgba(34,197,94,0.35);
+}
+.cg-status-failed {
+  color: #fca5a5;
+  background: rgba(239,68,68,0.14);
+  border: 1px solid rgba(239,68,68,0.35);
+}
+.cg-status-neutral {
+  color: #cbd5e1;
+  background: rgba(148,163,184,0.12);
+  border: 1px solid rgba(148,163,184,0.22);
+}
 
 /* ── 调参面板 ────────────────────────────────────────────────────────────── */
 .config-panel {

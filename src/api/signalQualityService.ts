@@ -61,6 +61,30 @@ export interface LayerDailyTrend {
   elite_rate: number
 }
 
+export interface CapacityGuardAction {
+  signal_id: string
+  symbol: string
+  status: 'GENERATED' | 'VALIDATED' | 'QUEUED' | 'EXECUTING' | 'EXECUTED' | 'FAILED' | 'CANCELLED' | 'EXPIRED' | 'SKIPPED' | 'REJECTED'
+  quantity: number | null
+  priority: number
+  recommendation: string | null
+  risk_level: string | null
+  target_position: number | null
+  overflow: number | null
+  target_max: number | null
+  rank: number | null
+  created_at: string | null
+  executed_at: string | null
+  notes: string | null
+}
+
+export interface CapacityGuardSummary {
+  recent_generated_count: number
+  open_signal_count: number
+  last_action_at: string | null
+  recent_actions: CapacityGuardAction[]
+}
+
 export interface FunnelStats {
   total_evaluated:     number
   total_passed:        number
@@ -79,6 +103,7 @@ export interface FunnelStats {
   effective_max_concurrent_positions?: number // 当前体制下生效的最大并发仓位
   current_regime?: RegimeType | null
   regime_confidence?: number | null
+  capacity_guard?: CapacityGuardSummary | null
 }
 
 export interface GhostTrade {
