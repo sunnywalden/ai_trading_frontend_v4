@@ -17,6 +17,9 @@
           <option :value="30">近 30 天</option>
           <option :value="90">近 90 天</option>
         </select>
+        <button class="sm-btn" @click="triggerCapacityGuard" :disabled="capacityGuardRunning || loading" title="立即执行一轮容量守卫">
+          {{ capacityGuardRunning ? '执行中…' : '触发容量守卫' }}
+        </button>
         <button class="icon-btn" @click="reloadAll" :disabled="loading" title="刷新">
           <span :class="loading ? 'spin' : ''">⟳</span>
         </button>
@@ -25,6 +28,19 @@
 
     <!-- ── Tab 1: 漏斗概览 ─────────────────────────────────────────── -->
     <div v-if="activeTab === 'funnel'" class="tab-content">
+      <div v-if="capacityGuardRunResult" class="capacity-guard-run-banner" :class="capacityGuardRunBannerClass">
+        <div class="capacity-guard-run-title">🛡️ 容量守卫手动执行结果</div>
+        <div class="capacity-guard-run-body">
+          当前持仓 {{ capacityGuardRunResult.result.current_positions }} 个，
+          上限 {{ capacityGuardRunResult.result.max_positions }} 个，
+          超限 {{ capacityGuardRunResult.result.overflow }} 个，
+          新生成退出信号 {{ capacityGuardRunResult.result.created_exit_signals }} 条。
+          <template v-if="capacityGuardRunResult.regime">
+            当前体制：{{ regimeLabelFromAny(capacityGuardRunResult.regime) }}。
+          </template>
+        </div>
+      </div>
+
       <!-- L2 持仓满载诊断横幅 -->
       <div v-if="isL2Dominant" class="l2-capacity-alert">
         <span class="l2-alert-icon">⚠️</span>
@@ -323,8 +339,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { autonomyApi } from '@/api/autonomyService'
 import { REGIME_LABELS } from '@/api/regimeService'
 import { signalQualityService } from '@/api/signalQualityService'
+import type { TriggerCapacityGuardResponse } from '@/api/autonomyService'
 import type {
   FunnelStats, AuditLogRecord, GhostTrade,
   GhostAnalysis, QualityConfig, QualityConfigPatch,
@@ -353,6 +371,8 @@ const sinceDays  = ref(7)
 const stats      = ref<FunnelStats | null>(null)
 const config     = ref<QualityConfig | null>(null)
 const editConfig = ref<Partial<QualityConfig>>({})
+const capacityGuardRunning = ref(false)
+const capacityGuardRunResult = ref<TriggerCapacityGuardResponse | null>(null)
 
 // ── 审计日志 ──────────────────────────────────────────────────────────────────
 const auditRows    = ref<AuditLogRecord[]>([])
@@ -412,6 +432,13 @@ const currentRegimeLabel = computed(() => {
   return REGIME_LABELS[regime] ?? regime
 })
 
+const capacityGuardRunBannerClass = computed(() => {
+  const status = capacityGuardRunResult.value?.result.status
+  if (status === 'capacity-reduced') return 'cg-run-success'
+  if (status === 'within-limit' || status === 'pending-exits-sufficient') return 'cg-run-neutral'
+  return 'cg-run-warning'
+})
+
 const effectiveCapacityLabel = computed(() => {
   if (!stats.value?.current_regime) return '配置上限'
   return `当前体制上限（${currentRegimeLabel.value}）`
@@ -452,6 +479,11 @@ function fmtTs(ts: string | null | undefined): string {
   return new Date(ts).toLocaleString('zh-CN', {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
   })
+}
+
+function regimeLabelFromAny(regime: string | null | undefined): string {
+  if (!regime) return '基础配置'
+  return REGIME_LABELS[regime as RegimeType] ?? regime
 }
 
 function capacityGuardStatusLabel(status: string): string {
@@ -540,6 +572,19 @@ async function loadGhostAnalysis() {
   try {
     ghostAnalysis.value = await signalQualityService.getGhostAnalysis(sinceDays.value)
   } catch (e) { console.error('[Watchtower] loadGhostAnalysis', e) }
+}
+
+async function triggerCapacityGuard() {
+  capacityGuardRunning.value = true
+  try {
+    const { data } = await autonomyApi.triggerCapacityGuard()
+    capacityGuardRunResult.value = data
+    await loadStats()
+  } catch (e) {
+    console.error('[Watchtower] triggerCapacityGuard', e)
+  } finally {
+    capacityGuardRunning.value = false
+  }
 }
 
 // ── 分页 ─────────────────────────────────────────────────────────────────────
@@ -847,6 +892,34 @@ onUnmounted(() => {
 .ab-conclusion { font-size: 12px; margin-bottom: 4px; }
 .ab-stats { font-size: 11px; color: #94a3b8; }
 .ab-stats strong { color: #e2e8f0; }
+
+.capacity-guard-run-banner {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid;
+}
+.capacity-guard-run-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.capacity-guard-run-body {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+.cg-run-success {
+  background: rgba(34,197,94,0.1);
+  border-color: rgba(34,197,94,0.4);
+}
+.cg-run-neutral {
+  background: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.35);
+}
+.cg-run-warning {
+  background: rgba(245,158,11,0.1);
+  border-color: rgba(245,158,11,0.4);
+}
 
 /* ── L2 持仓满载诊断横幅 ───────────────────────────────────────────────── */
 .l2-capacity-alert {
