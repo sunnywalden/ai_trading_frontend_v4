@@ -32,8 +32,11 @@
           <strong>组合容量已满 — L2 正在拦截所有新信号</strong>
           <span class="l2-alert-detail">
             当前 HELD 持仓 <strong>{{ stats!.current_positions_count }}</strong> 个 &gt;
-            配置上限 <strong>{{ stats!.max_concurrent_positions_cfg }}</strong> 个；
+            {{ effectiveCapacityLabel }} <strong>{{ effectiveMaxCapacity }}</strong> 个；
             须平仓后方可放行新信号
+          </span>
+          <span v-if="capacityContextText" class="l2-alert-detail">
+            {{ capacityContextText }}
           </span>
         </div>
       </div>
@@ -50,6 +53,10 @@
         <div class="stat-card sc-warn">
           <div class="sc-value">{{ eliteRatePct }}%</div>
           <div class="sc-label">精英率 <span class="target-hint">(目标 5-15%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-value">{{ effectiveMaxCapacityDisplay }}</div>
+          <div class="sc-label">当前容量上限 <span class="target-hint">({{ currentRegimeLabel }})</span></div>
         </div>
       </div>
 
@@ -266,11 +273,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { REGIME_LABELS } from '@/api/regimeService'
 import { signalQualityService } from '@/api/signalQualityService'
 import type {
   FunnelStats, AuditLogRecord, GhostTrade,
   GhostAnalysis, QualityConfig, QualityConfigPatch,
 } from '@/api/signalQualityService'
+import type { RegimeType } from '@/api/regimeService'
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -337,6 +346,43 @@ const eliteRatePct = computed(() =>
   stats.value?.elite_rate_pct?.toFixed(1) ?? '--'
 )
 
+const effectiveMaxCapacity = computed(() =>
+  stats.value?.effective_max_concurrent_positions
+  ?? stats.value?.max_concurrent_positions_cfg
+  ?? Infinity
+)
+
+const effectiveMaxCapacityDisplay = computed(() =>
+  Number.isFinite(effectiveMaxCapacity.value) ? String(effectiveMaxCapacity.value) : '--'
+)
+
+const currentRegimeLabel = computed(() => {
+  const regime = stats.value?.current_regime as RegimeType | null | undefined
+  if (!regime) return '基础配置'
+  return REGIME_LABELS[regime] ?? regime
+})
+
+const effectiveCapacityLabel = computed(() => {
+  if (!stats.value?.current_regime) return '配置上限'
+  return `当前体制上限（${currentRegimeLabel.value}）`
+})
+
+const capacityContextText = computed(() => {
+  if (!stats.value) return ''
+  const base = stats.value.max_concurrent_positions_cfg
+  const effective = stats.value.effective_max_concurrent_positions ?? base
+  const confidence = stats.value.regime_confidence
+  const confidenceText = confidence != null ? `，置信度 ${(confidence * 100).toFixed(1)}%` : ''
+
+  if (stats.value.current_regime && base != null && effective != null && effective !== base) {
+    return `基础上限 ${base} 个；当前体制 ${currentRegimeLabel.value}${confidenceText}，已动态收紧为 ${effective} 个。`
+  }
+  if (stats.value.current_regime) {
+    return `当前体制 ${currentRegimeLabel.value}${confidenceText}；当前生效上限为 ${effective ?? '--'} 个。`
+  }
+  return base != null ? `当前使用基础配置上限 ${base} 个。` : ''
+})
+
 // L2 (MAX_POSITIONS_REACHED) 是否为主要拦截原因，且确实超出配置上限
 const isL2Dominant = computed(() => {
   if (!stats.value) return false
@@ -345,7 +391,7 @@ const isL2Dominant = computed(() => {
   const total = stats.value.total_evaluated ?? 0
   if (total === 0 || l2Count === 0) return false
   const currentPos = stats.value.current_positions_count ?? 0
-  const maxCfg = stats.value.max_concurrent_positions_cfg ?? Infinity
+  const maxCfg = effectiveMaxCapacity.value
   // 超过配置上限 且 L2 拒绝占比 > 30%
   return currentPos > maxCfg && (l2Count / total) > 0.3
 })

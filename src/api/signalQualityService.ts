@@ -1,6 +1,7 @@
 // signalQualityService.ts — V10.4.2 信号精英化漏斗 API 客户端
 
 import { api } from './client'
+import type { RegimeType } from './regimeService'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -74,7 +75,10 @@ export interface FunnelStats {
   rejection_breakdown: Record<string, number>
   daily_trend:         LayerDailyTrend[]
   current_positions_count?:     number   // 当前 HELD 持仓数
-  max_concurrent_positions_cfg?: number  // 配置的最大并发仓位
+  max_concurrent_positions_cfg?: number  // 基础配置的最大并发仓位
+  effective_max_concurrent_positions?: number // 当前体制下生效的最大并发仓位
+  current_regime?: RegimeType | null
+  regime_confidence?: number | null
 }
 
 export interface GhostTrade {
