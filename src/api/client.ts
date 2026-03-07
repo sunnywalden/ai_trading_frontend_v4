@@ -1,5 +1,6 @@
-import axios from "axios";
+import { getApiBaseUrl, getBackendBaseUrl, getWsBaseUrl } from "@/config/runtime";
 import { logger } from "@/utils/logger";
+import axios from "axios";
 
 function normalizeUrl(url?: string): string {
   return String(url || '').toLowerCase()
@@ -24,11 +25,11 @@ function isExpectedApiNoise(err: any): boolean {
 }
 
 // 后端基础 URL
-const BACKEND_URL = import.meta.env.DEV ? "" : (import.meta.env.VITE_BACKEND_URL ?? "");
+const BACKEND_URL = getBackendBaseUrl();
 
 // 业务 API（/api/v1/*）
 export const api = axios.create({
-  baseURL: import.meta.env.DEV ? "/api" : (import.meta.env.VITE_BACKEND_URL ?? "") + "/api",
+  baseURL: getApiBaseUrl(),
   timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 120000
 });
 
@@ -1815,14 +1816,7 @@ export function createWsUrl(): string | null {
   if (!token) return null;
 
   // 优先级：VITE_WS_BASE_URL > VITE_BACKEND_URL > DEV 默认直连 127.0.0.1:8088 > 当前 host
-  const wsBaseRaw =
-    (import.meta.env.VITE_WS_BASE_URL as string | undefined) ||
-    (import.meta.env.VITE_BACKEND_URL as string | undefined) ||
-    (import.meta.env.DEV ? 'http://127.0.0.1:8088' : '');
-
-  const wsBase = wsBaseRaw
-    ? wsBaseRaw.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://').replace(/\/$/, '')
-    : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`;
+  const wsBase = getWsBaseUrl();
 
   return `${wsBase}/api/v1/ws?token=${encodeURIComponent(token)}`;
 }

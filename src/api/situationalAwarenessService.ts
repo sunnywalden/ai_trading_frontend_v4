@@ -1,4 +1,5 @@
 /** V10.3: 全局态势感知 API Service + WebSocket */
+import { getWsBaseUrl } from '@/config/runtime'
 import { api } from './client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -80,14 +81,7 @@ export function connectSaWebSocket(
   onError?: (err: Event) => void,
   interval = 3,
 ): WebSocket {
-  const wsBaseRaw =
-    (import.meta.env.VITE_WS_BASE_URL as string | undefined) ||
-    (import.meta.env.VITE_BACKEND_URL as string | undefined) ||
-    (import.meta.env.DEV ? 'http://127.0.0.1:8088' : '')
-
-  const wsBase = wsBaseRaw
-    ? wsBaseRaw.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://').replace(/\/$/, '')
-    : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
+  const wsBase = getWsBaseUrl()
 
   const url = `${wsBase}/api/v1/ws/situational-awareness?token=${encodeURIComponent(token)}&interval=${interval}`
 
