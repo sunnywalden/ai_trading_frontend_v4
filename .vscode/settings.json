@@ -1,0 +1,9 @@
+{
+  // Use workspace TypeScript (5.9.x) instead of VS Code's built-in version.
+  // This ensures moduleResolution:"bundler" and Vue 3 exports are resolved correctly.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // Vue - Official (Volar) hybrid mode: TS handles .ts files, Volar handles .vue templates.
+  "vue.server.hybridMode": true
+}

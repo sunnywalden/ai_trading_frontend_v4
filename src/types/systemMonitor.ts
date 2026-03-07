@@ -18,6 +18,10 @@ export interface LifecycleHeadlineMetrics {
   p95_stage_seconds: number
   warn_stage_count: number
   critical_stage_count: number
+  // V10.4.4 – Position-centric metrics
+  active_positions: number
+  exception_positions: number
+  stuck_slices: number
 }
 
 export interface LifecycleStageMetric {
@@ -67,6 +71,8 @@ export interface LifecycleOverviewResponse {
   plan_fsm: LifecycleFsmStateMetric[]
   position_fsm: LifecycleFsmStateMetric[]
   exceptions: LifecycleExceptionItem[]
+  // V10.4.4 – Position-centric close reason distribution
+  closing_reason_distribution: Record<string, number>
 }
 
 export interface LifecycleTimelineEvent {
