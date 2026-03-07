@@ -320,11 +320,26 @@ export async function createPostMortem(payload: {
   hold_days: number
   trade_context?: string
 }): Promise<PostMortemReport> {
-  const { data } = await api.post('/v1/ai-hub/post-mortems', payload, {
-    // 事后剖析包含 LLM 深度推理，允许更长等待时间
-    timeout: 300000,
-  })
+  const { data } = await api.post('/v1/ai-hub/post-mortems', payload)
   return data
+}
+
+export async function pollPostMortem(
+  tradeId: string,
+  onProgress?: (report: PostMortemReport) => void,
+  intervalMs = 2500,
+  maxWaitMs = 180000,
+): Promise<PostMortemReport> {
+  const deadline = Date.now() + maxWaitMs
+  while (Date.now() < deadline) {
+    const report = await getPostMortemByTrade(tradeId)
+    onProgress?.(report)
+    if (report.status === 'completed' || report.status === 'failed') {
+      return report
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+  }
+  throw new Error(`Post-mortem ${tradeId} did not complete within ${maxWaitMs / 1000}s`)
 }
 
 // ─── Convenience aliases used by Pinia stores ─────────────────────────────────

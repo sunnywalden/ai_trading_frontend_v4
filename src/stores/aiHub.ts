@@ -1,35 +1,36 @@
 // stores/aiHub.ts — V10.3.3 AI 中枢 Pinia Store
 
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import {
-  listAgentRuns,
-  getAgentRunSummary,
-  triggerAgentRun,
-  pollAgentRun,
-  getLatestCalibration,
-  getCalibrationHistory,
-  getFactorWeights,
-  getWeightsHistory,
-  getFactorMomentumTyped,
-  listPostMortems,
-  getPostMortem,
-  getPostMortemPatterns,
-  triggerPostMortem,
-  getPostMortemTradeCandidates,
-  getPostMortemTradePrefill,
-} from '@/api/aiHubService'
 import type {
-  AgentRunSummary,
   AgentRunResult,
+  AgentRunSummary,
   CalibrationSnapshot,
-  FactorWeightRecord,
   FactorMomentum,
-  PostMortemReport,
+  FactorWeightRecord,
   PostMortemPatterns,
+  PostMortemReport,
   PostMortemTradeCandidate,
   PostMortemTradePrefill,
 } from '@/api/aiHubService'
+import {
+  getAgentRunSummary,
+  getCalibrationHistory,
+  getFactorMomentumTyped,
+  getFactorWeights,
+  getLatestCalibration,
+  getPostMortem,
+  getPostMortemPatterns,
+  getPostMortemTradeCandidates,
+  getPostMortemTradePrefill,
+  getWeightsHistory,
+  listAgentRuns,
+  listPostMortems,
+  pollAgentRun,
+  pollPostMortem,
+  triggerAgentRun,
+  triggerPostMortem,
+} from '@/api/aiHubService'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export interface TriggerAgentRunParams {
   symbol: string
@@ -210,48 +211,35 @@ export const useAiHubStore = defineStore('aiHub', () => {
   async function generatePostMortem(params: TriggerPostMortemParams): Promise<PostMortemReport> {
     generatingPostMortem.value = true
     try {
-      try {
-        const pm = await triggerPostMortem(
-          params.trade_id,
-          params.symbol,
-          params.direction,
-          params.entry_price,
-          params.exit_price,
-          params.realized_pnl,
-          params.hold_days,
-          params.trade_context,
-        )
+      const upsertPostMortem = (pm: PostMortemReport) => {
         currentPostMortem.value = pm
-        // prepend to list if not already present
         const idx = postMortems.value.findIndex((p) => p.trade_id === params.trade_id)
         if (idx === -1) postMortems.value.unshift(pm)
         else postMortems.value[idx] = pm
-        return pm
-      } catch (e: unknown) {
-        // 兼容“后端已在跑且最终成功，但前端先超时/取消”的场景
-        const message = e instanceof Error ? e.message : String(e)
-        const likelyTimeout = /timeout|canceled|cancelled|network error/i.test(message)
-        if (!likelyTimeout) throw e
-
-        const deadline = Date.now() + 180_000 // 最多再等 3 分钟
-        while (Date.now() < deadline) {
-          try {
-            const pm = await getPostMortem(params.trade_id)
-            if (pm) {
-              currentPostMortem.value = pm
-              const idx = postMortems.value.findIndex((p) => p.trade_id === params.trade_id)
-              if (idx === -1) postMortems.value.unshift(pm)
-              else postMortems.value[idx] = pm
-              return pm
-            }
-          } catch {
-            // 404 期间继续轮询
-          }
-          await new Promise((resolve) => setTimeout(resolve, 3000))
-        }
-
-        throw e
       }
+
+      const initial = await triggerPostMortem(
+        params.trade_id,
+        params.symbol,
+        params.direction,
+        params.entry_price,
+        params.exit_price,
+        params.realized_pnl,
+        params.hold_days,
+        params.trade_context,
+      )
+      upsertPostMortem(initial)
+
+      if (initial.status === 'completed' || initial.status === 'failed') {
+        return initial
+      }
+
+      return await pollPostMortem(
+        params.trade_id,
+        (pm) => {
+          upsertPostMortem(pm)
+        },
+      )
     } finally {
       generatingPostMortem.value = false
     }
