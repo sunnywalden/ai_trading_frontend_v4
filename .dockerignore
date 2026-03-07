@@ -1,0 +1,11 @@
+.git
+.vscode
+node_modules
+dist
+logs
+coverage
+.DS_Store
+*.log
+
+cypress/videos
+cypress/screenshots

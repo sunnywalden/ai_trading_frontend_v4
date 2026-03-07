@@ -8,12 +8,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# 生产镜像构建不需要 Cypress 二进制，跳过下载避免网络波动导致安装失败
+ENV CYPRESS_INSTALL_BINARY=0
+
 # 复制 package 文件
 COPY package*.json ./
 
 # 安装依赖（使用国内镜像加速）
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install --legacy-peer-deps
+    npm ci --legacy-peer-deps
 
 # 复制源代码
 COPY . .
