@@ -3,16 +3,135 @@
     <div class="pe-header">
       <div class="header-left">
         <h2 class="page-title"><span class="icon">⚙️</span> {{ $t('nav.task_management') }}</h2>
-        <p class="page-subtitle">系统性管理机会扫描、持仓评估、数据同步等自动触发任务配置</p>
+        <p class="page-subtitle">统一查看 APScheduler 真实任务，并管理可配置的业务自动触发任务</p>
       </div>
       <div class="header-right">
-        <button class="btn-primary" @click="openConfigDialog()">
+        <button
+          v-if="panelMode === 'configs'"
+          class="btn-primary"
+          @click="openConfigDialog()"
+        >
           + 新增配置
+        </button>
+        <button
+          v-else
+          class="btn-primary"
+          @click="loadSchedulerJobs"
+          :disabled="schedulerLoading"
+        >
+          {{ schedulerLoading ? '刷新中...' : '刷新调度器' }}
         </button>
       </div>
     </div>
 
-    <!-- 过滤器 -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">调度器任务</div>
+        <div class="summary-value">{{ schedulerJobs.length }}</div>
+        <div class="summary-sub">运行中的 APScheduler 全量任务</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">动态配置</div>
+        <div class="summary-value">{{ configs.length }}</div>
+        <div class="summary-sub">TaskTriggerConfig 业务任务</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">动态已启用</div>
+        <div class="summary-value">{{ enabledConfigCount }}</div>
+        <div class="summary-sub">当前启用的业务自动化配置</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">配置内置缺口</div>
+        <div class="summary-value">{{ schedulerJobs.length - dynamicSchedulerJobs.length }}</div>
+        <div class="summary-sub">尚未纳入配置中心的内置任务</div>
+      </div>
+    </div>
+
+    <div class="view-switch">
+      <button
+        class="view-chip"
+        :class="{ active: panelMode === 'scheduler' }"
+        @click="panelMode = 'scheduler'"
+      >
+        调度器总览
+      </button>
+      <button
+        class="view-chip"
+        :class="{ active: panelMode === 'configs' }"
+        @click="panelMode = 'configs'"
+      >
+        动态任务配置
+      </button>
+    </div>
+
+    <div v-if="panelMode === 'scheduler'" class="scheduler-panel">
+      <div class="toolbar">
+        <div class="filter-group">
+          <button
+            v-for="group in schedulerGroups"
+            :key="group.value"
+            class="filter-chip"
+            :class="{ active: selectedSchedulerGroup === group.value }"
+            @click="selectedSchedulerGroup = group.value"
+          >
+            {{ group.label }}
+          </button>
+        </div>
+        <button
+          class="btn-icon-sm"
+          @click="loadSchedulerJobs"
+          :class="{ spinning: schedulerLoading }"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+        </button>
+      </div>
+
+      <div v-if="schedulerLoading" class="state-loading">{{ $t('common.loading') }}</div>
+      <div v-else-if="schedulerError" class="state-empty">{{ schedulerError }}</div>
+      <div v-else class="table-wrap">
+        <table class="scheduler-table">
+          <thead>
+            <tr>
+              <th>任务</th>
+              <th>分组</th>
+              <th>触发器</th>
+              <th>下次执行</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="job in filteredSchedulerJobs" :key="job.id">
+              <td>
+                <div class="primary-cell">{{ job.name }}</div>
+                <div class="secondary-cell mono">{{ job.id }}</div>
+              </td>
+              <td>
+                <span class="scheduler-group-tag">{{ getSchedulerGroupLabel(job.id) }}</span>
+              </td>
+              <td class="mono">{{ job.trigger }}</td>
+              <td class="mono">{{ job.next_run_time || '-' }}</td>
+              <td>
+                <span class="scheduler-status" :class="job.status === 'active' ? 'is-active' : 'is-paused'">
+                  {{ job.status === 'active' ? '运行中' : '已暂停' }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="btn-link"
+                  :disabled="schedulerActionJobId === job.id"
+                  @click="toggleSchedulerState(job)"
+                >
+                  {{ schedulerActionJobId === job.id ? '处理中...' : (job.status === 'active' ? '暂停' : '恢复') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <template v-else>
     <div class="toolbar">
       <div class="filter-group">
         <button 
@@ -65,6 +184,7 @@
         </div>
       </div>
     </div>
+    </template>
 
     <!-- 编辑弹窗 -->
     <div v-if="showDialog" class="modal-overlay" @click.self="showDialog = false">
@@ -149,13 +269,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, h } from 'vue'
-import { 
-  listTaskTriggerConfigs, 
-  createTaskTriggerConfig, 
-  updateTaskTriggerConfig, 
+import { computed, onMounted, ref, watch } from 'vue'
+import {
+  createTaskTriggerConfig,
   deleteTaskTriggerConfig,
+  fetchSchedulerJobsList,
+  listTaskTriggerConfigs,
+  pauseSchedulerJob,
+  resumeSchedulerJob,
   toggleTaskTriggerConfig,
+  updateTaskTriggerConfig,
+  type SchedulerJobDetail,
   type TaskTriggerConfig,
   type TaskType,
   type TriggerMode
@@ -163,7 +287,13 @@ import {
 
 const configs = ref<TaskTriggerConfig[]>([])
 const loading = ref(false)
+const panelMode = ref<'scheduler' | 'configs'>('scheduler')
 const selectedType = ref<TaskType | ''>('')
+const schedulerJobs = ref<SchedulerJobDetail[]>([])
+const schedulerLoading = ref(false)
+const schedulerError = ref('')
+const schedulerActionJobId = ref('')
+const selectedSchedulerGroup = ref('ALL')
 const taskTypes = [
   { value: '' as const, label: '全部' },
   { value: 'POSITION_EVAL' as const, label: '持仓评估' },
@@ -171,6 +301,27 @@ const taskTypes = [
   { value: 'DATA_WARMUP' as const, label: '数据预热' },
   { value: 'SYSTEM_HEALTH' as const, label: '系统健康' },
 ] as const
+
+const schedulerGroups = [
+  { value: 'ALL', label: '全部' },
+  { value: 'DYNAMIC', label: '动态配置' },
+  { value: 'QUANT', label: '量化闭环' },
+  { value: 'DATA', label: '数据同步/刷新' },
+  { value: 'OBS', label: '观测/健康' },
+  { value: 'RESEARCH', label: '研究分析' },
+  { value: 'OTHER', label: '其他' },
+] as const
+
+const enabledConfigCount = computed(() => configs.value.filter(cfg => cfg.enabled).length)
+const dynamicSchedulerJobs = computed(() => schedulerJobs.value.filter(job => job.id.startsWith('dyn_task_')))
+const filteredSchedulerJobs = computed(() => {
+  if (selectedSchedulerGroup.value === 'ALL') {
+    return schedulerJobs.value
+  }
+  return schedulerJobs.value.filter(
+    job => getSchedulerGroup(job.id) === selectedSchedulerGroup.value
+  )
+})
 
 async function loadConfigs() {
   loading.value = true
@@ -181,6 +332,83 @@ async function loadConfigs() {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadSchedulerJobs() {
+  schedulerLoading.value = true
+  schedulerError.value = ''
+  try {
+    const res = await fetchSchedulerJobsList()
+    schedulerJobs.value = (res.jobs || []).slice().sort((left, right) => {
+      return String(left.next_run_time || '').localeCompare(String(right.next_run_time || ''))
+    })
+  } catch (e: any) {
+    schedulerError.value = e?.message || '加载调度器任务失败'
+  } finally {
+    schedulerLoading.value = false
+  }
+}
+
+function getSchedulerGroup(jobId: string) {
+  if (jobId.startsWith('dyn_task_')) return 'DYNAMIC'
+  if (
+    jobId.includes('trading_cycle')
+    || jobId.includes('decision_cycle')
+    || jobId.includes('position_')
+    || jobId.includes('post_trade')
+    || jobId.includes('broker_order_reconcile')
+    || jobId.includes('adaptive_optimization')
+    || jobId.includes('performance_eval')
+  ) return 'QUANT'
+  if (
+    jobId.includes('refresh_')
+    || jobId.includes('data_sync')
+    || jobId.includes('journal_auto_close')
+    || jobId.includes('signal_return_backfill')
+    || jobId.includes('attribution_')
+    || jobId.includes('broker_order_sync')
+    || jobId.includes('cleanup_old_data')
+    || jobId.includes('plan_expiration')
+    || jobId.includes('market_universe')
+  ) return 'DATA'
+  if (
+    jobId.includes('observability_')
+    || jobId.includes('health')
+    || jobId.includes('equity_')
+    || jobId.includes('paper_graduation')
+    || jobId.includes('ghost_trade')
+    || jobId.includes('sync_task_trigger_configs')
+  ) return 'OBS'
+  if (
+    jobId.includes('regime_')
+    || jobId.includes('event_')
+    || jobId.includes('insight_')
+    || jobId.includes('ab_experiment')
+    || jobId.includes('ai_hub_')
+    || jobId.includes('m1_return_backfill')
+  ) return 'RESEARCH'
+  return 'OTHER'
+}
+
+function getSchedulerGroupLabel(jobId: string) {
+  const key = getSchedulerGroup(jobId)
+  return schedulerGroups.find(group => group.value === key)?.label || '其他'
+}
+
+async function toggleSchedulerState(job: SchedulerJobDetail) {
+  schedulerActionJobId.value = job.id
+  try {
+    if (job.status === 'active') {
+      await pauseSchedulerJob(job.id)
+    } else {
+      await resumeSchedulerJob(job.id)
+    }
+    await loadSchedulerJobs()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    schedulerActionJobId.value = ''
   }
 }
 
@@ -286,6 +514,7 @@ function formatDt(s: string) {
 
 onMounted(() => {
   loadConfigs()
+  loadSchedulerJobs()
 })
 </script>
 
@@ -294,6 +523,29 @@ onMounted(() => {
 .pe-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
 .page-title { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
 .page-subtitle { margin: 4px 0 0; color: #9ca3af; font-size: 0.95rem; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.summary-card { background: #111827; border: 1px solid #263246; border-radius: 12px; padding: 16px; }
+.summary-label { color: #9ca3af; font-size: 0.78rem; }
+.summary-value { margin-top: 10px; font-size: 1.6rem; font-weight: 700; color: #f3f4f6; }
+.summary-sub { margin-top: 6px; color: #6b7280; font-size: 0.78rem; }
+
+.view-switch { display: inline-flex; gap: 8px; background: #0f172a; border: 1px solid #263246; border-radius: 999px; padding: 6px; margin-bottom: 20px; }
+.view-chip { border: none; background: transparent; color: #9ca3af; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.view-chip.active { background: #2563eb; color: #fff; }
+.scheduler-panel { margin-bottom: 16px; }
+.table-wrap { overflow-x: auto; border: 1px solid #263246; border-radius: 12px; background: #111827; }
+.scheduler-table { width: 100%; border-collapse: collapse; }
+.scheduler-table th,
+.scheduler-table td { padding: 14px 16px; border-bottom: 1px solid #1f2937; text-align: left; font-size: 0.86rem; }
+.scheduler-table th { color: #9ca3af; font-weight: 600; background: #0f172a; }
+.primary-cell { color: #f3f4f6; font-weight: 600; }
+.secondary-cell { color: #6b7280; margin-top: 4px; font-size: 0.75rem; }
+.mono { font-family: Consolas, Monaco, monospace; }
+.scheduler-group-tag { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; background: rgba(59, 130, 246, 0.12); color: #93c5fd; font-size: 0.75rem; }
+.scheduler-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.scheduler-status.is-active { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; }
+.scheduler-status.is-paused { background: rgba(245, 158, 11, 0.14); color: #fbbf24; }
 
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .filter-group { display: flex; gap: 8px; }
@@ -361,5 +613,13 @@ onMounted(() => {
 
 .text-mono { font-family: monospace; }
 .spinning { animation: spin 1s linear infinite; }
+@media (max-width: 1100px) {
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-group { flex-wrap: wrap; }
+}
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
