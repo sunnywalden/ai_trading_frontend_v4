@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AI Trading">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="line" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)" />
+  <path d="M14 42 L24 32 L31 36 L42 22 L50 26" fill="none" stroke="url(#line)" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" />
+  <circle cx="14" cy="42" r="3" fill="#38bdf8" />
+  <circle cx="24" cy="32" r="3" fill="#60a5fa" />
+  <circle cx="31" cy="36" r="3" fill="#f8fafc" />
+  <circle cx="42" cy="22" r="3" fill="#f59e0b" />
+  <circle cx="50" cy="26" r="3" fill="#fbbf24" />
+</svg>
