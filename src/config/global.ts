@@ -1,3 +1,6 @@
+import { reactive } from 'vue';
+import { getBackendBaseUrl } from './runtime';
+
 // 全局配置
 export const globalConfig = {
   // 数据窗口天数 - 用于行为评分和持仓评估
@@ -5,7 +8,7 @@ export const globalConfig = {
   
   // API配置
   api: {
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_BACKEND_URL ?? ''),
+    baseURL: getBackendBaseUrl(),
     timeout: 30000
   },
   
@@ -16,9 +19,6 @@ export const globalConfig = {
     macro: 600000         // 宏观风险：10分钟
   }
 };
-
-// 导出可响应式的配置
-import { reactive } from 'vue';
 
 export const appConfig = reactive({
   windowDays: globalConfig.windowDays
