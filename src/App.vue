@@ -152,7 +152,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/quant-loop',               label: t('nav.quant_loop'),          icon: '🔄' },
       { path: '/paper',                    label: t('nav.paper'),               icon: '🧪' },
       { path: '/attribution',              label: t('nav.attribution'),         icon: '🎯' },
-      { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),     icon: '🔄' },
+      { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),     icon: '�' },
       { path: '/order-book',               label: t('nav.order_book'),          icon: '📋' },
       { path: '/observability/execution',  label: t('nav.exec_microscope'),     icon: '🔬' },
       { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
