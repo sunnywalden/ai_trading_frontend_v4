@@ -5,7 +5,7 @@
       <div class="page-title">
         <span class="title-icon">🔄</span>
         交易生命周期中心
-        <span class="version-badge">V10.3</span>
+        <span class="version-badge">V10.4.4</span>
       </div>
       <div class="header-actions">
         <span class="last-updated">更新: {{ lastUpdated }}</span>
@@ -41,12 +41,22 @@
         />
       </div>
 
-      <!-- 预留右侧 -->
+      <!-- V10.4.4 Position Summary Panel -->
       <div class="reserve-section">
-        <div class="section-label">扩展预留</div>
-        <div class="reserve-placeholder">
-          <div class="placeholder-icon">📈</div>
-          <div class="placeholder-text">后续版本扩展</div>
+        <div class="section-label">仓位总览 <span class="total-badge">V10.4.4</span></div>
+        <div class="pos-summary-grid">
+          <div class="pos-stat-card green">
+            <div class="pos-stat-val">{{ lifecycle.activePositionCount }}</div>
+            <div class="pos-stat-label">活跃仓位</div>
+          </div>
+          <div class="pos-stat-card red">
+            <div class="pos-stat-val">{{ lifecycle.exceptionPositionCount }}</div>
+            <div class="pos-stat-label">异常仓位</div>
+          </div>
+          <div class="pos-stat-card yellow">
+            <div class="pos-stat-val">{{ lifecycle.stuckSliceCount }}</div>
+            <div class="pos-stat-label">卡单切片</div>
+          </div>
         </div>
       </div>
     </div>
@@ -62,13 +72,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useLifecycleStore } from '@/stores/lifecycle'
-import PipelineKanbanBoard from '@/components/PipelineKanbanBoard.vue'
-import DualFSMPanel        from '@/components/DualFSMPanel.vue'
 import DecisionProvenanceDrawer from '@/components/DecisionProvenanceDrawer.vue'
+import DualFSMPanel from '@/components/DualFSMPanel.vue'
+import PipelineKanbanBoard from '@/components/PipelineKanbanBoard.vue'
+import { useLifecycleStore } from '@/stores/lifecycle'
+import { useQuantLoopStore } from '@/stores/quantLoop'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const lifecycle = useLifecycleStore()
+const quantLoop = useQuantLoopStore()
 
 const loading      = ref(false)
 const lastUpdated  = ref('—')
@@ -82,6 +94,11 @@ async function refresh() {
   try {
     await lifecycle.fetchAll()
     await lifecycle.fetchFsmEvents()
+    // V10.4.4: position summary panel
+    const accountId = quantLoop.systemStatus?.account_id
+    if (accountId) {
+      await lifecycle.fetchPositions(accountId)
+    }
     lastUpdated.value = new Date().toLocaleTimeString('zh-CN')
   } finally {
     loading.value = false
@@ -209,19 +226,36 @@ onUnmounted(() => {
   border-radius: 9px;
 }
 
-/* ---- 预留 ---- */
-.reserve-placeholder {
-  flex: 1;
+/* ---- V10.4.4 Position Summary ---- */
+.pos-summary-grid {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,0.02);
-  border: 1px dashed rgba(255,255,255,0.08);
-  border-radius: 8px;
-  color: #374151;
   gap: 8px;
+  padding: 4px 0;
 }
-.placeholder-icon { font-size: 28px; opacity: 0.4; }
-.placeholder-text { font-size: 12px; }
+
+.pos-stat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.pos-stat-val {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pos-stat-label {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.pos-stat-card.green .pos-stat-val { color: #34d399; }
+.pos-stat-card.red   .pos-stat-val { color: #f87171; }
+.pos-stat-card.yellow .pos-stat-val { color: #fbbf24; }
 </style>

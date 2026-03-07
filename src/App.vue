@@ -117,17 +117,20 @@
 
   <!-- V10.4 M3: 全局 Copilot 悬浮助手（任何页面均可 ⌘K 唤起） -->
   <CopilotFloatingWidget />
+  <!-- V10.4.4: 全局仓位详情抽屉 -->
+  <PositionDetailModal />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import router from './router';
 import { useRoute } from 'vue-router';
-import { isLoggedIn, logout, getCurrentUsername, getTokenExpiryMs, getAuthToken, getTokenPayload, isTokenExpired } from './api/client';
+import { getAuthToken, getCurrentUsername, getTokenExpiryMs, getTokenPayload, isLoggedIn, isTokenExpired, logout } from './api/client';
 import AdminInfoModal from './components/AdminInfoModal.vue';
-import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
 import CopilotFloatingWidget from './components/CopilotFloatingWidget.vue';
+import PositionDetailModal from './components/PositionDetailModal.vue';
+import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
+import router from './router';
 import { useWebSocketStore } from './stores/websocket';
 
 const { t, locale } = useI18n();

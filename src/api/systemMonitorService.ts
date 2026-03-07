@@ -1,21 +1,20 @@
-import { api } from './client'
 import type {
-  DataFlowDetailResponse,
-  DataFlowFailureSample,
-  DataFlowNodeStatus,
-  DataFlowOverviewResponse,
-  DataFlowSummary,
-  LifecycleExceptionItem,
-  LifecycleIntentDetailResponse,
-  LifecycleOverviewResponse,
-  LifecycleTimelineEvent,
-  MonitorStatus,
-  ServiceDetailResponse,
-  ServiceHealthItem,
-  ServiceHealthTimelineEvent,
-  ServiceModuleSummary,
-  ServiceOverviewResponse,
+    DataFlowDetailResponse,
+    DataFlowFailureSample,
+    DataFlowNodeStatus,
+    DataFlowOverviewResponse,
+    DataFlowSummary,
+    LifecycleIntentDetailResponse,
+    LifecycleOverviewResponse,
+    LifecycleTimelineEvent,
+    MonitorStatus,
+    ServiceDetailResponse,
+    ServiceHealthItem,
+    ServiceHealthTimelineEvent,
+    ServiceModuleSummary,
+    ServiceOverviewResponse
 } from '../types/systemMonitor'
+import { api } from './client'
 
 export interface MonitorQueryOptions {
   window_minutes?: number
@@ -72,11 +71,16 @@ function buildLifecycleOverview(windowMinutes = 60): LifecycleOverviewResponse {
       p95_stage_seconds: 0,
       warn_stage_count: 0,
       critical_stage_count: 0,
+      // V10.4.4 – position-centric metrics (backend will fill in real values)
+      active_positions: 0,
+      exception_positions: 0,
+      stuck_slices: 0,
     },
     pipeline: [],
     plan_fsm: [],
     position_fsm: [],
     exceptions: [],
+    closing_reason_distribution: {},
   }
 }
 

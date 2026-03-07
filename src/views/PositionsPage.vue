@@ -96,20 +96,44 @@
       <PositionsGuideline />
     </div>
     <p v-else class="info-message">{{ $t('positions.empty') }}</p>
+
+    <!-- V10.4.4 DB Positions section -->
+    <section v-if="dbPositions.length > 0 || dbLoading" class="db-positions-section">
+      <div class="db-section-header">
+        <span>🗄️ 生命周期仓位 (V10.4.4)</span>
+        <span class="db-badge">{{ dbPositions.length }} 活跃</span>
+      </div>
+      <div v-if="dbLoading" class="loading-message">加载中…</div>
+      <div v-else class="db-positions-grid">
+        <div
+          v-for="pos in dbPositions"
+          :key="pos.id"
+          class="db-position-card"
+          @click="openDetail(pos.id)"
+        >
+          <div class="db-pos-sym">{{ pos.symbol }}</div>
+          <div class="db-pos-status" :class="`status-${pos.status.toLowerCase()}`">{{ pos.status }}</div>
+          <div class="db-pos-qty">数量: {{ pos.open_qty }}</div>
+          <div class="db-pos-pnl" v-if="pos.unrealized_pnl_pct != null">
+            {{ pos.unrealized_pnl_pct >= 0 ? '+' : '' }}{{ (pos.unrealized_pnl_pct * 100).toFixed(2) }}%
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PositionScoreCard from '../components/PositionScoreCard.vue';
-import PortfolioDashboard from '../components/PortfolioDashboard.vue';
-import PositionsGuideline from '../components/PositionsGuideline.vue';
-import { 
-  fetchPositionsAssessment, 
-  type PositionsAssessmentResponse,
-  refreshPositions
+import {
+    fetchPositionsAssessment,
+    type PositionsAssessmentResponse,
+    refreshPositions
 } from '../api/client';
+import PortfolioDashboard from '../components/PortfolioDashboard.vue';
+import PositionScoreCard from '../components/PositionScoreCard.vue';
+import PositionsGuideline from '../components/PositionsGuideline.vue';
 import { appConfig } from '../config/global';
 
 const { t } = useI18n();
@@ -215,7 +239,34 @@ async function onRefreshSinglePosition(symbol: string) {
 
 onMounted(() => {
   loadPositionsData();
+  loadDbPositions();
 });
+
+// ── V10.4.4 DB Positions ─────────────────────────────────────────────────────
+import { useLifecycleStore } from '@/stores/lifecycle';
+import { useQuantLoopStore } from '@/stores/quantLoop';
+import type { Position } from '@/types/position';
+
+const lifecycleStore = useLifecycleStore()
+const quantLoopStore = useQuantLoopStore()
+const dbPositions = ref<Position[]>([])
+const dbLoading   = ref(false)
+
+async function loadDbPositions() {
+  const accountId = quantLoopStore.systemStatus?.account_id
+  if (!accountId) return
+  dbLoading.value = true
+  try {
+    await lifecycleStore.fetchPositions(accountId)
+    dbPositions.value = lifecycleStore.positions
+  } finally {
+    dbLoading.value = false
+  }
+}
+
+function openDetail(positionId: number) {
+  lifecycleStore.openPositionDetail(positionId)
+}
 </script>
 
 <style scoped>
@@ -370,5 +421,85 @@ onMounted(() => {
   color: #9ca3af;
   font-size: 0.9rem;
   text-align: center;
+}
+
+/* V10.4.4 DB positions section */
+.db-positions-section {
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+}
+
+.db-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 12px;
+}
+
+.db-badge {
+  font-size: 10px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.db-positions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.db-position-card {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.db-position-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.db-pos-sym {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+}
+
+.db-pos-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.status-active     { color: #34d399; }
+.status-exception  { color: #f87171; }
+.status-closing    { color: #fb923c; }
+.status-pending    { color: #94a3b8; }
+.status-closed     { color: #6b7280; }
+.status-liquidated { color: #ef4444; }
+
+.db-pos-qty {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.db-pos-pnl {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  color: #34d399;
 }
 </style>

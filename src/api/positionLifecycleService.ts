@@ -1,7 +1,21 @@
-/** V10.2-M3: 仓位生命周期 API */
+/**
+ * V10.4.4 – Position-centric lifecycle API.
+ *
+ * Backward-compatible: V10.2-M3 evaluate/scale methods are preserved.
+ * New: Full Position CRUD, slices, timeline via /api/v1/pos/ prefix.
+ */
+import type {
+    ExecutionSlice,
+    ManualCloseRequest,
+    ManualCloseResponse,
+    PortfolioSummary,
+    Position,
+    PositionDetail,
+    PositionLifecycleEvent,
+} from '@/types/position'
 import { api } from './client'
 
-// ── 类型定义 ──────────────────────────────────────────────────────────────────
+// ── V10.2-M3 legacy types (still used by existing components) ────────────────
 
 export type PositionState =
   | 'ENTERING'
@@ -90,18 +104,67 @@ export interface ScaleInCandidatesResponse {
   count: number
 }
 
-// ── API 方法 ──────────────────────────────────────────────────────────────────
+// ── V10.2-M3 legacy API (backward compatible) ────────────────────────────────
 
 export const positionLifecycleApi = {
-  /** 评估单个仓位的决策 */
+  /** 评估单个仓位的决策 (V10.2-M3 legacy) */
   evaluateLifecycle: (positionId: number, ctx: LifecycleEvalInput) =>
     api.post<LifecycleStatusResponse>(`/v1/positions/${positionId}/lifecycle`, ctx),
 
-  /** 人工加减仓 */
+  /** 人工加减仓 (V10.2-M3 legacy) */
   manualScale: (positionId: number, direction: 'IN' | 'OUT', quantity: number, reason: string) =>
     api.post(`/v1/positions/${positionId}/manual-scale`, { direction, quantity, reason }),
 
-  /** 批量获取加仓候选 */
+  /** 批量获取加仓候选 (V10.2-M3 legacy) */
   getScaleInCandidates: (contexts: LifecycleEvalInput[]) =>
     api.post<ScaleInCandidatesResponse>('/v1/positions/scale-in-candidates', contexts),
 }
+
+// ── V10.4.4 Position-centric API ─────────────────────────────────────────────
+
+const POS = '/v1/pos'
+
+export const positionsApi = {
+  /** List active positions for an account */
+  listActive: (accountId: string) =>
+    api.get<Position[]>(`${POS}/`, { params: { account_id: accountId } }),
+
+  /** List EXCEPTION positions */
+  listExceptions: (accountId: string) =>
+    api.get<Position[]>(`${POS}/exceptions`, { params: { account_id: accountId } }),
+
+  /** List STUCK execution slices */
+  listStuckSlices: (accountId: string) =>
+    api.get<ExecutionSlice[]>(`${POS}/stuck-slices`, { params: { account_id: accountId } }),
+
+  /** Closing-reason distribution */
+  closingReasonStats: (accountId: string, days = 30) =>
+    api.get<Record<string, number>>(`${POS}/stats/closing-reasons`, {
+      params: { account_id: accountId, days },
+    }),
+
+  /** Summary counts for dashboard widgets */
+  portfolioSummary: (accountId: string) =>
+    api.get<PortfolioSummary>(`${POS}/portfolio-summary`, {
+      params: { account_id: accountId },
+    }),
+
+  /** Position detail (includes slices array) */
+  getDetail: (positionId: number) =>
+    api.get<PositionDetail>(`${POS}/${positionId}`),
+
+  /** Lifecycle event timeline */
+  getTimeline: (positionId: number, limit = 100) =>
+    api.get<PositionLifecycleEvent[]>(`${POS}/${positionId}/timeline`, {
+      params: { limit },
+    }),
+
+  /** Execution slices for a position */
+  getSlices: (positionId: number) =>
+    api.get<ExecutionSlice[]>(`${POS}/${positionId}/slices`),
+
+  /** Human-triggered close */
+  manualClose: (positionId: number, body: ManualCloseRequest = {}) =>
+    api.post<ManualCloseResponse>(`${POS}/${positionId}/manual-close`, body),
+}
+

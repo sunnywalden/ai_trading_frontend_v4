@@ -216,6 +216,19 @@
               <div class="headline-label">P95 阶段耗时</div>
               <div class="headline-value">{{ lifecycleOverview.headline.p95_stage_seconds.toFixed(0) }}s</div>
             </article>
+            <!-- V10.4.4 Position-centric metrics -->
+            <article class="headline-card pos-active">
+              <div class="headline-label">活跃仓位</div>
+              <div class="headline-value">{{ lifecycleOverview.headline.active_positions ?? 0 }}</div>
+            </article>
+            <article class="headline-card pos-exception">
+              <div class="headline-label">异常仓位</div>
+              <div class="headline-value">{{ lifecycleOverview.headline.exception_positions ?? 0 }}</div>
+            </article>
+            <article class="headline-card pos-stuck">
+              <div class="headline-label">卡单切片</div>
+              <div class="headline-value">{{ lifecycleOverview.headline.stuck_slices ?? 0 }}</div>
+            </article>
           </div>
 
           <div class="pipeline-grid">
@@ -547,40 +560,40 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import SystemHealthCard from '../components/SystemHealthCard.vue'
-import HealthStatusBar from '../components/HealthStatusBar.vue'
-import ApiProviderCard from '../components/ApiProviderCard.vue'
-import AlertsPanel from '../components/AlertsPanel.vue'
-import TaskManagementPage from './TaskManagementPage.vue'
-import { useWebSocketStore } from '../stores/websocket'
 import {
-  fetchAutonomyHealth,
-  fetchLlmStats,
-  fetchMonitoringHealth,
-  fetchMonitoringReport,
-  fetchMonitoringStats,
-  type ApiStats,
-  type AutonomyHealthReport,
-  type LlmStats,
-  type MonitoringReport,
+    fetchAutonomyHealth,
+    fetchLlmStats,
+    fetchMonitoringHealth,
+    fetchMonitoringReport,
+    fetchMonitoringStats,
+    type ApiStats,
+    type AutonomyHealthReport,
+    type LlmStats,
+    type MonitoringReport,
 } from '../api/client'
 import {
-  fetchSystemDataFlowDetail,
-  fetchSystemDataFlowOverview,
-  fetchSystemLifecycleDetail,
-  fetchSystemLifecycleOverview,
-  fetchSystemServiceDetail,
-  fetchSystemServiceOverview,
+    fetchSystemDataFlowDetail,
+    fetchSystemDataFlowOverview,
+    fetchSystemLifecycleDetail,
+    fetchSystemLifecycleOverview,
+    fetchSystemServiceDetail,
+    fetchSystemServiceOverview,
 } from '../api/systemMonitorService'
+import AlertsPanel from '../components/AlertsPanel.vue'
+import ApiProviderCard from '../components/ApiProviderCard.vue'
+import HealthStatusBar from '../components/HealthStatusBar.vue'
+import SystemHealthCard from '../components/SystemHealthCard.vue'
+import { useWebSocketStore } from '../stores/websocket'
 import type {
-  DataFlowDetailResponse,
-  DataFlowOverviewResponse,
-  LifecycleIntentDetailResponse,
-  LifecycleOverviewResponse,
-  MonitorStatus,
-  ServiceDetailResponse,
-  ServiceOverviewResponse,
+    DataFlowDetailResponse,
+    DataFlowOverviewResponse,
+    LifecycleIntentDetailResponse,
+    LifecycleOverviewResponse,
+    MonitorStatus,
+    ServiceDetailResponse,
+    ServiceOverviewResponse,
 } from '../types/systemMonitor'
+import TaskManagementPage from './TaskManagementPage.vue'
 
 const wsStore = useWebSocketStore()
 const tab = ref<'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks'>('health')
@@ -1211,6 +1224,17 @@ onMounted(() => {
 
 .headline-card.critical {
   border-color: rgba(248, 113, 113, 0.45);
+}
+
+/* V10.4.4 position headline variants */
+.headline-card.pos-active {
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.headline-card.pos-exception {
+  border-color: rgba(248, 113, 113, 0.45);
+}
+.headline-card.pos-stuck {
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .headline-label {
