@@ -5,17 +5,22 @@
  * New: Full Position CRUD, slices, timeline via /api/v1/pos/ prefix.
  */
 import type {
-    ExecutionSlice,
-    ManualCloseRequest,
-    ManualCloseResponse,
-    PortfolioSummary,
-    Position,
-    PositionDetail,
-    PositionLifecycleEvent,
+  ExecutionSlice,
+  ManualCloseRequest,
+  ManualCloseResponse,
+  PortfolioSummary,
+  Position,
+  PositionDetail,
+  PositionLifecycleEvent,
 } from '@/types/position'
 import { api } from './client'
 
-// ── V10.2-M3 legacy types (still used by existing components) ────────────────
+// ── Dynamic Decision Engine states (V10.2-M3) ───────────────────────────────
+// These mirror app/services/dynamic_position_service.py PositionState enum.
+// They represent the ENGINE's decision recommendation, NOT the V10.4.4 lifecycle
+// status stored in Position.status.  For the true lifecycle status use:
+//   import type { PositionStatus } from '@/types/position'
+// This API is only called by positionLifecycleApi.evaluateLifecycle (legacy).
 
 export type PositionState =
   | 'ENTERING'

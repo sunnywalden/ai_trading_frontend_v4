@@ -14,8 +14,35 @@
 
     <p v-if="errorMsg" class="error-message">{{ errorMsg }}</p>
     <p v-else-if="loading" class="loading-message">{{ $t('positions.loading') }}</p>
+
+    <!-- V10.4.4 生命周期仓位 (主要数据源) -->
+    <section class="db-positions-section">
+      <div class="db-section-header">
+        <span>🗄️ 生命周期仓位 (V10.4.4)</span>
+        <span class="db-badge" v-if="!dbLoading">{{ dbPositions.length }} 活跃</span>
+        <span class="db-badge" v-else>加载中…</span>
+        <button class="db-refresh-btn" @click="loadDbPositions" :disabled="dbLoading">↻ 刷新</button>
+      </div>
+      <div v-if="dbLoading" class="loading-message">加载中…</div>
+      <div v-else-if="!dbPositions.length" class="info-message">暂无活跃生命周期仓位</div>
+      <div v-else class="db-positions-grid">
+        <div
+          v-for="pos in dbPositions"
+          :key="pos.id"
+          class="db-position-card"
+          @click="openDetail(pos.id)"
+        >
+          <div class="db-pos-sym">{{ pos.symbol }}</div>
+          <div class="db-pos-status" :class="`status-${pos.status.toLowerCase()}`">{{ pos.status }}</div>
+          <div class="db-pos-qty">数量: {{ pos.open_qty }}</div>
+          <div class="db-pos-pnl" :class="(pos.unrealized_pnl_pct ?? 0) >= 0 ? 'pnl-pos' : 'pnl-neg'" v-if="pos.unrealized_pnl_pct != null">
+            {{ pos.unrealized_pnl_pct >= 0 ? '+' : '' }}{{ (pos.unrealized_pnl_pct * 100).toFixed(2) }}%
+          </div>
+        </div>
+      </div>
+    </section>
     
-    <div v-else-if="positionsData">
+    <div v-if="positionsData">
       <!-- V10.1: US/HK 市场过滤标签 -->
       <div class="market-filter-bar" v-if="hasHkPositions">
         <button
@@ -97,41 +124,21 @@
     </div>
     <p v-else class="info-message">{{ $t('positions.empty') }}</p>
 
-    <!-- V10.4.4 DB Positions section -->
-    <section v-if="dbPositions.length > 0 || dbLoading" class="db-positions-section">
-      <div class="db-section-header">
-        <span>🗄️ 生命周期仓位 (V10.4.4)</span>
-        <span class="db-badge">{{ dbPositions.length }} 活跃</span>
-      </div>
-      <div v-if="dbLoading" class="loading-message">加载中…</div>
-      <div v-else class="db-positions-grid">
-        <div
-          v-for="pos in dbPositions"
-          :key="pos.id"
-          class="db-position-card"
-          @click="openDetail(pos.id)"
-        >
-          <div class="db-pos-sym">{{ pos.symbol }}</div>
-          <div class="db-pos-status" :class="`status-${pos.status.toLowerCase()}`">{{ pos.status }}</div>
-          <div class="db-pos-qty">数量: {{ pos.open_qty }}</div>
-          <div class="db-pos-pnl" v-if="pos.unrealized_pnl_pct != null">
-            {{ pos.unrealized_pnl_pct >= 0 ? '+' : '' }}{{ (pos.unrealized_pnl_pct * 100).toFixed(2) }}%
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- 持仓详情弹窗 -->
+    <PositionDetailModal />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
-    fetchPositionsAssessment,
-    type PositionsAssessmentResponse,
-    refreshPositions
+  fetchPositionsAssessment,
+  type PositionsAssessmentResponse,
+  refreshPositions
 } from '../api/client';
 import PortfolioDashboard from '../components/PortfolioDashboard.vue';
+import PositionDetailModal from '../components/PositionDetailModal.vue';
 import PositionScoreCard from '../components/PositionScoreCard.vue';
 import PositionsGuideline from '../components/PositionsGuideline.vue';
 import { appConfig } from '../config/global';
@@ -245,12 +252,12 @@ onMounted(() => {
 // ── V10.4.4 DB Positions ─────────────────────────────────────────────────────
 import { useLifecycleStore } from '@/stores/lifecycle';
 import { useQuantLoopStore } from '@/stores/quantLoop';
-import type { Position } from '@/types/position';
+import { storeToRefs } from 'pinia';
 
 const lifecycleStore = useLifecycleStore()
 const quantLoopStore = useQuantLoopStore()
-const dbPositions = ref<Position[]>([])
-const dbLoading   = ref(false)
+const { positions: dbPositions } = storeToRefs(lifecycleStore)
+const dbLoading = ref(false)
 
 async function loadDbPositions() {
   const accountId = quantLoopStore.systemStatus?.account_id
@@ -258,11 +265,16 @@ async function loadDbPositions() {
   dbLoading.value = true
   try {
     await lifecycleStore.fetchPositions(accountId)
-    dbPositions.value = lifecycleStore.positions
   } finally {
     dbLoading.value = false
   }
 }
+
+// Retry when account_id becomes available (e.g., after quantLoop hydrates)
+watch(
+  () => quantLoopStore.systemStatus?.account_id,
+  (id) => { if (id && !dbPositions.value.length) loadDbPositions() },
+)
 
 function openDetail(positionId: number) {
   lifecycleStore.openPositionDetail(positionId)
@@ -500,6 +512,24 @@ function openDetail(positionId: number) {
   font-size: 12px;
   font-weight: 600;
   margin-top: 4px;
-  color: #34d399;
 }
+
+.pnl-pos { color: #34d399; }
+.pnl-neg { color: #f87171; }
+
+.db-refresh-btn {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: transparent;
+  color: #a5b4fc;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.db-refresh-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.15);
+}
+.db-refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
