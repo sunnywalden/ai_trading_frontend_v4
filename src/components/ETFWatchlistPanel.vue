@@ -51,6 +51,7 @@
           <div class="etf-meta">
             <span class="etf-symbol">{{ item.symbol }}</span>
             <span class="etf-name">{{ item.name }}</span>
+            <span v-if="heldSymbols.has(item.symbol)" class="etf-held-badge">持中</span>
           </div>
           <!-- 行情 -->
           <div class="etf-price-block">
@@ -95,7 +96,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { useLifecycleStore } from '@/stores/lifecycle'
+import { computed, onMounted, ref } from 'vue'
+
+const lifecycleStore = useLifecycleStore()
+/** Set of symbols currently held as active positions (V10.4.4) */
+const heldSymbols = computed(() =>
+  new Set(lifecycleStore.positions.map(p => p.symbol))
+)
 
 interface EtfItem {
   symbol: string
@@ -252,6 +260,18 @@ onMounted(refresh)
 .etf-meta { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .etf-symbol { font-size: 13px; font-weight: 700; color: #e2e8f0; font-family: monospace; }
 .etf-name { font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.etf-held-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 .etf-price-block { display: flex; flex-direction: column; align-items: flex-end; min-width: 70px; }
 .etf-price { font-size: 14px; font-weight: 600; color: #f1f5f9; font-family: monospace; }

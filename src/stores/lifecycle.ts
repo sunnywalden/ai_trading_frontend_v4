@@ -61,13 +61,14 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
 
   // ── Computed (V10.4.4) ────────────────────────────────────────────────────
   // Prefer portfolioSummary (V10.4.4 positions table) if populated;
-  // fall back to positionFsm counts (TradingPlan-based) which are always live.
+  // fall back to positionFsm counts (V10.4.4 Position.status based).
   const activePositionCount = computed(() => {
     const fromSummary = portfolioSummary.value.active_positions
     if (fromSummary > 0) return fromSummary
     const fsm = positionFsm.value
     if (!fsm) return 0
-    const activeStates = new Set(['ENTERING', 'HELD', 'SCALING_IN', 'SCALING_OUT'])
+    // V10.4.4 Position FSM active states (excludes CLOSED / LIQUIDATED / PENDING)
+    const activeStates = new Set(['OPENING', 'ACTIVE', 'SCALING_IN', 'SCALING_OUT', 'PARTIALLY_CLOSED', 'CLOSING'])
     return fsm.states
       .filter(s => activeStates.has(s.state))
       .reduce((sum, s) => sum + s.count, 0)
