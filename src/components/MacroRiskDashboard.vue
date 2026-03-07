@@ -21,7 +21,7 @@
     </div>
 
     <!-- 市场体感校准解释 -->
-    <div class="calibration-section" v-if="calibrationVisible">
+    <div class="calibration-section" v-if="calibrationVisible && calibration">
       <div class="calibration-header">
         <div>
           <h3>🧭 市场体感校准</h3>

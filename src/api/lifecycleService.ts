@@ -125,6 +125,32 @@ export interface DecisionProvenance {
   autonomy_action: string | null
 }
 
+// ── Position Board (持仓看板 – groups by position status) ─────────────────
+export interface PositionBoardCard {
+  id: number
+  symbol: string
+  direction: 'LONG' | 'SHORT' | null
+  total_qty: number
+  avg_entry_price: number | null
+  unrealized_pnl_pct: number | null
+  hold_seconds: number | null
+  latest_plan_id: number | null
+}
+
+export interface PositionBoardColumn {
+  state: string
+  label: string
+  color: string
+  count: number
+  cards: PositionBoardCard[]
+}
+
+export interface PositionBoard {
+  columns: PositionBoardColumn[]
+  total_active: number
+  as_of: string
+}
+
 // ── Stage 名称映射 ─────────────────────────────────────────────────────────────
 export const PIPELINE_STAGE_NAMES: Record<number, string> = {
   0: '体制分类', 1: '信号融合', 2: '策略匹配', 3: '计划生成',
@@ -167,5 +193,10 @@ export async function getFsmEvents(params: {
 
 export async function getDecisionProvenance(planId: number): Promise<DecisionProvenance> {
   const res = await api.get(`/v1/lifecycle/provenance/${planId}`)
+  return res.data
+}
+
+export async function getPositionBoard(): Promise<PositionBoard> {
+  const res = await api.get('/v1/lifecycle/position-board')
   return res.data
 }

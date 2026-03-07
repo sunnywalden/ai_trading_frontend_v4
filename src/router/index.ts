@@ -167,7 +167,7 @@ const routes: RouteRecordRaw[] = [
     path: '/trade-lifecycle',
     name: 'TradeLifecycle',
     component: () => import('../views/TradeLifecycleCenterPage.vue'),
-    meta: { title: '交易生命周期中心' }
+    meta: { title: '持仓生命周期中心' }
   },
   {
     path: '/order-book',
