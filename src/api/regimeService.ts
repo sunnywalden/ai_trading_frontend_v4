@@ -92,6 +92,15 @@ export interface RegimeOverrideResponse {
   regime: RegimeInfo
 }
 
+export interface RegimeClassifyResponse {
+  success: boolean
+  message: string
+  candidate: string | null
+  confirmed: boolean | null
+  confidence: number | null
+  regime: RegimeInfo | null
+}
+
 // ── API 函数 ──────────────────────────────────────────────────────────────────
 
 export const regimeApi = {
@@ -122,4 +131,10 @@ export const regimeApi = {
    */
   override: (payload: RegimeOverrideRequest) =>
     api.post<RegimeOverrideResponse>('/v1/regime/override', payload),
+
+  /**
+   * 立即触发体制重新分类（V10.5.1，跳过 cron 时间限制）
+   */
+  classify: () =>
+    api.post<RegimeClassifyResponse>('/v1/regime/classify'),
 }
