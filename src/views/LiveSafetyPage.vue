@@ -5,10 +5,29 @@
         <h2>Live Safety Guard</h2>
         <p>模型退化监控、数据陈旧矩阵与自主度节流 — V10.5.1 M4</p>
       </div>
-      <button class="refresh-button" @click="loadAll" :disabled="loading">
-        {{ loading ? '刷新中...' : '🔄 刷新' }}
-      </button>
+      <div class="header-actions">
+        <button
+          class="classify-button"
+          @click="triggerClassify"
+          :disabled="classifying"
+          title="立即触发市场体制重新分类，消除陈旧告警"
+        >
+          {{ classifying ? '分类中...' : '🧠 重新分类' }}
+        </button>
+        <button class="refresh-button" @click="loadAll" :disabled="loading">
+          {{ loading ? '刷新中...' : '🔄 刷新' }}
+        </button>
+      </div>
     </section>
+
+    <!-- 重新分类结果提示 -->
+    <transition name="fade">
+      <div v-if="classifyResult" class="classify-toast" :class="classifyResult.ok ? 'toast-ok' : 'toast-error'">
+        <span class="toast-icon">{{ classifyResult.ok ? '✅' : '❌' }}</span>
+        <span class="toast-msg">{{ classifyResult.message }}</span>
+        <button class="toast-close" @click="classifyResult = null">✕</button>
+      </div>
+    </transition>
 
     <!-- 总体节流状态横幅 -->
     <div v-if="throttle" class="throttle-banner" :class="`banner-${bannerClass}`">
@@ -158,12 +177,15 @@
 
 <script setup lang="ts">
 import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '@/api/liveSafetyService'
+import { regimeApi } from '@/api/regimeService'
 import { CLIENT_TIME_ZONE, parseBackendDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref } from 'vue'
 
 const tab = ref<'degradation' | 'freshness'>('degradation')
 const loading = ref(false)
 const error = ref<string | null>(null)
+const classifying = ref(false)
+const classifyResult = ref<{ ok: boolean; message: string } | null>(null)
 
 const degradation = ref<DegradationReport | null>(null)
 const freshness = ref<FreshnessMatrix | null>(null)
@@ -235,6 +257,25 @@ function barWidth(current: number, baseline: number) {
   return Math.min(ratio * 60, 90) + '%'
 }
 
+async function triggerClassify() {
+  classifying.value = true
+  classifyResult.value = null
+  try {
+    const res = await regimeApi.classify()
+    classifyResult.value = { ok: true, message: res.data.message }
+    // 同步刷新数据陈旧矩阵，让 market_regime last_seen 立即更新
+    const fresh = await liveSafetyApi.getFreshness()
+    freshness.value = fresh.data
+  } catch (e: any) {
+    classifyResult.value = {
+      ok: false,
+      message: e?.response?.data?.detail ?? e?.message ?? '分类触发失败',
+    }
+  } finally {
+    classifying.value = false
+  }
+}
+
 async function loadAll() {
   loading.value = true
   error.value = null
@@ -262,6 +303,7 @@ onMounted(loadAll)
 .section-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
 .section-header h2 { margin: 0 0 4px; font-size: 22px; }
 .section-header p  { margin: 0; color: #9aa4bf; font-size: 14px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 .tab-bar { display: flex; gap: 8px; margin: 20px 0 0; border-bottom: 1px solid var(--border-color, #2d2d4e); }
 .tab-btn { background: none; border: none; padding: 10px 20px; color: #9aa4bf; cursor: pointer; font-size: 14px; border-bottom: 2px solid transparent; }
 .tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
@@ -270,6 +312,17 @@ onMounted(loadAll)
 .metrics-card { margin-top: 20px; }
 .refresh-button { background: rgba(74,144,226,0.12); border: 1px solid rgba(74,144,226,0.3); color: #4a90e2; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
 .refresh-button:hover { background: rgba(74,144,226,0.22); }
+.classify-button { background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.35); color: #81c784; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.classify-button:hover:not(:disabled) { background: rgba(76,175,80,0.22); }
+.classify-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.classify-toast { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
+.toast-ok    { background: rgba(76,175,80,0.12);   border: 1px solid rgba(76,175,80,0.4);   color: #a5d6a7; }
+.toast-error { background: rgba(255,118,117,0.12); border: 1px solid rgba(255,118,117,0.4); color: #ef9a9a; }
+.toast-msg { flex: 1; }
+.toast-close { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; font-size: 14px; padding: 0 4px; line-height: 1; }
+.toast-close:hover { opacity: 1; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 .error-message { color: #ff7675; margin-top: 16px; font-size: 13px; }
 .empty-state { color: #666; text-align: center; padding: 32px; font-size: 14px; }
 
