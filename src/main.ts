@@ -1,15 +1,45 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
+import { logger } from "@/utils/logger";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
+import { createPinia } from "pinia";
+import { createApp } from "vue";
 import App from "./App.vue";
-import router from "./router";
 import i18n from "./i18n";
+import router from "./router";
 import "./style.css";
 import "./styles/responsive.css"; // V3.2 全局响应式样式
-import { logger } from "@/utils/logger";
 
 logger.info("🚀 Frontend application starting...");
+
+if (globalThis.window !== undefined) {
+	globalThis.addEventListener("unhandledrejection", (event) => {
+		const reason = event.reason;
+		let message = "";
+
+		if (typeof reason === "string") {
+			message = reason;
+		} else if (reason instanceof Error) {
+			message = reason.message;
+		} else if (reason !== null && typeof reason === "object") {
+			// Plain objects (e.g. ErrorEvent, custom rejects) may have a .message field
+			const r = reason as Record<string, unknown>;
+			message = typeof r["message"] === "string" ? r["message"] : String(reason);
+		} else {
+			message = String(reason ?? "");
+		}
+
+		// Chrome prepends "Unable to load image: " in the console display, but the
+		// actual rejection reason is often just the bare data URL or the full string.
+		const isSvgImageError =
+			message.includes("data:image/svg+xml") ||
+			message.includes("Unable to load image");
+
+		if (isSvgImageError) {
+			logger.warn("Ignored recoverable SVG image load rejection");
+			event.preventDefault();
+		}
+	});
+}
 
 const app = createApp(App);
 app.use(createPinia());
