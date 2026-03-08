@@ -158,6 +158,7 @@
 
 <script setup lang="ts">
 import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '@/api/liveSafetyService'
+import { CLIENT_TIME_ZONE, parseBackendDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref } from 'vue'
 
 const tab = ref<'degradation' | 'freshness'>('degradation')
@@ -186,9 +187,16 @@ const bannerIcon = computed(() => {
 })
 
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleString('zh-CN', {
-    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-  })
+  const d = parseBackendDateTime(iso)
+  if (!d) return '—'
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: CLIENT_TIME_ZONE,
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d)
 }
 
 function metricLabel(type: string) {
