@@ -47,7 +47,7 @@
         <div class="l2-alert-body">
           <strong>组合容量已满 — L2 正在拦截所有新信号</strong>
           <span class="l2-alert-detail">
-            当前 HELD 持仓 <strong>{{ stats!.current_positions_count }}</strong> 个 &gt;
+            当前 HELD 持仓 <strong>{{ currentPositionsCountDisplay }}</strong> 个 &gt;
             {{ effectiveCapacityLabel }} <strong>{{ effectiveMaxCapacity }}</strong> 个；
             须平仓后方可放行新信号
           </span>
@@ -71,8 +71,8 @@
           <div class="sc-label">精英率 <span class="target-hint">(目标 5-15%)</span></div>
         </div>
         <div class="stat-card">
-          <div class="sc-value">{{ effectiveMaxCapacityDisplay }}</div>
-          <div class="sc-label">当前容量上限 <span class="target-hint">({{ currentRegimeLabel }})</span></div>
+          <div class="sc-value">{{ currentPositionsCountDisplay }}</div>
+          <div class="sc-label">当前持仓标的数 <span class="target-hint">(上限 {{ effectiveMaxCapacityDisplay }} · {{ currentRegimeLabel }})</span></div>
         </div>
       </div>
 
@@ -300,13 +300,15 @@
 
         <div class="config-grid" v-if="editConfig">
           <div class="config-row-item" v-for="field in CONFIG_FIELDS" :key="field.key">
-            <label class="config-label">
+            <label class="config-label" :for="`config-${field.key}`">
               {{ field.label }}
               <span class="config-hint">{{ field.hint }}</span>
             </label>
             <input
+              :id="`config-${field.key}`"
               type="number"
-              v-model.number="editConfig[field.key as keyof typeof editConfig]"
+              :value="getEditConfigValue(field.key) ?? ''"
+              @input="updateEditConfigValue(field.key, $event)"
               :min="field.min"
               :max="field.max"
               :step="field.step"
@@ -337,17 +339,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import * as echarts from 'echarts'
-import { autonomyApi } from '@/api/autonomyService'
-import { REGIME_LABELS } from '@/api/regimeService'
-import { signalQualityService } from '@/api/signalQualityService'
 import type { TriggerCapacityGuardResponse } from '@/api/autonomyService'
-import type {
-  FunnelStats, AuditLogRecord, GhostTrade,
-  GhostAnalysis, QualityConfig, QualityConfigPatch,
-} from '@/api/signalQualityService'
+import { autonomyApi } from '@/api/autonomyService'
 import type { RegimeType } from '@/api/regimeService'
+import { REGIME_LABELS } from '@/api/regimeService'
+import type {
+  AuditLogRecord,
+  FunnelStats,
+  GhostAnalysis,
+  GhostTrade,
+  QualityConfig, QualityConfigPatch,
+} from '@/api/signalQualityService'
+import { signalQualityService } from '@/api/signalQualityService'
+import * as echarts from 'echarts'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -364,6 +369,7 @@ const GHOST_RESULT_LABELS: Record<string, string> = {
 
 type AuditResultFilter = '' | 'PASSED' | 'REJECTED'
 type GhostResultFilter = '' | 'WIN' | 'LOSS' | 'OPEN' | 'EXPIRED'
+type ConfigFieldKey = keyof QualityConfigPatch
 
 // ── 全局状态 ──────────────────────────────────────────────────────────────────
 const loading    = ref(false)
@@ -395,7 +401,14 @@ const ghostFilter  = ref<{ ghost_result: GhostResultFilter; symbol: string }>({
 
 // ── 调参 ─────────────────────────────────────────────────────────────────────
 const showConfirm = ref(false)
-const CONFIG_FIELDS = [
+const CONFIG_FIELDS: Array<{
+  key: ConfigFieldKey
+  label: string
+  hint: string
+  min: number
+  max: number
+  step: number
+}> = [
   { key: 'signal_confidence_threshold', label: '置信度门槛',     hint: '(0-100, 推荐 90-95)',  min: 50, max: 100, step: 1 },
   { key: 'signal_resonance_min_dims',   label: '最小共振维度数', hint: '(1-6, 推荐 4)',        min: 1,  max: 6,   step: 1 },
   { key: 'max_concurrent_positions',    label: '最大并发仓位',   hint: '(1-20, 推荐 6)',       min: 1,  max: 20,  step: 1 },
@@ -426,6 +439,11 @@ const effectiveMaxCapacityDisplay = computed(() =>
   Number.isFinite(effectiveMaxCapacity.value) ? String(effectiveMaxCapacity.value) : '--'
 )
 
+const currentPositionsCountDisplay = computed(() => {
+  const currentPositionsCount = stats.value?.current_positions_count
+  return typeof currentPositionsCount === 'number' ? String(currentPositionsCount) : '--'
+})
+
 const currentRegimeLabel = computed(() => {
   const regime = stats.value?.current_regime as RegimeType | null | undefined
   if (!regime) return '基础配置'
@@ -449,15 +467,17 @@ const capacityContextText = computed(() => {
   const base = stats.value.max_concurrent_positions_cfg
   const effective = stats.value.effective_max_concurrent_positions ?? base
   const confidence = stats.value.regime_confidence
-  const confidenceText = confidence != null ? `，置信度 ${(confidence * 100).toFixed(1)}%` : ''
+  const confidenceText = typeof confidence === 'number'
+    ? `，置信度 ${(confidence * 100).toFixed(1)}%`
+    : ''
 
-  if (stats.value.current_regime && base != null && effective != null && effective !== base) {
+  if (stats.value.current_regime && typeof base === 'number' && typeof effective === 'number' && effective !== base) {
     return `基础上限 ${base} 个；当前体制 ${currentRegimeLabel.value}${confidenceText}，已动态收紧为 ${effective} 个。`
   }
   if (stats.value.current_regime) {
     return `当前体制 ${currentRegimeLabel.value}${confidenceText}；当前生效上限为 ${effective ?? '--'} 个。`
   }
-  return base != null ? `当前使用基础配置上限 ${base} 个。` : ''
+  return typeof base === 'number' ? `当前使用基础配置上限 ${base} 个。` : ''
 })
 
 // L2 (MAX_POSITIONS_REACHED) 是否为主要拦截原因，且确实超出配置上限
@@ -508,6 +528,21 @@ function capacityGuardStatusClass(status: string): string {
   if (status === 'EXECUTED') return 'cg-status-done'
   if (['FAILED', 'CANCELLED', 'EXPIRED', 'REJECTED'].includes(status)) return 'cg-status-failed'
   return 'cg-status-neutral'
+}
+
+function getEditConfigValue(key: ConfigFieldKey): number | undefined {
+  const value = editConfig.value[key]
+  return typeof value === 'number' ? value : undefined
+}
+
+function updateEditConfigValue(key: ConfigFieldKey, event: Event): void {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) return
+  const nextValue = target.value === '' ? undefined : Number(target.value)
+  editConfig.value = {
+    ...editConfig.value,
+    [key]: nextValue != null && !Number.isNaN(nextValue) ? nextValue : undefined,
+  }
 }
 
 // ── 数据加载 ──────────────────────────────────────────────────────────────────
@@ -643,7 +678,7 @@ function renderFunnelChart() {
 function renderReasonChart() {
   if (!reasonChartRef.value || !stats.value) return
   if (!reasonChart) reasonChart = echarts.init(reasonChartRef.value)
-  const breakdown = stats.value.rejection_breakdown
+  const breakdown: Record<string, number> = stats.value.rejection_breakdown ?? {}
   const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]).slice(0, 10)
   reasonChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c}' },
@@ -663,10 +698,10 @@ function renderReasonChart() {
 function renderTrendChart() {
   if (!trendChartRef.value || !stats.value?.daily_trend) return
   if (!trendChart) trendChart = echarts.init(trendChartRef.value)
-  const trend = stats.value.daily_trend
+  const trend: FunnelStats['daily_trend'] = stats.value.daily_trend
   trendChart.setOption({
-    tooltip: { trigger: 'axis', formatter: (p: any) =>
-      `${p[0].axisValue}<br/>精英率: ${p[0].value}% (${p[1]?.value ?? 0}通过/${p[2]?.value ?? 0}评估)` },
+    tooltip: { trigger: 'axis', formatter: (params: Array<{ axisValue: string; value: number }>) =>
+      `${params[0]?.axisValue ?? ''}<br/>精英率: ${params[0]?.value ?? 0}% (${params[1]?.value ?? 0}通过/${params[2]?.value ?? 0}评估)` },
     legend: { show: false },
     grid: { top: 12, bottom: 24, left: 6, right: 6, containLabel: true },
     xAxis: { type: 'category', data: trend.map(t => t.date),
