@@ -197,6 +197,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/ai-hub/weights',     label: t('nav.factor_weights'),  icon: '⚖️' },
       { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'),     icon: '🔭' },
       { path: '/governance/pipeline', label: 'Promotion Pipeline',    icon: '🛡️' },
+      { path: '/live-safety',        label: 'Live Safety Guard',      icon: '🔒' },
       { path: '/regime',             label: t('nav.regime'),          icon: '🌊' },
       { path: '/alerts',             label: t('nav.alerts'),          icon: '🔔' },
       { path: '/system-monitor',     label: '系统监控',               icon: '🖥️' },

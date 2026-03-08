@@ -16,6 +16,16 @@
         <span class="cb-alert" v-if="autonomy.circuitBreakerActive">
           ⚡ {{ $t('autonomy.circuit_breaker_active') }}
         </span>
+        <!-- V10.5.1 Live Safety throttle pill -->
+        <span
+          v-if="throttle && throttle.downgrade_needed"
+          class="throttle-alert"
+          :class="`throttle-${(throttle.recommended_level || 'advisory').toLowerCase()}`"
+          @click="$router.push('/live-safety')"
+          title="Live Safety Guard 建议降级"
+        >
+          🛡️ THROTTLE → {{ throttle.recommended_level }}
+        </span>
       </div>
       <div class="banner-right">
         <span class="trade-count" v-if="autonomy.status">
@@ -31,6 +41,7 @@
           <svg :class="{ spinning: store.loading }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
         </button>
         <router-link to="/autonomy" class="banner-link">{{ $t('nav.autonomy') }} →</router-link>
+        <router-link v-if="throttle" to="/live-safety" class="banner-link banner-link-safety">🔒 Live Safety</router-link>
       </div>
     </div>
 
@@ -84,6 +95,38 @@
             <span class="cap-desc">Walk-Forward 稳健性测试</span>
           </div>
           <div class="cap-tag">HOT</div>
+        </div>
+        <!-- V10.5.1 新能力入口 -->
+        <div class="capability-item" @click="$router.push('/alpha-lab')">
+          <div class="cap-icon">🧭</div>
+          <div class="cap-text">
+            <span class="cap-title">Alpha Lab</span>
+            <span class="cap-desc">净 Alpha · 衰减 · Shadow Book</span>
+          </div>
+          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
+        </div>
+        <div class="capability-item" @click="$router.push('/portfolio')">
+          <div class="cap-icon">⚖️</div>
+          <div class="cap-text">
+            <span class="cap-title">Portfolio 构建台</span>
+            <span class="cap-desc">风险预算 · 边际贡献 · 流动性</span>
+          </div>
+          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
+        </div>
+        <div
+          class="capability-item"
+          :class="{ 'cap-item-warn': throttle?.downgrade_needed }"
+          @click="$router.push('/live-safety')"
+        >
+          <div class="cap-icon">🛡️</div>
+          <div class="cap-text">
+            <span class="cap-title">Live Safety Guard</span>
+            <span class="cap-desc">
+              <template v-if="throttle?.downgrade_needed">⚠ 建议降级 → {{ throttle.recommended_level }}</template>
+              <template v-else>模型退化 · 数据陈旧 · 节流</template>
+            </span>
+          </div>
+          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
         </div>
       </section>
 
@@ -364,23 +407,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useDashboardV2Store } from '@/stores/dashboardV2'
-import { useAutonomyStore } from '@/stores/autonomy'
-import { useWarRoomStore } from '@/stores/warRoom'
-import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
-import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
+import { liveSafetyApi, type ThrottleStatus } from '@/api/liveSafetyService'; // V10.5.1
+import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
-import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
+import HotspotCard from '@/components/dashboard/HotspotCard.vue'
+import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
+import PlanCard from '@/components/dashboard/PlanCard.vue'
 import PnLAttributionPanel from '@/components/dashboard/PnLAttributionPanel.vue'
 import PositionCard from '@/components/dashboard/PositionCard.vue'
-import PlanCard from '@/components/dashboard/PlanCard.vue'
-import HotspotCard from '@/components/dashboard/HotspotCard.vue'
+import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
+import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'; // V10.4.2
 import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
-import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'  // V10.4.2
+import { useAutonomyStore } from '@/stores/autonomy'
+import { useDashboardV2Store } from '@/stores/dashboardV2'
+import { useWarRoomStore } from '@/stores/warRoom'
 import { formatClientTime } from '@/utils/datetime'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const store = useDashboardV2Store()
 const autonomy = useAutonomyStore()
@@ -389,6 +433,15 @@ const router = useRouter()
 const { t, locale } = useI18n()
 
 const moduleLoading = reactive<Record<string, boolean>>({})
+
+// V10.5.1 Live Safety throttle
+const throttle = ref<ThrottleStatus | null>(null)
+async function fetchThrottle() {
+  try {
+    const res = await liveSafetyApi.getThrottle(autonomy.currentLevel || 'FULL')
+    throttle.value = res.data
+  } catch { /* silent — non-blocking */ }
+}
 
 // V10.3.3 Smart Alert Center
 const filterGrade = ref<string | null>(null)
@@ -441,9 +494,10 @@ async function fetchRegime() {
   } catch { /* silent */ }
 }
 
-// AI Engine Banner 背景样式
+// AI Engine Banner 背景样式（V10.5.1: 若 Live Safety 建议 FREEZE/ADVISORY 则覆盖为 critical）
 const autonomyBannerClass = computed(() => {
   if (autonomy.circuitBreakerActive) return 'banner-critical'
+  if (throttle.value?.recommended_level === 'FREEZE' || throttle.value?.recommended_level === 'ADVISORY') return 'banner-critical'
   if (autonomy.isPaused) return 'banner-paused'
   const lvl = autonomy.currentLevel
   if (lvl === 'FULL') return 'banner-full'
@@ -457,6 +511,7 @@ onMounted(async () => {
     autonomy.fetchStatus(),
     fetchRegime(),          // V10.2-M1
     warRoom.fetchAlerts(),  // V10.3.3 Smart Alert Center
+    fetchThrottle(),        // V10.5.1 Live Safety Guard
   ])
   store.startAutoRefresh()
 })
@@ -468,6 +523,7 @@ onUnmounted(() => {
 function handleRefresh() {
   store.loadFull()
   autonomy.fetchStatus()
+  fetchThrottle()  // V10.5.1
 }
 
 async function handleModuleRefresh(module: string) {
@@ -654,6 +710,26 @@ function riskLevelLabel(level: string): string {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* V10.5.1 throttle pill & capability tag */
+.throttle-alert {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  animation: pulse-border 1.5s infinite;
+  border: 1px solid rgba(239,68,68,0.6);
+  background: rgba(239,68,68,0.12);
+  color: #fca5a5;
+  white-space: nowrap;
+}
+.throttle-freeze   { border-color: rgba(239,68,68,0.7);  background: rgba(239,68,68,0.18);  color: #f87171; }
+.throttle-advisory { border-color: rgba(245,158,11,0.7); background: rgba(245,158,11,0.12); color: #fcd34d; }
+.banner-link-safety { color: #a78bfa; }
+.cap-tag-v1051 { background: rgba(139,92,246,0.20); color: #a78bfa; }
+.cap-item-warn { border-color: rgba(245,158,11,0.4) !important; background: rgba(245,158,11,0.06) !important; }
 
 .trade-count {
   display: flex;
