@@ -14,6 +14,9 @@ export interface OrderBookRow {
   plan_id: number
   account_id: string
   symbol: string
+  execution_intent_db_id: number | null
+  execution_intent_key: string | null
+  broker_order_id: string | null
   market: string | null
   direction: 'BUY' | 'SELL' | null
   strategy_source: string | null

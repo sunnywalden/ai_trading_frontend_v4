@@ -122,6 +122,7 @@
         <td>
           <div class="action-btns">
             <button class="act-btn" @click.stop="$emit('detail', row)">详情</button>
+            <button class="act-btn act-policy" @click.stop="$emit('policy', row)">策略</button>
             <button
               v-if="row.stop_loss != null"
               class="act-btn act-stop"
@@ -140,11 +141,12 @@
 </template>
 
 <script setup lang="ts">
-import type { OrderBookRow } from '@/api/orderBookService'
+import type { OrderBookRow } from '@/api/orderBookService';
 
 defineProps<{ rows: OrderBookRow[] }>()
 defineEmits<{
   (e: 'detail',   row: OrderBookRow): void
+  (e: 'policy',   row: OrderBookRow): void
   (e: 'stopLoss', row: OrderBookRow): void
 }>()
 
@@ -277,7 +279,7 @@ function fmtTime(iso: string): string {
   border-radius: 4px;
   background: rgba(99,102,241,0.15);
   border: 1px solid rgba(99,102,241,0.3);
-  color: #a5b4fc;
+  color: #e2e8f0;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -285,9 +287,17 @@ function fmtTime(iso: string): string {
 .act-stop {
   background: rgba(245,158,11,0.12);
   border-color: rgba(245,158,11,0.3);
-  color: #fde68a;
+  color: #fef3c7;
 }
 .act-stop:hover { background: rgba(245,158,11,0.22); }
+
+.act-policy {
+  background: rgba(59,130,246,0.14);
+  border-color: rgba(96,165,250,0.32);
+  color: #eff6ff;
+}
+
+.act-policy:hover { background: rgba(59,130,246,0.24); }
 
 .empty-td {
   text-align: center;

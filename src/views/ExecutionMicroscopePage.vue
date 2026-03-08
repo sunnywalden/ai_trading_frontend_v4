@@ -7,15 +7,37 @@
           <p>IS 四分解 · 执行成本全透视 · Fill 热力图</p>
         </div>
         <div class="header-actions">
-          <select v-model="days" class="filter-select" @change="store.fetchExecutionMicroscope(days)">
+          <select v-model="days" class="filter-select" @change="fetchData()">
             <option :value="7">近 7 天</option>
             <option :value="30">近 30 天</option>
             <option :value="90">近 90 天</option>
           </select>
-          <button class="refresh-button" :disabled="store.loadingExecution" @click="store.fetchExecutionMicroscope(days)">
+          <button class="refresh-button" :disabled="store.loadingExecution" @click="fetchData()">
             {{ store.loadingExecution ? '加载中...' : '刷新' }}
           </button>
         </div>
+      </div>
+    </section>
+
+    <section v-if="hasFocusContext" class="focus-banner">
+      <div>
+        <strong>
+          {{ focusSymbol ? `当前聚焦标的: ${focusSymbol}` : '当前为审计链路聚焦视图' }}
+        </strong>
+        <p>
+          <span v-if="focusIntentId">Intent: {{ focusIntentId }}</span>
+          <span v-if="focusOrderId"> · Order: {{ focusOrderId }}</span>
+        </p>
+        <div v-if="focusSourceLabel || focusMatchLabel || focusUpstreamSourceLabel" class="focus-meta">
+          <span v-if="focusSourceLabel" class="focus-chip">{{ focusSourceLabel }}</span>
+          <span v-if="focusUpstreamSourceLabel" class="focus-chip">{{ focusUpstreamSourceLabel }}</span>
+          <span v-if="focusMatchLabel" class="focus-chip accent">{{ focusMatchLabel }}</span>
+        </div>
+        <p v-if="focusAuditNote" class="focus-note">{{ focusAuditNote }}</p>
+      </div>
+      <div class="focus-actions">
+        <button class="refresh-button alt" @click="openExecutionPolicyFromBanner">返回策略页</button>
+        <button class="refresh-button alt" @click="clearFocus">清除聚焦</button>
       </div>
     </section>
 
@@ -51,14 +73,15 @@
                 <th>总 IS</th>
                 <th>成交率</th>
                 <th>等级</th>
+                <th>联动</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="store.loadingExecution">
-                <td colspan="9" class="loading-cell">加载中...</td>
+                <td colspan="10" class="loading-cell">加载中...</td>
               </tr>
               <tr v-else-if="!store.executionQuality.length">
-                <td colspan="9" class="empty-cell">暂无数据</td>
+                <td colspan="10" class="empty-cell">暂无数据</td>
               </tr>
               <tr v-else v-for="r in store.executionQuality" :key="r.id">
                 <td class="symbol-cell">{{ r.symbol }}</td>
@@ -70,6 +93,9 @@
                 <td :class="bpsCss(r.total_is_bps, true)"><strong>{{ r.total_is_bps?.toFixed(1) }}</strong></td>
                 <td>{{ r.fill_rate != null ? (r.fill_rate * 100).toFixed(1) + '%' : '-' }}</td>
                 <td><span class="grade-badge" :class="`grade-${r.grade}`">{{ r.grade }}</span></td>
+                <td>
+                  <button class="table-link" @click="openExecutionPolicy(r)">策略</button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -92,11 +118,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import type { ExecutionQualityRecord } from '@/api/observabilityService'
 import { useObservabilityStore } from '@/stores/observability'
 import * as echarts from 'echarts'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const store = useObservabilityStore()
+const route = useRoute()
+const router = useRouter()
 const days = ref(30)
 
 const trendChartEl = ref<HTMLElement | null>(null)
@@ -105,6 +135,62 @@ let trendChart: echarts.ECharts | null = null
 let heatmapChart: echarts.ECharts | null = null
 
 const dimensionKeys = ['delay_cost_bps', 'market_impact_bps', 'opportunity_cost_bps', 'timing_cost_bps'] as const
+const SOURCE_LABELS: Record<string, string> = {
+  'order-book-row': '上游来源: 订单簿行级回溯',
+  'order-book': '上游来源: 智能订单簿',
+  'execution-policy': '来源: 执行策略控制台',
+  'execution-microscope': '来源: 执行显微镜',
+}
+const focusSymbol = computed(() => {
+  const value = route.query.symbol
+  return typeof value === 'string' && value.trim() ? value.trim().toUpperCase() : ''
+})
+const focusIntentId = computed(() => {
+  const value = Number(route.query.intentId)
+  return Number.isFinite(value) && value > 0 ? value : null
+})
+const focusOrderId = computed(() => {
+  const value = route.query.orderId
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+})
+const focusSource = computed(() => {
+  const value = route.query.source
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+})
+const focusUpstreamSource = computed(() => {
+  const value = route.query.upstreamSource
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+})
+const focusMatchMode = computed(() => {
+  const value = route.query.matchMode
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+})
+const hasFocusContext = computed(() => Boolean(
+  focusSymbol.value || focusIntentId.value || focusOrderId.value || focusMatchMode.value,
+))
+const focusSourceLabel = computed(() => SOURCE_LABELS[focusSource.value] || '')
+const focusUpstreamSourceLabel = computed(
+  () => SOURCE_LABELS[focusUpstreamSource.value] || '',
+)
+const focusMatchLabel = computed(() => {
+  if (focusMatchMode.value === 'order_id') return '命中方式: Broker Order 精确定位'
+  if (focusMatchMode.value === 'fallback_filters') return '命中方式: 后端回退筛选'
+  if (focusMatchMode.value === 'not_found') return '命中方式: Broker Order 未命中'
+  if (focusIntentId.value) return '命中方式: Intent 精确定位'
+  return ''
+})
+const focusAuditNote = computed(() => {
+  if (focusMatchMode.value === 'order_id' && focusOrderId.value) {
+    return `当前显微镜继承了 Broker Order ${focusOrderId.value} 的精确审计链路。`
+  }
+  if (focusMatchMode.value === 'fallback_filters' && focusOrderId.value) {
+    return `Broker Order ${focusOrderId.value} 在策略页未精确命中，当前显微镜保留该回退审计上下文。`
+  }
+  if (focusIntentId.value) {
+    return '当前显微镜保留了执行策略页选中的 execution intent 上下文。'
+  }
+  return ''
+})
 
 function dimLabel(key: string) {
   const map: Record<string, string> = {
@@ -134,6 +220,41 @@ function bpsCss(v: number | null | undefined, isTot = false) {
 function formatTime(ts: string | null) {
   if (!ts) return '-'
   return new Date(ts).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+}
+
+async function fetchData() {
+  await store.fetchExecutionMicroscope(days.value, focusSymbol.value || undefined)
+  renderTrend()
+  renderHeatmap()
+}
+
+function openExecutionPolicy(row: ExecutionQualityRecord) {
+  router.push({
+    path: '/execution-policy',
+    query: {
+      symbol: row.symbol,
+      intentId: String(row.intent_id),
+      source: 'execution-microscope',
+    },
+  })
+}
+
+function openExecutionPolicyFromBanner() {
+  router.push({
+    path: '/execution-policy',
+    query: {
+      symbol: focusSymbol.value || undefined,
+      intentId: focusIntentId.value ? String(focusIntentId.value) : undefined,
+      orderId: focusOrderId.value || undefined,
+      source: 'execution-microscope',
+      upstreamSource: focusUpstreamSource.value || focusSource.value || undefined,
+      matchMode: focusMatchMode.value || undefined,
+    },
+  })
+}
+
+function clearFocus() {
+  router.replace({ path: '/observability/execution' })
 }
 
 function renderTrend() {
@@ -176,10 +297,20 @@ watch(() => store.executionTrend, renderTrend, { deep: true })
 watch(() => store.fillHeatmap, renderHeatmap, { deep: true })
 
 onMounted(async () => {
-  await store.fetchExecutionMicroscope(days.value)
-  renderTrend()
-  renderHeatmap()
+  await fetchData()
 })
+
+watch(
+  () => [
+    route.query.symbol,
+    route.query.intentId,
+    route.query.orderId,
+    route.query.matchMode,
+    route.query.source,
+    route.query.upstreamSource,
+  ],
+  fetchData,
+)
 </script>
 
 <style scoped>
@@ -191,8 +322,16 @@ onMounted(async () => {
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .refresh-button { padding: 6px 16px; background: rgba(0,255,136,0.15); border: 1px solid #00ff88; color: #00ff88; border-radius: 4px; cursor: pointer; }
 .refresh-button:hover { background: rgba(0,255,136,0.25); }
+.refresh-button.alt { border-color: rgba(96, 165, 250, 0.6); color: #dbeafe; background: rgba(30, 64, 175, 0.85); }
 .refresh-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .filter-select { background: #0d0d1a; border: 1px solid rgba(0,255,136,0.3); color: #ccc; padding: 6px 10px; border-radius: 4px; }
+.focus-banner { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 16px; padding: 12px 14px; background: rgba(24, 47, 79, 0.72); border: 1px solid rgba(90, 184, 255, 0.22); border-radius: 8px; }
+.focus-banner p { margin: 4px 0 0; color: #9cc4df; font-size: 0.84rem; }
+.focus-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.focus-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.focus-chip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(125, 211, 252, 0.38); background: rgba(22, 47, 88, 0.92); color: #f8fbff; font-size: 0.76rem; font-weight: 600; }
+.focus-chip.accent { border-color: rgba(250, 204, 21, 0.4); background: rgba(96, 67, 10, 0.94); color: #fff8de; }
+.focus-note { margin-top: 10px !important; color: #d9ebf8 !important; }
 .metrics-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
 .metric-card { flex: 1; min-width: 120px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px; padding: 14px 16px; text-align: center; }
 .mc-label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
@@ -217,6 +356,8 @@ onMounted(async () => {
 .symbol-cell { color: #00ff88; font-weight: 600; }
 .time-cell { color: #888; white-space: nowrap; }
 .grade-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+.table-link { background: rgba(59,130,246,0.16); border: 1px solid rgba(125,211,252,0.25); color: #d6f4ff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+.table-link:hover { background: rgba(59,130,246,0.24); }
 .grade-badge.grade-A { background: rgba(0,255,136,0.2); color: #00ff88; }
 .grade-badge.grade-B { background: rgba(127,255,127,0.2); color: #7fff7f; }
 .grade-badge.grade-C { background: rgba(255,215,0,0.2); color: #ffd700; }

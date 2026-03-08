@@ -214,8 +214,8 @@ async function doManualClose() {
 
 .pdm-dir {
   font-size: 11px;
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.1);
+  color: #dbeafe;
+  background: rgba(30, 64, 175, 0.45);
   border-radius: 4px;
   padding: 1px 7px;
 }
@@ -249,7 +249,7 @@ async function doManualClose() {
 
 .pdm-metric {
   padding: 12px 16px;
-  background: #0f172a;
+  background: #020617;
 }
 
 .pdm-metric-label {
@@ -263,7 +263,7 @@ async function doManualClose() {
 .pdm-metric-val {
   font-size: 15px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #f8fafc;
 }
 
 .pdm-metric-val.pos { color: #34d399; }
@@ -346,19 +346,19 @@ async function doManualClose() {
 .pdm-input {
   flex: 1;
   padding: 6px 10px;
-  background: rgba(255,255,255,0.05);
+  background: #020617;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
-  color: #e2e8f0;
+  color: #f8fafc;
   font-size: 13px;
 }
 
 .pdm-close-btn {
   padding: 6px 14px;
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(127, 29, 29, 0.72);
   border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 6px;
-  color: #fca5a5;
+  color: #fee2e2;
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;

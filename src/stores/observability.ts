@@ -1,28 +1,28 @@
 // stores/observability.ts — V10.3.3 可观测性 Pinia Store
 
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import {
-  getExecutionQuality,
-  getExecutionQualityTrend,
-  getFillHeatmap,
-  getSignalIntelligence,
-  getSignalCorrelation,
-  getCrowdingAlerts,
-  getRiskCluster,
-  getFactorExposureHistory,
-  getCorrelationAlerts,
-} from '@/api/observabilityService'
 import type {
+  CorrelationMatrix,
+  DimensionIntelligence,
   ExecutionQualityRecord,
   ExecutionTrendPoint,
-  FillHeatmapCell,
-  SignalIntelligenceResponse,
-  CorrelationMatrix,
   FactorExposureSnapshot,
+  FillHeatmapCell,
   RiskCluster,
-  DimensionIntelligence,
+  SignalIntelligenceResponse,
 } from '@/api/observabilityService'
+import {
+  getCorrelationAlerts,
+  getCrowdingAlerts,
+  getExecutionQuality,
+  getExecutionQualityTrend,
+  getFactorExposureHistory,
+  getFillHeatmap,
+  getRiskCluster,
+  getSignalCorrelation,
+  getSignalIntelligence,
+} from '@/api/observabilityService'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export const useObservabilityStore = defineStore('observability', () => {
   // ─── State ────────────────────────────────────────────────────────────────
@@ -66,14 +66,14 @@ export const useObservabilityStore = defineStore('observability', () => {
   )
 
   // ─── Actions ──────────────────────────────────────────────────────────────
-  async function fetchExecutionMicroscope(days = 30) {
+  async function fetchExecutionMicroscope(days = 30, symbol?: string) {
     loadingExecution.value = true
     error.value = null
     try {
       const [quality, trend, heatmap] = await Promise.all([
-        getExecutionQuality(50),
-        getExecutionQualityTrend(days),
-        getFillHeatmap(days),
+        getExecutionQuality(50, symbol),
+        getExecutionQualityTrend(days, symbol),
+        getFillHeatmap(days, symbol),
       ])
       executionQuality.value = quality
       executionTrend.value = trend

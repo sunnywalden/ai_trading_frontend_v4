@@ -6,6 +6,7 @@ import { api } from './client'
 
 export interface ExecutionQualityRecord {
   id: number
+  intent_id: number
   symbol: string
   total_is_bps: number
   delay_cost_bps: number
@@ -96,18 +97,33 @@ export interface RiskCluster {
 
 // ─── Execution Microscope ─────────────────────────────────────────────────────
 
-export async function getExecutionQuality(limit = 50): Promise<ExecutionQualityRecord[]> {
-  const { data } = await api.get('/v1/observability/execution-quality', { params: { limit } })
+export async function getExecutionQuality(
+  limit = 50,
+  symbol?: string,
+): Promise<ExecutionQualityRecord[]> {
+  const { data } = await api.get('/v1/observability/execution-quality', {
+    params: { limit, symbol },
+  })
   return data
 }
 
-export async function getExecutionQualityTrend(days = 30): Promise<ExecutionTrendPoint[]> {
-  const { data } = await api.get('/v1/observability/execution-quality/trend', { params: { days } })
+export async function getExecutionQualityTrend(
+  days = 30,
+  symbol?: string,
+): Promise<ExecutionTrendPoint[]> {
+  const { data } = await api.get('/v1/observability/execution-quality/trend', {
+    params: { days, symbol },
+  })
   return data
 }
 
-export async function getFillHeatmap(days = 30): Promise<FillHeatmapCell[]> {
-  const { data } = await api.get('/v1/observability/fill-heatmap', { params: { days } })
+export async function getFillHeatmap(
+  days = 30,
+  symbol?: string,
+): Promise<FillHeatmapCell[]> {
+  const { data } = await api.get('/v1/observability/fill-heatmap', {
+    params: { days, symbol },
+  })
   return data
 }
 
