@@ -247,6 +247,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/GovernancePipelinePage.vue'),
     meta: { title: 'Promotion Pipeline' }
   },
+  {
+    path: '/live-safety',
+    name: 'LiveSafety',
+    component: () => import('../views/LiveSafetyPage.vue'),
+    meta: { title: 'Live Safety Guard' }
+  },
 
   // ── V10.4.2 Signal Watchtower 信号哨所 ────────────────────
   {

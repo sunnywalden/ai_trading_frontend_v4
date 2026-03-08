@@ -16,6 +16,7 @@
       <button :class="['tab-btn', { active: tab === 'data-flow' }]" @click="tab = 'data-flow'">🔀 数据流</button>
       <button :class="['tab-btn', { active: tab === 'api' }]" @click="tab = 'api'">📡 API 监控</button>
       <button :class="['tab-btn', { active: tab === 'tasks' }]" @click="tab = 'tasks'">📋 任务管理</button>
+      <button :class="['tab-btn', { active: tab === 'live-safety' }]" @click="tab = 'live-safety'">🛡️ AI 安全</button>
     </div>
 
     <section v-if="summaryItems.length" class="summary-strip">
@@ -554,49 +555,165 @@
       <TaskManagementPage />
     </div>
 
+    <!-- V10.5.1: AI 安全 Tab -->
+    <div v-if="tab === 'live-safety'" class="tab-content">
+      <section class="monitor-section">
+        <div class="sub-header">
+          <h3 class="section-title">🛡️ 自主度节流状态</h3>
+          <span v-if="lsThrottle" class="meta-chip"
+            :class="lsThrottle.recommended_level === 'FULL' ? 'status-healthy'
+              : lsThrottle.recommended_level === 'SEMI' ? 'status-warn'
+              : 'status-critical'">
+            {{ lsThrottle.recommended_level }}
+          </span>
+          <router-link to="/live-safety" class="see-all-link">完整看板 →</router-link>
+        </div>
+        <div v-if="lsLoading" class="loading-message">加载中...</div>
+        <template v-else-if="lsThrottle">
+          <div class="headline-grid" style="margin-bottom:12px">
+            <article class="headline-card" :class="lsThrottle.downgrade_needed ? 'critical' : ''">
+              <div class="headline-label">建议级别</div>
+              <div class="headline-value">{{ lsThrottle.recommended_level }}</div>
+            </article>
+            <article class="headline-card" :class="lsThrottle.downgrade_needed ? 'warn' : ''">
+              <div class="headline-label">需要降级</div>
+              <div class="headline-value">{{ lsThrottle.downgrade_needed ? '是' : '否' }}</div>
+            </article>
+            <article class="headline-card">
+              <div class="headline-label">可以升级</div>
+              <div class="headline-value">{{ lsThrottle.upgrade_possible ? '是' : '否' }}</div>
+            </article>
+          </div>
+          <div v-if="lsThrottle.reasons?.length" class="detail-card" style="margin-bottom:16px">
+            <div class="detail-card-title">触发原因</div>
+            <ul class="detail-list">
+              <li v-for="r in lsThrottle.reasons" :key="r">{{ r }}</li>
+            </ul>
+          </div>
+        </template>
+        <div v-else class="info-message">暂无节流数据</div>
+      </section>
+
+      <section class="monitor-section">
+        <div class="sub-header">
+          <h3 class="section-title">📉 模型退化监控</h3>
+          <span v-if="lsDegradation" class="meta-chip"
+            :class="lsDegradation.overall_severity === 'OK' ? 'status-healthy'
+              : lsDegradation.overall_severity === 'WARNING' ? 'status-warn'
+              : 'status-critical'">
+            {{ lsDegradation.overall_severity }}
+          </span>
+        </div>
+        <div v-if="lsLoading" class="loading-message">加载中...</div>
+        <template v-else-if="lsDegradation">
+          <div class="module-grid">
+            <article
+              v-for="m in lsDegradation.metrics"
+              :key="m.metric_name"
+              class="module-card"
+              :class="m.severity === 'OK' ? 'tone-healthy' : m.severity === 'WARNING' ? 'tone-warn' : 'tone-critical'"
+            >
+              <div class="module-head">
+                <div>
+                  <div class="module-title">{{ m.metric_name }}</div>
+                  <div class="module-sub">当前 {{ m.current_value?.toFixed(3) ?? '—' }} / 基准 {{ m.baseline_value?.toFixed(3) ?? '—' }}</div>
+                </div>
+                <span class="status-pill" :class="statusClass(m.severity)">{{ m.severity }}</span>
+              </div>
+              <div class="module-metrics">
+                <span>漂移 {{ m.drift?.toFixed(3) ?? '—' }}</span>
+                <span>方向 {{ m.drift_direction ?? '—' }}</span>
+              </div>
+            </article>
+          </div>
+        </template>
+        <div v-else class="info-message">暂无退化数据</div>
+      </section>
+
+      <section class="monitor-section">
+        <div class="sub-header">
+          <h3 class="section-title">⏱ 数据陈旧矩阵</h3>
+          <span v-if="lsFreshness?.freeze_new_open" class="meta-chip status-critical">FREEZE NEW OPEN</span>
+        </div>
+        <div v-if="lsLoading" class="loading-message">加载中...</div>
+        <template v-else-if="lsFreshness">
+          <div class="table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>数据源</th>
+                  <th>最近更新</th>
+                  <th>当前延迟(h)</th>
+                  <th>警戒(h)</th>
+                  <th>临界(h)</th>
+                  <th>状态</th>
+                  <th>触发动作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="entry in lsFreshness.matrix" :key="entry.source">
+                  <td>{{ entry.source }}</td>
+                  <td>{{ formatDateTime(entry.last_seen) }}</td>
+                  <td :class="entry.status === 'OK' ? '' : entry.status === 'WARNING' ? 'warn-cell' : 'crit-cell'">
+                    {{ entry.age_hours?.toFixed(1) ?? '—' }}
+                  </td>
+                  <td class="dim-cell">{{ entry.warn_threshold_hours }}</td>
+                  <td class="dim-cell">{{ entry.crit_threshold_hours }}</td>
+                  <td><span class="status-pill small" :class="statusClass(entry.status)">{{ entry.status }}</span></td>
+                  <td class="dim-cell">{{ entry.action_on_critical }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+        <div v-else class="info-message">暂无陈旧度数据</div>
+      </section>
+    </div>
+
     <div v-if="successMsg" class="success-toast">{{ successMsg }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue';
 import {
-    fetchAutonomyHealth,
-    fetchLlmStats,
-    fetchMonitoringHealth,
-    fetchMonitoringReport,
-    fetchMonitoringStats,
-    type ApiStats,
-    type AutonomyHealthReport,
-    type LlmStats,
-    type MonitoringReport,
-} from '../api/client'
+  fetchAutonomyHealth,
+  fetchLlmStats,
+  fetchMonitoringHealth,
+  fetchMonitoringReport,
+  fetchMonitoringStats,
+  type ApiStats,
+  type AutonomyHealthReport,
+  type LlmStats,
+  type MonitoringReport,
+} from '../api/client';
+import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '../api/liveSafetyService'; // V10.5.1
 import {
-    fetchSystemDataFlowDetail,
-    fetchSystemDataFlowOverview,
-    fetchSystemLifecycleDetail,
-    fetchSystemLifecycleOverview,
-    fetchSystemServiceDetail,
-    fetchSystemServiceOverview,
-} from '../api/systemMonitorService'
-import AlertsPanel from '../components/AlertsPanel.vue'
-import ApiProviderCard from '../components/ApiProviderCard.vue'
-import HealthStatusBar from '../components/HealthStatusBar.vue'
-import SystemHealthCard from '../components/SystemHealthCard.vue'
-import { useWebSocketStore } from '../stores/websocket'
+  fetchSystemDataFlowDetail,
+  fetchSystemDataFlowOverview,
+  fetchSystemLifecycleDetail,
+  fetchSystemLifecycleOverview,
+  fetchSystemServiceDetail,
+  fetchSystemServiceOverview,
+} from '../api/systemMonitorService';
+import AlertsPanel from '../components/AlertsPanel.vue';
+import ApiProviderCard from '../components/ApiProviderCard.vue';
+import HealthStatusBar from '../components/HealthStatusBar.vue';
+import SystemHealthCard from '../components/SystemHealthCard.vue';
+import { useWebSocketStore } from '../stores/websocket';
 import type {
-    DataFlowDetailResponse,
-    DataFlowOverviewResponse,
-    LifecycleIntentDetailResponse,
-    LifecycleOverviewResponse,
-    MonitorStatus,
-    ServiceDetailResponse,
-    ServiceOverviewResponse,
-} from '../types/systemMonitor'
-import TaskManagementPage from './TaskManagementPage.vue'
+  DataFlowDetailResponse,
+  DataFlowOverviewResponse,
+  LifecycleIntentDetailResponse,
+  LifecycleOverviewResponse,
+  MonitorStatus,
+  ServiceDetailResponse,
+  ServiceOverviewResponse,
+} from '../types/systemMonitor';
+import TaskManagementPage from './TaskManagementPage.vue';
 
 const wsStore = useWebSocketStore()
-const tab = ref<'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks'>('health')
+const tab = ref<'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks' | 'live-safety'>('health')
 
 const loadingHealth = ref(false)
 const healthError = ref('')
@@ -636,8 +753,30 @@ const serviceOverview = ref<ServiceOverviewResponse | null>(null)
 const selectedServiceDetail = ref<ServiceDetailResponse | null>(null)
 
 const isRefreshing = computed(
-  () => loadingHealth.value || loadingApi.value || autonomyHealthLoading.value || lifecycleLoading.value || dataFlowLoading.value || serviceLoading.value,
+  () => loadingHealth.value || loadingApi.value || autonomyHealthLoading.value || lifecycleLoading.value || dataFlowLoading.value || serviceLoading.value || lsLoading.value,
 )
+
+// V10.5.1 Live Safety data
+const lsLoading = ref(false)
+const lsThrottle = ref<ThrottleStatus | null>(null)
+const lsDegradation = ref<DegradationReport | null>(null)
+const lsFreshness = ref<FreshnessMatrix | null>(null)
+
+async function loadLiveSafety() {
+  lsLoading.value = true
+  try {
+    const [tRes, dRes, fRes] = await Promise.all([
+      liveSafetyApi.getThrottle('FULL'),
+      liveSafetyApi.getDegradation(),
+      liveSafetyApi.getFreshness(),
+    ])
+    lsThrottle.value = tRes.data
+    lsDegradation.value = dRes.data
+    lsFreshness.value = fRes.data
+  } catch { /* silent */ } finally {
+    lsLoading.value = false
+  }
+}
 
 const summaryItems = computed(() => {
   const items: Array<{ label: string; value: string; sub: string }> = []
@@ -877,6 +1016,7 @@ async function onRefreshAll() {
     loadLifecycleOverview(),
     loadDataFlowOverview(),
     loadServiceOverview(),
+    loadLiveSafety(),
   ])
   successMsg.value = '✅ 刷新成功'
   setTimeout(() => {
@@ -891,6 +1031,7 @@ onMounted(() => {
   loadLifecycleOverview()
   loadDataFlowOverview()
   loadServiceOverview()
+  loadLiveSafety()  // V10.5.1
 })
 </script>
 
@@ -1451,6 +1592,11 @@ onMounted(() => {
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #fca5a5;
 }
+
+/* V10.5.1 Live Safety tab helpers */
+.warn-cell { color: #fcd34d; }
+.crit-cell { color: #f87171; font-weight: 600; }
+.dim-cell  { color: #64748b; }
 
 .ws-status-bar {
   display: flex;
