@@ -1,0 +1,143 @@
+import { api } from './client'
+
+export interface AlphaLabSummary {
+  generated: number
+  executed: number
+  evaluated: number
+  win_rate: number
+  avg_expected_return: number
+  avg_actual_return: number
+  avg_pnl_pct: number
+  avg_confidence: number
+}
+
+export interface AlphaLabSnapshot {
+  lookback_days: number
+  summary: AlphaLabSummary
+  current_regime: {
+    regime: string
+    confidence: number
+    classification_date: string | null
+    reasoning?: string | null
+  } | null
+  regime_tape: Array<{
+    id: number
+    regime: string
+    confidence: number
+    classification_date: string | null
+  }>
+  strategy_scorecards: Array<{
+    strategy_id: string
+    strategy_name: string
+    style?: string | null
+    generated: number
+    evaluated: number
+    win_rate: number
+    avg_expected_return: number
+    avg_actual_return: number
+    alpha_gap: number
+    avg_confidence: number
+  }>
+  decay_monitor: Array<{
+    strategy_id: string
+    strategy_name: string
+    recent_win_rate: number
+    previous_win_rate: number
+    win_rate_delta: number
+    recent_sample_size: number
+    previous_sample_size: number
+  }>
+  shadow_book: {
+    total: number
+    closed: number
+    win_rate: number
+    avg_pnl_pct: number
+    rejection_breakdown: Array<{
+      reason: string
+      count: number
+      avg_pnl_pct: number
+    }>
+  }
+  recent_signals: Array<{
+    signal_id: string
+    symbol: string
+    direction: string
+    status: string
+    strategy_name?: string | null
+    confidence: number
+    expected_return: number
+    actual_return?: number | null
+    generated_at: string | null
+  }>
+}
+
+export interface GovernanceSnapshot {
+  funnel: {
+    discovery: number
+    paper: number
+    challenger: number
+    production: number
+  }
+  pipeline: Array<{
+    strategy_id: string
+    name: string
+    style?: string | null
+    version: number
+    is_active: boolean
+    last_run_status?: string | null
+    last_run_at?: string | null
+    run_count: number
+    stage: string
+    hit_rate: number
+    avg_signal_strength: number
+    scanned_total: number
+    hits: number
+  }>
+  experiments: Array<{
+    id: number
+    experiment_name: string
+    param_key: string
+    status: string
+    start_date?: string | null
+    end_date?: string | null
+    control_win_rate?: number | null
+    treatment_win_rate?: number | null
+    p_value?: number | null
+    passed_significance: boolean
+    auto_applied: boolean
+  }>
+  insight_summary: {
+    total: number
+    validated: number
+    active: number
+  }
+  recent_insights: Array<{
+    id: number
+    insight_type: string
+    title: string
+    summary: string
+    confidence: number
+    validated: boolean
+    active: boolean
+    created_at?: string | null
+  }>
+  recent_runs: Array<{
+    run_id: string
+    strategy_id: string
+    strategy_name: string
+    status: string
+    created_at?: string | null
+    finished_at?: string | null
+    hit_rate: number
+    avg_signal_strength: number
+    hits: number
+  }>
+}
+
+export const v1051Api = {
+  getAlphaLabSnapshot: (lookbackDays = 90) =>
+    api.get<AlphaLabSnapshot>('/v1/alpha-lab/snapshot', { params: { lookback_days: lookbackDays } }),
+
+  getGovernancePipeline: (limit = 20) =>
+    api.get<GovernanceSnapshot>('/v1/governance/pipeline', { params: { limit } }),
+}

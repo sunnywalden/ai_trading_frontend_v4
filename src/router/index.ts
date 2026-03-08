@@ -91,10 +91,16 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '回测引擎' }
   },
   {
+    path: '/alpha-lab',
+    name: 'AlphaLab',
+    component: () => import('../views/AlphaLabPage.vue'),
+    meta: { title: 'Alpha Lab' }
+  },
+  {
     path: '/portfolio',
     name: 'Portfolio',
     component: () => import('../views/PortfolioPage.vue'),
-    meta: { title: '组合优化' }
+    meta: { title: 'Portfolio Construction' }
   },
 
   // ── 持仓 & 执行 ──────────────────────────────────────────────
@@ -184,6 +190,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '执行显微镜' }
   },
   {
+    path: '/execution-policy',
+    name: 'ExecutionPolicy',
+    component: () => import('../views/ExecutionPolicyPage.vue'),
+    meta: { title: '执行策略控制台' }
+  },
+  {
     path: '/observability/signal',
     name: 'SignalIntelligence',
     component: () => import('../views/SignalIntelligencePage.vue'),
@@ -228,6 +240,12 @@ const routes: RouteRecordRaw[] = [
     name: 'WarRoom',
     component: () => import('../views/WarRoomPage.vue'),
     meta: { title: 'War Room 作战室' }
+  },
+  {
+    path: '/governance/pipeline',
+    name: 'GovernancePipeline',
+    component: () => import('../views/GovernancePipelinePage.vue'),
+    meta: { title: 'Promotion Pipeline' }
   },
 
   // ── V10.4.2 Signal Watchtower 信号哨所 ────────────────────

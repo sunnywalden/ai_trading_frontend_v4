@@ -3,7 +3,7 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "strict": true,
     "jsx": "preserve",
     "resolveJsonModule": true,
@@ -14,7 +14,11 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "vue": ["node_modules/vue"],
+      "vue/*": ["node_modules/vue/*"],
+      "echarts": ["node_modules/echarts/index"],
+      "echarts/*": ["node_modules/echarts/*"]
     },
     "ignoreDeprecations": "5.0"
   },

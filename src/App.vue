@@ -56,27 +56,29 @@
       </div>
 
       <div class="auth-block">
-        <div v-if="loggedIn" class="user-info" @click="openTokenModal" role="button" tabindex="0">
-          <div class="avatar" :title="username || $t('auth.admin')">
-            <svg viewBox="0 0 24 24" class="avatar-svg" aria-hidden="true">
-              <defs>
-                <linearGradient id="grad1" x1="0" x2="1">
-                  <stop offset="0" stop-color="var(--accent1)" />
-                  <stop offset="1" stop-color="var(--accent2)" />
-                </linearGradient>
-              </defs>
-              <circle cx="12" cy="8" r="3.2" fill="url(#grad1)"></circle>
-              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
-            </svg>
-          </div>
-          <div class="user-meta">
-            <div class="user-name">{{ username || $t('auth.admin') }}</div>
-            <div class="token-expiry" v-if="expiryText">Token: {{ expiryText }}</div>
-          </div>
+        <div v-if="loggedIn" class="user-info">
+          <button type="button" class="user-summary-btn" @click="openTokenModal">
+            <div class="avatar" :title="username || $t('auth.admin')">
+              <svg viewBox="0 0 24 24" class="avatar-svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="grad1" x1="0" x2="1">
+                    <stop offset="0" stop-color="var(--accent1)" />
+                    <stop offset="1" stop-color="var(--accent2)" />
+                  </linearGradient>
+                </defs>
+                <circle cx="12" cy="8" r="3.2" fill="url(#grad1)"></circle>
+                <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+              </svg>
+            </div>
+            <div class="user-meta">
+              <div class="user-name">{{ username || $t('auth.admin') }}</div>
+              <div class="token-expiry" v-if="expiryText">Token: {{ expiryText }}</div>
+            </div>
+            <div v-if="expiringSoon" class="expiry-badge" :title="$t('auth.token_expiring_soon')">⚠️</div>
+          </button>
           <div class="user-actions">
             <button class="small-btn" @click.stop="onLogout">{{ $t('auth.logout') }}</button>
           </div>
-          <div v-if="expiringSoon" class="expiry-badge" :title="$t('auth.token_expiring_soon')">⚠️</div>
         </div>
         <div v-else>
           <router-link to="/login" class="small-btn">{{ $t('auth.login') }}</router-link>
@@ -126,9 +128,13 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { getAuthToken, getCurrentUsername, getTokenExpiryMs, getTokenPayload, isLoggedIn, isTokenExpired, logout } from './api/client';
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import AdminInfoModal from './components/AdminInfoModal.vue';
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import CopilotFloatingWidget from './components/CopilotFloatingWidget.vue';
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import PositionDetailModal from './components/PositionDetailModal.vue';
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
 import router from './router';
 import { useWebSocketStore } from './stores/websocket';
@@ -155,6 +161,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),     icon: '�' },
       { path: '/order-book',               label: t('nav.order_book'),          icon: '📋' },
       { path: '/observability/execution',  label: t('nav.exec_microscope'),     icon: '🔬' },
+      { path: '/execution-policy',         label: 'Execution Policy',           icon: '🧠' },
       { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
       { path: '/observability/risk',       label: t('nav.risk_cluster'),        icon: '⚡' },
       { path: '/war-room',                 label: t('nav.war_room'),            icon: '⚔️' },
@@ -171,6 +178,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/strategies',    label: t('nav.strategies'),    icon: '📚' },
       { path: '/etf-pool',      label: t('nav.etf_pool'),      icon: '📊' },
       { path: '/backtest',      label: t('nav.backtest'),      icon: '📈' },
+      { path: '/alpha-lab',     label: 'Alpha Lab',            icon: '🧭' },
       { path: '/portfolio',     label: t('nav.portfolio'),     icon: '⚖️' },
       { path: '/options',       label: t('nav.options'),       icon: '💎' },
     ],
@@ -188,6 +196,7 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/ai-hub/calibration', label: t('nav.calibration'),     icon: '🎯' },
       { path: '/ai-hub/weights',     label: t('nav.factor_weights'),  icon: '⚖️' },
       { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'),     icon: '🔭' },
+      { path: '/governance/pipeline', label: 'Promotion Pipeline',    icon: '🛡️' },
       { path: '/regime',             label: t('nav.regime'),          icon: '🌊' },
       { path: '/alerts',             label: t('nav.alerts'),          icon: '🔔' },
       { path: '/system-monitor',     label: '系统监控',               icon: '🖥️' },
@@ -230,11 +239,6 @@ const themeLabel = computed(() => theme.value === 'dark' ? t('auth.light_mode') 
 
 const currentLocaleLabel = computed(() => locale.value === 'zh-CN' ? 'EN' : 'CN');
 
-function toggleLanguage() {
-  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN';
-  localStorage.setItem('locale', locale.value);
-}
-
 const showTokenModal = ref(false);
 const showRaw = ref(false);
 const tokenPayload = ref<any | null>(null);
@@ -254,32 +258,43 @@ function formatExpiryText(ms: number | null) {
   return t('expiry.days_left', { n: Math.floor(hours / 24) });
 }
 
+function readBannerDismissUntil(): number {
+  try {
+    return Number(sessionStorage.getItem(bannerDismissUntilKey) || '0');
+  } catch (error) {
+    console.warn('[App] failed to read expiry banner dismissal', error);
+    return 0;
+  }
+}
+
+function requestExpiryNotificationIfNeeded() {
+  if (typeof Notification === 'undefined') return;
+  try {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') sendExpiryNotification();
+      });
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      sendExpiryNotification();
+    }
+  } catch (error) {
+    console.warn('[App] failed to request expiry notification permission', error);
+  }
+}
+
+function syncExpiryBanner() {
+  const shouldShowBanner = expiringSoon.value && Date.now() > readBannerDismissUntil();
+  showExpiryBanner.value = shouldShowBanner;
+  if (shouldShowBanner) requestExpiryNotificationIfNeeded();
+}
+
 function updateExpiry() {
   const ms = getTokenExpiryMs();
   expiryText.value = formatExpiryText(ms);
   expiringSoon.value = ms ? (ms - Date.now() < 5 * 60 * 1000) : false; // <5min
-
-  // show banner and notify when expiring soon and user hasn't dismissed recently
-  try {
-    const until = Number(sessionStorage.getItem(bannerDismissUntilKey) || '0');
-    if (expiringSoon.value && Date.now() > until) {
-      showExpiryBanner.value = true;
-      // desktop notification
-      if (typeof Notification !== 'undefined') {
-        try {
-          if (Notification.permission === 'default') {
-            Notification.requestPermission().then((p) => { if (p === 'granted') sendExpiryNotification(); });
-          } else if (Notification.permission === 'granted') {
-            sendExpiryNotification();
-          }
-        } catch (e) {}
-      }
-    } else {
-      showExpiryBanner.value = false;
-    }
-  } catch (e) {
-    showExpiryBanner.value = expiringSoon.value;
-  }
+  syncExpiryBanner();
 
   // auto logout when expired (only when a token exists)
   if (getAuthToken() && isTokenExpired()) {
@@ -290,13 +305,22 @@ function updateExpiry() {
 function sendExpiryNotification() {
   try {
     const n = new Notification(t('expiry.banner_title'), { body: t('expiry.banner_body', { time: expiryText.value }) });
-    n.onclick = () => { openTokenModal(); window.focus && window.focus(); };
-  } catch (e) {}
+    n.onclick = () => {
+      openTokenModal();
+      if (typeof globalThis.focus === 'function') globalThis.focus();
+    };
+  } catch (error) {
+    console.warn('[App] failed to send expiry notification', error);
+  }
 }
 
 function dismissBanner() {
   // 不再弹出 3 分钟
-  try { sessionStorage.setItem(bannerDismissUntilKey, String(Date.now() + 3 * 60 * 1000)); } catch (e) {}
+  try {
+    sessionStorage.setItem(bannerDismissUntilKey, String(Date.now() + 3 * 60 * 1000));
+  } catch (error) {
+    console.warn('[App] failed to persist expiry banner dismissal', error);
+  }
   showExpiryBanner.value = false;
 }
 
@@ -316,14 +340,12 @@ async function copyToken() {
 }
 
 function handleAuthLogout() {
-  try {
-    router.push('/login');
-  } catch (e) {}
-} 
+  router.push('/login');
+}
 
 let timer: number | undefined;
 onMounted(() => {
-  timer = window.setInterval(() => {
+  timer = globalThis.setInterval(() => {
     username.value = getCurrentUsername();
     loggedIn.value = isLoggedIn();
     updateExpiry();
@@ -332,7 +354,7 @@ onMounted(() => {
   applyTheme();
 
   // Listen for auth-logout events dispatched by API layer and navigate via router
-  try { window.addEventListener('auth-logout', handleAuthLogout); } catch (e) {}
+  globalThis.addEventListener('auth-logout', handleAuthLogout);
 
   // V10.4 M4: 启动 WebSocket 指数退避重连（已登录时连接）
   if (isLoggedIn()) {
@@ -340,13 +362,21 @@ onMounted(() => {
   }
 });
 
-onUnmounted(() => { if (timer) clearInterval(timer); wsStore.disconnect(); try { window.removeEventListener('auth-logout', handleAuthLogout); } catch (e) {} });
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+  wsStore.disconnect();
+  globalThis.removeEventListener('auth-logout', handleAuthLogout);
+});
 
 function onLogout() { logout(); router.push('/login'); }
 function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark';
   localStorage.setItem('theme', theme.value);
   applyTheme();
+}
+function toggleLanguage() {
+  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN';
+  localStorage.setItem('locale', locale.value);
 }
 function applyTheme() {
   if (typeof document !== 'undefined') {
@@ -393,17 +423,17 @@ function applyTheme() {
   gap: 4px;
 }
 .tool-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #9ca3af;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
   font-size: 0.65rem;
   padding: 2px 6px;
   border-radius: 4px;
   cursor: pointer;
 }
 .tool-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(51, 65, 85, 0.85);
+  color: #f8fafc;
 }
 .sidebar-subtitle {
   font-size: 0.75rem;
@@ -480,9 +510,9 @@ function applyTheme() {
 }
 
 .nav-button.active {
-  background: rgba(56, 189, 248, 0.15);
-  border-color: rgba(56, 189, 248, 0.8);
-  color: #38bdf8;
+  background: #164e63;
+  border-color: #67e8f9;
+  color: #f8fafc;
   font-weight: 600;
 }
 
@@ -521,6 +551,19 @@ function applyTheme() {
   align-items: center;
   gap: 10px;
 }
+.user-summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
 .avatar {
   width: 40px;
   height: 40px;
@@ -552,9 +595,9 @@ function applyTheme() {
   font-size: 0.78rem;
 }
 .expiry-banner {
-  background: linear-gradient(90deg, rgba(255, 236, 179, 0.06), rgba(255, 236, 179, 0.03));
+  background: linear-gradient(90deg, rgba(146, 64, 14, 0.62), rgba(120, 53, 15, 0.52));
   border: 1px solid rgba(255, 205, 54, 0.12);
-  color: #ffcd34;
+  color: #fde68a;
   padding: 8px 10px;
   border-radius: 8px;
   display: flex;
@@ -587,9 +630,9 @@ function applyTheme() {
   border-color: rgba(56, 189, 248, 0.65);
 }
 .nav-button.command-room.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.18));
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.62), rgba(67, 56, 202, 0.5));
   border-color: #38bdf8;
-  color: #38bdf8;
+  color: #bae6fd;
 }
 .nav-label-block {
   display: flex;
@@ -601,7 +644,7 @@ function applyTheme() {
   color: #6b7280;
   font-weight: 400;
 }
-.nav-button.command-room .nav-subdesc { color: rgba(56, 189, 248, 0.55); }
+.nav-button.command-room .nav-subdesc { color: rgba(186, 230, 253, 0.8); }
 
 /* ── Module group header with desc ── */
 .group-title-block {

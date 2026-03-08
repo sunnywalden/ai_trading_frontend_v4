@@ -792,9 +792,9 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 .sw-tab.active, .sw-tab:hover {
-  background: rgba(59,130,246,0.2);
+  background: rgba(30,64,175,0.6);
   border-color: #3b82f6;
-  color: #93c5fd;
+  color: #dbeafe;
 }
 .sw-actions { display: flex; gap: 8px; align-items: center; }
 .period-select, .small-select, .small-input {
@@ -839,7 +839,7 @@ onUnmounted(() => {
 }
 .sc-good .sc-value { color: #22c55e; }
 .sc-warn .sc-value { color: #f59e0b; }
-.sc-label { font-size: 11px; color: #64748b; margin-top: 4px; }
+.sc-label { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 .target-hint { font-size: 10px; color: #475569; }
 
 /* ── 双列图 ───────────────────────────────────────────────────────────────── */
@@ -868,9 +868,9 @@ onUnmounted(() => {
 }
 .sm-btn {
   padding: 4px 12px;
-  background: rgba(59,130,246,0.2);
+  background: rgba(30,64,175,0.62);
   border: 1px solid #3b82f6;
-  color: #93c5fd;
+  color: #dbeafe;
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
@@ -882,7 +882,7 @@ onUnmounted(() => {
 .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .data-table th {
   background: rgba(30,41,59,0.9);
-  color: #64748b; font-weight: 600; text-align: left;
+  color: #94a3b8; font-weight: 600; text-align: left;
   padding: 8px 10px; white-space: nowrap;
   border-bottom: 1px solid rgba(100,116,139,0.3);
 }
@@ -1029,23 +1029,23 @@ onUnmounted(() => {
   font-weight: 600;
 }
 .cg-status-pending {
-  color: #93c5fd;
-  background: rgba(59,130,246,0.18);
+  color: #dbeafe;
+  background: rgba(30,64,175,0.42);
   border: 1px solid rgba(59,130,246,0.35);
 }
 .cg-status-done {
-  color: #86efac;
-  background: rgba(34,197,94,0.16);
+  color: #dcfce7;
+  background: rgba(22,101,52,0.4);
   border: 1px solid rgba(34,197,94,0.35);
 }
 .cg-status-failed {
-  color: #fca5a5;
-  background: rgba(239,68,68,0.14);
+  color: #fee2e2;
+  background: rgba(127,29,29,0.42);
   border: 1px solid rgba(239,68,68,0.35);
 }
 .cg-status-neutral {
   color: #cbd5e1;
-  background: rgba(148,163,184,0.12);
+  background: rgba(51,65,85,0.5);
   border: 1px solid rgba(148,163,184,0.22);
 }
 
@@ -1058,12 +1058,12 @@ onUnmounted(() => {
   padding: 20px;
 }
 .config-warning {
-  background: rgba(245,158,11,0.1);
+  background: rgba(146,64,14,0.62);
   border: 1px solid rgba(245,158,11,0.4);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 12px;
-  color: #fcd34d;
+  color: #fde68a;
   margin-bottom: 16px;
 }
 .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -1088,8 +1088,8 @@ onUnmounted(() => {
   border-radius: 6px; cursor: pointer; font-size: 12px;
 }
 .btn-apply {
-  padding: 6px 20px; background: rgba(59,130,246,0.2);
-  border: 1px solid #3b82f6; color: #93c5fd;
+  padding: 6px 20px; background: rgba(30,64,175,0.68);
+  border: 1px solid #3b82f6; color: #dbeafe;
   border-radius: 6px; cursor: pointer; font-size: 12px;
 }
 
@@ -1116,8 +1116,8 @@ onUnmounted(() => {
   border-radius: 6px; cursor: pointer; font-size: 12px;
 }
 .btn-confirm {
-  padding: 6px 20px; background: rgba(239,68,68,0.2);
-  border: 1px solid #ef4444; color: #f87171;
+  padding: 6px 20px; background: rgba(127,29,29,0.72);
+  border: 1px solid #ef4444; color: #fee2e2;
   border-radius: 6px; cursor: pointer; font-size: 12px;
 }
 </style>
