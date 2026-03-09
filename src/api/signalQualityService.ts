@@ -31,6 +31,9 @@ export interface AuditLogRecord {
   signal_id:               number | null
   symbol:                  string
   funnel_result:           'PASSED' | 'REJECTED'
+  decision_stage?:         string | null
+  reason_category?:        string | null
+  result_source?:          string | null
   rejected_at_layer:       number | null
   rejection_reason:        string | null
   rejection_detail:        string | null
