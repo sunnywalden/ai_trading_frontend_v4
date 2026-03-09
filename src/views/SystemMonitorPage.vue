@@ -382,7 +382,7 @@
               <div class="flow-head">
                 <div>
                   <div class="module-title">{{ flow.flow_label }}</div>
-                  <div class="module-sub">{{ flow.total_nodes }} 节点 · avg lag {{ formatDuration(flow.avg_lag_seconds) }}</div>
+                  <div class="module-sub">{{ flowCardSubtitle(flow) }}</div>
                 </div>
                 <span class="status-pill" :class="statusClass(flow.status)">{{ flow.status }}</span>
               </div>
@@ -391,10 +391,12 @@
                   {{ node.node_label }}
                 </span>
               </div>
-              <div class="module-metrics">
-                <span>Warn {{ flow.warn_nodes }}</span>
-                <span>Critical {{ flow.critical_nodes }}</span>
-                <span>Trend {{ flow.trend }}</span>
+              <div class="module-metrics flow-ops-metrics">
+                <span>{{ flowCardPrimaryMetric(flow) }}</span>
+                <span>最近心跳 {{ formatDateTime(flowLatestHeartbeat(flow)) }}</span>
+                <span>
+                  {{ flowOperationalQueue(flow) > 0 ? `Queue ${flowOperationalQueue(flow)}` : 'Queue 正常' }}
+                </span>
               </div>
             </article>
           </div>
@@ -403,7 +405,7 @@
             <div class="detail-header">
               <div>
                 <h4>{{ selectedFlowDetail.flow_label }}</h4>
-                <p>当前状态 {{ selectedFlowDetail.status }}，最近失败样本 {{ selectedFlowDetail.failures.length }} 条。</p>
+                <p>{{ flowDetailSummary(selectedFlowDetail) }}</p>
               </div>
               <span class="status-pill" :class="statusClass(selectedFlowDetail.status)">{{ selectedFlowDetail.status }}</span>
             </div>
@@ -416,17 +418,23 @@
                     <tr>
                       <th>节点</th>
                       <th>状态</th>
-                      <th>lag</th>
+                      <th>当前 lag</th>
                       <th>queue</th>
+                      <th>最近心跳</th>
                       <th>最近成功</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="node in selectedFlowDetail.nodes" :key="node.node_key">
+                    <tr
+                      v-for="node in orderedFlowNodes(selectedFlowDetail.nodes)"
+                      :key="node.node_key"
+                      :class="flowNodeRowClass(node)"
+                    >
                       <td>{{ node.node_label }}</td>
                       <td><span class="status-pill small" :class="statusClass(node.status)">{{ node.status }}</span></td>
-                      <td>{{ formatDuration(node.lag_seconds) }}</td>
+                      <td :class="flowNodeLagClass(node)">{{ formatDuration(node.lag_seconds) }}</td>
                       <td>{{ node.queue_depth ?? '-' }}</td>
+                      <td>{{ formatDateTime(node.heartbeat_at) }}</td>
                       <td>{{ formatDateTime(node.last_success_at) }}</td>
                     </tr>
                   </tbody>
@@ -790,12 +798,125 @@ const summaryItems = computed(() => {
     items.push({ label: '异常跳转', value: `${lifecycleOverview.value.headline.exception_count}`, sub: `P95 ${lifecycleOverview.value.headline.p95_stage_seconds.toFixed(0)}s` })
   }
   if (dataFlowOverview.value) {
-    const warnFlows = dataFlowOverview.value.flows.filter(item => item.status !== 'HEALTHY').length
-    const maxLag = Math.max(...dataFlowOverview.value.flows.map(item => item.max_lag_seconds ?? 0), 0)
-    items.push({ label: '主数据流', value: `${dataFlowOverview.value.flows.length} 条`, sub: `${warnFlows} 条异常 · max lag ${formatDuration(maxLag)}` })
+    const unhealthyFlows = dataFlowOverview.value.flows.filter(item => item.status !== 'HEALTHY')
+    const issueLag = Math.max(
+      ...unhealthyFlows.map(item => flowFocusLagSeconds(item) ?? 0),
+      0,
+    )
+    items.push({
+      label: '主数据流',
+      value: `${dataFlowOverview.value.flows.length} 条`,
+      sub: unhealthyFlows.length > 0
+        ? `${unhealthyFlows.length} 条异常 · 问题 lag ${formatDuration(issueLag)}`
+        : '全部健康 · 实时运行正常',
+    })
   }
   return items
 })
+
+function statusRank(status: string): number {
+  const normalized = String(status || 'UNKNOWN').toUpperCase()
+  if (normalized === 'CRITICAL') return 0
+  if (normalized === 'WARN') return 1
+  if (normalized === 'UNKNOWN') return 2
+  return 3
+}
+
+function flowLatestHeartbeat(
+  flow: { nodes: Array<{ heartbeat_at: string | null; last_success_at: string | null }> },
+): string | null {
+  const timestamps = flow.nodes
+    .map(node => node.heartbeat_at || node.last_success_at)
+    .filter((value): value is string => Boolean(value))
+
+  if (!timestamps.length) return null
+
+  return timestamps.reduce((latest, current) => {
+    return new Date(current).getTime() > new Date(latest).getTime() ? current : latest
+  })
+}
+
+function flowOperationalQueue(
+  flow: { nodes: Array<{ queue_depth: number | null }> },
+): number {
+  return flow.nodes.reduce((sum, node) => sum + (node.queue_depth ?? 0), 0)
+}
+
+function flowFocusLagSeconds(
+  flow: { nodes: Array<{ status: string; lag_seconds: number | null; queue_depth: number | null }> },
+): number | null {
+  const issueNodes = flow.nodes.filter(node => node.status !== 'HEALTHY')
+  const activeNodes = issueNodes.length
+    ? issueNodes
+    : flow.nodes.filter(node => (node.queue_depth ?? 0) > 0)
+  const lags = activeNodes
+    .map(node => node.lag_seconds)
+    .filter((value): value is number => value != null)
+
+  if (!lags.length) return null
+
+  return Math.max(...lags)
+}
+
+function flowCardSubtitle(flow: DataFlowOverviewResponse['flows'][number]): string {
+  const issueCount = flow.warn_nodes + flow.critical_nodes
+  if (issueCount > 0) {
+    return `${flow.total_nodes} 节点 · ${issueCount} 个异常节点 · 问题 lag ${formatDuration(flowFocusLagSeconds(flow))}`
+  }
+
+  const heartbeat = formatDateTime(flowLatestHeartbeat(flow))
+  const queue = flowOperationalQueue(flow)
+  return queue > 0
+    ? `${flow.total_nodes} 节点 · 实时运行正常 · Queue ${queue}`
+    : `${flow.total_nodes} 节点 · 实时运行正常 · 最近心跳 ${heartbeat}`
+}
+
+function flowCardPrimaryMetric(flow: DataFlowOverviewResponse['flows'][number]): string {
+  if (flow.critical_nodes > 0) return `Critical ${flow.critical_nodes}`
+  if (flow.warn_nodes > 0) return `Warn ${flow.warn_nodes}`
+  return '当前无实时告警'
+}
+
+function orderedFlowNodes(nodes: DataFlowDetailResponse['nodes']) {
+  return [...nodes].sort((a, b) => {
+    const rankDiff = statusRank(a.status) - statusRank(b.status)
+    if (rankDiff !== 0) return rankDiff
+
+    const queueDiff = (b.queue_depth ?? 0) - (a.queue_depth ?? 0)
+    if (queueDiff !== 0) return queueDiff
+
+    return (b.lag_seconds ?? -1) - (a.lag_seconds ?? -1)
+  })
+}
+
+function flowNodeRowClass(node: DataFlowDetailResponse['nodes'][number]): string {
+  if (node.status === 'CRITICAL') return 'node-row-critical'
+  if (node.status === 'WARN') return 'node-row-warn'
+  if ((node.queue_depth ?? 0) > 0) return 'node-row-active'
+  return ''
+}
+
+function flowNodeLagClass(node: DataFlowDetailResponse['nodes'][number]): string {
+  if (node.status === 'CRITICAL') return 'crit-cell'
+  if (node.status === 'WARN') return 'warn-cell'
+  return 'dim-cell'
+}
+
+function flowDetailSummary(detail: DataFlowDetailResponse): string {
+  const issueCount = detail.nodes.filter(node => node.status !== 'HEALTHY').length
+  const queue = flowOperationalQueue(detail)
+  const heartbeat = formatDateTime(flowLatestHeartbeat(detail))
+
+  if (issueCount > 0) {
+    return `当前有 ${issueCount} 个异常节点，最近失败样本 ${detail.failures.length} 条，最近心跳 ${heartbeat}。`
+  }
+
+  if (queue > 0) {
+    return `当前链路健康，存在 ${queue} 个在途队列项，最近心跳 ${heartbeat}。`
+  }
+
+  return `当前链路健康，无实时告警，最近心跳 ${heartbeat}。`
+}
 
 function normalizeAutonomyStatus(status?: string): MonitorStatus {
   const normalized = String(status || '').toUpperCase()
@@ -1344,6 +1465,10 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+.flow-ops-metrics span:first-child {
+  font-weight: 600;
+}
+
 .flow-arrow-row {
   display: flex;
   flex-wrap: wrap;
@@ -1498,6 +1623,18 @@ onMounted(() => {
 .clickable-table tbody tr:hover,
 .clickable-table tbody tr.selected {
   background: rgba(56, 189, 248, 0.08);
+}
+
+.compact-table tbody tr.node-row-critical {
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.compact-table tbody tr.node-row-warn {
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.compact-table tbody tr.node-row-active {
+  background: rgba(56, 189, 248, 0.05);
 }
 
 .compact-table th,
