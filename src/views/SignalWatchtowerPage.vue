@@ -195,8 +195,12 @@
                 </span>
               </td>
               <td class="center-cell">{{ row.rejected_at_layer != null ? `L${row.rejected_at_layer}` : '--' }}</td>
-              <td class="reason-cell" :title="row.rejection_detail ?? ''">
-                {{ row.rejection_reason ?? '--' }}
+              <td class="reason-cell" :title="row.rejection_reason ?? ''">
+                <span
+                  v-if="row.rejection_reason === 'SEAT_COMPETITION_ELIMINATED'"
+                  class="reason-seat-competition"
+                >{{ formatRejectionReason(row.rejection_reason) }}</span>
+                <span v-else>{{ formatRejectionReason(row.rejection_reason) }}</span>
               </td>
               <td class="num-cell">{{ row.conviction_score?.toFixed(1) ?? '--' }}</td>
               <td class="num-cell">{{ row.composite_score?.toFixed(1) ?? '--' }}</td>
@@ -344,11 +348,11 @@ import { autonomyApi } from '@/api/autonomyService'
 import type { RegimeType } from '@/api/regimeService'
 import { REGIME_LABELS } from '@/api/regimeService'
 import type {
-  AuditLogRecord,
-  FunnelStats,
-  GhostAnalysis,
-  GhostTrade,
-  QualityConfig, QualityConfigPatch,
+    AuditLogRecord,
+    FunnelStats,
+    GhostAnalysis,
+    GhostTrade,
+    QualityConfig, QualityConfigPatch,
 } from '@/api/signalQualityService'
 import { signalQualityService } from '@/api/signalQualityService'
 import * as echarts from 'echarts'
@@ -499,6 +503,26 @@ function fmtTs(ts: string | null | undefined): string {
   return new Date(ts).toLocaleString('zh-CN', {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
   })
+}
+
+const REJECTION_REASON_LABELS: Record<string, string> = {
+  LOW_LIQUIDITY: '流动性不足',
+  REGIME_BLOCKED: '体制拦截',
+  REGIME_DIRECTION: '体制方向限制',
+  MAX_POSITIONS_REACHED: '持仓已满',
+  SEAT_COMPETITION_ELIMINATED: '席位竞争淘汰',  // V10.5.2
+  DAILY_QUOTA_EXHAUSTED: '日配额耗尽',
+  HIGH_CORRELATION: '相关性过高',
+  INSUFFICIENT_RESONANCE: '共振不足',
+  ANTI_RESONANCE_KILL: '反共振一票否决',
+  LOW_CONVICTION: '置信度不足',
+  LOW_EXPECTED_SHARPE: '夏普不足',
+  LOW_CALIBRATED_FLOOR: '校准下界不足',
+}
+
+function formatRejectionReason(reason?: string | null): string {
+  if (!reason) return '--'
+  return REJECTION_REASON_LABELS[reason] ?? reason
 }
 
 function regimeLabelFromAny(regime: string | null | undefined): string {
@@ -903,6 +927,15 @@ onUnmounted(() => {
 .center-cell { text-align: center; }
 .reason-cell { font-size: 10px; color: #94a3b8; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .anti-kill { font-size: 13px; }
+/* V10.5.2: 席位竞争淘汰标签 */
+.reason-seat-competition {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
 .pnl-pos { color: #22c55e; }
 .pnl-neg { color: #f87171; }
 

@@ -366,6 +366,14 @@
       </table>
     </div>
 
+    <!-- V10.5.2: 席位竞争仲裁 -->
+    <div v-if="status" style="margin-bottom: 24px;">
+      <CapacityArbitrationPanel
+        :account-id="status.account_id ?? 'default'"
+        :regime="regimeInfo?.regime"
+      />
+    </div>
+
     <!-- 审计日志 -->
     <div class="card">
       <h3 style="margin: 0 0 16px;">决策审计日志</h3>
@@ -430,12 +438,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
+import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService'
+import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel.vue'; // V10.5.2
 import { useAutonomyStore } from '@/stores/autonomy'
-import type { AutonomyLevel, AuditLogEntry, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
-import { storeToRefs } from 'pinia'
-import { regimeApi, REGIME_LABELS, REGIME_COLORS, type RegimeInfo, type RegimeType } from '@/api/regimeService'
 import { formatClientDateTime } from '@/utils/datetime'
+import { storeToRefs } from 'pinia'
+import { computed, onMounted, ref } from 'vue'
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
@@ -523,6 +532,7 @@ const FUNNEL_REJECTION_LABELS: Record<string, string> = {
   REGIME_BLOCKED: '体制拦截',
   REGIME_DIRECTION: '体制方向限制',
   MAX_POSITIONS_REACHED: '持仓已满',
+  SEAT_COMPETITION_ELIMINATED: '席位竞争淘汰',  // V10.5.2
   DAILY_QUOTA_EXHAUSTED: '日配额耗尽',
   HIGH_CORRELATION: '相关性过高',
   INSUFFICIENT_RESONANCE: '共振不足',

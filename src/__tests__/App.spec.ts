@@ -1,5 +1,5 @@
-import { render, fireEvent } from '@testing-library/vue';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { fireEvent, render } from '@testing-library/vue';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../router', () => ({
   default: {
@@ -40,11 +40,15 @@ describe('App.vue token expiry banner', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     // ensure Notification is stubbed
+    class MockNotification {
+      static permission = 'default';
+      static requestPermission = () => Promise.resolve('granted');
+      onclick: (() => void) | null = null;
+
+      constructor(_title?: string, _options?: NotificationOptions) {}
+    }
     // @ts-ignore
-    global.Notification = {
-      permission: 'default',
-      requestPermission: () => Promise.resolve('granted')
-    };
+    global.Notification = MockNotification;
   });
 
   afterEach(() => {
@@ -54,7 +58,7 @@ describe('App.vue token expiry banner', () => {
   it('shows expiry banner when token is expiring soon', async () => {
     const { container, getByText, findByText } = render(App, {
       global: {
-        stubs: ['router-link', 'router-view', 'AdminInfoModal', 'SituationalAwarenessBar', 'CopilotFloatingWidget']
+        stubs: ['router-link', 'router-view', 'AdminInfoModal', 'SituationalAwarenessBar', 'CopilotFloatingWidget', 'PositionDetailModal']
       }
     });
 
