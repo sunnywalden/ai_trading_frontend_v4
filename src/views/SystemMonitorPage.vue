@@ -450,9 +450,19 @@
                         <div class="secondary-cell">{{ formatDateTime(node.last_success_at) }}</div>
                       </td>
                       <td>
-                        <span class="action-chip" :class="flowActionToneClass(node)">
-                          {{ flowNodeSuggestedAction(node) }}
-                        </span>
+                        <div class="action-stack">
+                          <span class="action-chip" :class="flowActionToneClass(node)">
+                            {{ flowNodeSuggestedAction(node) }}
+                          </span>
+                          <button
+                            v-if="flowNodeJumpTarget(node)"
+                            class="jump-button"
+                            type="button"
+                            @click="jumpToNodeTarget(node)"
+                          >
+                            {{ flowNodeJumpTarget(node)?.label }}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -702,6 +712,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   fetchAutonomyHealth,
   fetchLlmStats,
@@ -739,6 +750,7 @@ import type {
 import TaskManagementPage from './TaskManagementPage.vue';
 
 const wsStore = useWebSocketStore()
+const router = useRouter()
 const tab = ref<'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks' | 'live-safety'>('health')
 
 const loadingHealth = ref(false)
@@ -971,6 +983,68 @@ function flowActionToneClass(node: DataFlowDetailResponse['nodes'][number]): str
   if (node.status === 'WARN') return 'action-warn'
   if ((node.queue_depth ?? 0) > 0) return 'action-active'
   return 'action-idle'
+}
+
+type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks' | 'live-safety'
+
+type FlowNodeJumpTarget = {
+  label: string
+  mode: 'route' | 'service-tab'
+  route?: string
+  tab?: MonitorTabKey
+  serviceKey?: string
+}
+
+function flowNodeJumpTarget(
+  node: DataFlowDetailResponse['nodes'][number],
+): FlowNodeJumpTarget | null {
+  switch (node.node_key) {
+    case 'signal_generation':
+    case 'portfolio_decision':
+    case 'risk_gate':
+      return { label: '打开自主中枢', mode: 'route', route: '/autonomy' }
+    case 'execution':
+    case 'monitoring':
+      return { label: '查看交易日志', mode: 'route', route: '/journal' }
+    case 'market_data':
+    case 'situational_awareness':
+      return {
+        label: '打开相关服务',
+        mode: 'service-tab',
+        tab: 'health',
+        serviceKey: 'situational_awareness_service',
+      }
+    case 'regime_classification':
+      return { label: '打开体制面板', mode: 'route', route: '/regime' }
+    case 'settlement':
+    case 'loop_completed':
+      return { label: '查看生命周期中心', mode: 'route', route: '/trade-lifecycle' }
+    case 'attribution':
+    case 'insight_update':
+      return { label: '打开归因分析', mode: 'route', route: '/attribution' }
+    default:
+      return null
+  }
+}
+
+async function jumpToNodeTarget(
+  node: DataFlowDetailResponse['nodes'][number],
+) {
+  const target = flowNodeJumpTarget(node)
+  if (!target) return
+
+  if (target.mode === 'route' && target.route) {
+    await router.push(target.route)
+    return
+  }
+
+  if (target.mode === 'service-tab') {
+    tab.value = target.tab ?? 'health'
+    await loadServiceOverview()
+    if (target.serviceKey) {
+      await openServiceDetail(target.serviceKey)
+    }
+  }
 }
 
 function flowDetailSummary(detail: DataFlowDetailResponse): string {
@@ -1780,6 +1854,30 @@ onMounted(() => {
 .action-idle {
   background: rgba(100, 116, 139, 0.18);
   color: #cbd5e1;
+}
+
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.jump-button {
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(14, 165, 233, 0.14);
+  color: #e0f2fe;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.jump-button:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(14, 165, 233, 0.22);
+  transform: translateY(-1px);
 }
 
 .compact-table th,
