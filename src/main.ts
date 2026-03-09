@@ -34,8 +34,16 @@ if (globalThis.window !== undefined) {
 			message.includes("data:image/svg+xml") ||
 			message.includes("Unable to load image");
 
-		if (isSvgImageError) {
-			logger.warn("Ignored recoverable SVG image load rejection");
+		const isClosedMessageChannelError =
+			message.includes("A listener indicated an asynchronous response by returning true") ||
+			message.includes("message channel closed before a response was received");
+
+		const isAbortLikeError =
+			message.includes("AbortError") ||
+			message.includes("The operation was aborted");
+
+		if (isSvgImageError || isClosedMessageChannelError || isAbortLikeError) {
+			logger.debug(`Ignored recoverable promise rejection: ${message}`);
 			event.preventDefault();
 		}
 	});
