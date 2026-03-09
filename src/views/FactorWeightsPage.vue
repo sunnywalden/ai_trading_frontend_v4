@@ -6,7 +6,7 @@
           <h2>⚖️ 自适应因子权重</h2>
           <p>Kalman Filter 在线学习 · IC 排名 · 动量调整</p>
         </div>
-        <button class="refresh-button" :disabled="store.loadingWeights" @click="store.fetchFactorWeights()">
+        <button class="refresh-button" :disabled="store.loadingWeights" @click="refreshFactorWeights">
           {{ store.loadingWeights ? '计算中...' : '刷新' }}
         </button>
       </div>
@@ -87,15 +87,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
 import { useAiHubStore } from '@/stores/aiHub'
 import * as echarts from 'echarts'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const store = useAiHubStore()
 const weightsChartEl = ref<HTMLElement | null>(null)
 const momentumChartEl = ref<HTMLElement | null>(null)
 let weightsChart: echarts.ECharts | null = null
 let momentumChart: echarts.ECharts | null = null
+
+const MOMENTUM_RADAR_MIN = 0
+const MOMENTUM_RADAR_MAX = 0.5
+const MOMENTUM_RADAR_INTERVAL = 0.1
 
 const DIM_LABELS: Record<string, string> = {
   technical: '技术面', fundamental: '基本面', ml: 'ML', sentiment: '情绪', macro: '宏观', event: '事件'
@@ -116,6 +120,16 @@ const icRankMap = computed(() => {
 })
 
 function icRank(dim: string) { return icRankMap.value[dim] ?? '-' }
+
+async function refreshFactorWeights() {
+  try {
+    await store.fetchFactorWeights()
+    renderWeights()
+    renderMomentum()
+  } catch (error) {
+    console.error('[FactorWeights] refreshFactorWeights', error)
+  }
+}
 
 const COLORS = ['#00ff88', '#ff6b35', '#ffd700', '#a8dadc', '#c77dff', '#4dffb8']
 const DIMS = ['technical', 'fundamental', 'ml', 'sentiment', 'macro', 'event']
@@ -150,7 +164,14 @@ function renderMomentum() {
   momentumChart.setOption({
     backgroundColor: 'transparent',
     radar: {
-      indicator: DIMS.map((d) => ({ name: dimLabel(d), max: 0.5 })),
+      indicator: DIMS.map((d) => ({
+        name: dimLabel(d),
+        min: MOMENTUM_RADAR_MIN,
+        max: MOMENTUM_RADAR_MAX,
+        interval: MOMENTUM_RADAR_INTERVAL,
+        axisLabel: { show: false },
+      })),
+      splitNumber: Math.round((MOMENTUM_RADAR_MAX - MOMENTUM_RADAR_MIN) / MOMENTUM_RADAR_INTERVAL),
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.3)' } },
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.1)' } },
       axisName: { color: '#ccc' },
@@ -173,7 +194,7 @@ function renderMomentum() {
 
 watch(() => store.weightsHistory, renderWeights, { deep: true })
 watch(() => store.factorMomentum, renderMomentum, { deep: true })
-onMounted(async () => { await store.fetchFactorWeights(); renderWeights(); renderMomentum() })
+onMounted(async () => { await refreshFactorWeights() })
 </script>
 
 <style scoped>

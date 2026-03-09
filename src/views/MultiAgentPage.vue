@@ -6,7 +6,7 @@
           <h2>🤝 多 Agent 协同研究室</h2>
           <p>五职责 Agent · 并行辩证对话 · AI 合议决策</p>
         </div>
-        <button class="refresh-button" @click="store.fetchAgentRuns()">刷新历史</button>
+        <button class="refresh-button" @click="refreshRuns">刷新历史</button>
       </div>
     </section>
 
@@ -123,8 +123,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
 import { useAiHubStore } from '@/stores/aiHub'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const store = useAiHubStore()
 const selectedRunId = ref<string | null>(null)
@@ -161,6 +161,15 @@ const ROLE_LABELS: Record<string, string> = {
 }
 function roleLabel(role: string) { return ROLE_LABELS[role] || role }
 
+async function refreshRuns() {
+  try {
+    await store.fetchAgentRuns()
+  } catch (e: unknown) {
+    submitError.value = e instanceof Error ? e.message : '加载 Agent 历史失败，请稍后重试'
+    console.error('[MultiAgent] refreshRuns', e)
+  }
+}
+
 async function triggerRun() {
   if (!form.symbol.trim() || !form.context.trim()) return
   submitError.value = ''
@@ -173,10 +182,17 @@ async function triggerRun() {
 
 async function selectRun(runId: string) {
   selectedRunId.value = runId
-  await store.fetchRunSummary(runId)
+  try {
+    await store.fetchRunSummary(runId)
+  } catch (e: unknown) {
+    submitError.value = e instanceof Error ? e.message : '加载 Agent 运行详情失败，请稍后重试'
+    console.error('[MultiAgent] selectRun', e)
+  }
 }
 
-onMounted(() => store.fetchAgentRuns())
+onMounted(() => {
+  void refreshRuns()
+})
 </script>
 
 <style scoped>

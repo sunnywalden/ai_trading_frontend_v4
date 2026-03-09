@@ -183,7 +183,7 @@
               <div class="slot-label">面板 P{{ idx + 1 }}</div>
               <select
                 :value="slot"
-                @change="e => panelLayoutDraft[idx] = (e.target as HTMLSelectElement).value as PanelType"
+                @change="onPanelTypeChange(idx, $event)"
                 class="slot-select"
               >
                 <option v-for="pt in ALL_PANEL_TYPES" :key="pt" :value="pt">{{ PANEL_LABELS[pt] }}</option>
@@ -223,12 +223,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'  // V10.4.2
-import { useWarRoomStore } from '@/stores/warRoom'
+import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'; // V10.4.2
 import { useAiHubStore } from '@/stores/aiHub'
 import { useAutonomyStore } from '@/stores/autonomy'
+import { useWarRoomStore } from '@/stores/warRoom'
 import * as echarts from 'echarts'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 // ── 面板类型定义（设计文档 V10.4 8-type spec）
 type PanelType = 'PNL_DETAIL' | 'INTEL_FEED' | 'FACTOR_EXPOSURE' | 'SMART_ALERTS' | 'FACTOR_WEIGHTS' | 'AGENT_BRIEF' | 'SECTOR_HEATMAP' | 'RISK_GAUGES' | 'SIGNAL_PULSE' | 'EXEC_QUEUE' | 'ORDER_BOOK_MINI' | 'SIGNAL_BUDGET'
@@ -305,16 +305,36 @@ const FEED_CATS = ['ALL', 'DECISION', 'RISK', 'EVENT', 'SIGNAL']
 const DIMS = ['technical', 'fundamental', 'ml', 'sentiment', 'macro', 'event']
 const DIM_LABELS = { technical: '技术', fundamental: '基本', ml: 'ML', sentiment: '情绪', macro: '宏观', event: '事件' } as Record<string, string>
 const DIM_COLORS = ['#00ff88', '#ff6b35', '#ffd700', '#a8dadc', '#c77dff', '#4dffb8']
+const FACTOR_EXPOSURE_MIN = 0
+const FACTOR_EXPOSURE_MAX = 2
+const FACTOR_EXPOSURE_INTERVAL = 0.5
 
 const totalPnL = computed(() => store.totalUnrealizedPnL)
 const filteredFeed = computed(() => feedFilter.value === 'ALL' ? store.feed : store.feed.filter((f) => f.category === feedFilter.value))
 const latestRun = computed(() => aiHub.agentRuns[0] ?? null)
 const recentRuns = computed(() => aiHub.agentRuns.slice(1, 5))
 
-function urgencyColor(v: number) { return v > 80 ? '#ff4444' : v > 50 ? '#ffd700' : '#00ff88' }
-function recCss(r: string | null | undefined) { if (!r) return ''; if (r.includes('BUY')) return 'rec-buy'; if (r.includes('SELL')) return 'rec-sell'; return 'rec-hold' }
+function urgencyColor(v: number) {
+  if (v > 80) return '#ff4444'
+  if (v > 50) return '#ffd700'
+  return '#00ff88'
+}
+
+function recCss(r: string | null | undefined) {
+  if (!r) return ''
+  if (r.includes('BUY')) return 'rec-buy'
+  if (r.includes('SELL')) return 'rec-sell'
+  return 'rec-hold'
+}
+
 function fmtTs(ts: string | null) { return ts ? new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '' }
 function setFeedFilter(cat: string) { feedFilter.value = cat }
+
+function onPanelTypeChange(idx: number, event: Event) {
+  const target = event.target
+  if (!(target instanceof HTMLSelectElement)) return
+  panelLayoutDraft.value[idx] = target.value as PanelType
+}
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
@@ -338,10 +358,10 @@ function onKeyDown(e: KeyboardEvent) {
   else if (e.key === '`') {
     // ` 键唤起全局 Copilot
     e.preventDefault()
-    window.dispatchEvent(new CustomEvent('copilot:open', { detail: { context: 'war-room' } }))
+    globalThis.dispatchEvent(new CustomEvent('copilot:open', { detail: { context: 'war-room' } }))
   }
   else if (['1','2','3','4','5','6'].includes(key)) {
-    focusedPanel.value = parseInt(key)
+    focusedPanel.value = Number.parseInt(key, 10)
     document.getElementById(`panel-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
@@ -356,9 +376,13 @@ async function confirmPauseToggle() {
 }
 
 async function manualRefresh() {
-  await Promise.all([store.fetchSnapshot(), store.fetchAlerts()])
-  await nextTick()
-  renderAllCharts()
+  try {
+    await Promise.all([store.fetchSnapshot(), store.fetchAlerts()])
+    await nextTick()
+    renderAllCharts()
+  } catch (error) {
+    console.error('[WarRoom] manualRefresh', error)
+  }
 }
 
 // ── 面板配置抽屉操作
@@ -398,18 +422,18 @@ function renderRadarAt(idx: number) {
     backgroundColor: 'transparent',
     radar: { 
       indicator: [
-        { name: 'β Market', min: 0, max: 2 }, 
-        { name: 'HML', min: 0, max: 2 }, 
-        { name: 'SMB', min: 0, max: 2 }, 
-        { name: 'MOM', min: 0, max: 2 }, 
-        { name: 'QMJ', min: 0, max: 2 }
+        { name: 'β Market', min: FACTOR_EXPOSURE_MIN, max: FACTOR_EXPOSURE_MAX, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } }, 
+        { name: 'HML', min: FACTOR_EXPOSURE_MIN, max: FACTOR_EXPOSURE_MAX, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } }, 
+        { name: 'SMB', min: FACTOR_EXPOSURE_MIN, max: FACTOR_EXPOSURE_MAX, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } }, 
+        { name: 'MOM', min: FACTOR_EXPOSURE_MIN, max: FACTOR_EXPOSURE_MAX, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } }, 
+        { name: 'QMJ', min: FACTOR_EXPOSURE_MIN, max: FACTOR_EXPOSURE_MAX, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } }
       ], 
       radius: '65%', 
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.2)' } }, 
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.08)' } }, 
       axisName: { color: '#aaa', fontSize: 10 },
-      splitNumber: 2, // 显式分段，避免计算密集轴逻辑
-      axisLabel: { show: false } // 隐藏可能引起 tick 冲突的标签
+      splitNumber: Math.round((FACTOR_EXPOSURE_MAX - FACTOR_EXPOSURE_MIN) / FACTOR_EXPOSURE_INTERVAL),
+      axisLabel: { show: false }
     },
     series: [{ 
       type: 'radar', 

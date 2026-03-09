@@ -47,7 +47,7 @@ api.interceptors.request.use((config) => {
   try {
     // 打印最终请求 URL（包含 baseURL + url）和 params
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-    logger.info(`API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
+    logger.debug(`API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
   } catch (e) {
     // ignore
   }
@@ -56,7 +56,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (resp) => {
-    logger.info(`API Response: ${resp.status} ${resp.config?.url}`);
+    logger.debug(`API Response: ${resp.status} ${resp.config?.url}`);
     return resp;
   },
   (err) => {
@@ -70,14 +70,14 @@ api.interceptors.response.use(
 systemApi.interceptors.request.use((config) => {
   try {
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-    logger.info(`System API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
+    logger.debug(`System API Request: ${config.method?.toUpperCase()} ${fullUrl}`, config.params || config.data || {});
   } catch (e) {}
   return config;
 });
 
 systemApi.interceptors.response.use(
   (resp) => {
-    logger.info(`System API Response: ${resp.status} ${resp.config?.url}`);
+    logger.debug(`System API Response: ${resp.status} ${resp.config?.url}`);
     return resp;
   },
   (err) => {

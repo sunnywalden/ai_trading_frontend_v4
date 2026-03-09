@@ -6,7 +6,7 @@
           <h2>⚡ 风险拓扑聚类</h2>
           <p>五因子敞口雷达 · ES@97.5% · 相关性热力图</p>
         </div>
-        <button class="refresh-button" :disabled="store.loadingRisk" @click="store.fetchRiskCluster()">
+        <button class="refresh-button" :disabled="store.loadingRisk" @click="refreshRiskCluster">
           {{ store.loadingRisk ? '计算中...' : '刷新' }}
         </button>
       </div>
@@ -92,9 +92,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
 import { useObservabilityStore } from '@/stores/observability'
 import * as echarts from 'echarts'
+import { onMounted, ref, watch } from 'vue'
 
 const store = useObservabilityStore()
 const radarEl = ref<HTMLElement | null>(null)
@@ -104,25 +104,41 @@ let radarChart: echarts.ECharts | null = null
 let esChart: echarts.ECharts | null = null
 let factorChart: echarts.ECharts | null = null
 
+const FACTOR_EXPOSURE_MIN = 0
+const FACTOR_EXPOSURE_MAX = 2
+const FACTOR_EXPOSURE_INTERVAL = 0.5
+
 function fmtTs(ts: string | null) {
   if (!ts) return '-'
   return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+async function refreshRiskCluster() {
+  try {
+    await store.fetchRiskCluster()
+    renderRadar()
+    renderES()
+    renderFactorTrend()
+  } catch (error) {
+    console.error('[RiskCluster] refreshRiskCluster', error)
+  }
 }
 
 function renderRadar() {
   if (!radarEl.value || !store.latestFactorSnap) return
   if (!radarChart) radarChart = echarts.init(radarEl.value)
   const s = store.latestFactorSnap
-  const maxVal = 2
   radarChart.setOption({
     backgroundColor: 'transparent',
     radar: {
       indicator: [
-        { name: 'Beta', max: maxVal, min: 0 }, { name: 'HML', max: maxVal, min: 0 },
-        { name: 'SMB', max: maxVal, min: 0 }, { name: 'Momentum', max: maxVal, min: 0 },
-        { name: 'QMJ', max: maxVal, min: 0 },
+        { name: 'Beta', max: FACTOR_EXPOSURE_MAX, min: FACTOR_EXPOSURE_MIN, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } },
+        { name: 'HML', max: FACTOR_EXPOSURE_MAX, min: FACTOR_EXPOSURE_MIN, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } },
+        { name: 'SMB', max: FACTOR_EXPOSURE_MAX, min: FACTOR_EXPOSURE_MIN, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } },
+        { name: 'Momentum', max: FACTOR_EXPOSURE_MAX, min: FACTOR_EXPOSURE_MIN, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } },
+        { name: 'QMJ', max: FACTOR_EXPOSURE_MAX, min: FACTOR_EXPOSURE_MIN, interval: FACTOR_EXPOSURE_INTERVAL, axisLabel: { show: false } },
       ],
-      splitNumber: 4,
+      splitNumber: Math.round((FACTOR_EXPOSURE_MAX - FACTOR_EXPOSURE_MIN) / FACTOR_EXPOSURE_INTERVAL),
       axisLine: { lineStyle: { color: 'rgba(0,255,136,0.3)' } },
       splitLine: { lineStyle: { color: 'rgba(0,255,136,0.1)' } },
       axisName: { color: '#ccc' },
@@ -176,8 +192,7 @@ watch(() => store.latestFactorSnap, renderRadar, { deep: true })
 watch(() => store.factorHistory, () => { renderES(); renderFactorTrend() }, { deep: true })
 
 onMounted(async () => {
-  await store.fetchRiskCluster()
-  renderRadar(); renderES(); renderFactorTrend()
+  await refreshRiskCluster()
 })
 </script>
 

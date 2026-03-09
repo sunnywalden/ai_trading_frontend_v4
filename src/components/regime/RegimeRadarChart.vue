@@ -26,9 +26,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import * as echarts from 'echarts'
 import type { RegimeScores } from '@/api/regimeService'
+import * as echarts from 'echarts'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface Props {
   scores: RegimeScores | null
@@ -40,6 +40,10 @@ const props = withDefaults(defineProps<Props>(), { loading: false })
 
 const chartRef = ref<HTMLElement | null>(null)
 let chartInstance: echarts.ECharts | null = null
+
+const REGIME_SCORE_MIN = 0
+const REGIME_SCORE_MAX = 100
+const REGIME_SCORE_INTERVAL = 20
 
 const DIMENSIONS = [
   { key: 'trend',    label: '趋势强度', color: '#00ff88' },
@@ -82,13 +86,14 @@ function buildOption(): echarts.EChartsOption {
     radar: {
       indicator: DIMENSIONS.map((d) => ({ 
         name: d.label, 
-        max: 100,
-        min: 0,
+        max: REGIME_SCORE_MAX,
+        min: REGIME_SCORE_MIN,
+        interval: REGIME_SCORE_INTERVAL,
         axisLabel: { show: false } 
       })),
       center: ['50%', '50%'],
       radius: '68%',
-      splitNumber: 4,
+      splitNumber: Math.round((REGIME_SCORE_MAX - REGIME_SCORE_MIN) / REGIME_SCORE_INTERVAL),
       axisName: { color: '#888899', fontSize: 11 },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
       splitArea: { show: false },
