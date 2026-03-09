@@ -384,7 +384,10 @@
                   <div class="module-title">{{ flow.flow_label }}</div>
                   <div class="module-sub">{{ flowCardSubtitle(flow) }}</div>
                 </div>
-                <span class="status-pill" :class="statusClass(flow.status)">{{ flow.status }}</span>
+                <div class="flow-status-stack">
+                  <span class="status-pill" :class="statusClass(flow.status)">{{ flow.status }}</span>
+                  <span v-if="isFlowLive(flow)" class="meta-chip flow-live-chip">LIVE</span>
+                </div>
               </div>
               <div class="flow-arrow-row">
                 <span v-for="node in flow.nodes.slice(0, 5)" :key="`${flow.flow_name}-${node.node_key}`">
@@ -393,7 +396,7 @@
               </div>
               <div class="module-metrics flow-ops-metrics">
                 <span>{{ flowCardPrimaryMetric(flow) }}</span>
-                <span>最近心跳 {{ formatDateTime(flowLatestHeartbeat(flow)) }}</span>
+                <span>最近心跳 {{ formatRelativeTime(flowLatestHeartbeat(flow)) }}</span>
                 <span>
                   {{ flowOperationalQueue(flow) > 0 ? `Queue ${flowOperationalQueue(flow)}` : 'Queue 正常' }}
                 </span>
@@ -407,7 +410,10 @@
                 <h4>{{ selectedFlowDetail.flow_label }}</h4>
                 <p>{{ flowDetailSummary(selectedFlowDetail) }}</p>
               </div>
-              <span class="status-pill" :class="statusClass(selectedFlowDetail.status)">{{ selectedFlowDetail.status }}</span>
+              <div class="flow-status-stack">
+                <span class="status-pill" :class="statusClass(selectedFlowDetail.status)">{{ selectedFlowDetail.status }}</span>
+                <span v-if="isFlowLive(selectedFlowDetail)" class="meta-chip flow-live-chip">LIVE</span>
+              </div>
             </div>
 
             <div class="detail-grid two-col">
@@ -422,6 +428,7 @@
                       <th>queue</th>
                       <th>最近心跳</th>
                       <th>最近成功</th>
+                      <th>建议动作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -434,8 +441,19 @@
                       <td><span class="status-pill small" :class="statusClass(node.status)">{{ node.status }}</span></td>
                       <td :class="flowNodeLagClass(node)">{{ formatDuration(node.lag_seconds) }}</td>
                       <td>{{ node.queue_depth ?? '-' }}</td>
-                      <td>{{ formatDateTime(node.heartbeat_at) }}</td>
-                      <td>{{ formatDateTime(node.last_success_at) }}</td>
+                      <td>
+                        <div>{{ formatRelativeTime(node.heartbeat_at) }}</div>
+                        <div class="secondary-cell">{{ formatDateTime(node.heartbeat_at) }}</div>
+                      </td>
+                      <td>
+                        <div>{{ formatRelativeTime(node.last_success_at) }}</div>
+                        <div class="secondary-cell">{{ formatDateTime(node.last_success_at) }}</div>
+                      </td>
+                      <td>
+                        <span class="action-chip" :class="flowActionToneClass(node)">
+                          {{ flowNodeSuggestedAction(node) }}
+                        </span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -787,31 +805,51 @@ async function loadLiveSafety() {
 }
 
 const summaryItems = computed(() => {
-  const items: Array<{ label: string; value: string; sub: string }> = []
-  if (serviceOverview.value) {
+  const serviceItems: Array<{ label: string; value: string; sub: string }> = serviceOverview.value
+    ? (() => {
     const critical = serviceOverview.value.services.filter(item => item.status === 'CRITICAL').length
     const degraded = serviceOverview.value.services.filter(item => item.degraded).length
-    items.push({ label: '核心模块健康', value: `${serviceOverview.value.modules.length} 模块`, sub: `${critical} critical / ${degraded} degraded` })
-  }
-  if (lifecycleOverview.value) {
-    items.push({ label: '交易生命周期', value: `${lifecycleOverview.value.headline.active_intents} 活跃`, sub: `stuck ${lifecycleOverview.value.headline.stuck_intents}` })
-    items.push({ label: '异常跳转', value: `${lifecycleOverview.value.headline.exception_count}`, sub: `P95 ${lifecycleOverview.value.headline.p95_stage_seconds.toFixed(0)}s` })
-  }
-  if (dataFlowOverview.value) {
+      return [{
+        label: '核心模块健康',
+        value: `${serviceOverview.value.modules.length} 模块`,
+        sub: `${critical} critical / ${degraded} degraded`,
+      }]
+    })()
+    : []
+
+  const lifecycleItems: Array<{ label: string; value: string; sub: string }> = lifecycleOverview.value
+    ? [
+        {
+          label: '交易生命周期',
+          value: `${lifecycleOverview.value.headline.active_intents} 活跃`,
+          sub: `stuck ${lifecycleOverview.value.headline.stuck_intents}`,
+        },
+        {
+          label: '异常跳转',
+          value: `${lifecycleOverview.value.headline.exception_count}`,
+          sub: `P95 ${lifecycleOverview.value.headline.p95_stage_seconds.toFixed(0)}s`,
+        },
+      ]
+    : []
+
+  const flowItems: Array<{ label: string; value: string; sub: string }> = dataFlowOverview.value
+    ? (() => {
     const unhealthyFlows = dataFlowOverview.value.flows.filter(item => item.status !== 'HEALTHY')
     const issueLag = Math.max(
       ...unhealthyFlows.map(item => flowFocusLagSeconds(item) ?? 0),
       0,
     )
-    items.push({
-      label: '主数据流',
-      value: `${dataFlowOverview.value.flows.length} 条`,
-      sub: unhealthyFlows.length > 0
-        ? `${unhealthyFlows.length} 条异常 · 问题 lag ${formatDuration(issueLag)}`
-        : '全部健康 · 实时运行正常',
-    })
-  }
-  return items
+      return [{
+        label: '主数据流',
+        value: `${dataFlowOverview.value.flows.length} 条`,
+        sub: unhealthyFlows.length > 0
+          ? `${unhealthyFlows.length} 条异常 · 问题 lag ${formatDuration(issueLag)}`
+          : '全部健康 · 实时运行正常',
+      }]
+    })()
+    : []
+
+  return [...serviceItems, ...lifecycleItems, ...flowItems]
 })
 
 function statusRank(status: string): number {
@@ -834,6 +872,16 @@ function flowLatestHeartbeat(
   return timestamps.reduce((latest, current) => {
     return new Date(current).getTime() > new Date(latest).getTime() ? current : latest
   })
+}
+
+function flowHeartbeatAgeSeconds(
+  flow: { nodes: Array<{ heartbeat_at: string | null; last_success_at: string | null }> },
+): number | null {
+  const latest = flowLatestHeartbeat(flow)
+  if (!latest) return null
+
+  const ageSeconds = (Date.now() - new Date(latest).getTime()) / 1000
+  return Number.isFinite(ageSeconds) ? ageSeconds : null
 }
 
 function flowOperationalQueue(
@@ -864,7 +912,7 @@ function flowCardSubtitle(flow: DataFlowOverviewResponse['flows'][number]): stri
     return `${flow.total_nodes} 节点 · ${issueCount} 个异常节点 · 问题 lag ${formatDuration(flowFocusLagSeconds(flow))}`
   }
 
-  const heartbeat = formatDateTime(flowLatestHeartbeat(flow))
+  const heartbeat = formatRelativeTime(flowLatestHeartbeat(flow))
   const queue = flowOperationalQueue(flow)
   return queue > 0
     ? `${flow.total_nodes} 节点 · 实时运行正常 · Queue ${queue}`
@@ -902,10 +950,33 @@ function flowNodeLagClass(node: DataFlowDetailResponse['nodes'][number]): string
   return 'dim-cell'
 }
 
+function flowNodeSuggestedAction(node: DataFlowDetailResponse['nodes'][number]): string {
+  if (node.status === 'CRITICAL') {
+    if (node.last_error_code === 'SIGNAL_STALE') return '检查信号扫描任务与策略运行日志'
+    if (node.last_error_code === 'MARKET_DATA_STALE') return '检查技术指标刷新任务与行情源'
+    return '立即检查任务日志与上游依赖'
+  }
+
+  if (node.status === 'WARN') {
+    if ((node.queue_depth ?? 0) > 0) return '关注队列积压，必要时手动刷新'
+    return '观察下一次调度与最近日志'
+  }
+
+  if ((node.queue_depth ?? 0) > 0) return '链路运行中，继续观察即可'
+  return '无需动作'
+}
+
+function flowActionToneClass(node: DataFlowDetailResponse['nodes'][number]): string {
+  if (node.status === 'CRITICAL') return 'action-critical'
+  if (node.status === 'WARN') return 'action-warn'
+  if ((node.queue_depth ?? 0) > 0) return 'action-active'
+  return 'action-idle'
+}
+
 function flowDetailSummary(detail: DataFlowDetailResponse): string {
   const issueCount = detail.nodes.filter(node => node.status !== 'HEALTHY').length
   const queue = flowOperationalQueue(detail)
-  const heartbeat = formatDateTime(flowLatestHeartbeat(detail))
+  const heartbeat = formatRelativeTime(flowLatestHeartbeat(detail))
 
   if (issueCount > 0) {
     return `当前有 ${issueCount} 个异常节点，最近失败样本 ${detail.failures.length} 条，最近心跳 ${heartbeat}。`
@@ -916,6 +987,14 @@ function flowDetailSummary(detail: DataFlowDetailResponse): string {
   }
 
   return `当前链路健康，无实时告警，最近心跳 ${heartbeat}。`
+}
+
+function isFlowLive(
+  flow: { status: string; nodes: Array<{ heartbeat_at: string | null; last_success_at: string | null }> },
+): boolean {
+  if (flow.status !== 'HEALTHY') return false
+  const age = flowHeartbeatAgeSeconds(flow)
+  return age != null && age >= 0 && age <= 15 * 60
 }
 
 function normalizeAutonomyStatus(status?: string): MonitorStatus {
@@ -936,6 +1015,28 @@ function formatDateTime(value?: string | null): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+function formatRelativeTime(value?: string | null): string {
+  if (!value) return '-'
+  const date = new Date(value)
+  const timestamp = date.getTime()
+  if (Number.isNaN(timestamp)) return value
+
+  const diffSeconds = Math.round((Date.now() - timestamp) / 1000)
+  const absDiffSeconds = Math.abs(diffSeconds)
+
+  if (absDiffSeconds < 10) return diffSeconds >= 0 ? '刚刚' : '即将'
+  if (absDiffSeconds < 60) return diffSeconds >= 0 ? `${absDiffSeconds}s 前` : `${absDiffSeconds}s 后`
+
+  const diffMinutes = Math.round(absDiffSeconds / 60)
+  if (diffMinutes < 60) return diffSeconds >= 0 ? `${diffMinutes}m 前` : `${diffMinutes}m 后`
+
+  const diffHours = Math.round(diffMinutes / 60)
+  if (diffHours < 24) return diffSeconds >= 0 ? `${diffHours}h 前` : `${diffHours}h 后`
+
+  const diffDays = Math.round(diffHours / 24)
+  return diffSeconds >= 0 ? `${diffDays}d 前` : `${diffDays}d 后`
 }
 
 function formatDuration(value?: number | null): string {
@@ -1465,6 +1566,20 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+.flow-status-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.flow-live-chip {
+  background: rgba(16, 185, 129, 0.2);
+  color: #86efac;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
 .flow-ops-metrics span:first-child {
   font-weight: 600;
 }
@@ -1635,6 +1750,36 @@ onMounted(() => {
 
 .compact-table tbody tr.node-row-active {
   background: rgba(56, 189, 248, 0.05);
+}
+
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.action-critical {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+}
+
+.action-warn {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fde68a;
+}
+
+.action-active {
+  background: rgba(56, 189, 248, 0.14);
+  color: #bae6fd;
+}
+
+.action-idle {
+  background: rgba(100, 116, 139, 0.18);
+  color: #cbd5e1;
 }
 
 .compact-table th,
