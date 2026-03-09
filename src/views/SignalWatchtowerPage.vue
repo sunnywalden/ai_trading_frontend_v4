@@ -175,6 +175,7 @@
               <th>标的</th>
               <th>方向</th>
               <th>结果</th>
+              <th>阶段</th>
               <th>拒绝层</th>
               <th>拒绝原因</th>
               <th>置信分</th>
@@ -185,10 +186,10 @@
           </thead>
           <tbody>
             <tr v-if="auditLoading">
-              <td colspan="10" class="center-cell">加载中…</td>
+              <td colspan="11" class="center-cell">加载中…</td>
             </tr>
             <tr v-else-if="!auditRows.length">
-              <td colspan="10" class="center-cell">暂无数据</td>
+              <td colspan="11" class="center-cell">暂无数据</td>
             </tr>
             <tr v-else v-for="row in auditRows" :key="row.id"
               :class="row.funnel_result === 'PASSED' ? 'row-pass' : 'row-reject'">
@@ -201,6 +202,9 @@
                 <span :class="row.funnel_result === 'PASSED' ? 'badge-pass' : 'badge-reject'">
                   {{ row.funnel_result === 'PASSED' ? '✓ 通过' : '✗ 拒绝' }}
                 </span>
+              </td>
+              <td>
+                <span class="stage-pill">{{ formatDecisionStage(row.decision_stage) }}</span>
               </td>
               <td class="center-cell">{{ row.rejected_at_layer != null ? `L${row.rejected_at_layer}` : '--' }}</td>
               <td class="reason-cell" :title="row.rejection_reason ?? ''">
@@ -519,6 +523,12 @@ const REJECTION_REASON_LABELS: Record<string, string> = {
   REGIME_DIRECTION: '体制方向限制',
   MAX_POSITIONS_REACHED: '持仓已满',
   SEAT_COMPETITION_ELIMINATED: '席位竞争淘汰',  // V10.5.2
+  SIGNAL_EXPIRED: '信号过期',
+  TRADING_MODE_OFF: '交易模式关闭',
+  SIGNAL_VALIDATION_BLOCKED: '信号验证拦截',
+  POST_VALIDATION_REJECTED: '验证后决策拒绝',
+  CIRCUIT_BREAKER_TRIGGERED: '熔断器触发',
+  RISK_GATE_REJECTED: '风控门拒绝',
   DAILY_QUOTA_EXHAUSTED: '日配额耗尽',
   HIGH_CORRELATION: '相关性过高',
   INSUFFICIENT_RESONANCE: '共振不足',
@@ -531,6 +541,19 @@ const REJECTION_REASON_LABELS: Record<string, string> = {
 function formatRejectionReason(reason?: string | null): string {
   if (!reason) return '--'
   return REJECTION_REASON_LABELS[reason] ?? reason
+}
+
+const DECISION_STAGE_LABELS: Record<string, string> = {
+  SIGNAL_GENERATION: '生成',
+  SIGNAL_VALIDATION: '验证',
+  AUTONOMOUS_DECISION: '决策',
+  QUALITY_FUNNEL: '漏斗',
+  RISK_GATE: '风控',
+}
+
+function formatDecisionStage(stage?: string | null): string {
+  if (!stage) return '--'
+  return DECISION_STAGE_LABELS[stage] ?? stage
 }
 
 function regimeLabelFromAny(regime: string | null | undefined): string {
@@ -1002,10 +1025,23 @@ onUnmounted(() => {
 .center-cell { text-align: center; }
 .reason-cell { font-size: 10px; color: #94a3b8; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .anti-kill { font-size: 13px; }
+.stage-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(51, 65, 85, 0.64);
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 600;
+}
 /* V10.5.2: 席位竞争淘汰标签 */
 .reason-seat-competition {
-  background: rgba(249, 115, 22, 0.15);
-  color: #fb923c;
+  background: rgba(124, 45, 18, 0.88);
+  color: #ffffff;
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 8px;
