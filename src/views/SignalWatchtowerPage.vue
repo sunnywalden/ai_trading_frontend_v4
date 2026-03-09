@@ -76,6 +76,14 @@
         </div>
       </div>
 
+      <div v-if="stats?.fallback_mode" class="watchtower-fallback-banner">
+        <span class="fallback-icon">ℹ️</span>
+        <div class="fallback-body">
+          当前为 <strong>本地实时信号回退口径</strong>：统计与审计日志来自 `trading_signals`，
+          因正式 `signal_quality_audit_logs` 覆盖不足，逐层漏斗与拒绝原因分布暂不可完整还原。
+        </div>
+      </div>
+
       <div class="two-col">
         <!-- 漏斗逐层图 -->
         <div class="chart-card">
@@ -348,11 +356,11 @@ import { autonomyApi } from '@/api/autonomyService'
 import type { RegimeType } from '@/api/regimeService'
 import { REGIME_LABELS } from '@/api/regimeService'
 import type {
-    AuditLogRecord,
-    FunnelStats,
-    GhostAnalysis,
-    GhostTrade,
-    QualityConfig, QualityConfigPatch,
+  AuditLogRecord,
+  FunnelStats,
+  GhostAnalysis,
+  GhostTrade,
+  QualityConfig, QualityConfigPatch,
 } from '@/api/signalQualityService'
 import { signalQualityService } from '@/api/signalQualityService'
 import * as echarts from 'echarts'
@@ -672,6 +680,30 @@ function renderFunnelChart() {
   if (!funnelChart) funnelChart = echarts.init(funnelChartRef.value)
   const s = stats.value
   const total = s.total_evaluated || 1
+  if (s.fallback_mode) {
+    funnelChart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { show: false },
+      grid: { top: 12, bottom: 40, left: 0, right: 0, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['总量', '通过', '拒绝'],
+        axisLabel: { color: '#9ca3af', fontSize: 10 },
+      },
+      yAxis: { type: 'value', axisLabel: { color: '#6b7280', fontSize: 10 } },
+      series: [{
+        type: 'bar',
+        data: [
+          { value: total, itemStyle: { color: '#60a5fa' } },
+          { value: s.total_passed || 0, itemStyle: { color: '#22c55e' } },
+          { value: s.total_rejected || 0, itemStyle: { color: '#f87171' } },
+        ],
+        label: { show: true, position: 'top', color: '#e5e7eb', fontSize: 10 },
+        barMaxWidth: 56,
+      }],
+    })
+    return
+  }
   const layers = [
     { name: 'L0 流动性过滤', val: s.layer_stats.layer_0_rejected },
     { name: 'L1 体制门控',   val: s.layer_stats.layer_1_rejected },
@@ -704,6 +736,26 @@ function renderReasonChart() {
   if (!reasonChart) reasonChart = echarts.init(reasonChartRef.value)
   const breakdown: Record<string, number> = stats.value.rejection_breakdown ?? {}
   const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]).slice(0, 10)
+  if (!entries.length) {
+    reasonChart.setOption({
+      graphic: {
+        type: 'text',
+        left: 'center',
+        top: 'middle',
+        style: {
+          text: stats.value.fallback_mode
+            ? '回退模式下暂无正式拒绝原因分布'
+            : '暂无拒绝原因数据',
+          fill: '#64748b',
+          fontSize: 12,
+        },
+      },
+      xAxis: { show: false },
+      yAxis: { show: false },
+      series: [],
+    })
+    return
+  }
   reasonChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c}' },
     grid: { top: 12, bottom: 12, left: 10, right: 10, containLabel: true },
@@ -876,6 +928,29 @@ onUnmounted(() => {
   border: 1px solid rgba(100,116,139,0.25);
   border-radius: 10px;
   padding: 12px;
+}
+.watchtower-fallback-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+.fallback-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.fallback-body {
+  font-size: 12px;
+  color: #bfdbfe;
+  line-height: 1.5;
+}
+.fallback-body strong {
+  color: #dbeafe;
 }
 .card-title { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
 .chart-box { width: 100%; }
