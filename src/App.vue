@@ -232,10 +232,31 @@ function autoExpandGroup() {
 }
 watch(() => route.path, autoExpandGroup, { immediate: true })
 
+function safeStorageGet(storage: Storage | undefined, key: string, fallback = '') {
+  try {
+    if (storage && typeof storage.getItem === 'function') {
+      return storage.getItem(key) || fallback;
+    }
+  } catch (error) {
+    console.warn(`[App] failed to read storage key: ${key}`, error);
+  }
+  return fallback;
+}
+
+function safeStorageSet(storage: Storage | undefined, key: string, value: string) {
+  try {
+    if (storage && typeof storage.setItem === 'function') {
+      storage.setItem(key, value);
+    }
+  } catch (error) {
+    console.warn(`[App] failed to write storage key: ${key}`, error);
+  }
+}
+
 const loggedIn = ref(isLoggedIn());
 const username = ref(getCurrentUsername());
 const expiryText = ref('');
-const theme = ref(localStorage.getItem('theme') || 'dark');
+const theme = ref(safeStorageGet(globalThis.localStorage, 'theme', 'dark'));
 const themeLabel = computed(() => theme.value === 'dark' ? t('auth.light_mode') : t('auth.dark_mode'));
 
 const currentLocaleLabel = computed(() => locale.value === 'zh-CN' ? 'EN' : 'CN');
@@ -261,7 +282,7 @@ function formatExpiryText(ms: number | null) {
 
 function readBannerDismissUntil(): number {
   try {
-    return Number(sessionStorage.getItem(bannerDismissUntilKey) || '0');
+    return Number(safeStorageGet(globalThis.sessionStorage, bannerDismissUntilKey, '0'));
   } catch (error) {
     console.warn('[App] failed to read expiry banner dismissal', error);
     return 0;
@@ -318,7 +339,7 @@ function sendExpiryNotification() {
 function dismissBanner() {
   // 不再弹出 3 分钟
   try {
-    sessionStorage.setItem(bannerDismissUntilKey, String(Date.now() + 3 * 60 * 1000));
+    safeStorageSet(globalThis.sessionStorage, bannerDismissUntilKey, String(Date.now() + 3 * 60 * 1000));
   } catch (error) {
     console.warn('[App] failed to persist expiry banner dismissal', error);
   }
@@ -372,12 +393,12 @@ onUnmounted(() => {
 function onLogout() { logout(); router.push('/login'); }
 function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('theme', theme.value);
+  safeStorageSet(globalThis.localStorage, 'theme', theme.value);
   applyTheme();
 }
 function toggleLanguage() {
   locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN';
-  localStorage.setItem('locale', locale.value);
+  safeStorageSet(globalThis.localStorage, 'locale', locale.value);
 }
 function applyTheme() {
   if (typeof document !== 'undefined') {
