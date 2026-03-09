@@ -88,7 +88,9 @@ export interface CapacityGuardSummary {
 export interface FunnelStats {
   total_evaluated:     number
   total_passed:        number
+  total_rejected?:     number
   elite_rate_pct:      number
+  fallback_mode?:      boolean
   layer_stats: {
     layer_0_rejected: number
     layer_1_rejected: number
