@@ -20,7 +20,7 @@
       "echarts": ["node_modules/echarts/index"],
       "echarts/*": ["node_modules/echarts/*"]
     },
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }
