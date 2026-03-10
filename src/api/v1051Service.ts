@@ -1,14 +1,28 @@
 import { api } from './client'
 
+export type DataQuality = 'REAL' | 'INSUFFICIENT' | 'STALE' | 'PROXY'
+
 export interface AlphaLabSummary {
   generated: number
   executed: number
   evaluated: number
   win_rate: number
+  gross_return: number
+  net_return: number
+  after_cost_return: number
+  after_turnover_return: number
+  data_quality: DataQuality
+  avg_execution_slippage: number
   avg_expected_return: number
   avg_actual_return: number
   avg_pnl_pct: number
   avg_confidence: number
+}
+
+export interface AlphaLabBucketBreakdown {
+  bucket: string
+  count: number
+  avg_actual_return: number
 }
 
 export interface AlphaLabSnapshot {
@@ -33,10 +47,17 @@ export interface AlphaLabSnapshot {
     generated: number
     evaluated: number
     win_rate: number
+    gross_return: number
+    net_return: number
+    after_cost_return: number
+    after_turnover_return: number
+    data_quality: DataQuality
     avg_expected_return: number
     avg_actual_return: number
     alpha_gap: number
     avg_confidence: number
+    regime_breakdown: AlphaLabBucketBreakdown[]
+    capacity_breakdown: AlphaLabBucketBreakdown[]
   }>
   decay_monitor: Array<{
     strategy_id: string
@@ -44,13 +65,20 @@ export interface AlphaLabSnapshot {
     recent_win_rate: number
     previous_win_rate: number
     win_rate_delta: number
+    recent_alpha_gap: number
+    previous_alpha_gap: number
     recent_sample_size: number
     previous_sample_size: number
+    data_quality: DataQuality
   }>
   shadow_book: {
     total: number
     closed: number
     win_rate: number
+    false_reject_rate: number
+    missed_alpha_pct: number
+    avoided_loss_pct: number
+    protection_benefit_pct: number
     avg_pnl_pct: number
     rejection_breakdown: Array<{
       reason: string
@@ -67,6 +95,7 @@ export interface AlphaLabSnapshot {
     confidence: number
     expected_return: number
     actual_return?: number | null
+    data_quality: DataQuality
     generated_at: string | null
   }>
 }
@@ -75,6 +104,7 @@ export interface GovernanceSnapshot {
   funnel: {
     discovery: number
     paper: number
+    shadow_live: number
     challenger: number
     production: number
   }
@@ -88,6 +118,16 @@ export interface GovernanceSnapshot {
     last_run_at?: string | null
     run_count: number
     stage: string
+    evidence_chain: {
+      backtest: boolean
+      paper: boolean
+      shadow: boolean
+      execution: boolean
+      calibration: boolean
+      rollback_ready: boolean
+    }
+    promotion_blockers: string[]
+    rollback_suggestion: string
     hit_rate: number
     avg_signal_strength: number
     scanned_total: number

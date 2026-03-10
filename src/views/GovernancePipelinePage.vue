@@ -4,7 +4,7 @@
       <div>
         <p class="eyebrow">Research-to-Live Governance</p>
         <h2>Promotion Pipeline</h2>
-        <p class="hero-copy">把 discovery、paper、challenger、production 变成可审计的晋升链路，避免策略凭感觉上线。</p>
+        <p class="hero-copy">把 discovery、paper、shadow live、challenger、production 变成可审计的晋升链路，并明确 blocker 与 rollback 建议。</p>
       </div>
       <button class="action-button" @click="loadSnapshot" :disabled="loading">{{ loading ? '刷新中...' : '刷新数据' }}</button>
     </section>
@@ -19,6 +19,10 @@
       <article class="funnel-card">
         <span>Paper</span>
         <strong>{{ snapshot.funnel.paper }}</strong>
+      </article>
+      <article class="funnel-card">
+        <span>Shadow Live</span>
+        <strong>{{ snapshot.funnel.shadow_live }}</strong>
       </article>
       <article class="funnel-card">
         <span>Challenger</span>
@@ -44,7 +48,9 @@
               <th>状态</th>
               <th>运行次数</th>
               <th>命中率</th>
-              <th>平均强度</th>
+              <th>Evidence</th>
+              <th>Blockers</th>
+              <th>Rollback</th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +63,20 @@
               <td>{{ item.last_run_status || 'N/A' }}</td>
               <td>{{ item.run_count }}</td>
               <td>{{ pct(item.hit_rate) }}</td>
-              <td>{{ item.avg_signal_strength.toFixed(1) }}</td>
+              <td>
+                <div class="chip-group">
+                  <span v-for="(enabled, key) in item.evidence_chain" :key="`${item.strategy_id}-${key}`" class="stage-pill" :class="enabled ? 'production' : 'discovery'">
+                    {{ key }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="chip-group">
+                  <span v-for="blocker in item.promotion_blockers" :key="blocker" class="stage-pill paper">{{ blocker }}</span>
+                  <span v-if="!item.promotion_blockers.length" class="stage-pill production">CLEAR</span>
+                </div>
+              </td>
+              <td>{{ item.rollback_suggestion }}</td>
             </tr>
           </tbody>
         </table>
@@ -215,10 +234,12 @@ onMounted(loadSnapshot)
   font-size: 11px;
   background: rgba(255, 255, 255, 0.1);
 }
-.stage-pill.production { background: rgba(72, 219, 180, 0.18); color: #48dbb4; }
-.stage-pill.challenger { background: rgba(255, 190, 118, 0.18); color: #ffbe76; }
-.stage-pill.paper { background: rgba(84, 160, 255, 0.18); color: #74b9ff; }
-.stage-pill.discovery { background: rgba(199, 236, 238, 0.12); color: #dff9fb; }
+.stage-pill.production { background: rgba(17, 96, 76, 0.92); color: #f4fbff; }
+.stage-pill.challenger { background: rgba(122, 78, 17, 0.92); color: #fff8ea; }
+.stage-pill.paper { background: rgba(26, 85, 133, 0.92); color: #eef6ff; }
+.stage-pill.shadow_live { background: rgba(34, 96, 146, 0.92); color: #eef6ff; }
+.stage-pill.discovery { background: rgba(58, 77, 93, 0.92); color: #f4f7fb; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .insight-metrics { display: flex; gap: 18px; margin-bottom: 16px; }
 .insight-metrics div { display: grid; gap: 4px; }
 .insight-metrics strong { font-size: 22px; }

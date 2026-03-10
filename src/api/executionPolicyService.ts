@@ -23,6 +23,11 @@ export interface ExecutionPretradeCost {
   total_expected_cost_bps: number
 }
 
+export interface ExecutionControlState {
+  enabled: boolean
+  mode: 'OBSERVE_ONLY' | 'HARD_CONTROL'
+}
+
 export interface ExecutionPolicyOverviewItem {
   intent_id: number
   intent_key: string
@@ -50,6 +55,7 @@ export interface ExecutionPolicyOverviewResponse {
     requested_order_id: string
     match_mode: 'order_id' | 'fallback_filters' | 'not_found'
   } | null
+  control_state: ExecutionControlState
 }
 
 export interface ExecutionPolicyTimelineItem {
@@ -80,6 +86,7 @@ export interface ExecutionPolicyDetailResponse {
   }
   policy: ExecutionPolicySnapshot
   pretrade_cost: ExecutionPretradeCost
+  control_state: ExecutionControlState
   timeline: ExecutionPolicyTimelineItem[]
   exceptions: ExecutionPolicyException[]
   execution_result: {

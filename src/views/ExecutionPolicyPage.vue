@@ -40,6 +40,11 @@
 
     <section class="summary-grid">
       <article class="summary-card accent-blue">
+        <span class="summary-label">Control Mode</span>
+        <strong class="summary-value">{{ overview?.control_state.mode ?? 'OBSERVE_ONLY' }}</strong>
+        <span class="summary-foot">{{ overview?.control_state.enabled ? '策略可进入硬控制' : '当前只做观察与解释' }}</span>
+      </article>
+      <article class="summary-card accent-blue">
         <span class="summary-label">覆盖意图</span>
         <strong class="summary-value">{{ overview?.summary.total ?? 0 }}</strong>
         <span class="summary-foot">本次快照样本</span>
@@ -170,6 +175,10 @@
 
           <section class="detail-section metrics-strip">
             <div class="mini-metric">
+              <span>控制模式</span>
+              <strong>{{ detail.control_state.mode }}</strong>
+            </div>
+            <div class="mini-metric">
               <span>紧急度</span>
               <strong>{{ detail.policy.urgency }}</strong>
             </div>
@@ -268,9 +277,9 @@ import {
   type ExecutionPolicyDetailResponse,
   type ExecutionPolicyOverviewResponse,
 } from '@/api/executionPolicyService'
+import { formatClientDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { formatClientDateTime } from '@/utils/datetime'
 
 const route = useRoute()
 const router = useRouter()

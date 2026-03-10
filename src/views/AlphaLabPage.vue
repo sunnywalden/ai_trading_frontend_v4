@@ -2,7 +2,7 @@
   <div class="page-container alpha-lab-page">
     <section class="hero-card">
       <div>
-        <p class="eyebrow">V10.5.1 Alpha Truth Stack</p>
+        <p class="eyebrow">V10.5.3 Alpha Truth Engine 2.0</p>
         <h2>Alpha Lab</h2>
         <p class="hero-copy">把策略命中率、预期偏差、体制切换和 Shadow Book 放在同一张台面上，先判断 alpha 是否真实，再决定是否放量。</p>
       </div>
@@ -33,14 +33,24 @@
         <small>平均置信度 {{ pct(snapshot.summary.avg_confidence) }}</small>
       </article>
       <article class="metric-card">
-        <span>预期收益</span>
-        <strong>{{ pct(snapshot.summary.avg_expected_return) }}</strong>
-        <small>实际 {{ pct(snapshot.summary.avg_actual_return) }}</small>
+        <span>Gross / Net</span>
+        <strong>{{ pct(snapshot.summary.gross_return) }}</strong>
+        <small>净口径 {{ pct(snapshot.summary.net_return) }}</small>
+      </article>
+      <article class="metric-card">
+        <span>After Cost / Turnover</span>
+        <strong>{{ pct(snapshot.summary.after_cost_return) }}</strong>
+        <small>换手后 {{ pct(snapshot.summary.after_turnover_return) }}</small>
       </article>
       <article class="metric-card accent">
         <span>Shadow Book</span>
-        <strong>{{ pct(snapshot.shadow_book.win_rate) }}</strong>
-        <small>闭环样本 {{ snapshot.shadow_book.closed }}</small>
+        <strong>{{ pct(snapshot.shadow_book.false_reject_rate) }}</strong>
+        <small>保护收益 {{ signedPct(snapshot.shadow_book.protection_benefit_pct) }}</small>
+      </article>
+      <article class="metric-card">
+        <span>Data Quality</span>
+        <strong><span class="quality-pill" :class="dqClass(snapshot.summary.data_quality)">{{ snapshot.summary.data_quality }}</span></strong>
+        <small>平均滑点 {{ pct(snapshot.summary.avg_execution_slippage) }}</small>
       </article>
     </section>
 
@@ -95,9 +105,12 @@
               <th>策略</th>
               <th>风格</th>
               <th>样本</th>
+              <th>DQ</th>
               <th>胜率</th>
-              <th>预期</th>
-              <th>实际</th>
+              <th>Gross</th>
+              <th>Net</th>
+              <th>After Cost</th>
+              <th>After Turnover</th>
               <th>Alpha Gap</th>
             </tr>
           </thead>
@@ -106,9 +119,12 @@
               <td>{{ item.strategy_name }}</td>
               <td>{{ item.style || 'N/A' }}</td>
               <td>{{ item.evaluated }}</td>
+              <td><span class="quality-pill" :class="dqClass(item.data_quality)">{{ item.data_quality }}</span></td>
               <td>{{ pct(item.win_rate) }}</td>
-              <td>{{ pct(item.avg_expected_return) }}</td>
-              <td>{{ pct(item.avg_actual_return) }}</td>
+              <td>{{ pct(item.gross_return) }}</td>
+              <td>{{ pct(item.net_return) }}</td>
+              <td>{{ pct(item.after_cost_return) }}</td>
+              <td>{{ pct(item.after_turnover_return) }}</td>
               <td :class="item.alpha_gap < 0 ? 'negative' : 'positive'">{{ signedPct(item.alpha_gap) }}</td>
             </tr>
           </tbody>
@@ -126,8 +142,12 @@
             <span>总样本</span>
           </div>
           <div>
-            <strong>{{ pct(snapshot.shadow_book.avg_pnl_pct) }}</strong>
-            <span>平均虚拟回报</span>
+            <strong>{{ pct(snapshot.shadow_book.missed_alpha_pct) }}</strong>
+            <span>错过 Alpha</span>
+          </div>
+          <div>
+            <strong>{{ pct(snapshot.shadow_book.avoided_loss_pct) }}</strong>
+            <span>规避损失</span>
           </div>
         </div>
         <ul class="breakdown-list">
@@ -152,6 +172,7 @@
             <th>方向</th>
             <th>策略</th>
             <th>状态</th>
+            <th>DQ</th>
             <th>置信度</th>
             <th>预期</th>
             <th>实际</th>
@@ -163,6 +184,7 @@
             <td>{{ signal.direction }}</td>
             <td>{{ signal.strategy_name || 'N/A' }}</td>
             <td>{{ signal.status }}</td>
+            <td><span class="quality-pill" :class="dqClass(signal.data_quality)">{{ signal.data_quality }}</span></td>
             <td>{{ pct(signal.confidence) }}</td>
             <td>{{ pct(signal.expected_return) }}</td>
             <td>{{ signal.actual_return == null ? 'N/A' : pct(signal.actual_return) }}</td>
@@ -189,6 +211,10 @@ function pct(value: number) {
 function signedPct(value: number) {
   const prefix = value > 0 ? '+' : ''
   return `${prefix}${(value * 100).toFixed(1)}%`
+}
+
+function dqClass(value: string) {
+  return `dq-${value.toLowerCase()}`
 }
 
 async function loadSnapshot() {
@@ -254,6 +280,18 @@ onMounted(loadSnapshot)
   font-size: 12px;
   background: rgba(125, 184, 255, 0.16);
 }
+.quality-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.dq-real { background: rgba(18, 98, 78, 0.9); color: #f5fbff; }
+.dq-insufficient { background: rgba(133, 84, 18, 0.9); color: #fff8ea; }
+.dq-stale { background: rgba(120, 43, 42, 0.92); color: #fff1f1; }
+.dq-proxy { background: rgba(35, 82, 131, 0.92); color: #f0f7ff; }
 .regime-box { display: grid; gap: 8px; margin-bottom: 16px; }
 .regime-box strong { font-size: 24px; }
 .regime-box p { margin: 0; color: rgba(220, 232, 255, 0.72); line-height: 1.6; }

@@ -35,6 +35,11 @@
       </div>
 
       <div class="construction-panels">
+        <CapacityArbitrationPanel
+          v-if="accountId"
+          :account-id="accountId"
+        />
+
         <div class="card">
           <h3 style="margin: 0 0 16px;">风险预算</h3>
           <div class="weight-bars">
@@ -115,24 +120,24 @@
       <h3 style="margin: 0 0 16px;">优化配置</h3>
       <div class="form-grid">
         <div class="form-field">
-          <label>标的列表 (逗号分隔)</label>
-          <input v-model="symbolsInput" placeholder="AAPL,MSFT,GOOGL,AMZN,NVDA" />
+          <label for="symbols-input">标的列表 (逗号分隔)</label>
+          <input id="symbols-input" v-model="symbolsInput" placeholder="AAPL,MSFT,GOOGL,AMZN,NVDA" />
         </div>
         <div class="form-field">
-          <label>优化方法</label>
-          <select v-model="form.method">
+          <label for="method-select">优化方法</label>
+          <select id="method-select" v-model="form.method">
             <option value="MARKOWITZ">Markowitz 最大 Sharpe</option>
             <option value="RISK_PARITY">风险平价</option>
             <option value="KELLY">Kelly 准则 (半 Kelly)</option>
           </select>
         </div>
         <div class="form-field">
-          <label>历史数据天数</label>
-          <input type="number" v-model.number="form.lookback_days" min="60" max="756" />
+          <label for="lookback-input">历史数据天数</label>
+          <input id="lookback-input" type="number" v-model.number="form.lookback_days" min="60" max="756" />
         </div>
         <div class="form-field">
-          <label>无风险利率 (%)</label>
-          <input type="number" v-model.number="rfPct" min="0" step="0.1" />
+          <label for="rf-input">无风险利率 (%)</label>
+          <input id="rf-input" type="number" v-model.number="rfPct" min="0" step="0.1" />
         </div>
       </div>
       <button class="primary-button" @click="handleOptimize" :disabled="portfolioStore.loading">
@@ -218,22 +223,29 @@
 
 <script setup lang="ts">
 import { portfolioApi, type PortfolioConstructionSnapshot, type SnapshotHistoryItem } from '@/api/portfolioService'
-import { formatClientDateTime } from '@/utils/datetime'
 import { usePortfolioStore } from '@/stores/portfolio'
+import { useQuantLoopStore } from '@/stores/quantLoop'
+import { formatClientDateTime } from '@/utils/datetime'
 import { storeToRefs } from 'pinia'
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+
+const CapacityArbitrationPanel = defineAsyncComponent(
+  () => import('@/components/CapacityArbitrationPanel.vue'),
+)
 
 const portfolioStore = usePortfolioStore()
+const quantLoopStore = useQuantLoopStore()
 const { result } = storeToRefs(portfolioStore)
 const symbolsInput = ref('AAPL,MSFT,GOOGL,AMZN')
 const form = ref({ method: 'MARKOWITZ' as const, lookback_days: 252 })
-const rfPct = ref(4.0)
+const rfPct = ref(4)
 const chartDom = ref<HTMLElement>()
 
 // V10.1: 批量优化历史
 const history = ref<SnapshotHistoryItem[]>([])
 const historyLoading = ref(false)
 const construction = ref<PortfolioConstructionSnapshot | null>(null)
+const accountId = computed(() => quantLoopStore.systemStatus?.account_id || '')
 
 function pct(value: number) {
   return `${(value * 100).toFixed(1)}%`
@@ -311,6 +323,7 @@ watch(result, async (r) => {
 })
 
 onMounted(() => {
+  quantLoopStore.fetchSystemStatus()
   portfolioStore.fetchLatest()
   loadHistory()
   loadConstruction()
@@ -346,17 +359,17 @@ onMounted(() => {
 .weight-bar-fill { height: 100%; background: linear-gradient(90deg, #4a90e2, #7ec8e3); border-radius: 6px; transition: width 0.5s; }
 .weight-bar-fill.gold { background: linear-gradient(90deg, #f6b93b, #fa983a); }
 .weight-pct { width: 50px; text-align: right; font-size: 13px; }
-.primary-button { background: #4a90e2; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.primary-button { background: #2563eb; color: #ffffff; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .secondary-button { background: linear-gradient(135deg, #45aaf2, #2bcbba); }
 .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .error-message { color: #f44336; font-size: 13px; margin-top: 8px; }
 .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .history-table th, .history-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color, #2d2d4e); text-align: left; }
 .history-table th { color: #888; font-weight: 500; }
-.method-badge { background: rgba(74,144,226,0.15); color: #4a90e2; border-radius: 4px; padding: 2px 8px; font-size: 11px; }
+.method-badge { background: rgba(37, 99, 235, 0.28); color: #f8fbff; border-radius: 4px; padding: 2px 8px; font-size: 11px; }
 .weights-cell { display: flex; gap: 4px; flex-wrap: wrap; }
 .weight-chip { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 6px; font-size: 11px; }
-.danger-chip { background: rgba(255, 118, 117, 0.14); color: #ff9f9f; }
+.danger-chip { background: rgba(153, 51, 51, 0.78); color: #fff3f3; }
 .metrics-row.compact { margin-bottom: 0; }
 
 @media (max-width: 1024px) {
