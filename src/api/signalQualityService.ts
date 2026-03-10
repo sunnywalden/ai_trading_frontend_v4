@@ -103,7 +103,10 @@ export interface FunnelStats {
   }
   rejection_breakdown: Record<string, number>
   daily_trend:         LayerDailyTrend[]
-  current_positions_count?:     number   // 当前 HELD 持仓数
+  current_positions_count?:     number   // 兼容旧字段：当前容量占用 HELD 持仓数
+  capacity_positions_count?:    number   // 当前容量占用 HELD 持仓数
+  lifecycle_active_positions_count?: number // 生命周期活跃持仓数（与持仓评估/战情室口径一致）
+  current_positions_count_scope?: 'capacity_held' | string
   max_concurrent_positions_cfg?: number  // 基础配置的最大并发仓位
   effective_max_concurrent_positions?: number // 当前体制下生效的最大并发仓位
   current_regime?: RegimeType | null

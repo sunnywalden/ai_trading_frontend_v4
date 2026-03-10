@@ -30,6 +30,13 @@ const ACTIVE_POSITION_STATES = new Set([
   'EXCEPTION',
 ])
 
+const HELD_POSITION_STATES = new Set([
+  'ACTIVE',
+  'SCALING_IN',
+  'SCALING_OUT',
+  'PARTIALLY_CLOSED',
+])
+
 export const useLifecycleStore = defineStore('lifecycle', () => {
   // ── Legacy FSM state (V10.3 backward compat) ──────────────────────────────
   const pipeline        = ref<PipelineDistribution | null>(null)
@@ -78,6 +85,15 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
 
     return board.columns
       .filter(column => ACTIVE_POSITION_STATES.has(column.state))
+      .flatMap(column => column.cards)
+  })
+
+  const heldBoardCards = computed<PositionBoardCard[]>(() => {
+    const board = positionBoard.value
+    if (!board) return []
+
+    return board.columns
+      .filter(column => HELD_POSITION_STATES.has(column.state))
       .flatMap(column => column.cards)
   })
 
@@ -275,7 +291,7 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
     selectedPosition, positionTimeline, positionDetailOpen,
     posLoading, posError,
     // V10.4.4 computed
-    activeBoardCards, activePositionCount, exceptionPositionCount, stuckSliceCount,
+    activeBoardCards, heldBoardCards, activePositionCount, exceptionPositionCount, stuckSliceCount,
     // V10.4.4 actions
     fetchPositions, fetchExceptions, fetchStuckSlices,
     openPositionDetail, closePositionDetail, manualClosePosition,
