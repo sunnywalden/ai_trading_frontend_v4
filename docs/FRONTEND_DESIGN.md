@@ -1,7 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.5.1（规划中） | 更新日期：2026-03-08  
+> 版本：V10.5.3（规划中） | 当前已上线版本：V10.5.1 | 更新日期：2026-03-10  
+> 变更摘要（V10.5.3）：**Profit Engine Upgrade UI**——前端不新增导航组，而是把现有四个机构级工作台升级为收益控制面：`/alpha-lab` 升级为 **Alpha Truth Engine 2.0**（gross / net / after cost / after turnover、regime & capacity bucket、shadow false-reject 视图）、`/portfolio` 升级为 **Portfolio Construction 2.1 Console**（Seat Value、Risk Budget Tree、Marginal Alpha/Risk/Turnover/Liquidity、Replace-or-Hold 解释）、`/execution-policy` 升级为 **Execution Policy Closed Loop Console**（Pre-Trade Cost、budget breach、policy snapshot、child-order replay、execution feedback buckets）、`/governance/pipeline` 升级为 **Research-to-Live Hard Gate Board**（Discovery / Paper / Shadow Live / Challenger / Production 五阶段证据链、promotion blockers、rollback signals）；设计原则继续坚持“决策级可视化而非页面膨胀”，重点提升 why-now / why-size / why-not-live 的解释密度。  
 > 变更摘要（V10.5.1）：**研究真相与交易纪律工作台**——前端新增四个面向机构级交易流程的核心工作台：`/alpha-lab`（Strategy Scorecard 2.0 + Signal Decay + Regime Breakdown + Shadow Book Compare）、增强版 `/portfolio`（升级为 Portfolio Construction Console，新增 Risk Budget / Marginal Contribution / Liquidity Usage 多 Tab）、`/execution-policy`（Execution Policy Snapshot + Pre-Trade Cost + Child-Order Timeline + Replay）、`/governance/pipeline`（Strategy Promotion Pipeline + Experiment Ledger + Rollout / Rollback Evidence）；信息架构坚持“决策级可视化而非页面膨胀”，一级导航仍维持 4 组，重点把现有 observability 资产重组为可解释、可审计、可晋级的研究与交易操作台。  
 > 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。**追加需求**：`/system` 系统监控页新增交易生命周期监测、系统主要数据流转详细状态、主要模块与细粒度服务状态视图。  
 > 变更摘要（V10.4.2）：**信号精英化——Signal Watchtower + SignalBudgetWidget**——新增 `/signal-watchtower` 路由（漏斗实时流向图 + 拒绝信号列表 + 幽灵交易追踪 + 历史精英率折线图 + 参数调优面板）；新增 `SignalBudgetWidget` 组件（今日已推进/总配额环形图 + 漏斗各层通过数瀑布条状图）并嵌入 DashboardV2 和 War Room；导航"交易中枢"组新增"📡 信号哨所"入口；信号质量参数热更新 UI（参数滑块 + 权限确认弹窗）  
@@ -191,20 +192,20 @@
 | **信号情报观察站** | `/observability/signal`；别名：`/observability/signal-intelligence` | 六维 IC 衰减曲线 + Factor Correlation Matrix + Crowding Score ★ V10.3.3 新增 |
 | **风险可观测集群** | `/observability/risk`；别名：`/observability/risk-cluster` | 五因子敞口条 + ES@97.5% 仪表 + 相关性骤升时序图 ★ V10.3.3 新增 |
 | **信号哨所** | `/signal-watchtower` | 五层漏斗流向图 + 拒绝信号列表 + 幽灵追踪表格 + 精英率趋势 + 参数调优面板 ★ V10.4.2 新增 |
-| **Alpha Lab** | `/alpha-lab` | Strategy Scorecard 2.0 + Signal Decay + Regime Breakdown + Shadow Book Compare ★ V10.5.1 新增 |
+| **Alpha Lab** | `/alpha-lab` | Alpha Truth Engine 2.0：Strategy Scorecard + Signal Decay Truth + Regime/Capacity Breakdown + Shadow False-Reject Compare ★ V10.5.3 升级 |
 | **多智能体协作中心** | `/ai-hub/agents` | 五 Agent 状态看板 + AgentMessage 通信日志流 + Risk Challenger 面板 ★ V10.3.3 新增 |
 | **置信度校准仪表盘** | `/ai-hub/calibration` | Reliability Diagram + Brier Score/ECE 趋势 + 校准因子状态 ★ V10.3.3 新增 |
 | **自适应因子框架** | `/ai-hub/weights`；别名：`/ai-hub/factor-weights` | Kalman 权重演变曲线 + 因子动量排名 + 拥挤度 ★ V10.3.3 新增 |
 | **决策事后剖析库** | `/ai-hub/post-mortem`；别名：`/ai-hub/post-mortems` | 反事实三路径对比 + 洞察自动提炼 + 模式归纳视图 ★ V10.3.3 新增 |
 | **指挥室** | `/war-room` | 全屏六格可配置指挥视图，含 P&L Ticker/Intel Feed/Heatmap 等 ★ V10.3.3 新增 |
-| **执行策略控制台** | `/execution-policy` | Execution Policy Snapshot + Pre-Trade Cost + Child-Order Timeline + Replay + Bucketized Fill Quality ★ V10.5.1 新增 |
+| **执行策略控制台** | `/execution-policy` | Execution Policy Closed Loop：Policy Snapshot + Pre-Trade Cost + Budget Breach + Child-Order Replay + Execution Feedback Buckets ★ V10.5.3 升级 |
 | 持仓评估 | `/positions` | 技术+基本面评估；V10.1 港股持仓视图（US/HK 市场标签，Tiger API） |
 | AI 交易决策 | `/ai-advisor` | AI 决策历史+手动触发 |
 | 交易日志 | `/journal` | 交易复盘与 AI 自动复盘 |
 | 价格告警 | `/alerts` | 条件触发推送 |
 | **Paper Trading** | `/paper` | 模拟账户独立视图；V10.1 新增 Paper→Live 毕业自动化状态展示 |
 | **回测中心** | `/backtest` | 提交回测、查看报告、策略对比 |
-| **组合构建控制台** | `/portfolio` | V10.5.1 升级为 Portfolio Construction Console：Target Weights / Risk Budget / Marginal Contribution / Liquidity Usage 多 Tab |
+| **组合构建控制台** | `/portfolio` | Portfolio Construction 2.1：Target Weights / Seat Value / Risk Budget Tree / Marginal Contribution / Liquidity Usage / Replace-or-Hold 解释 ★ V10.5.3 升级 |
 | **压力测试** | `/stress-test` | 历史情景+自定义压测 |
 | **期权分析** | `/options` | IV曲面、P/C Ratio、异常成交（只读） |
 | 市场热点 | `/hotspots` | 热门赛道与个股 |
@@ -215,7 +216,7 @@
 | 行为评分 | `/behavior` | AI 决策质量评分 |
 | **归因分析** | `/attribution` | 三层 PnL 归因饼图（Alpha源/执行质量/仓位管理）+ 明细表 + JSON 抽屉 ★ V10.2-M5 新增 |
 | **AI 进化** | `/evolution` | 洞察知识库管理（周报/模式/规则候选）+ A/B 实验列表与创建 ★ V10.2-M6 新增 |
-| **策略晋级流水线** | `/governance/pipeline` | Strategy Promotion Pipeline + Experiment Ledger + Rollout / Rollback Evidence ★ V10.5.1 新增 |
+| **策略晋级流水线** | `/governance/pipeline` | Research-to-Live Hard Gate Board：Discovery / Paper / Shadow Live / Challenger / Production 五阶段 evidence chain + blockers + rollback signals ★ V10.5.3 升级 |
 | **交易生命周期中枢** | `/trade-lifecycle` | 17阶段 Pipeline Kanban + Dual FSM Panel + Decision Provenance Drawer ★ V10.3 新增 |
 | **智能订单簿** | `/order-book` | 全量交易列表（17阶段徽章 + 六维迷你雷达图 + AI摘要 + 价格偏差 + 风险徽章）★ V10.3 新增 |
 | 系统监控 | `/system` | 系统健康 + 生命周期监测 + 数据流链路 + 服务状态 |
@@ -225,14 +226,20 @@
 
 ## 4. 页面设计详述
 
-### 4.0 V10.5.1 新增设计原则
+### 4.0 V10.5.3 新增设计原则
 
-V10.5.1 的前端设计目标不是继续横向扩页，而是把现有观察能力升级成决策能力。所有新增页面都必须回答以下问题之一：
+V10.5.3 的前端设计目标不是继续横向扩页，而是把现有观察能力升级成利润控制能力。所有核心工作台都必须回答以下问题之一：
 
 - 为什么这个 alpha 值得信。
 - 为什么这个仓位应该是这个大小。
 - 为什么这笔订单应该用这个执行策略。
 - 为什么这个策略此刻允许进入 live，或者必须被回滚。
+
+新增控制要求：
+
+- 所有核心卡片同时展示 **结果值 + 解释字段 + data_quality**，不能只给图、不解释口径。
+- 组合与执行视图必须增加 `why not larger / why scaled down / why not another algo` 解释链。
+- 所有工作台都应支持 gross → net → after cost 的口径切换，避免只展示“好看”的结果。
 
 新增页面统一遵守以下约束：
 
