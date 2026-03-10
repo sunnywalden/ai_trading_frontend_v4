@@ -112,6 +112,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useSituationalAwarenessStore } from '@/stores/situationalAwareness'
 import { VAR_LEVEL_COLORS } from '@/api/situationalAwarenessService'
 import { getAuthToken } from '@/api/client'
+import { formatClientTime } from '@/utils/datetime'
 
 const store = useSituationalAwarenessStore()
 const snapshot  = computed(() => store.snapshot)
@@ -129,7 +130,7 @@ function trendIcon(dir: string | null): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  return formatClientTime(iso, { withSeconds: true })
 }
 
 onMounted(() => {

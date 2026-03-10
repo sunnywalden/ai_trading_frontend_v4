@@ -186,6 +186,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useStrategyStore } from '@/stores/strategyStore'
+import { formatClientDateTime } from '@/utils/datetime'
 import type { Strategy, StrategyPerformance, StrategySignal } from '@/types/strategy' 
 
 const route = useRoute()
@@ -270,8 +271,7 @@ const getActionType = (action: string) => {
 }
 
 const formatDate = (date: string | Date | null) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleString(locale.value)
+  return formatClientDateTime(date as string)
 }
 
 const loadPerformance = async () => {

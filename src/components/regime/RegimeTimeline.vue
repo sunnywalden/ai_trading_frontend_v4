@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { parseBackendDateTime } from '@/utils/datetime'
 import {
   type RegimeInfo,
   type RegimeType,
@@ -88,11 +89,11 @@ function getLabel(regime: string): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('zh-CN', {
-    year: '2-digit',
-    month: '2-digit',
-    day: '2-digit',
-  })
+  const d = parseBackendDateTime(iso)
+  if (!d) return iso
+  return new Intl.DateTimeFormat(undefined, {
+    year: '2-digit', month: '2-digit', day: '2-digit', hour12: false,
+  }).format(d)
 }
 
 function duration(item: RegimeInfo): string {

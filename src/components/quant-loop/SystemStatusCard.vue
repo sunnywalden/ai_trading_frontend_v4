@@ -28,6 +28,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { SystemStatus } from '@/api/quantLoopService'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const { locale } = useI18n()
 const props = defineProps<{
@@ -49,8 +50,7 @@ const statusClass = computed(() => {
 })
 
 function formatTime(time: string | undefined) {
-  if (!time) return '-'
-  return new Date(time).toLocaleString(locale.value)
+  return formatClientDateTime(time)
 }
 </script>
 

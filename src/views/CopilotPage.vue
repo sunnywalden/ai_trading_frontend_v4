@@ -156,7 +156,7 @@
             <span class="dr-symbol">{{ drReport.symbol }}</span>
             <span class="dr-rating" :class="`rating-${drReport.rating?.toLowerCase()}`">{{ drReport.rating }}</span>
             <span v-if="drReport.price_target" class="dr-pt">目标价: {{ drReport.price_target }}</span>
-            <span class="dr-timestamp">{{ drReport.generated_at?.slice(0,10) }}</span>
+            <span class="dr-timestamp">{{ formatClientDateTime(drReport.generated_at, { withSeconds: false }) }}</span>
           </div>
           <div class="dr-report-body">{{ drReport.body }}</div>
           <div class="dr-sources" v-if="drReport.sources?.length">

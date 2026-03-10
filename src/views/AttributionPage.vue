@@ -153,6 +153,7 @@ import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/compo
 import { CanvasRenderer } from 'echarts/renderers'
 import { attributionApi, CATEGORY_LABELS, CATEGORY_COLORS, type TradeAttributionItem, type AttributionSummaryResponse } from '@/api/attributionService'
 import { logger } from '@/utils/logger'
+import { formatClientDateTime } from '@/utils/datetime'
 
 echarts.use([PieChart, TitleComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -243,8 +244,7 @@ function compositeColor(v: number) {
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '-'
-  return new Date(iso).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(iso)
 }
 
 onMounted(async () => {

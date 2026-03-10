@@ -80,7 +80,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAlertStore } from '@/stores/alert'
-
+import { formatClientDateTime } from '@/utils/datetime'
 const store = useAlertStore()
 const { alerts, history, loading } = storeToRefs(store)
 
@@ -99,8 +99,7 @@ async function resumeAlert(a: any) { await store.edit(a.id, { alert_status: 'ACT
 async function removeAlert(id: number) { await store.remove(id) }
 function condLabel(t: string) { return t === 'price_above' ? '价格 ≥' : t === 'price_below' ? '价格 ≤' : t }
 function formatTime(ts: string) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(ts)
 }
 
 onMounted(async () => {

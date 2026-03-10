@@ -270,6 +270,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { formatClientDateTime } from '@/utils/datetime'
 import {
   createTaskTriggerConfig,
   deleteTaskTriggerConfig,
@@ -508,8 +509,7 @@ async function confirmDelete(cfg: TaskTriggerConfig) {
 }
 
 function formatDt(s: string) {
-  if (!s) return '-'
-  return new Date(s).toLocaleString()
+  return formatClientDateTime(s)
 }
 
 onMounted(() => {

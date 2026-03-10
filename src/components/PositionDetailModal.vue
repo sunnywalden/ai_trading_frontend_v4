@@ -110,6 +110,7 @@
 import { useLifecycleStore } from '@/stores/lifecycle'
 import { isActivePosition } from '@/types/position'
 import { computed, ref } from 'vue'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const lifecycle = useLifecycleStore()
 
@@ -139,8 +140,7 @@ function fmtPct(v: number | null | undefined): string {
 }
 
 function fmtTime(iso: string | null | undefined): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  return formatClientDateTime(iso)
 }
 
 function pnlColor(v: number | null | undefined): string {

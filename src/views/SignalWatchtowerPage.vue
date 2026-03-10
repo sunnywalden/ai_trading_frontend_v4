@@ -356,6 +356,7 @@
 
 <script setup lang="ts">
 import type { TriggerCapacityGuardResponse } from '@/api/autonomyService'
+import { formatClientDateTime } from '@/utils/datetime'
 import { autonomyApi } from '@/api/autonomyService'
 import type { RegimeType } from '@/api/regimeService'
 import { REGIME_LABELS } from '@/api/regimeService'
@@ -511,10 +512,7 @@ const isL2Dominant = computed(() => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTs(ts: string | null | undefined): string {
-  if (!ts) return '--'
-  return new Date(ts).toLocaleString('zh-CN', {
-    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-  })
+  return formatClientDateTime(ts)
 }
 
 const REJECTION_REASON_LABELS: Record<string, string> = {

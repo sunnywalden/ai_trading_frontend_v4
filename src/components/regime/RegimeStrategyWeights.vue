@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { parseBackendDateTime } from '@/utils/datetime'
 import {
   type RegimeType,
   type RegimeStrategyWeight,
@@ -95,12 +96,11 @@ const sortedWeights = computed(() => {
 
 const formattedUpdatedAt = computed(() => {
   if (!props.updatedAt) return ''
-  return new Date(props.updatedAt).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const d = parseBackendDateTime(props.updatedAt)
+  if (!d) return ''
+  return new Intl.DateTimeFormat(undefined, {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d)
 })
 
 function styleLabel(style: string): string {

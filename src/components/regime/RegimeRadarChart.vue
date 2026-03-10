@@ -29,6 +29,7 @@
 import type { RegimeScores } from '@/api/regimeService'
 import * as echarts from 'echarts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { parseBackendDateTime } from '@/utils/datetime'
 
 interface Props {
   scores: RegimeScores | null
@@ -61,12 +62,11 @@ const hasScores = computed(() =>
 
 const formattedDate = computed(() => {
   if (!props.classificationDate) return ''
-  return new Date(props.classificationDate).toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const d = parseBackendDateTime(props.classificationDate)
+  if (!d) return ''
+  return new Intl.DateTimeFormat(undefined, {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d)
 })
 
 function dimValue(key: keyof RegimeScores): string {

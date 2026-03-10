@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { formatClientDateTime } from '@/utils/datetime';
 import OpportunitiesGuideline from '../components/OpportunitiesGuideline.vue';
 import ExecutionListHeader from '../components/ExecutionListHeader.vue';
 
@@ -160,13 +161,7 @@ const selectedRunId = ref('');
 const modalAssets = ref<StrategyRunAssetView[]>([]);
 
 function formatDateTime(isoString: string): string {
-  if (!isoString) return '--';
-  return new Date(isoString).toLocaleString(locale.value, {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatClientDateTime(isoString)
 }
 
 async function loadStrategies() {

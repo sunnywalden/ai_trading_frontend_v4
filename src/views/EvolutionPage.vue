@@ -58,7 +58,7 @@
             <pre class="ic-rule-json">{{ JSON.stringify(ins.actionable_rule, null, 2) }}</pre>
           </div>
           <div class="ic-footer">
-            <span class="ic-period">{{ ins.created_at?.slice(0,10) }}</span>
+            <span class="ic-period">{{ formatClientDateTime(ins.created_at, { withSeconds: false }) }}</span>
             <button
               class="btn-toggle"
               @click="toggleInsight(ins)"
@@ -170,6 +170,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { formatClientDateTime } from '@/utils/datetime'
 import {
   insightApi,
   INSIGHT_TYPE_COLORS,

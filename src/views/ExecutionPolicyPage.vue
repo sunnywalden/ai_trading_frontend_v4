@@ -270,6 +270,7 @@ import {
 } from '@/api/executionPolicyService'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const route = useRoute()
 const router = useRouter()
@@ -346,18 +347,11 @@ function num(value: number | null | undefined) {
 }
 
 function shortTime(value: string | null) {
-  if (!value) return 'N/A'
-  return new Date(value).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatClientDateTime(value)
 }
 
 function fullTime(value: string | null) {
-  if (!value) return '无时间戳'
-  return new Date(value).toLocaleString('zh-CN')
+  return formatClientDateTime(value)
 }
 
 function pxGap(arrival: number, fill: number) {

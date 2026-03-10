@@ -189,6 +189,7 @@ import {
     type CapacityStatsResponse,
 } from '@/api/capacityArbiterService';
 import { computed, onMounted, ref } from 'vue';
+import { formatClientDateTime } from '@/utils/datetime';
 
 const props = defineProps<{ accountId: string; regime?: string }>()
 
@@ -263,9 +264,7 @@ async function runPreview() {
 }
 
 function fmtTs(ts: string): string {
-  return new Date(ts).toLocaleString('zh-CN', {
-    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-  })
+  return formatClientDateTime(ts)
 }
 
 onMounted(loadAll)

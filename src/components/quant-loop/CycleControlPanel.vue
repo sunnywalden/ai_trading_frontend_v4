@@ -116,6 +116,7 @@
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CycleConfig, CycleResult } from '@/api/quantLoopService'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const { t, locale } = useI18n()
 defineProps<{
@@ -145,7 +146,7 @@ function handleRunCycle() {
 }
 
 function formatTime(time: string) {
-  return new Date(time).toLocaleString(locale.value)
+  return formatClientDateTime(time)
 }
 </script>
 
