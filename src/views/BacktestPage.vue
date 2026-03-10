@@ -127,6 +127,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useBacktestStore } from '@/stores/backtest'
 import { storeToRefs } from 'pinia'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const backtestStore = useBacktestStore()
 const { currentReport } = storeToRefs(backtestStore)
@@ -173,7 +174,7 @@ async function handleRun() {
 }
 
 function formatDate(s: string) {
-  return new Date(s).toLocaleDateString('zh-CN')
+  return formatClientDateTime(s)
 }
 
 onMounted(() => backtestStore.fetchTasks())

@@ -142,6 +142,7 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TradingSignal } from '@/api/quantLoopService'
+import { parseBackendDateTime, formatClientDateTime } from '@/utils/datetime'
 
 const { t, locale } = useI18n()
 const props = defineProps<{
@@ -245,23 +246,16 @@ function getRiskClass(risk: number) {
 function formatTime(time: string) {
   if (!time) return '-'
   
-  try {
-    const date = new Date(time)
-    // 检查日期是否有效
-    if (isNaN(date.getTime())) {
-      return time // 如果解析失败，返回原始字符串
-    }
-    
-    const now = new Date()
-    const diff = (now.getTime() - date.getTime()) / 1000 / 60 // minutes
-    
-    if (diff < 1) return t('quant_loop.just_now')
-    if (diff < 60) return t('quant_loop.minutes_ago', { n: Math.floor(diff) })
-    if (diff < 1440) return t('quant_loop.hours_ago', { n: Math.floor(diff / 60) })
-    return date.toLocaleString(locale.value)
-  } catch (e) {
-    return time
-  }
+  const date = parseBackendDateTime(time)
+  if (!date) return time
+
+  const now = new Date()
+  const diff = (now.getTime() - date.getTime()) / 1000 / 60 // minutes
+  
+  if (diff < 1) return t('quant_loop.just_now')
+  if (diff < 60) return t('quant_loop.minutes_ago', { n: Math.floor(diff) })
+  if (diff < 1440) return t('quant_loop.hours_ago', { n: Math.floor(diff / 60) })
+  return formatClientDateTime(time)
 }
 
 function formatSignalType(type: string) {

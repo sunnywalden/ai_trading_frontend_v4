@@ -422,6 +422,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h } from 'vue'
+import { formatClientDateTime } from '@/utils/datetime'
 import { useI18n } from 'vue-i18n'
 import {
   type PositionEvalTask,
@@ -651,11 +652,7 @@ async function viewTaskDetail(taskId: number) {
 
 // ─── Helpers ───────────────────────────
 function formatDt(dt?: string | null): string {
-  if (!dt) return '-'
-  return new Date(dt).toLocaleString('zh-CN', {
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  })
+  return formatClientDateTime(dt)
 }
 
 function scoreClass(score?: number | null): string {

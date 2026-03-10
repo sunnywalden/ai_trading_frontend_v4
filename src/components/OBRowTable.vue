@@ -142,6 +142,7 @@
 
 <script setup lang="ts">
 import type { OrderBookRow } from '@/api/orderBookService';
+import { formatClientDateTime } from '@/utils/datetime';
 
 defineProps<{ rows: OrderBookRow[] }>()
 defineEmits<{
@@ -168,9 +169,7 @@ function confColor(c: number): string {
 }
 
 function fmtTime(iso: string): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+  return formatClientDateTime(iso)
 }
 </script>
 

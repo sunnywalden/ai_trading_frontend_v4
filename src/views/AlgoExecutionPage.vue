@@ -120,6 +120,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { formatClientDateTime } from '@/utils/datetime'
 import { executionAlgoApi, type AlgoTask } from '@/api/executionAlgoService'
 import { ElMessage } from 'element-plus'
 
@@ -181,9 +182,7 @@ const getProgress = (task: AlgoTask) => {
   return Math.round((count / task.slices) * 100)
 }
 
-const formatTime = (iso: string) => {
-  return new Date(iso).toLocaleTimeString()
-}
+const formatTime = (iso: string) => formatClientDateTime(iso)
 
 onMounted(() => {
   fetchTasks()

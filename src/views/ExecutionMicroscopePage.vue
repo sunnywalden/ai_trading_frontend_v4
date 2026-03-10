@@ -119,6 +119,7 @@
 
 <script setup lang="ts">
 import type { ExecutionQualityRecord } from '@/api/observabilityService'
+import { formatClientDateTime } from '@/utils/datetime'
 import { useObservabilityStore } from '@/stores/observability'
 import * as echarts from 'echarts'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -218,8 +219,7 @@ function bpsCss(v: number | null | undefined, isTot = false) {
 }
 
 function formatTime(ts: string | null) {
-  if (!ts) return '-'
-  return new Date(ts).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  return formatClientDateTime(ts)
 }
 
 async function fetchData() {

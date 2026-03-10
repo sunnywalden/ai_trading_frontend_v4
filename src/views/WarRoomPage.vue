@@ -224,6 +224,7 @@
 
 <script setup lang="ts">
 import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'; // V10.4.2
+import { formatClientDateTime } from '@/utils/datetime'
 import { useAiHubStore } from '@/stores/aiHub'
 import { useAutonomyStore } from '@/stores/autonomy'
 import { useWarRoomStore } from '@/stores/warRoom'
@@ -327,7 +328,7 @@ function recCss(r: string | null | undefined) {
   return 'rec-hold'
 }
 
-function fmtTs(ts: string | null) { return ts ? new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '' }
+function fmtTs(ts: string | null) { return formatClientDateTime(ts) }
 function setFeedFilter(cat: string) { feedFilter.value = cat }
 
 function onPanelTypeChange(idx: number, event: Event) {

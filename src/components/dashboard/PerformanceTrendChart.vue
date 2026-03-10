@@ -74,6 +74,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PerformanceTrend } from '@/api/client'
+import { parseBackendDateTime } from '@/utils/datetime'
 
 const props = defineProps<{
   data: PerformanceTrend[]
@@ -120,7 +121,7 @@ const xLabels = computed(() => {
     .filter(({ i }) => i % step === 0 || i === props.data.length - 1)
     .map(({ d, i }) => ({
       x: padding.left + (chartWidth / xDenominator) * i,
-      text: new Date(d.date).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+      text: (() => { const d2 = parseBackendDateTime(d.date); return d2 ? new Intl.DateTimeFormat(undefined, { month: '2-digit', day: '2-digit' }).format(d2) : d.date?.slice(5, 10) ?? '' })()
     }))
 })
 

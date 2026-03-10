@@ -421,7 +421,7 @@ import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
 import { useAutonomyStore } from '@/stores/autonomy'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import { useWarRoomStore } from '@/stores/warRoom'
-import { formatClientTime } from '@/utils/datetime'
+import { formatClientTime, formatClientDateTime } from '@/utils/datetime'
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -451,9 +451,7 @@ const filteredAlerts = computed(() => {
   return active.filter(a => a.grade === filterGrade.value)
 })
 function formatAlertTime(ts: string): string {
-  try {
-    return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-  } catch { return '' }
+  return formatClientDateTime(ts)
 }
 
 // V10.2-M1: 体制 KPI 数据

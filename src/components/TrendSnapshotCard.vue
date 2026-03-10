@@ -134,6 +134,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { TrendSnapshot } from '../api/client';
+import { formatClientDateTime } from '@/utils/datetime';
 
 const { t, locale } = useI18n();
 
@@ -225,17 +226,7 @@ const visibleResistances = computed(() => {
 
 // 时间格式化
 function formatTime(timestamp: string): string {
-  try {
-    const date = new Date(timestamp);
-    return date.toLocaleString(locale.value, {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch {
-    return timestamp;
-  }
+  return formatClientDateTime(timestamp)
 }
 </script>
 

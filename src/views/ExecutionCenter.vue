@@ -198,6 +198,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { formatClientDateTime } from '@/utils/datetime';
 import { useI18n } from 'vue-i18n';
 import { client } from '../api/client';
 import PlanEditDialog from '../components/PlanEditDialog.vue';
@@ -445,13 +446,7 @@ function translateStatus(status: string) {
 }
 
 function formatTime(timeStr: string) {
-  const date = new Date(timeStr);
-  return date.toLocaleString(locale.value, { 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return formatClientDateTime(timeStr)
 }
 
 onMounted(async () => {

@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TradingPlanSummary } from '@/api/client'
+import { formatClientDateTime } from '@/utils/datetime'
 
 const props = defineProps<{
   plan: TradingPlanSummary
@@ -46,15 +47,7 @@ const statusClass = computed(() => {
 })
 
 function formatTime(raw?: string): string {
-  if (!raw) return '—'
-  const d = new Date(raw)
-  if (Number.isNaN(d.getTime())) return raw
-  return d.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return formatClientDateTime(raw)
 }
 </script>
 

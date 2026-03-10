@@ -84,6 +84,7 @@
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboard'
+import { formatClientDateTime } from '@/utils/datetime'
 import GreeksBar from '@/components/GreeksBar.vue'
 
 const store = useDashboardStore()
@@ -94,9 +95,7 @@ onMounted(() => store.refresh())
 function fmt(n: number) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 function pnlClass(v: number) { return v >= 0 ? 'pnl-positive' : 'pnl-negative' }
 function formatTime(ts: string) {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(ts)
 }
 </script>
 

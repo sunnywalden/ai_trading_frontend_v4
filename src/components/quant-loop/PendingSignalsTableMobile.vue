@@ -151,6 +151,7 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TradingSignal } from '@/api/quantLoopService'
+import { parseBackendDateTime, formatClientDateTime } from '@/utils/datetime'
 
 const { t, locale } = useI18n()
 const props = defineProps<{
@@ -238,7 +239,8 @@ function formatDirection(direction: string): string {
 }
 
 function formatTime(timeStr: string): string {
-  const date = new Date(timeStr)
+  const date = parseBackendDateTime(timeStr)
+  if (!date) return timeStr
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   
@@ -249,7 +251,7 @@ function formatTime(timeStr: string): string {
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return t('quant_loop.hours_ago', { n: hours })
   
-  return date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(timeStr)
 }
 </script>
 

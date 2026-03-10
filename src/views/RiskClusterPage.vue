@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { useObservabilityStore } from '@/stores/observability'
+import { formatClientDateTime } from '@/utils/datetime'
 import * as echarts from 'echarts'
 import { onMounted, ref, watch } from 'vue'
 
@@ -109,8 +110,7 @@ const FACTOR_EXPOSURE_MAX = 2
 const FACTOR_EXPOSURE_INTERVAL = 0.5
 
 function fmtTs(ts: string | null) {
-  if (!ts) return '-'
-  return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(ts)
 }
 
 async function refreshRiskCluster() {

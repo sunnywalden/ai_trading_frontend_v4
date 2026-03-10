@@ -185,6 +185,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { formatClientDateTime } from '@/utils/datetime'
 import { useAiHubStore } from '@/stores/aiHub'
 
 const store = useAiHubStore()
@@ -200,7 +201,7 @@ function biasLabel(b: string) { return BIAS_LABELS[b] || b }
 function statusLabel(s: string | null) {
   return { pending: '⏳ 等待', running: '🔄 生成中', completed: '✅ 完成', failed: '❌ 失败' }[s || ''] || s
 }
-function fmtDate(ts: string | null) { return ts ? new Date(ts).toLocaleDateString('zh-CN') : '' }
+function fmtDate(ts: string | null) { return formatClientDateTime(ts) }
 
 async function selectPM(tradeId: string) { await store.fetchPostMortem(tradeId) }
 

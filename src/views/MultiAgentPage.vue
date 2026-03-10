@@ -124,6 +124,7 @@
 
 <script setup lang="ts">
 import { useAiHubStore } from '@/stores/aiHub'
+import { formatClientDateTime } from '@/utils/datetime'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 const store = useAiHubStore()
@@ -141,8 +142,7 @@ const STATUS_LABELS: Record<string, string> = {
 const runningLabel = computed(() => STATUS_LABELS[store.pollingStatus] ?? '⏳ Agent 协商中...')
 
 function fmtTime(ts: string | null) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return formatClientDateTime(ts)
 }
 
 function recCss(rec: string | null | undefined) {

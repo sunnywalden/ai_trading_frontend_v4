@@ -199,7 +199,7 @@
         </thead>
         <tbody>
           <tr v-for="h in history" :key="h.id">
-            <td>{{ new Date(h.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</td>
+            <td>{{ formatClientDateTime(h.created_at) }}</td>
             <td><span class="method-badge">{{ h.method }}</span></td>
             <td class="text-success">{{ (h.metrics.expected_return * 100).toFixed(1) }}%</td>
             <td>{{ (h.metrics.volatility * 100).toFixed(1) }}%</td>
@@ -218,6 +218,7 @@
 
 <script setup lang="ts">
 import { portfolioApi, type PortfolioConstructionSnapshot, type SnapshotHistoryItem } from '@/api/portfolioService'
+import { formatClientDateTime } from '@/utils/datetime'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, watch } from 'vue'

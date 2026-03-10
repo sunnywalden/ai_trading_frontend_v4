@@ -395,6 +395,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { parseBackendDateTime, formatClientDateTime } from '@/utils/datetime';
 import { client } from '../api/client';
 
 const { t, locale } = useI18n();
@@ -634,7 +635,8 @@ async function deleteHistoryRecord(recordId: number) {
 
 function formatTime(timestamp?: string) {
   if (!timestamp) return '-';
-  const date = new Date(timestamp);
+  const date = parseBackendDateTime(timestamp);
+  if (!date) return '-';
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   
@@ -643,14 +645,7 @@ function formatTime(timestamp?: string) {
   if (diff < 86400000) return t('advisor.history.time.hours_ago', { n: Math.floor(diff / 3600000) });
   if (diff < 604800000) return t('advisor.history.time.days_ago', { n: Math.floor(diff / 86400000) });
   
-  return date.toLocaleDateString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', { 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-}
-
+  return formatClientDateTime(timestamp);
 onMounted(() => { 
   loadPlans(); 
   loadHistory(); 
