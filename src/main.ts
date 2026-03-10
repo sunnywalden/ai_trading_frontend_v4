@@ -21,18 +21,22 @@ if (globalThis.window !== undefined) {
 		} else if (reason instanceof Error) {
 			message = reason.message;
 		} else if (reason !== null && typeof reason === "object") {
-			// Plain objects (e.g. ErrorEvent, custom rejects) may have a .message field
 			const r = reason as Record<string, unknown>;
 			message = typeof r["message"] === "string" ? r["message"] : String(reason);
 		} else {
 			message = String(reason ?? "");
 		}
 
-		// Chrome prepends "Unable to load image: " in the console display, but the
-		// actual rejection reason is often just the bare data URL or the full string.
+		// Chrome may reject with a DOMException whose .name is "EncodingError" when
+		// an in-page SVG is serialized to a data-URL and decoded as an image.
+		// Its .message reads "The source image could not be decoded" and does NOT
+		// contain the data-URL that Chrome shows in the console.  Match broadly.
 		const isSvgImageError =
 			message.includes("data:image/svg+xml") ||
-			message.includes("Unable to load image");
+			message.includes("Unable to load image") ||
+			message.includes("could not be decoded") ||
+			message.includes("Failed to decode") ||
+			(reason instanceof DOMException && reason.name === "EncodingError");
 
 		const isClosedMessageChannelError =
 			message.includes("A listener indicated an asynchronous response by returning true") ||

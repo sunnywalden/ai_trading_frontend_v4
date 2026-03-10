@@ -5,8 +5,8 @@
         <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
           <defs>
             <linearGradient id="lg" x1="0" x2="1">
-              <stop offset="0" stop-color="var(--accent1)" />
-              <stop offset="1" stop-color="var(--accent2)" />
+              <stop offset="0" stop-color="#38bdf8" />
+              <stop offset="1" stop-color="#2563eb" />
             </linearGradient>
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
