@@ -37,7 +37,7 @@
       <div class="kanban-section">
         <div class="section-label">
           持仓生命周期看板 (按标的流转)
-          <span class="total-badge">{{ lifecycle.positionBoard?.total_active ?? 0 }} 活跃持仓</span>
+          <span class="total-badge">{{ lifecycle.activePositionCount }} 活跃持仓</span>
         </div>
         <PositionBoardKanban
           :board="lifecycle.positionBoard"
@@ -66,11 +66,11 @@
           </div>
           
           <!-- 当前持仓标的 chips -->
-          <div class="held-symbols" v-if="heldSymbols.length">
+          <div class="held-symbols" v-if="lifecycle.activeBoardCards.length">
             <div class="held-label">当前持有列表:</div>
             <div class="held-chips">
               <span
-                v-for="card in heldSymbols"
+                v-for="card in lifecycle.activeBoardCards"
                 :key="card.id"
                 class="held-chip"
               >
@@ -131,7 +131,7 @@ import PipelineKanbanBoard from '@/components/PipelineKanbanBoard.vue'
 import PositionBoardKanban from '@/components/PositionBoardKanban.vue'
 import { useLifecycleStore } from '@/stores/lifecycle'
 import { useQuantLoopStore } from '@/stores/quantLoop'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const lifecycle = useLifecycleStore()
 const quantLoop = useQuantLoopStore()
@@ -144,14 +144,6 @@ const fsmType      = ref<'PLAN' | 'POSITION' | 'ALL'>('ALL')
 
 let autoRefreshTimer: number | undefined
 
-// Symbols currently in HELD state for the sidebar chips
-const heldSymbols = computed(() => {
-  const board = lifecycle.positionBoard
-  if (!board) return []
-  const heldCol = board.columns.find((c: { state: string }) => c.state === 'ACTIVE')
-  return heldCol?.cards ?? []
-})
-
 function formatHoldTime(secs: number | null | undefined): string {
   if (secs == null) return ''
   const s = Math.round(secs)
@@ -162,13 +154,11 @@ function formatHoldTime(secs: number | null | undefined): string {
 async function refresh() {
   loading.value = true
   try {
-    await lifecycle.fetchAll()
-    await lifecycle.fetchFsmEvents()
-    // V10.4.4: position summary panel
     const accountId = quantLoop.systemStatus?.account_id
-    if (accountId) {
-      await lifecycle.fetchPositions(accountId)
-    }
+    await Promise.all([
+      lifecycle.fetchAll(accountId),
+      lifecycle.fetchFsmEvents(),
+    ])
     lastUpdated.value = new Date().toLocaleTimeString('zh-CN')
   } finally {
     loading.value = false

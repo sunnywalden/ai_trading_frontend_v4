@@ -66,8 +66,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="b in store.calibration.calibration_buckets" :key="b.bucket_start">
-            <td class="sym">{{ (b.bucket_start * 100).toFixed(0) }}–{{ (b.bucket_end * 100).toFixed(0) }}%</td>
+          <tr v-for="b in store.calibration.calibration_buckets" :key="b.bucket">
+            <td class="sym">{{ formatBucketRange(b) }}</td>
             <td>{{ b.count }}</td>
             <td :class="Math.abs(b.actual_rate - b.predicted_rate) > 0.1 ? 'danger' : 'good'">
               {{ (b.actual_rate * 100).toFixed(1) }}%
@@ -101,11 +101,50 @@ let histChart: echarts.ECharts | null = null
 function briGrade(v: number | null | undefined) { return !v ? '' : v < 0.1 ? 'good' : v < 0.2 ? 'warn' : 'danger' }
 function eceGrade(v: number | null | undefined) { return !v ? '' : v < 0.08 ? 'good' : v < 0.12 ? 'warn' : 'danger' }
 
+type CalibrationBucketView = {
+  bucket: string
+  bucket_start?: number | null
+  bucket_end?: number | null
+  actual_rate: number
+  predicted_rate: number
+}
+
+function getBucketBounds(bucket: CalibrationBucketView): [number, number] | null {
+  if (typeof bucket.bucket_start === 'number' && typeof bucket.bucket_end === 'number') {
+    return [bucket.bucket_start, bucket.bucket_end]
+  }
+
+  const [left, right] = (bucket.bucket || '').split('-', 2)
+  const start = Number(left)
+  const end = Number(right)
+  if (Number.isFinite(start) && Number.isFinite(end)) {
+    return [start, end]
+  }
+  return null
+}
+
+function getBucketMidpoint(bucket: CalibrationBucketView): number | null {
+  const bounds = getBucketBounds(bucket)
+  if (!bounds) return null
+  const [start, end] = bounds
+  return (start + end) / 2
+}
+
+function formatBucketRange(bucket: CalibrationBucketView): string {
+  const bounds = getBucketBounds(bucket)
+  if (!bounds) return bucket.bucket || '—'
+  const [start, end] = bounds
+  return `${(start * 100).toFixed(0)}–${(end * 100).toFixed(0)}%`
+}
+
 function renderReliability() {
   if (!reliabilityEl.value || !store.calibration?.calibration_buckets?.length) return
   if (!reliChart) reliChart = echarts.init(reliabilityEl.value, 'dark')
   const buckets = store.calibration.calibration_buckets
-  const mid = buckets.map((b) => ((b.bucket_start + b.bucket_end) / 2 * 100).toFixed(0) + '%')
+  const mid = buckets.map((b) => {
+    const midpoint = getBucketMidpoint(b)
+    return midpoint === null ? (b.bucket || '—') : `${(midpoint * 100).toFixed(0)}%`
+  })
   reliChart.setOption({
     backgroundColor: 'transparent',
     tooltip: { trigger: 'axis' },
@@ -114,7 +153,7 @@ function renderReliability() {
     yAxis: { type: 'value', min: 0, max: 1, axisLabel: { formatter: (v: number) => (v * 100).toFixed(0) + '%', color: '#999' }, name: '实际胜率' },
     series: [
       { name: '实际胜率', type: 'bar', data: buckets.map((b) => b.actual_rate), itemStyle: { color: '#00ff88' } },
-      { name: '完美校准线', type: 'line', data: buckets.map((b) => (b.bucket_start + b.bucket_end) / 2), itemStyle: { color: '#ffd700' }, lineStyle: { type: 'dashed' } },
+      { name: '完美校准线', type: 'line', data: buckets.map((b) => getBucketMidpoint(b)), itemStyle: { color: '#ffd700' }, lineStyle: { type: 'dashed' } },
     ],
   })
 }

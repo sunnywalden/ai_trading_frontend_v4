@@ -11,12 +11,24 @@ import {
     type PipelineDistribution,
     type PlanFsmSummary,
     type PositionBoard,
+    type PositionBoardCard,
     type PositionFsmSummary
 } from '@/api/lifecycleService'
 import { positionsApi } from '@/api/positionLifecycleService'
 import type { ExecutionSlice, PortfolioSummary, Position, PositionDetail, PositionLifecycleEvent } from '@/types/position'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+
+const ACTIVE_POSITION_STATES = new Set([
+  'PENDING',
+  'OPENING',
+  'ACTIVE',
+  'SCALING_IN',
+  'SCALING_OUT',
+  'CLOSING',
+  'PARTIALLY_CLOSED',
+  'EXCEPTION',
+])
 
 export const useLifecycleStore = defineStore('lifecycle', () => {
   // ── Legacy FSM state (V10.3 backward compat) ──────────────────────────────
@@ -60,41 +72,83 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
   )
 
   // ── Computed (V10.4.4) ────────────────────────────────────────────────────
-  // Prefer portfolioSummary (V10.4.4 positions table) if populated;
-  // fall back to positionFsm counts (V10.4.4 Position.status based).
+  const activeBoardCards = computed<PositionBoardCard[]>(() => {
+    const board = positionBoard.value
+    if (!board) return []
+
+    return board.columns
+      .filter(column => ACTIVE_POSITION_STATES.has(column.state))
+      .flatMap(column => column.cards)
+  })
+
   const activePositionCount = computed(() => {
+    const fromBoard = positionBoard.value?.total_active
+    if (fromBoard != null) return fromBoard
+
+    if (positions.value.length > 0) return positions.value.length
+
     const fromSummary = portfolioSummary.value.active_positions
     if (fromSummary > 0) return fromSummary
+
     const fsm = positionFsm.value
     if (!fsm) return 0
-    // V10.4.4 Position FSM active states (excludes CLOSED / LIQUIDATED / PENDING)
-    const activeStates = new Set(['OPENING', 'ACTIVE', 'SCALING_IN', 'SCALING_OUT', 'PARTIALLY_CLOSED', 'CLOSING'])
+
     return fsm.states
-      .filter(s => activeStates.has(s.state))
+      .filter(s => ACTIVE_POSITION_STATES.has(s.state))
       .reduce((sum, s) => sum + s.count, 0)
   })
   const exceptionPositionCount = computed(() => portfolioSummary.value.exception_positions)
   const stuckSliceCount        = computed(() => portfolioSummary.value.stuck_slices)
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  async function fetchAll() {
+  async function fetchAll(accountId?: string) {
     loading.value = true
     error.value = null
+    if (accountId) {
+      posLoading.value = true
+      posError.value = null
+    }
     try {
+      if (accountId) {
+        const [p, pf, posf, pb, posResp, summaryResp] = await Promise.all([
+          getPipelineDistribution(),
+          getPlanFsmSummary(),
+          getPositionFsmSummary(),
+          getPositionBoard(),
+          positionsApi.listActive(accountId),
+          positionsApi.portfolioSummary(accountId),
+        ])
+
+        pipeline.value = p
+        planFsm.value = pf
+        positionFsm.value = posf
+        positionBoard.value = pb
+        positions.value = posResp.data
+        portfolioSummary.value = summaryResp.data
+        return
+      }
+
       const [p, pf, posf, pb] = await Promise.all([
         getPipelineDistribution(),
         getPlanFsmSummary(),
         getPositionFsmSummary(),
         getPositionBoard(),
       ])
-      pipeline.value    = p
-      planFsm.value     = pf
+      pipeline.value = p
+      planFsm.value = pf
       positionFsm.value = posf
       positionBoard.value = pb
     } catch (e: any) {
-      error.value = e.message || '加载失败'
+      const message = e.message || '加载失败'
+      error.value = message
+      if (accountId) {
+        posError.value = message
+      }
     } finally {
       loading.value = false
+      if (accountId) {
+        posLoading.value = false
+      }
     }
   }
 
@@ -147,14 +201,12 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
     posLoading.value = true
     posError.value = null
     try {
-      const [posResp, summaryResp, boardResp] = await Promise.all([
+      const [posResp, summaryResp] = await Promise.all([
         positionsApi.listActive(accountId),
         positionsApi.portfolioSummary(accountId),
-        getPositionBoard(),
       ])
       positions.value = posResp.data
       portfolioSummary.value = summaryResp.data
-      positionBoard.value = boardResp
     } catch (e: any) {
       posError.value = e.message || '加载仓位失败'
     } finally {
@@ -223,7 +275,7 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
     selectedPosition, positionTimeline, positionDetailOpen,
     posLoading, posError,
     // V10.4.4 computed
-    activePositionCount, exceptionPositionCount, stuckSliceCount,
+    activeBoardCards, activePositionCount, exceptionPositionCount, stuckSliceCount,
     // V10.4.4 actions
     fetchPositions, fetchExceptions, fetchStuckSlices,
     openPositionDetail, closePositionDetail, manualClosePosition,
