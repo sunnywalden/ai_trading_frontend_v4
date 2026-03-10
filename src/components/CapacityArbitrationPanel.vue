@@ -28,7 +28,7 @@
         <div class="gauge-row">
           <span class="gauge-label">席位利用率</span>
           <span class="gauge-fraction">{{ stats?.seat_utilization_trend?.at(-1)?.utilization != null
-            ? Math.round((stats!.seat_utilization_trend.at(-1)!.utilization) * 100) + '%'
+            ? Math.round((stats?.seat_utilization_trend?.at(-1)?.utilization ?? 0) * 100) + '%'
             : `${config?.max_concurrent_positions ?? '—'} 个上限` }}</span>
         </div>
         <div class="gauge-bar">
@@ -86,6 +86,8 @@
                 <th>标的</th>
                 <th>原始分</th>
                 <th>准入分</th>
+                <th>Seat Value</th>
+                <th>Marginals</th>
                 <th>持仓时长</th>
                 <th>结果</th>
               </tr>
@@ -107,6 +109,17 @@
                 <td class="num-cell score-cell" :class="admissionClass(c.admission_score)">
                   {{ c.admission_score.toFixed(1) }}
                 </td>
+                <td class="num-cell score-cell" :class="admissionClass(c.seat_value)">
+                  {{ c.seat_value.toFixed(1) }}
+                </td>
+                <td>
+                  <div class="metric-stack">
+                    <span>α {{ pct(c.marginal_alpha) }}</span>
+                    <span>Risk {{ pct(c.marginal_risk) }}</span>
+                    <span>Turn {{ pct(c.marginal_turnover) }}</span>
+                    <span>Liq {{ pct(c.liquidity_usage) }}</span>
+                  </div>
+                </td>
                 <td class="num-cell">{{ c.hold_minutes != null ? Math.round(c.hold_minutes) + ' min' : '—' }}</td>
                 <td>
                   <span v-if="isProtected(c)" class="badge-protected" :title="c.protect_reason ?? ''">
@@ -116,6 +129,7 @@
                     ✗ 淘汰
                   </span>
                   <span v-else class="badge-approve">✓ 通过</span>
+                  <div v-if="c.replace_or_hold_reason" class="reason-text">{{ c.replace_or_hold_reason }}</div>
                 </td>
               </tr>
             </tbody>
@@ -182,14 +196,14 @@
 
 <script setup lang="ts">
 import {
-    capacityArbiterApi,
-    type CapacityConfigResponse,
-    type CapacityLogListResponse,
-    type CapacityPreviewResponse,
-    type CapacityStatsResponse,
+  capacityArbiterApi,
+  type CapacityConfigResponse,
+  type CapacityLogListResponse,
+  type CapacityPreviewResponse,
+  type CapacityStatsResponse,
 } from '@/api/capacityArbiterService';
-import { computed, onMounted, ref } from 'vue';
 import { formatClientDateTime } from '@/utils/datetime';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{ accountId: string; regime?: string }>()
 
@@ -231,6 +245,10 @@ function admissionClass(score: number) {
   if (score >= 70) return 'score-high'
   if (score >= 50) return 'score-mid'
   return 'score-low'
+}
+
+function pct(value: number) {
+  return `${(value * 100).toFixed(0)}%`
 }
 
 async function loadAll() {
@@ -304,24 +322,24 @@ onMounted(loadAll)
 }
 
 .badge-enabled {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
+  background: rgba(22, 101, 52, 0.88);
+  color: #f8fafc;
   font-size: 11px;
   padding: 2px 7px;
   border-radius: 20px;
 }
 
 .badge-disabled {
-  background: rgba(107, 114, 128, 0.2);
-  color: #9ca3af;
+  background: rgba(71, 85, 105, 0.88);
+  color: #f8fafc;
   font-size: 11px;
   padding: 2px 7px;
   border-radius: 20px;
 }
 
 .sm-btn {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  background: rgba(67, 56, 202, 0.78);
+  color: #f8fafc;
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 6px;
   padding: 4px 10px;
@@ -376,7 +394,7 @@ onMounted(loadAll)
 
 .gauge-meta {
   font-size: 11px;
-  color: #6b7280;
+  color: #cbd5e1;
   margin-top: 4px;
 }
 
@@ -458,24 +476,24 @@ onMounted(loadAll)
 .num-cell    { font-variant-numeric: tabular-nums; }
 
 .badge-position {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  background: rgba(67, 56, 202, 0.78);
+  color: #f8fafc;
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 10px;
 }
 
 .badge-signal {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: rgba(21, 128, 61, 0.82);
+  color: #f8fafc;
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 10px;
 }
 
 .badge-protected {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  background: rgba(146, 64, 14, 0.88);
+  color: #fff8eb;
   font-size: 11px;
   padding: 1px 7px;
   border-radius: 10px;
@@ -483,16 +501,16 @@ onMounted(loadAll)
 }
 
 .badge-eliminate {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: rgba(153, 27, 27, 0.88);
+  color: #fff4f4;
   font-size: 11px;
   padding: 1px 7px;
   border-radius: 10px;
 }
 
 .badge-approve {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: rgba(21, 128, 61, 0.82);
+  color: #f8fafc;
   font-size: 11px;
   padding: 1px 7px;
   border-radius: 10px;
@@ -502,6 +520,17 @@ onMounted(loadAll)
 .score-high { color: #4ade80; }
 .score-mid  { color: #fbbf24; }
 .score-low  { color: #f87171; }
+.metric-stack {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+.reason-text {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+}
 
 .no-overflow-msg {
   text-align: center;
@@ -545,8 +574,8 @@ onMounted(loadAll)
 .ts-cell  { color: #9ca3af; white-space: nowrap; }
 
 .badge-replaced {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
+  background: rgba(21, 128, 61, 0.82);
+  color: #f8fafc;
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 10px;

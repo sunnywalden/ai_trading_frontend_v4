@@ -18,6 +18,12 @@ export interface CandidateSnapshot {
   rank: number | null
   eliminate: boolean
   eliminated_reason: string | null
+  seat_value: number
+  marginal_alpha: number
+  marginal_risk: number
+  marginal_turnover: number
+  liquidity_usage: number
+  replace_or_hold_reason: string | null
 }
 
 export interface CapacityPreviewResponse {
