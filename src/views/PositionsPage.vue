@@ -209,7 +209,7 @@ async function onRefreshPositions() {
   try {
     const result = await refreshPositions();
     console.log('刷新成功:', result);
-    await loadPositionsData();
+    await Promise.all([loadPositionsData(), loadDbPositions()]);
   } catch (e: any) {
     console.error('刷新持仓数据失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
@@ -231,7 +231,7 @@ async function onRefreshSinglePosition(symbol: string) {
     const result = await refreshPositions([symbol]);
     console.log('刷新成功:', result);
     // 重新加载数据以获取更新后的快照
-    await loadPositionsData();
+    await Promise.all([loadPositionsData(), loadDbPositions()]);
   } catch (e: any) {
     console.error('刷新单标的失败:', e);
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
@@ -260,7 +260,11 @@ const { positions: dbPositions } = storeToRefs(lifecycleStore)
 const dbLoading = ref(false)
 
 async function loadDbPositions() {
-  const accountId = quantLoopStore.systemStatus?.account_id
+  let accountId = quantLoopStore.systemStatus?.account_id
+  if (!accountId) {
+    await quantLoopStore.fetchSystemStatus()
+    accountId = quantLoopStore.systemStatus?.account_id
+  }
   if (!accountId) return
   dbLoading.value = true
   try {
