@@ -62,8 +62,8 @@
               <svg viewBox="0 0 24 24" class="avatar-svg" aria-hidden="true">
                 <defs>
                   <linearGradient id="grad1" x1="0" x2="1">
-                    <stop offset="0" stop-color="var(--accent1)" />
-                    <stop offset="1" stop-color="var(--accent2)" />
+                    <stop offset="0" stop-color="#38bdf8" />
+                    <stop offset="1" stop-color="#2563eb" />
                   </linearGradient>
                 </defs>
                 <circle cx="12" cy="8" r="3.2" fill="url(#grad1)"></circle>
