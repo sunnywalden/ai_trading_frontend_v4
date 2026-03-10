@@ -66,11 +66,11 @@
           </div>
           
           <!-- 当前持仓标的 chips -->
-          <div class="held-symbols" v-if="lifecycle.activeBoardCards.length">
+          <div class="held-symbols" v-if="lifecycle.heldBoardCards.length">
             <div class="held-label">当前持有列表:</div>
             <div class="held-chips">
               <span
-                v-for="card in lifecycle.activeBoardCards"
+                v-for="card in lifecycle.heldBoardCards"
                 :key="card.id"
                 class="held-chip"
               >

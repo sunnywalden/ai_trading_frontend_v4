@@ -47,7 +47,7 @@
         <div class="l2-alert-body">
           <strong>组合容量已满 — L2 正在拦截所有新信号</strong>
           <span class="l2-alert-detail">
-            当前 HELD 持仓 <strong>{{ currentPositionsCountDisplay }}</strong> 个 &gt;
+            当前容量占用 HELD 仓位 <strong>{{ currentPositionsCountDisplay }}</strong> 个 &gt;
             {{ effectiveCapacityLabel }} <strong>{{ effectiveMaxCapacity }}</strong> 个；
             须平仓后方可放行新信号
           </span>
@@ -72,7 +72,7 @@
         </div>
         <div class="stat-card">
           <div class="sc-value">{{ currentPositionsCountDisplay }}</div>
-          <div class="sc-label">当前持仓标的数 <span class="target-hint">(上限 {{ effectiveMaxCapacityDisplay }} · {{ currentRegimeLabel }})</span></div>
+          <div class="sc-label">当前占用容量仓位数 <span class="target-hint">(生命周期活跃 {{ lifecycleActivePositionsDisplay }} · 上限 {{ effectiveMaxCapacityDisplay }} · {{ currentRegimeLabel }})</span></div>
         </div>
       </div>
 
@@ -457,8 +457,13 @@ const effectiveMaxCapacityDisplay = computed(() =>
 )
 
 const currentPositionsCountDisplay = computed(() => {
-  const currentPositionsCount = stats.value?.current_positions_count
+  const currentPositionsCount = stats.value?.capacity_positions_count ?? stats.value?.current_positions_count
   return typeof currentPositionsCount === 'number' ? String(currentPositionsCount) : '--'
+})
+
+const lifecycleActivePositionsDisplay = computed(() => {
+  const lifecycleCount = stats.value?.lifecycle_active_positions_count
+  return typeof lifecycleCount === 'number' ? String(lifecycleCount) : '--'
 })
 
 const currentRegimeLabel = computed(() => {
@@ -483,18 +488,32 @@ const capacityContextText = computed(() => {
   if (!stats.value) return ''
   const base = stats.value.max_concurrent_positions_cfg
   const effective = stats.value.effective_max_concurrent_positions ?? base
+  const lifecycleCount = stats.value.lifecycle_active_positions_count
+  const heldCount = stats.value.capacity_positions_count ?? stats.value.current_positions_count
   const confidence = stats.value.regime_confidence
   const confidenceText = typeof confidence === 'number'
     ? `，置信度 ${(confidence * 100).toFixed(1)}%`
     : ''
 
   if (stats.value.current_regime && typeof base === 'number' && typeof effective === 'number' && effective !== base) {
-    return `基础上限 ${base} 个；当前体制 ${currentRegimeLabel.value}${confidenceText}，已动态收紧为 ${effective} 个。`
+    const lifecycleText = typeof lifecycleCount === 'number' ? `生命周期活跃仓位 ${lifecycleCount} 个；` : ''
+    return `${lifecycleText}基础上限 ${base} 个；当前体制 ${currentRegimeLabel.value}${confidenceText}，已动态收紧为 ${effective} 个。`
   }
   if (stats.value.current_regime) {
-    return `当前体制 ${currentRegimeLabel.value}${confidenceText}；当前生效上限为 ${effective ?? '--'} 个。`
+    const diffText = (
+      typeof lifecycleCount === 'number'
+      && typeof heldCount === 'number'
+      && lifecycleCount !== heldCount
+    )
+      ? `生命周期活跃 ${lifecycleCount} 个，其中占用容量 ${heldCount} 个；`
+      : ''
+    return `${diffText}当前体制 ${currentRegimeLabel.value}${confidenceText}；当前生效上限为 ${effective ?? '--'} 个。`
   }
-  return typeof base === 'number' ? `当前使用基础配置上限 ${base} 个。` : ''
+  if (typeof base === 'number') {
+    const lifecycleText = typeof lifecycleCount === 'number' ? `生命周期活跃仓位 ${lifecycleCount} 个；` : ''
+    return `${lifecycleText}当前使用基础配置上限 ${base} 个。`
+  }
+  return ''
 })
 
 // L2 (MAX_POSITIONS_REACHED) 是否为主要拦截原因，且确实超出配置上限
@@ -504,7 +523,7 @@ const isL2Dominant = computed(() => {
   const l2Count = breakdown['MAX_POSITIONS_REACHED'] ?? 0
   const total = stats.value.total_evaluated ?? 0
   if (total === 0 || l2Count === 0) return false
-  const currentPos = stats.value.current_positions_count ?? 0
+  const currentPos = stats.value.capacity_positions_count ?? stats.value.current_positions_count ?? 0
   const maxCfg = effectiveMaxCapacity.value
   // 超过配置上限 且 L2 拒绝占比 > 30%
   return currentPos > maxCfg && (l2Count / total) > 0.3
