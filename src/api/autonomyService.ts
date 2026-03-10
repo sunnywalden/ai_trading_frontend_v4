@@ -12,6 +12,7 @@ export interface CooldownSymbol {
 }
 
 export interface AutonomyStatus {
+  account_id?: string | null
   level: AutonomyLevel
   paused: boolean
   circuit_breaker_triggered: boolean
@@ -75,6 +76,8 @@ export interface SignalPipelineItem {
   funnel_result?: 'PASSED' | 'REJECTED' | null
   funnel_rejected_at_layer?: number | null
   funnel_rejection_reason?: string | null
+  rejection_stage?: string | null
+  rejection_detail?: string | null
 }
 
 export interface SignalGenerationStrategyRun {

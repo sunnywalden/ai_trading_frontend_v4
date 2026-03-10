@@ -1,5 +1,6 @@
 /** V10.3: 全局态势感知 API Service + WebSocket */
 import { getWsBaseUrl } from '@/config/runtime'
+import { logger } from '@/utils/logger'
 import { api } from './client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -94,12 +95,11 @@ export function connectSaWebSocket(
         onMessage(msg.data as SituationalAwarenessSnapshot)
       }
     } catch (e) {
-      console.warn('[SA WS] parse error', e)
+      logger.debug('[SA WS] parse error', e)
     }
   }
 
   ws.onerror = (err) => {
-    console.warn('[SA WS] error', err)
     onError?.(err)
   }
 

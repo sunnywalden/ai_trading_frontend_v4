@@ -355,8 +355,11 @@
                 </span>
               </div>
             </td>
-            <td style="max-width: 200px; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              {{ sig.notes ?? '—' }}
+            <td
+              style="max-width: 200px; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+              :title="signalRemark(sig)"
+            >
+              {{ signalRemark(sig) }}
             </td>
           </tr>
           <tr v-if="autonomyStore.signalPipeline.length === 0">
@@ -545,6 +548,13 @@ const FUNNEL_REJECTION_LABELS: Record<string, string> = {
 function funnelRejectionLabel(reason?: string | null): string {
   if (!reason) return '拒绝'
   return FUNNEL_REJECTION_LABELS[reason] ?? reason
+}
+
+function signalRemark(sig: SignalPipelineItem): string {
+  if (sig.notes) return sig.notes
+  if (sig.rejection_detail) return sig.rejection_detail
+  if (sig.funnel_result === 'REJECTED') return funnelRejectionLabel(sig.funnel_rejection_reason)
+  return '—'
 }
 
 function sourceBadgeClass(source?: string | null) {
