@@ -14,6 +14,20 @@ function trimTrailingSlash(value?: string): string {
   return String(value || '').trim().replace(/\/$/, '')
 }
 
+function getDefaultDevBackendOrigin(): string {
+  if (typeof window === 'undefined') return ''
+
+  const { protocol, hostname, port } = window.location
+  const backendProtocol = protocol === 'https:' ? 'https:' : 'http:'
+
+  // Vite dev/preview 常见端口下，如果没有显式配置后端地址，则默认回退到本机后端 8088。
+  if (port === '5173' || port === '4173') {
+    return `${backendProtocol}//${hostname}:8088`
+  }
+
+  return ''
+}
+
 export function getRuntimeConfig(): RuntimeConfig {
   if (typeof window === 'undefined') return {}
   return window.__APP_CONFIG__ || {}
@@ -28,7 +42,7 @@ export function getBackendBaseUrl(): string {
     ''
 
   if (import.meta.env.DEV) {
-    return trimTrailingSlash(runtimeValue)
+    return trimTrailingSlash(runtimeValue || getDefaultDevBackendOrigin())
   }
 
   return trimTrailingSlash(runtimeValue)
@@ -60,6 +74,15 @@ export function getWsBaseUrl(): string {
 
   if (typeof window === 'undefined') {
     return ''
+  }
+
+  if (import.meta.env.DEV) {
+    const devBackendOrigin = getDefaultDevBackendOrigin()
+    if (devBackendOrigin) {
+      return devBackendOrigin
+        .replace(/^http:\/\//i, 'ws://')
+        .replace(/^https:\/\//i, 'wss://')
+    }
   }
 
   return `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`

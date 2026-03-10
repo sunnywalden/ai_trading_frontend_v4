@@ -1,6 +1,7 @@
 /** V10.3: 全局态势感知 Pinia Store（WebSocket + REST备用） */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { logger } from '@/utils/logger'
 import {
   getSituationalAwarenessSnapshot,
   connectSaWebSocket,
@@ -19,6 +20,7 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
   let _fetchPromise: Promise<void> | null = null
   let _reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let _manualDisconnect = false
+  let _wsFallbackLogged = false
 
   // ── Computed ──────────────────────────────────────────────────────────────
   const regime   = computed(() => snapshot.value?.regime)
@@ -62,17 +64,22 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
           snapshot.value = data
           connected.value = true
           error.value = null
+          _wsFallbackLogged = false
           stopPolling()
         },
-        (err) => {
-          console.warn('[SA] WS error, falling back to polling')
+        () => {
           connected.value = false
+          if (!_wsFallbackLogged) {
+            logger.debug('[SA] WebSocket unavailable, falling back to polling')
+            _wsFallbackLogged = true
+          }
           startPolling(15000)
         },
       )
 
       _ws.onopen  = () => {
         connected.value = true
+        _wsFallbackLogged = false
         stopPolling()
       }
       _ws.onclose = () => {
@@ -80,6 +87,10 @@ export const useSituationalAwarenessStore = defineStore('situationalAwareness', 
         _ws = null
         if (_manualDisconnect) return
         startPolling(15000)
+        if (!_wsFallbackLogged) {
+          logger.debug('[SA] WebSocket closed, polling mode enabled')
+          _wsFallbackLogged = true
+        }
         // 5 秒后重连
         _reconnectTimer = setTimeout(() => {
           _reconnectTimer = null
