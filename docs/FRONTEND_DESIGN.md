@@ -1,8 +1,8 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.5.3（实施中） | 当前已上线版本：V10.5.2 | 更新日期：2026-03-10  
-> 变更摘要（V10.5.3）：**Profit Engine Upgrade UI**——前端不新增导航组，而是把现有四个机构级工作台升级为收益控制面：`/alpha-lab` 升级为 **Alpha Truth Engine 2.0**（gross / net / after cost / after turnover、regime & capacity bucket、shadow false-reject 视图）、`/portfolio` 升级为 **Portfolio Construction 2.1 Console**（Seat Value、Risk Budget Tree、Marginal Alpha/Risk/Turnover/Liquidity、Replace-or-Hold 解释）、`/execution-policy` 升级为 **Execution Policy Closed Loop Console**（Pre-Trade Cost、budget breach、policy snapshot、child-order replay、execution feedback buckets）、`/governance/pipeline` 升级为 **Research-to-Live Hard Gate Board**（Discovery / Paper / Shadow Live / Challenger / Production 五阶段证据链、promotion blockers、rollback signals）；设计原则继续坚持“决策级可视化而非页面膨胀”，重点提升 why-now / why-size / why-not-live 的解释密度。  
+> 版本：V10.5.4（规划中） | 当前已上线版本：V10.5.2 | 更新日期：2026-03-11  
+> 变更摘要（V10.5.4）：**Signal Pipeline Integrity & Control-Plane Hardening UI**——前端不新增导航组，而是在现有工作台上统一信号控制平面语义：`/alpha-lab` 与 `/portfolio` 强化 REAL/SYNTHETIC/BACKFILL 与 canonical payload 可视化，`/execution-policy` 与 `/autonomy` 强化唯一自动执行主链、native audit / reconstructed 来源标识、control-plane rollout 状态与 displacement pending 闭环解释，`/governance/pipeline` 对齐完整开发流程与 Observe → Shadow → Semi → Full 放量纪律；设计原则继续坚持“决策级可视化而非页面膨胀”，重点提升 why-now / why-source / why-path / why-not-live 的解释密度。  
 > 变更摘要（V10.5.2）：**组合席位竞争引擎 UI（Capacity-Aware Admission Visualization）**——/portfolio 页新增席位竞争看板 Tab（候选信号 vs 现有持仓统一评分排名列表、overflow 淘汰清单、准入评分拆解 tooltip）；/autonomy 新增 CapacityArbiter 状态卡（本轮候选数、触发席位竞争次数、今日替换成功 / 拒绝计数、dry-run 状态徽章）；/order-book 新增 REJECTED_BY_CAPACITY_REPLACEMENT 拒绝原因徽章与原因详情抽屉；新增 /capacity-arbiter 路由（Preview 模拟面板 + Audit Log 历史 + Config 治理参数面板）；所有席位竞争事件接入 SSE 实时推送，用户可在不刷新页面的情况下观测替换决策流。
 > 变更摘要（V10.5.1）：**研究真相与交易纪律工作台**——前端新增四个面向机构级交易流程的核心工作台：`/alpha-lab`（Strategy Scorecard 2.0 + Signal Decay + Regime Breakdown + Shadow Book Compare）、增强版 `/portfolio`（升级为 Portfolio Construction Console，新增 Risk Budget / Marginal Contribution / Liquidity Usage 多 Tab）、`/execution-policy`（Execution Policy Snapshot + Pre-Trade Cost + Child-Order Timeline + Replay）、`/governance/pipeline`（Strategy Promotion Pipeline + Experiment Ledger + Rollout / Rollback Evidence）；信息架构坚持“决策级可视化而非页面膨胀”，一级导航仍维持 4 组，重点把现有 observability 资产重组为可解释、可审计、可晋级的研究与交易操作台。  
 > 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。**追加需求**：`/system` 系统监控页新增交易生命周期监测、系统主要数据流转详细状态、主要模块与细粒度服务状态视图。  
@@ -227,9 +227,9 @@
 
 ## 4. 页面设计详述
 
-### 4.0 V10.5.3 新增设计原则
+### 4.0 V10.5.4 新增设计原则
 
-V10.5.3 的前端设计目标不是继续横向扩页，而是把现有观察能力升级成利润控制能力。所有核心工作台都必须回答以下问题之一：
+V10.5.4 的前端设计目标不是继续横向扩页，而是把现有观察能力升级成统一控制平面。所有核心工作台都必须回答以下问题之一：
 
 - 为什么这个 alpha 值得信。
 - 为什么这个仓位应该是这个大小。
@@ -249,11 +249,11 @@ V10.5.3 的前端设计目标不是继续横向扩页，而是把现有观察能
 - 所有关键信息同时展示结果值与解释字段，不只给图，不只给结论。
 - 能作为高级视图挂载的页面，不强制拆成独立导航入口。
 
-### 4.0.1 V10.5.3 实施顺序（定稿）
+### 4.0.1 V10.5.4 实施顺序（定稿）
 
 - **先后端，后前端**：四个工作台的 UI 不先发明新状态，全部以后端返回的 truth / seat value / policy / evidence contract 为准。
 - **先展示，后控制**：UI rollout 必须遵循 `Observe → Shadow Control → Semi → Full`；页面先展示新字段，再逐步开放控制型按钮与 blocker 提示。
-- **不新增一级导航**：V10.5.3 仍然只升级 `/alpha-lab`、`/portfolio`、`/execution-policy`、`/governance/pipeline` 四个工作台，不额外膨胀导航结构。
+- **不新增一级导航**：V10.5.4 仍然只升级 `/alpha-lab`、`/portfolio`、`/execution-policy`、`/governance/pipeline` 与 `/autonomy` 五个工作台，不额外膨胀导航结构。
 - **结果值 + 解释链 + data_quality 同屏**：所有新增 KPI 卡、表格列与 Drawer 必须同时给出结果值、why 字段与 `data_quality`，禁止只给图或只给结论。
 
 ### 4.1 交易仪表盘 (Dashboard V2)
