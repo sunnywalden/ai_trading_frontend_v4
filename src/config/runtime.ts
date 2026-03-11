@@ -14,6 +14,34 @@ function trimTrailingSlash(value?: string): string {
   return String(value || '').trim().replace(/\/$/, '')
 }
 
+function stripLeadingWww(hostname: string): string {
+  return String(hostname || '').replace(/^www\./i, '')
+}
+
+export function shouldPreferSameOriginBackend(runtimeValue?: string): boolean {
+  if (typeof window === 'undefined') return false
+  if (!runtimeValue) return false
+
+  try {
+    const resolved = new URL(runtimeValue, window.location.origin)
+    const current = window.location
+    const currentPort = current.port || (current.protocol === 'https:' ? '443' : '80')
+    const resolvedPort = resolved.port || (resolved.protocol === 'https:' ? '443' : '80')
+
+    if (
+      resolved.protocol === current.protocol
+      && resolvedPort === currentPort
+      && stripLeadingWww(resolved.hostname) === stripLeadingWww(current.hostname)
+    ) {
+      return true
+    }
+  } catch {
+    return false
+  }
+
+  return false
+}
+
 function getDefaultDevBackendOrigin(): string {
   if (typeof window === 'undefined') return ''
 
@@ -43,6 +71,10 @@ export function getBackendBaseUrl(): string {
 
   if (import.meta.env.DEV) {
     return trimTrailingSlash(runtimeValue || getDefaultDevBackendOrigin())
+  }
+
+  if (shouldPreferSameOriginBackend(runtimeValue)) {
+    return ''
   }
 
   return trimTrailingSlash(runtimeValue)
