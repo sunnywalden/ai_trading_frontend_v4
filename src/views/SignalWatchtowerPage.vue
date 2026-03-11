@@ -549,6 +549,7 @@ const REJECTION_REASON_LABELS: Record<string, string> = {
   RISK_GATE_REJECTED: '风控门拒绝',
   DAILY_QUOTA_EXHAUSTED: '日配额耗尽',
   HIGH_CORRELATION: '相关性过高',
+  MISSING_RESONANCE_METADATA: '缺少共振元数据',
   INSUFFICIENT_RESONANCE: '共振不足',
   ANTI_RESONANCE_KILL: '反共振一票否决',
   LOW_CONVICTION: '置信度不足',
