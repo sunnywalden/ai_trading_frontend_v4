@@ -1119,7 +1119,7 @@
     "strategy_card": {
       "builtin": "Built-in",
       "no_desc": "No description",
-      "not_run": "Not run",
+      "not_run": "Pending trigger",
       "last_run": "Last Run",
       "tags": "Tags",
       "details": "Strategy Details",

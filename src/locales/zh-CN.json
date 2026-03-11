@@ -1124,7 +1124,7 @@
     "strategy_card": {
       "builtin": "内置策略",
       "no_desc": "暂无描述",
-      "not_run": "未运行",
+      "not_run": "待触发",
       "last_run": "最近运行",
       "tags": "标签",
       "details": "策略逻辑详情",
