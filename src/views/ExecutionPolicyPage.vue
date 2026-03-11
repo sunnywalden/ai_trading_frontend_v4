@@ -69,6 +69,16 @@
         <strong class="summary-value">{{ bps(overview?.summary.avg_realized_is_bps) }}</strong>
         <span class="summary-foot">回看真实代价</span>
       </article>
+      <article class="summary-card accent-green">
+        <span class="summary-label">画像覆盖率</span>
+        <strong class="summary-value">{{ pct(overview?.summary.persistent_profile_coverage) }}</strong>
+        <span class="summary-foot">命中长期反馈画像</span>
+      </article>
+      <article class="summary-card accent-gold">
+        <span class="summary-label">V10.5.4 Rollout</span>
+        <strong class="summary-value">{{ overview?.rollout?.stage ?? 'OBSERVE' }}</strong>
+        <span class="summary-foot">{{ overview?.rollout?.policy_source ?? 'NATIVE_EXECUTION_POLICY' }}</span>
+      </article>
     </section>
 
     <p v-if="error" class="error-banner">{{ error }}</p>
@@ -205,6 +215,7 @@
                 <li><span>撤改单策略</span><strong>{{ detail.policy.cancel_replace_policy }}</strong></li>
                 <li><span>限价偏移</span><strong>{{ bps(detail.policy.limit_offset_bps) }}</strong></li>
                 <li><span>Closing Override</span><strong>{{ detail.policy.closing_override_policy ? 'ON' : 'OFF' }}</strong></li>
+                <li><span>Policy Source</span><strong>{{ detail.policy_source || 'NATIVE_EXECUTION_POLICY' }}</strong></li>
               </ul>
             </div>
             <div class="subpanel">
@@ -215,6 +226,29 @@
                 <li><span>Impact</span><strong>{{ bps(detail.pretrade_cost.market_impact_bps) }}</strong></li>
                 <li><span>Opportunity</span><strong>{{ bps(detail.pretrade_cost.opportunity_cost_bps) }}</strong></li>
                 <li><span>Timing</span><strong>{{ bps(detail.pretrade_cost.timing_cost_bps) }}</strong></li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="detail-section two-col" v-if="detail.feedback_profile || detail.persistent_profile">
+            <div class="subpanel" v-if="detail.feedback_profile">
+              <h4>反馈画像</h4>
+              <ul class="kv-list">
+                <li><span>Source</span><strong>{{ detail.feedback_profile.source || 'none' }}</strong></li>
+                <li><span>Bias</span><strong>{{ detail.feedback_profile.feedback_bias }}</strong></li>
+                <li><span>Sample</span><strong>{{ detail.feedback_profile.sample_size }}</strong></li>
+                <li><span>Avg Fill</span><strong>{{ pct(detail.feedback_profile.avg_fill_rate) }}</strong></li>
+                <li><span>Avg Quality</span><strong>{{ num(detail.feedback_profile.avg_quality_score) }}</strong></li>
+              </ul>
+            </div>
+            <div class="subpanel" v-if="detail.persistent_profile">
+              <h4>Persistent Profile</h4>
+              <ul class="kv-list">
+                <li><span>Algo</span><strong>{{ detail.persistent_profile.algo_type }}</strong></li>
+                <li><span>Urgency</span><strong>{{ detail.persistent_profile.urgency_bucket }}</strong></li>
+                <li><span>Sample</span><strong>{{ detail.persistent_profile.sample_size }}</strong></li>
+                <li><span>Bias</span><strong>{{ detail.persistent_profile.feedback_bias }}</strong></li>
+                <li><span>Limit Offset</span><strong>{{ bps(detail.persistent_profile.limit_offset_bps) }}</strong></li>
               </ul>
             </div>
           </section>
@@ -273,9 +307,9 @@
 
 <script setup lang="ts">
 import {
-  executionPolicyApi,
-  type ExecutionPolicyDetailResponse,
-  type ExecutionPolicyOverviewResponse,
+    executionPolicyApi,
+    type ExecutionPolicyDetailResponse,
+    type ExecutionPolicyOverviewResponse,
 } from '@/api/executionPolicyService'
 import { formatClientDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref, watch } from 'vue'

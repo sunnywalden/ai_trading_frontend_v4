@@ -172,6 +172,43 @@
       </div>
     </div>
 
+    <div v-if="status?.signal_integrity" class="card signal-quality-card" style="margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div>
+          <h3 style="margin:0 0 4px;">🧬 Signal Integrity</h3>
+          <p style="margin:0; font-size:12px; color:#8b97ad;">跟踪 origin mode、canonical payload 与 native transition 覆盖率，避免控制面“看起来一致，实际上各说各话”。</p>
+        </div>
+        <span class="quality-badge quality-badge-high">
+          {{ status.rollout?.stage || 'OBSERVE' }}
+        </span>
+      </div>
+      <div class="closing-flow-grid">
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">样本数</div>
+          <div class="closing-flow-value">{{ status.signal_integrity.sample_size }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">Payload Ready</div>
+          <div class="closing-flow-value text-success">{{ ratioPct(status.signal_integrity.canonical_payload_ratio) }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">Transition Ready</div>
+          <div class="closing-flow-value text-warning">{{ ratioPct(status.signal_integrity.native_transition_ratio) }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">Audit Source</div>
+          <div class="closing-flow-value" style="font-size: 16px;">{{ status.audit_source || 'LEGACY_COMPAT' }}</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px;">
+        <span class="quality-badge quality-badge-high">REAL {{ status.signal_integrity.origin_counts.REAL || 0 }}</span>
+        <span class="quality-badge quality-badge-medium">SYNTHETIC {{ status.signal_integrity.origin_counts.SYNTHETIC || 0 }}</span>
+        <span class="quality-badge quality-badge-elite">BACKFILL {{ status.signal_integrity.origin_counts.BACKFILL || 0 }}</span>
+        <span class="mini-note">Positions {{ status.positions_source || 'N/A' }}</span>
+        <span class="mini-note">Regime {{ status.regime_truth?.source || 'N/A' }}</span>
+      </div>
+    </div>
+
     <div v-if="autonomyStore.marketUniverseStatus" class="card" style="margin-bottom: 24px;">
       <h3 style="margin: 0 0 12px;">📚 本地全量池健康</h3>
       <div class="full-cycle-summary__meta" style="margin-bottom: 10px;">
@@ -324,6 +361,11 @@
                 <span :class="executionPathClass(sig.execution_path)">{{ executionPathLabel(sig.execution_path) }}</span>
                 <span v-if="sig.bypass_reason" class="mini-note">{{ sig.bypass_reason }}</span>
               </div>
+              <div v-if="sig.signal_origin_mode || sig.signal_transition_count" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="originBadgeClass(sig.signal_origin_mode)">{{ sig.signal_origin_mode || 'UNKNOWN' }}</span>
+                <span v-if="sig.signal_payload_version" class="mini-note">{{ sig.signal_payload_version }}</span>
+                <span v-if="sig.signal_transition_count != null" class="mini-note">T{{ sig.signal_transition_count }}</span>
+              </div>
             </td>
             <td style="min-width: 180px;">
               <div style="font-size: 12px;">
@@ -417,6 +459,11 @@
                 <span :class="executionPathClass(log.execution_path)">{{ executionPathLabel(log.execution_path) }}</span>
                 <span v-if="log.bypass_reason" class="mini-note">{{ log.bypass_reason }}</span>
               </div>
+              <div v-if="log.signal_origin_mode || log.signal_transition_count" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span :class="originBadgeClass(log.signal_origin_mode)">{{ log.signal_origin_mode || 'UNKNOWN' }}</span>
+                <span v-if="log.signal_payload_version" class="mini-note">{{ log.signal_payload_version }}</span>
+                <span v-if="log.signal_transition_count != null" class="mini-note">T{{ log.signal_transition_count }}</span>
+              </div>
             </td>
             <td style="max-width:180px; font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" :title="log.ai_reasoning ?? ''">
               {{ log.ai_reasoning ?? '—' }}
@@ -441,13 +488,13 @@
 </template>
 
 <script setup lang="ts">
-import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService'
-import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService'
+import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService';
+import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
 import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel.vue'; // V10.5.2
-import { useAutonomyStore } from '@/stores/autonomy'
-import { formatClientDateTime } from '@/utils/datetime'
-import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref } from 'vue'
+import { useAutonomyStore } from '@/stores/autonomy';
+import { formatClientDateTime } from '@/utils/datetime';
+import { storeToRefs } from 'pinia';
+import { computed, onMounted, ref } from 'vue';
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
@@ -644,6 +691,18 @@ function qualityBadgeLabel(tier?: string | null, score?: number | null) {
   if (normalized === 'HIGH') return `高质${scoreLabel}`
   if (normalized === 'MEDIUM') return `中质${scoreLabel}`
   return `观察${scoreLabel}`
+}
+
+function ratioPct(value?: number | null) {
+  return `${(Number(value || 0) * 100).toFixed(1)}%`
+}
+
+function originBadgeClass(origin?: string | null) {
+  const normalized = (origin || 'UNKNOWN').toUpperCase()
+  if (normalized === 'REAL') return 'quality-badge quality-badge-high'
+  if (normalized === 'SYNTHETIC') return 'quality-badge quality-badge-medium'
+  if (normalized === 'BACKFILL') return 'quality-badge quality-badge-elite'
+  return 'quality-badge quality-badge-low'
 }
 
 const levelLabels: Record<string, string> = {

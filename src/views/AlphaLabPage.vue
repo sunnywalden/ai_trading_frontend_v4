@@ -5,6 +5,10 @@
         <p class="eyebrow">V10.5.3 Alpha Truth Engine 2.0</p>
         <h2>Alpha Lab</h2>
         <p class="hero-copy">把策略命中率、预期偏差、体制切换和 Shadow Book 放在同一张台面上，先判断 alpha 是否真实，再决定是否放量。</p>
+        <div v-if="snapshot?.rollout" class="hero-rollout">
+          <span class="rollout-pill">V10.5.4 {{ snapshot.rollout.stage }}</span>
+          <small>{{ snapshot.rollout.recommended_next_step }}</small>
+        </div>
       </div>
       <div class="hero-actions">
         <label>
@@ -46,6 +50,11 @@
         <span>Shadow Book</span>
         <strong>{{ pct(snapshot.shadow_book.false_reject_rate) }}</strong>
         <small>保护收益 {{ signedPct(snapshot.shadow_book.protection_benefit_pct) }}</small>
+      </article>
+      <article class="metric-card">
+        <span>Origin Mix</span>
+        <strong>{{ originHeadline(snapshot.origin_breakdown) }}</strong>
+        <small>{{ originSecondary(snapshot.origin_breakdown) }}</small>
       </article>
       <article class="metric-card">
         <span>Data Quality</span>
@@ -90,6 +99,50 @@
             </tr>
           </tbody>
         </table>
+      </article>
+    </section>
+
+    <section v-if="snapshot?.signal_integrity" class="content-grid">
+      <article class="panel-card">
+        <div class="panel-header">
+          <h3>Signal Integrity</h3>
+          <span>canonical payload & native transition</span>
+        </div>
+        <div class="shadow-metrics">
+          <div>
+            <strong>{{ snapshot.signal_integrity.sample_size }}</strong>
+            <span>样本</span>
+          </div>
+          <div>
+            <strong>{{ pct(snapshot.signal_integrity.canonical_payload_ratio) }}</strong>
+            <span>Payload Ready</span>
+          </div>
+          <div>
+            <strong>{{ pct(snapshot.signal_integrity.native_transition_ratio) }}</strong>
+            <span>Transition Ready</span>
+          </div>
+        </div>
+        <ul class="breakdown-list">
+          <li v-for="item in snapshot.signal_integrity.origin_breakdown" :key="item.mode">
+            <span>{{ item.mode }}</span>
+            <strong>{{ item.count }}</strong>
+            <small>{{ pct(item.ratio) }}</small>
+          </li>
+        </ul>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <h3>Rollout Flags</h3>
+          <span>{{ snapshot.rollout?.stage || 'OBSERVE' }}</span>
+        </div>
+        <ul class="breakdown-list" v-if="snapshot.rollout">
+          <li v-for="(enabled, key) in snapshot.rollout.flags" :key="key">
+            <span>{{ key }}</span>
+            <strong>{{ enabled ? 'ON' : 'OFF' }}</strong>
+            <small>{{ enabled ? 'enabled' : 'disabled' }}</small>
+          </li>
+        </ul>
       </article>
     </section>
 
@@ -172,6 +225,7 @@
             <th>方向</th>
             <th>策略</th>
             <th>状态</th>
+            <th>Origin</th>
             <th>DQ</th>
             <th>置信度</th>
             <th>预期</th>
@@ -184,6 +238,11 @@
             <td>{{ signal.direction }}</td>
             <td>{{ signal.strategy_name || 'N/A' }}</td>
             <td>{{ signal.status }}</td>
+            <td>
+              <span class="quality-pill" :class="originClass(signal.origin_mode)">
+                {{ signal.origin_mode || 'UNKNOWN' }}
+              </span>
+            </td>
             <td><span class="quality-pill" :class="dqClass(signal.data_quality)">{{ signal.data_quality }}</span></td>
             <td>{{ pct(signal.confidence) }}</td>
             <td>{{ pct(signal.expected_return) }}</td>
@@ -215,6 +274,21 @@ function signedPct(value: number) {
 
 function dqClass(value: string) {
   return `dq-${value.toLowerCase()}`
+}
+
+function originClass(value?: string | null) {
+  return `origin-${(value || 'unknown').toLowerCase()}`
+}
+
+function originHeadline(items?: Array<{ mode: string; count: number }>) {
+  if (!items?.length) return 'N/A'
+  const top = [...items].sort((a, b) => b.count - a.count)[0]
+  return `${top.mode} ${top.count}`
+}
+
+function originSecondary(items?: Array<{ mode: string; count: number; ratio: number }>) {
+  if (!items?.length) return '暂无样本'
+  return items.map((item) => `${item.mode} ${pct(item.ratio)}`).join(' · ')
 }
 
 async function loadSnapshot() {
@@ -292,10 +366,25 @@ onMounted(loadSnapshot)
 .dq-insufficient { background: rgba(133, 84, 18, 0.9); color: #fff8ea; }
 .dq-stale { background: rgba(120, 43, 42, 0.92); color: #fff1f1; }
 .dq-proxy { background: rgba(35, 82, 131, 0.92); color: #f0f7ff; }
+.origin-real { background: rgba(18, 98, 78, 0.9); color: #f5fbff; }
+.origin-synthetic { background: rgba(35, 82, 131, 0.92); color: #f0f7ff; }
+.origin-backfill { background: rgba(122, 78, 17, 0.92); color: #fff8ea; }
+.origin-unknown { background: rgba(82, 89, 104, 0.92); color: #f4f7fb; }
 .regime-box { display: grid; gap: 8px; margin-bottom: 16px; }
 .regime-box strong { font-size: 24px; }
 .regime-box p { margin: 0; color: rgba(220, 232, 255, 0.72); line-height: 1.6; }
 .tape-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-rollout { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.rollout-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(69, 170, 242, 0.16);
+  color: #dff2ff;
+  font-size: 12px;
+  font-weight: 700;
+}
 .compact-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .compact-table th, .compact-table td { padding: 10px 8px; border-bottom: 1px solid rgba(125, 184, 255, 0.08); text-align: left; }
 .compact-table th { color: rgba(220, 232, 255, 0.58); font-weight: 500; }
