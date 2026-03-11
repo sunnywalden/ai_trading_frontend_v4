@@ -2,7 +2,6 @@ import { render } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 
 import StrategyCard from '@/components/StrategyCard.vue'
-import i18n from '@/i18n'
 
 describe('StrategyCard', () => {
   it('shows pending-trigger copy when the strategy has no run history', () => {
@@ -17,9 +16,6 @@ describe('StrategyCard', () => {
           is_active: true,
           tags: ['mean_reversion']
         }
-      },
-      global: {
-        plugins: [i18n]
       }
     })
 

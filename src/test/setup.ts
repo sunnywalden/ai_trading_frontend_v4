@@ -30,6 +30,9 @@ const messages: Record<string, string> = {
   'auth.switch_language': '切换语言',
   'auth.token_expiring_soon': 'Token 即将过期',
   'nav.control_tower': 'AI 量化自主交易系统',
+  'execution_list.strategy_card.builtin': '内置策略',
+  'execution_list.strategy_card.not_run': '待触发',
+  'execution_list.strategy_card.details': '策略逻辑详情',
   'footer.version': '版本',
   'footer.description': '描述',
 };
