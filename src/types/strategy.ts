@@ -5,6 +5,8 @@ export interface Strategy {
   description?: string
   is_builtin: boolean
   is_active: boolean
+  auto_scan_enabled: boolean
+  auto_scan_priority: number
   tags?: string[]
   last_run_status?: string
   last_run_at?: string
@@ -38,6 +40,11 @@ export interface StrategyRunResponse {
   status: string
   run_id: string
   celery_task_id?: string
+}
+
+export interface StrategyAutoScanConfigRequest {
+  auto_scan_enabled: boolean
+  auto_scan_priority: number
 }
 
 export interface StrategySignal {
