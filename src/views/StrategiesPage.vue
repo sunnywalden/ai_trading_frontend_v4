@@ -81,15 +81,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import ETFWatchlistPanel from '@/components/ETFWatchlistPanel.vue'
+import StrategyCard from '@/components/StrategyCard.vue'
+import { useStrategyStore } from '@/stores/strategyStore'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useStrategyStore } from '@/stores/strategyStore'
-import StrategyCard from '@/components/StrategyCard.vue'
-import ETFWatchlistPanel from '@/components/ETFWatchlistPanel.vue'
-import type { Strategy } from '@/types/strategy'
+import { useRouter } from 'vue-router'
 
 const { t: $t } = useI18n()
 
@@ -178,6 +177,7 @@ const batchRun = async () => {
       })
       successCount.value++
     } catch (error) {
+      console.error(`Failed to run strategy ${strategyId}:`, error)
       failCount.value++
     }
   }
@@ -195,6 +195,8 @@ const batchRun = async () => {
       duration: 3000
     })
   }, 500)
+
+  await strategyStore.loadStrategies({ is_builtin: true, limit: 100 })
 
   selectedStrategies.value = []
 }

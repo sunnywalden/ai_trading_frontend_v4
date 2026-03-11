@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
 import { api } from '@/api/client'
 import type { Strategy, StrategyPerformance, StrategyRunRequest, StrategyRunResponse, StrategySignal } from '@/types/strategy'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export const useStrategyStore = defineStore('strategy', () => {
   // State
@@ -110,6 +110,16 @@ export const useStrategyStore = defineStore('strategy', () => {
         `/v1/strategies/${strategyId}/run`,
         request
       )
+      const triggeredAt = new Date().toISOString()
+      const strategy = strategies.value.find(s => s.id === strategyId)
+      if (strategy) {
+        strategy.last_run_status = 'QUEUED'
+        strategy.last_run_at = triggeredAt
+      }
+      if (currentStrategy.value?.id === strategyId) {
+        currentStrategy.value.last_run_status = 'QUEUED'
+        currentStrategy.value.last_run_at = triggeredAt
+      }
       return response.data
     } catch (error) {
       console.error('Failed to run strategy:', error)
