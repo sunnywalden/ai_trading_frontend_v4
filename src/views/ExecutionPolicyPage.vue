@@ -388,6 +388,35 @@ function severityClass(severity: string) {
   return `severity-${severity.toLowerCase()}`
 }
 
+function getRequestErrorMessage(err: any, scope: 'detail' | 'overview') {
+  const status = Number(err?.response?.status || 0)
+  const suffix = scope === 'detail' ? '明细' : '总览'
+
+  if (!status) {
+    return '执行策略接口暂时不可达；请检查当前站点与 API 域名配置、反向代理或跨域设置后重试。'
+  }
+
+  if (status === 401) {
+    return '登录状态已失效，请重新登录后再查看执行策略。'
+  }
+
+  if (status === 403) {
+    return '当前账号无权查看执行策略数据。'
+  }
+
+  if (status === 404) {
+    return scope === 'detail'
+      ? '未找到对应的执行意图，可能已被清理或当前筛选结果已变化。'
+      : '未找到可展示的执行策略数据。'
+  }
+
+  if (status >= 500) {
+    return `执行策略${suffix}暂时不可用，后端服务返回了 ${status} 错误。`
+  }
+
+  return `执行策略${suffix}加载失败（HTTP ${status}）。`
+}
+
 function clearFocus() {
   router.replace({ path: '/execution-policy' })
 }
@@ -430,8 +459,7 @@ async function selectIntent(intentId: number) {
     const { data } = await executionPolicyApi.getDetail(intentId)
     detail.value = data
   } catch (err) {
-    console.warn('[ExecutionPolicy] failed to load detail', err)
-    error.value = '执行策略明细加载失败，请稍后重试。'
+    error.value = getRequestErrorMessage(err, 'detail')
   } finally {
     detailLoading.value = false
   }
@@ -485,8 +513,7 @@ async function loadOverview(refreshDetail: boolean) {
       selectedIntentId.value = resolvedIntentId
     }
   } catch (err) {
-    console.warn('[ExecutionPolicy] failed to load overview', err)
-    error.value = '执行策略总览加载失败，请确认后端接口可用。'
+    error.value = getRequestErrorMessage(err, 'overview')
   } finally {
     loading.value = false
   }
