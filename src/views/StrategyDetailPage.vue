@@ -34,6 +34,14 @@
             {{ strategy.is_active ? '启用' : '禁用' }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item :label="$t('strategies.detail.auto_scan_enabled')">
+          <el-tag :type="strategy.auto_scan_enabled ? 'success' : 'info'">
+            {{ strategy.auto_scan_enabled ? $t('common.enabled') : $t('common.disabled') }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('strategies.detail.auto_scan_priority')">
+          {{ strategy.auto_scan_priority }}
+        </el-descriptions-item>
         <el-descriptions-item label="描述" :span="2">
           {{ strategy.description }}
         </el-descriptions-item>
@@ -43,6 +51,45 @@
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
+
+      <el-divider />
+
+      <div class="auto-scan-section">
+        <div class="section-header">
+          <span>{{ $t('strategies.detail.auto_scan_policy') }}</span>
+        </div>
+        <div class="auto-scan-form">
+          <el-form label-width="160px">
+            <el-form-item :label="$t('strategies.detail.auto_scan_enabled')">
+              <el-switch
+                v-model="autoScanForm.enabled"
+                :active-text="$t('common.enabled')"
+                :inactive-text="$t('common.disabled')"
+              />
+            </el-form-item>
+            <el-form-item :label="$t('strategies.detail.auto_scan_priority')">
+              <el-input-number
+                v-model="autoScanForm.priority"
+                :min="0"
+                :max="1000"
+                :step="10"
+              />
+            </el-form-item>
+          </el-form>
+          <div class="auto-scan-actions">
+            <span class="auto-scan-hint">
+              {{ $t('strategies.detail.auto_scan_hint') }}
+            </span>
+            <el-button
+              type="primary"
+              :loading="autoScanLoading"
+              @click="handleSaveAutoScan"
+            >
+              {{ $t('common.save') }}
+            </el-button>
+          </div>
+        </div>
+      </div>
 
       <el-divider />
 
@@ -181,13 +228,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
 import { useStrategyStore } from '@/stores/strategyStore'
+import type { StrategyPerformance, StrategySignal } from '@/types/strategy'
 import { formatClientDateTime } from '@/utils/datetime'
-import type { Strategy, StrategyPerformance, StrategySignal } from '@/types/strategy' 
+import { ElMessage } from 'element-plus'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
@@ -202,10 +249,15 @@ const signals = ref<StrategySignal[]>([])
 const loading = ref(false)
 const runLoading = ref(false)
 const saveLoading = ref(false)
+const autoScanLoading = ref(false)
 const showEditDialog = ref(false)
 
 const editForm = ref({
   params: {} as Record<string, any>
+})
+const autoScanForm = ref({
+  enabled: true,
+  priority: 100,
 })
 
 const goBack = () => {
@@ -259,6 +311,22 @@ const handleSaveParams = async () => {
   }
 }
 
+const handleSaveAutoScan = async () => {
+  autoScanLoading.value = true
+  try {
+    await strategyStore.updateAutoScanConfig(strategyId.value, {
+      auto_scan_enabled: autoScanForm.value.enabled,
+      auto_scan_priority: autoScanForm.value.priority,
+    })
+    ElMessage.success(t('strategies.detail.messages.auto_scan_save_success'))
+    await strategyStore.loadStrategy(strategyId.value)
+  } catch (error) {
+    ElMessage.error(t('strategies.detail.messages.auto_scan_save_fail'))
+  } finally {
+    autoScanLoading.value = false
+  }
+}
+
 const getActionType = (action: string) => {
   const typeMap: Record<string, string> = {
     'BUY': 'success',
@@ -296,6 +364,16 @@ watch(showEditDialog, (value) => {
   }
 })
 
+watch(strategy, (value) => {
+  if (!value) {
+    return
+  }
+  autoScanForm.value = {
+    enabled: value.auto_scan_enabled,
+    priority: value.auto_scan_priority,
+  }
+}, { immediate: true })
+
 onMounted(async () => {
   await strategyStore.loadStrategy(strategyId.value)
   await Promise.all([
@@ -325,8 +403,25 @@ onMounted(async () => {
 }
 
 .params-section,
-.risk-section {
+.risk-section,
+.auto-scan-section {
   margin-top: 16px;
+}
+
+.auto-scan-form {
+  margin-top: 16px;
+}
+
+.auto-scan-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auto-scan-hint {
+  color: #909399;
+  font-size: 13px;
 }
 
 .performance-card .metric-box {

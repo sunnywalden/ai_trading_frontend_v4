@@ -1,5 +1,12 @@
 import { api } from '@/api/client'
-import type { Strategy, StrategyPerformance, StrategyRunRequest, StrategyRunResponse, StrategySignal } from '@/types/strategy'
+import type {
+  Strategy,
+  StrategyAutoScanConfigRequest,
+  StrategyPerformance,
+  StrategyRunRequest,
+  StrategyRunResponse,
+  StrategySignal,
+} from '@/types/strategy'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -176,6 +183,34 @@ export const useStrategyStore = defineStore('strategy', () => {
     }
   }
 
+  async function updateAutoScanConfig(
+    strategyId: string,
+    config: StrategyAutoScanConfigRequest,
+  ) {
+    try {
+      const response = await api.patch<{ status: string; strategy: Strategy }>(
+        `/v1/strategies/${strategyId}/auto-scan`,
+        config,
+      )
+
+      const updated = response.data.strategy
+      const strategy = strategies.value.find(s => s.id === strategyId)
+      if (strategy) {
+        strategy.auto_scan_enabled = updated.auto_scan_enabled
+        strategy.auto_scan_priority = updated.auto_scan_priority
+      }
+      if (currentStrategy.value?.id === strategyId) {
+        currentStrategy.value.auto_scan_enabled = updated.auto_scan_enabled
+        currentStrategy.value.auto_scan_priority = updated.auto_scan_priority
+      }
+
+      return updated
+    } catch (error) {
+      console.error('Failed to update auto scan config:', error)
+      throw error
+    }
+  }
+
   async function getSignals(strategyId: string, limit: number = 20) {
     try {
       const response = await api.get<{
@@ -211,6 +246,7 @@ export const useStrategyStore = defineStore('strategy', () => {
     runStrategy,
     toggleStrategy,
     updateParams,
+    updateAutoScanConfig,
     getSignals
   }
 })
