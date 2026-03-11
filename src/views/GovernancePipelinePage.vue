@@ -5,6 +5,10 @@
         <p class="eyebrow">Research-to-Live Governance</p>
         <h2>Promotion Pipeline</h2>
         <p class="hero-copy">把 discovery、paper、shadow live、challenger、production 变成可审计的晋升链路，并明确 blocker 与 rollback 建议。</p>
+        <div v-if="snapshot?.rollout" class="hero-rollout">
+          <span class="stage-pill production">{{ snapshot.rollout.stage }}</span>
+          <small>{{ snapshot.rollout.recommended_next_step }}</small>
+        </div>
       </div>
       <button class="action-button" @click="loadSnapshot" :disabled="loading">{{ loading ? '刷新中...' : '刷新数据' }}</button>
     </section>
@@ -32,6 +36,46 @@
         <span>Production</span>
         <strong>{{ snapshot.funnel.production }}</strong>
       </article>
+      <article class="funnel-card">
+        <span>Hard Gate Ready</span>
+        <strong>{{ snapshot.hard_gate_candidates || 0 }}</strong>
+      </article>
+    </section>
+
+    <section v-if="snapshot?.rollout" class="content-grid">
+      <article class="panel-card">
+        <div class="panel-header">
+          <h3>Rollout Flags</h3>
+          <span>{{ snapshot.rollout.stage }}</span>
+        </div>
+        <div class="chip-group">
+          <span
+            v-for="(enabled, key) in snapshot.rollout.flags"
+            :key="key"
+            class="stage-pill"
+            :class="enabled ? 'production' : 'discovery'"
+          >
+            {{ key }} · {{ enabled ? 'ON' : 'OFF' }}
+          </span>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <h3>晋升节奏</h3>
+          <span>Hard gate candidates</span>
+        </div>
+        <div class="insight-metrics">
+          <div>
+            <strong>{{ snapshot.hard_gate_candidates || 0 }}</strong>
+            <span>可进硬门</span>
+          </div>
+          <div>
+            <strong>{{ snapshot.pipeline.filter((item) => item.hard_gate_ready).length }}</strong>
+            <span>当前列表命中</span>
+          </div>
+        </div>
+      </article>
     </section>
 
     <section v-if="snapshot" class="content-grid">
@@ -49,6 +93,7 @@
               <th>运行次数</th>
               <th>命中率</th>
               <th>Evidence</th>
+              <th>Gate</th>
               <th>Blockers</th>
               <th>Rollback</th>
             </tr>
@@ -69,6 +114,11 @@
                     {{ key }}
                   </span>
                 </div>
+              </td>
+              <td>
+                <span class="stage-pill" :class="item.hard_gate_ready ? 'production' : 'paper'">
+                  {{ item.hard_gate_ready ? 'READY' : 'PENDING' }}
+                </span>
               </td>
               <td>
                 <div class="chip-group">
@@ -201,6 +251,7 @@ onMounted(loadSnapshot)
 .eyebrow { margin: 0 0 8px; color: #ffbe76; text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; }
 .hero-card h2 { margin: 0 0 8px; font-size: 32px; }
 .hero-copy { margin: 0; color: rgba(246, 232, 216, 0.78); line-height: 1.6; max-width: 720px; }
+.hero-rollout { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .action-button {
   min-height: 42px;
   border: none;

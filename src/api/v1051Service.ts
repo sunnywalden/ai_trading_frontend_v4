@@ -28,6 +28,30 @@ export interface AlphaLabBucketBreakdown {
 export interface AlphaLabSnapshot {
   lookback_days: number
   summary: AlphaLabSummary
+  origin_breakdown?: Array<{
+    mode: string
+    count: number
+    ratio: number
+  }>
+  signal_integrity?: {
+    sample_size: number
+    origin_breakdown: Array<{
+      mode: string
+      count: number
+      ratio: number
+    }>
+    origin_known: number
+    origin_known_ratio: number
+    canonical_payload_ready: number
+    canonical_payload_ratio: number
+    native_transition_ready: number
+    native_transition_ratio: number
+  }
+  rollout?: {
+    stage: string
+    flags: Record<string, boolean>
+    recommended_next_step?: string
+  }
   current_regime: {
     regime: string
     confidence: number
@@ -56,6 +80,11 @@ export interface AlphaLabSnapshot {
     avg_actual_return: number
     alpha_gap: number
     avg_confidence: number
+    origin_breakdown?: Array<{
+      mode: string
+      count: number
+      ratio: number
+    }>
     regime_breakdown: AlphaLabBucketBreakdown[]
     capacity_breakdown: AlphaLabBucketBreakdown[]
   }>
@@ -95,12 +124,20 @@ export interface AlphaLabSnapshot {
     confidence: number
     expected_return: number
     actual_return?: number | null
+    origin_mode?: string
+    signal_payload_version?: string | null
+    signal_transition_count?: number
     data_quality: DataQuality
     generated_at: string | null
   }>
 }
 
 export interface GovernanceSnapshot {
+  rollout?: {
+    stage: string
+    flags: Record<string, boolean>
+    recommended_next_step?: string
+  }
   funnel: {
     discovery: number
     paper: number
@@ -128,11 +165,13 @@ export interface GovernanceSnapshot {
     }
     promotion_blockers: string[]
     rollback_suggestion: string
+    hard_gate_ready?: boolean
     hit_rate: number
     avg_signal_strength: number
     scanned_total: number
     hits: number
   }>
+  hard_gate_candidates?: number
   experiments: Array<{
     id: number
     experiment_name: string

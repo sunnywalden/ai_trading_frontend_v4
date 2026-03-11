@@ -25,6 +25,26 @@ export interface AutonomyStatus {
   revoke_window_minutes: number
   signal_pipeline?: Record<string, number>  // 各状态信号数量
   failed_trades_today?: number
+  positions_source?: string | null
+  positions_count_truth?: number
+  audit_source?: string | null
+  regime_truth?: {
+    regime: string
+    confidence: number
+    source: string
+  }
+  rollout?: {
+    stage: string
+    flags: Record<string, boolean>
+  }
+  signal_integrity?: {
+    sample_size: number
+    origin_counts: Record<string, number>
+    canonical_payload_ready: number
+    canonical_payload_ratio: number
+    native_transition_ready: number
+    native_transition_ratio: number
+  }
   cooldown_symbols?: CooldownSymbol[]
   cooldown_minutes?: number
   closing_flow?: {
@@ -78,6 +98,12 @@ export interface SignalPipelineItem {
   funnel_rejection_reason?: string | null
   rejection_stage?: string | null
   rejection_detail?: string | null
+  signal_origin_mode?: string | null
+  signal_payload_version?: string | null
+  signal_transition_count?: number
+  signal_transition_source?: string | null
+  latest_transition_to_status?: string | null
+  signal_integrity_ready?: boolean
 }
 
 export interface SignalGenerationStrategyRun {
@@ -180,6 +206,9 @@ export interface AuditLogEntry {
   signal_quality_tier?: 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | string | null
   signal_quality_score?: number | null
   signal_quality_quota_exempt?: boolean
+  signal_origin_mode?: string | null
+  signal_payload_version?: string | null
+  signal_transition_count?: number
   created_at: string
 }
 

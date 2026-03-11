@@ -28,6 +28,31 @@ export interface ExecutionControlState {
   mode: 'OBSERVE_ONLY' | 'HARD_CONTROL'
 }
 
+export interface ExecutionPolicyRollout {
+  stage: string
+  flags: Record<string, boolean>
+  policy_source: string
+}
+
+export interface ExecutionPersistentProfile {
+  id: number
+  account_id: string
+  symbol: string
+  side: string
+  urgency_bucket: string
+  algo_type: string
+  sample_size: number
+  avg_total_is_bps: number
+  avg_fill_rate: number
+  avg_quality_score: number
+  feedback_bias: string
+  recommended_algo?: string | null
+  limit_offset_bps: number
+  participation_rate_multiplier: number
+  pressure_high: boolean
+  last_feedback_at?: string | null
+}
+
 export interface ExecutionPolicyOverviewItem {
   intent_id: number
   intent_key: string
@@ -49,13 +74,17 @@ export interface ExecutionPolicyOverviewResponse {
     high_urgency: number
     avg_slippage_budget_bps: number
     avg_realized_is_bps: number
+    persistent_profile_matches?: number
+    persistent_profile_coverage?: number
   }
   policies: ExecutionPolicyOverviewItem[]
+  persistent_profiles?: ExecutionPersistentProfile[]
   lookup?: {
     requested_order_id: string
     match_mode: 'order_id' | 'fallback_filters' | 'not_found'
   } | null
   control_state: ExecutionControlState
+  rollout?: ExecutionPolicyRollout
 }
 
 export interface ExecutionPolicyTimelineItem {
@@ -87,6 +116,20 @@ export interface ExecutionPolicyDetailResponse {
   policy: ExecutionPolicySnapshot
   pretrade_cost: ExecutionPretradeCost
   control_state: ExecutionControlState
+  policy_source?: string
+  feedback_profile?: {
+    sample_size: number
+    avg_total_is_bps: number
+    avg_fill_rate: number
+    avg_quality_score: number
+    feedback_bias: string
+    recommended_algo?: string | null
+    limit_offset_bps: number
+    participation_rate_multiplier: number
+    pressure_high: boolean
+    source?: string
+  }
+  persistent_profile?: ExecutionPersistentProfile | null
   timeline: ExecutionPolicyTimelineItem[]
   exceptions: ExecutionPolicyException[]
   execution_result: {
@@ -100,6 +143,7 @@ export interface ExecutionPolicyDetailResponse {
     mid_price_at_order: number
     vwap_reference: number
   } | null
+  rollout?: ExecutionPolicyRollout
 }
 
 export const executionPolicyApi = {
