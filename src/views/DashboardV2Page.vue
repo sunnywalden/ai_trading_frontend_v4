@@ -36,7 +36,7 @@
           <svg :class="{ spinning: store.loading }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
         </button>
         <router-link to="/autonomy" class="banner-link">{{ $t('nav.autonomy') }} →</router-link>
-        <router-link to="/system-monitor" class="banner-link">AI 洞察 & 系统 →</router-link>
+        <router-link to="/system-monitor" class="banner-link">系统监控 →</router-link>
       </div>
     </div>
 
@@ -202,12 +202,13 @@
       <section class="section-block">
         <div class="section-head">
           <div>
-            <div class="section-eyebrow">AI INSIGHTS & SYSTEM</div>
-            <h2>AI 洞察 & 系统</h2>
-            <p>聚焦洞察、API 健康、控制面状态与任务编排入口，不再混入研究/行情杂项。</p>
+            <div class="section-eyebrow">SYSTEM OPS</div>
+            <h2>系统监控分区</h2>
+            <p>拆分为系统监控、AI 安全、任务管理三个清晰二级页面，同时保留首页快照。</p>
           </div>
           <div class="section-actions">
-            <router-link to="/system-monitor" class="section-link">系统观测</router-link>
+            <router-link to="/system-monitor" class="section-link">系统监控</router-link>
+            <router-link to="/live-safety" class="section-link">AI 安全</router-link>
             <router-link to="/task-management" class="section-link">任务管理</router-link>
           </div>
         </div>
@@ -239,7 +240,7 @@
           <div class="card insights-card">
             <div class="card-header">
               <h3><span class="icon">💡</span> 核心 AI 洞察</h3>
-              <router-link to="/system-monitor" class="card-link">更多系统洞察 →</router-link>
+              <router-link to="/system-monitor" class="card-link">系统监控 →</router-link>
             </div>
             <div v-if="topInsights.length" class="insights-list">
               <AIInsightCard v-for="insight in topInsights" :key="`${insight.title}-${insight.created_at}`" :insight="insight" />
@@ -316,9 +317,9 @@ const coreLinks = [
   { to: '/autonomy', title: '自主中枢', desc: '信号、决策与执行控制平面', icon: '🤖' },
   { to: '/positions', title: '持仓监控', desc: '仓位、集中度与风险暴露', icon: '📊' },
   { to: '/trade-lifecycle', title: '生命周期', desc: 'Plan / Position FSM 与异常跳转', icon: '🧬' },
-  { to: '/system-monitor', title: 'AI 洞察 & 系统', desc: '服务健康、数据流与 API 观测', icon: '🖥️' },
+  { to: '/system-monitor', title: '系统监控', desc: '服务健康、数据流、生命周期与 API 观测', icon: '🖥️' },
   { to: '/task-management', title: '任务管理', desc: '调度器总览与动态任务配置', icon: '⚙️' },
-  { to: '/live-safety', title: 'AI 安全', desc: '节流建议、退化与数据陈旧', icon: '🛡️' },
+  { to: '/live-safety', title: 'AI 安全', desc: '节流建议、模型退化与数据陈旧', icon: '🛡️' },
 ] as const
 
 const topInsights = computed(() => store.fullData?.ai_insights.slice(0, 3) ?? [])
