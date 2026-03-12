@@ -149,12 +149,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '告警中心' }
   },
 
-  // ── AI 洞察 & 系统 ─────────────────────────────────────────
+  // ── 系统监控 / AI 安全 / 任务管理 ──────────────────────────
   {
     path: '/system-monitor',
     name: 'SystemMonitor',
     component: () => import('../views/SystemMonitorPage.vue'),
-    meta: { title: 'AI 洞察 & 系统' }
+    meta: { title: '系统监控' }
   },
   {
     path: '/task-management',
@@ -256,7 +256,7 @@ const routes: RouteRecordRaw[] = [
     path: '/live-safety',
     name: 'LiveSafety',
     component: () => import('../views/LiveSafetyPage.vue'),
-    meta: { title: 'Live Safety Guard' }
+    meta: { title: 'AI 安全' }
   },
 
   // ── V10.4.2 Signal Watchtower 信号哨所 ────────────────────

@@ -1,9 +1,11 @@
 <template>
   <div class="page-container">
+    <SystemOperationsNav />
+
     <section class="section-header">
       <div>
-        <h2>Live Safety Guard</h2>
-        <p>模型退化监控、数据陈旧矩阵与自主度节流 — V10.5.1 M4</p>
+        <h2>AI 安全</h2>
+        <p>模型退化监控、数据陈旧矩阵与自主度节流；作为系统监控体系的独立二级页面运行。</p>
       </div>
       <div class="header-actions">
         <button
@@ -178,6 +180,7 @@
 <script setup lang="ts">
 import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '@/api/liveSafetyService'
 import { regimeApi } from '@/api/regimeService'
+import SystemOperationsNav from '@/components/SystemOperationsNav.vue'
 import { CLIENT_TIME_ZONE, parseBackendDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref } from 'vue'
 

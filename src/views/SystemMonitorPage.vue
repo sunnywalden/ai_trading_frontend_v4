@@ -1,9 +1,11 @@
 <template>
   <div class="page-container">
+    <SystemOperationsNav />
+
     <section class="section-header">
       <div>
-        <h2>AI 洞察 & 系统</h2>
-        <p>聚焦服务健康、交易生命周期、主数据流、API 配额与 AI 安全；任务管理已拆分为独立页面。</p>
+        <h2>系统监控</h2>
+        <p>聚焦服务健康、交易生命周期、主数据流与 API 监控；AI 安全与任务管理已拆分为独立二级页面。</p>
       </div>
       <div class="header-actions">
         <router-link to="/task-management" class="header-link-button">⚙️ 任务管理</router-link>
@@ -745,6 +747,7 @@ import {
 import AlertsPanel from '../components/AlertsPanel.vue';
 import ApiProviderCard from '../components/ApiProviderCard.vue';
 import HealthStatusBar from '../components/HealthStatusBar.vue';
+import SystemOperationsNav from '../components/SystemOperationsNav.vue';
 import SystemHealthCard from '../components/SystemHealthCard.vue';
 import { useWebSocketStore } from '../stores/websocket';
 import type {

@@ -1,9 +1,11 @@
 <template>
   <div class="pe-page">
+    <SystemOperationsNav />
+
     <div class="pe-header">
       <div class="header-left">
         <h2 class="page-title"><span class="icon">⚙️</span> {{ $t('nav.task_management') }}</h2>
-        <p class="page-subtitle">统一查看 APScheduler 真实任务，并管理可配置的业务自动触发任务</p>
+        <p class="page-subtitle">统一查看 APScheduler 真实任务，并管理可配置的业务自动触发任务；作为系统监控体系的独立二级页面。</p>
       </div>
       <div class="header-right">
         <button
@@ -270,6 +272,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import SystemOperationsNav from '@/components/SystemOperationsNav.vue'
 import { formatClientDateTime } from '@/utils/datetime'
 import {
   createTaskTriggerConfig,
