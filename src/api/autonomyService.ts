@@ -59,6 +59,14 @@ export interface AutonomyStatus {
     pending_elite_signals: number
     quota_exempt_signals_today: number
   }
+  gross_exposure_allocator?: {
+    current_regime: string
+    effective_target_gross_exposure_pct: number
+    target_gross_exposure_by_regime: Record<string, number>
+    current_gross_exposure_pct?: number
+    distance_to_target_gross_exposure_pct?: number
+    remaining_to_max_gross_exposure_pct?: number
+  }
 }
 
 export interface SignalPipelineItem {
@@ -91,6 +99,16 @@ export interface SignalPipelineItem {
   selection_mode?: string | null
   fallback_reason?: string | null
   fallback_to_default_symbols?: boolean | null
+  gross_exposure_allocator?: {
+    regime: string
+    base_target: number
+    target_cap: number
+    max_cap: number
+    leverage_multiplier: number
+    is_cap_hit: boolean
+    is_max_hit: boolean
+    reason?: string | null
+  }
   executed_at: string | null
   created_at: string
   funnel_result?: 'PASSED' | 'REJECTED' | null
