@@ -90,6 +90,25 @@
         <div v-else class="info-message">暂无健康检查数据（Job Watchdog 尚未回传最新快照）</div>
       </section>
 
+      <section v-if="tigerOhlcvGateway" class="monitor-section">
+        <div class="sub-header">
+          <h3 class="section-title">📉 Tiger 历史行情通道</h3>
+          <span class="status-pill" :class="statusClass(tigerOhlcvGateway.status)">
+            {{ tigerOhlcvGateway.status }}
+          </span>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-title">当前状态</div>
+          <p class="inline-note">{{ tigerGatewayMessage(tigerOhlcvGateway) }}</p>
+          <ul class="detail-list stack-list">
+            <li><strong>Service：</strong>{{ tigerOhlcvGateway.service_label }}</li>
+            <li><strong>Code：</strong>{{ tigerOhlcvGateway.last_error_code || 'HEALTHY' }}</li>
+            <li><strong>Tags：</strong>{{ joinList(tigerOhlcvGateway.tags) }}</li>
+            <li><strong>最近恢复：</strong>{{ formatDateTime(tigerOhlcvGateway.last_recovered_at) }}</li>
+          </ul>
+        </div>
+      </section>
+
       <section class="monitor-section">
         <div class="sub-header">
           <h3 class="section-title">🧩 模块与细粒度服务状态</h3>
@@ -830,11 +849,20 @@ const summaryItems = computed(() => {
     ? (() => {
     const critical = serviceOverview.value.services.filter(item => item.status === 'CRITICAL').length
     const degraded = serviceOverview.value.services.filter(item => item.degraded).length
-      return [{
+      const items = [{
         label: '核心模块健康',
         value: `${serviceOverview.value.modules.length} 模块`,
         sub: `${critical} critical / ${degraded} degraded`,
       }]
+      const tigerService = serviceOverview.value.services.find(item => item.service_key === 'tiger_ohlcv_gateway')
+      if (tigerService && (tigerService.degraded || tigerService.status !== 'HEALTHY')) {
+        items.push({
+          label: 'Tiger OHLCV',
+          value: tigerService.status,
+          sub: tigerGatewayMessage(tigerService),
+        })
+      }
+      return items
     })()
     : []
 
@@ -1140,6 +1168,14 @@ function joinList(items: string[]): string {
 
 function moduleLabel(moduleKey: string): string {
   return serviceOverview.value?.modules.find(item => item.module_key === moduleKey)?.module_label || moduleKey
+}
+
+const tigerOhlcvGateway = computed(() => {
+  return serviceOverview.value?.services.find(item => item.service_key === 'tiger_ohlcv_gateway') || null
+})
+
+function tigerGatewayMessage(service: ServiceOverviewResponse['services'][number]): string {
+  return service.last_error_message || 'Tiger OHLCV 主路径健康，当前未处于冷却状态。'
 }
 
 function pipelineStageTone(stage: LifecycleOverviewResponse['pipeline'][number]): string {
@@ -1973,6 +2009,24 @@ onMounted(() => {
 .detail-card-title {
   margin-bottom: 12px;
   font-size: 0.9rem;
+}
+
+.inline-note {
+  margin: 0 0 12px;
+  color: #cbd5e1;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.stack-list {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stack-list li {
+  justify-content: flex-start;
+  color: #dbe4f0;
 }
 
 .detail-list,
