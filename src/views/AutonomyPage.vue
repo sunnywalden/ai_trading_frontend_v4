@@ -319,6 +319,54 @@
       </div>
     </div>
 
+    <div v-if="status?.gross_exposure_allocator" class="card exposure-allocator-card" style="margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div>
+          <h3 style="margin:0 0 4px;">⚖️ 杠杆与敞口管理 (Gross Exposure)</h3>
+          <p style="margin:0; font-size:12px; color:#8b97ad;">
+            基于当前体制 <b>{{ status.gross_exposure_allocator.current_regime }}</b> 的动态目标：<b>{{ (status.gross_exposure_allocator.effective_target_gross_exposure_pct * 100).toFixed(0) }}%</b>。
+            当实际敞口接近目标或最大限制时，开仓将被自动压减。
+          </p>
+        </div>
+        <div style="display:flex; gap: 8px;">
+          <span class="quality-badge quality-badge-high" v-if="status.gross_exposure_allocator.current_gross_exposure_pct != null">
+            当前 {{ (status.gross_exposure_allocator.current_gross_exposure_pct * 100).toFixed(1) }}%
+          </span>
+          <span
+            class="quality-badge"
+            :class="(status.gross_exposure_allocator.distance_to_target_gross_exposure_pct ?? 0) > 0.05 ? 'quality-badge-medium' : 'quality-badge-elite'"
+            v-if="status.gross_exposure_allocator.distance_to_target_gross_exposure_pct != null"
+          >
+            距目标 {{ (status.gross_exposure_allocator.distance_to_target_gross_exposure_pct * 100).toFixed(1) }}%
+          </span>
+        </div>
+      </div>
+      <div class="closing-flow-grid">
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">当前体制</div>
+          <div class="closing-flow-value" style="font-size: 16px; color: #6ea8ff;">{{ status.gross_exposure_allocator.current_regime }}</div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">目标敞口</div>
+          <div class="closing-flow-value text-success">{{ (status.gross_exposure_allocator.effective_target_gross_exposure_pct * 100).toFixed(0) }}%</div>
+        </div>
+        <div class="closing-flow-metric" v-if="status.gross_exposure_allocator.remaining_to_max_gross_exposure_pct != null">
+          <div class="closing-flow-label">剩余最大额度</div>
+          <div class="closing-flow-value" :class="(status.gross_exposure_allocator.remaining_to_max_gross_exposure_pct ?? 0) < 0.1 ? 'text-danger' : 'text-warning'">
+            {{ (status.gross_exposure_allocator.remaining_to_max_gross_exposure_pct * 100).toFixed(1) }}%
+          </div>
+        </div>
+        <div class="closing-flow-metric">
+          <div class="closing-flow-label">体制映射配置</div>
+          <div class="closing-flow-value" style="font-size: 11px; line-height: 1.2; color: #888;">
+            <div v-for="(val, reg) in status.gross_exposure_allocator.target_gross_exposure_by_regime" :key="reg">
+              {{ reg }}: {{ (val * 100).toFixed(0) }}%
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 信号流水线 -->
     <div class="card" style="margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -380,6 +428,18 @@
                 :title="formatUniverseMeta(sig)"
               >
                 {{ formatUniverseMeta(sig) }}
+              </div>
+              <div v-if="sig.gross_exposure_allocator" style="margin-top: 6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span
+                  class="mini-note"
+                  :style="{ color: sig.gross_exposure_allocator.is_cap_hit ? '#ff4d4d' : '#00ff88', borderColor: sig.gross_exposure_allocator.is_cap_hit ? '#ff4d4d44' : '#00ff8844' }"
+                  :title="`Gross Allocator: ${sig.gross_exposure_allocator.reason || 'No adjustments'}`"
+                >
+                  ⚖️ {{ (sig.gross_exposure_allocator.leverage_multiplier * 100).toFixed(0) }}% 敞口压减
+                </span>
+                <span v-if="sig.gross_exposure_allocator.is_cap_hit || sig.gross_exposure_allocator.is_max_hit" class="mini-note" style="color: #ff4d4d;">
+                  已触达{{ sig.gross_exposure_allocator.is_max_hit ? '硬上限' : '体制软上限' }}
+                </span>
               </div>
             </td>
             <td>{{ sig.direction ?? '—' }}</td>
