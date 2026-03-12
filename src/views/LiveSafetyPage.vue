@@ -52,6 +52,20 @@
       </div>
     </div>
 
+    <div v-if="tigerGatewayService" class="card tiger-status-card" :class="tigerGatewayService.degraded ? 'tiger-degraded' : 'tiger-healthy'">
+      <div class="tiger-card-head">
+        <div>
+          <h3>📡 Tiger 历史行情通道</h3>
+          <p>{{ tigerGatewayService.last_error_message || 'Tiger OHLCV 主路径健康，当前未处于冷却状态。' }}</p>
+        </div>
+        <span class="sev-badge" :class="`badge-sev-${tigerBadgeClass}`">{{ tigerGatewayService.status }}</span>
+      </div>
+      <div class="tiger-meta-row">
+        <span><strong>Code:</strong> {{ tigerGatewayService.last_error_code || 'HEALTHY' }}</span>
+        <span><strong>最近恢复:</strong> {{ tigerGatewayService.last_recovered_at ? fmtTime(tigerGatewayService.last_recovered_at) : '—' }}</span>
+      </div>
+    </div>
+
     <!-- Tab 切换 -->
     <div class="tab-bar">
       <button :class="['tab-btn', { active: tab === 'degradation' }]" @click="tab = 'degradation'">
@@ -179,8 +193,10 @@
 
 <script setup lang="ts">
 import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '@/api/liveSafetyService'
+import { fetchSystemServiceOverview } from '@/api/systemMonitorService'
 import { regimeApi } from '@/api/regimeService'
 import SystemOperationsNav from '@/components/SystemOperationsNav.vue'
+import type { ServiceHealthItem } from '@/types/systemMonitor'
 import { CLIENT_TIME_ZONE, parseBackendDateTime } from '@/utils/datetime'
 import { computed, onMounted, ref } from 'vue'
 
@@ -193,6 +209,7 @@ const classifyResult = ref<{ ok: boolean; message: string } | null>(null)
 const degradation = ref<DegradationReport | null>(null)
 const freshness = ref<FreshnessMatrix | null>(null)
 const throttle = ref<ThrottleStatus | null>(null)
+const tigerGatewayService = ref<ServiceHealthItem | null>(null)
 
 const bannerClass = computed(() => {
   if (!throttle.value) return 'ok'
@@ -209,6 +226,13 @@ const bannerIcon = computed(() => {
   if (level === 'ADVISORY') return '🔴'
   if (level === 'SEMI') return '🟡'
   return '🟢'
+})
+
+const tigerBadgeClass = computed(() => {
+  const status = tigerGatewayService.value?.status || 'OK'
+  if (status === 'CRITICAL') return 'critical'
+  if (status === 'WARN') return 'warning'
+  return 'ok'
 })
 
 function fmtTime(iso: string) {
@@ -283,14 +307,16 @@ async function loadAll() {
   loading.value = true
   error.value = null
   try {
-    const [deg, fresh, thr] = await Promise.all([
+    const [deg, fresh, thr, services] = await Promise.all([
       liveSafetyApi.getDegradation(),
       liveSafetyApi.getFreshness(),
       liveSafetyApi.getThrottle(),
+      fetchSystemServiceOverview({ window_minutes: 60 }),
     ])
     degradation.value = deg.data
     freshness.value = fresh.data
     throttle.value = thr.data
+    tigerGatewayService.value = services.services.find(item => item.service_key === 'tiger_ohlcv_gateway') || null
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? e?.message ?? '加载失败'
   } finally {
@@ -328,6 +354,13 @@ onMounted(loadAll)
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .error-message { color: #ff7675; margin-top: 16px; font-size: 13px; }
 .empty-state { color: #666; text-align: center; padding: 32px; font-size: 14px; }
+.tiger-status-card { margin-top: 16px; }
+.tiger-degraded { border-color: rgba(255, 193, 7, 0.35); }
+.tiger-healthy { border-color: rgba(76,175,80,0.28); }
+.tiger-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+.tiger-card-head h3 { margin: 0 0 6px; font-size: 16px; }
+.tiger-card-head p { margin: 0; color: #9aa4bf; font-size: 13px; line-height: 1.6; }
+.tiger-meta-row { display: flex; gap: 16px; flex-wrap: wrap; color: #c9d3ea; font-size: 12px; }
 
 /* ─── Throttle Banner ────────────────────────────────────────────────────── */
 .throttle-banner { display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; border-radius: 8px; border: 1px solid; margin-bottom: 4px; }
