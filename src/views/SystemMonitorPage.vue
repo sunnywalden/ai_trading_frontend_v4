@@ -8,7 +8,6 @@
         <p>聚焦服务健康、交易生命周期、主数据流与 API 监控；AI 安全与任务管理已拆分为独立二级页面。</p>
       </div>
       <div class="header-actions">
-        <router-link to="/task-management" class="header-link-button">⚙️ 任务管理</router-link>
         <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
           {{ isRefreshing ? '刷新中...' : '🔄 刷新' }}
         </button>
@@ -32,12 +31,8 @@
     </section>
 
     <section class="ops-shortcuts">
-      <router-link to="/task-management" class="ops-shortcut-card">
-        <div class="ops-shortcut-title">⚙️ 任务管理</div>
-        <div class="ops-shortcut-sub">调度器任务、动态配置与业务自动触发任务已迁移为独立页面统一管理。</div>
-      </router-link>
       <router-link to="/live-safety" class="ops-shortcut-card">
-        <div class="ops-shortcut-title">🛡️ Live Safety Guard</div>
+        <div class="ops-shortcut-title">🛡️ AI 安全</div>
         <div class="ops-shortcut-sub">模型退化、数据陈旧与自主度节流建议可在独立面板中查看完整细节。</div>
       </router-link>
     </section>
@@ -1386,27 +1381,6 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.header-link-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  background: rgba(14, 165, 233, 0.12);
-  color: #e0f2fe;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.header-link-button:hover {
-  border-color: rgba(56, 189, 248, 0.55);
-  background: rgba(14, 165, 233, 0.2);
-  transform: translateY(-1px);
 }
 
 .section-header h2 {
