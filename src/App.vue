@@ -200,7 +200,8 @@ const navGroups = computed<NavGroup[]>(() => [
       { path: '/live-safety',        label: 'Live Safety Guard',      icon: '🔒' },
       { path: '/regime',             label: t('nav.regime'),          icon: '🌊' },
       { path: '/alerts',             label: t('nav.alerts'),          icon: '🔔' },
-      { path: '/system-monitor',     label: '系统监控',               icon: '🖥️' },
+      { path: '/system-monitor',     label: 'AI 洞察 & 系统',         icon: '🖥️' },
+      { path: '/task-management',    label: '任务管理',               icon: '⚙️' },
     ],
   },
 ])

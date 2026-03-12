@@ -2,12 +2,15 @@
   <div class="page-container">
     <section class="section-header">
       <div>
-        <h2>系统监控</h2>
-        <p>服务健康、交易生命周期、主数据流、API 配额与任务执行的一站式作战视图</p>
+        <h2>AI 洞察 & 系统</h2>
+        <p>聚焦服务健康、交易生命周期、主数据流、API 配额与 AI 安全；任务管理已拆分为独立页面。</p>
       </div>
-      <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
-        {{ isRefreshing ? '刷新中...' : '🔄 刷新' }}
-      </button>
+      <div class="header-actions">
+        <router-link to="/task-management" class="header-link-button">⚙️ 任务管理</router-link>
+        <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
+          {{ isRefreshing ? '刷新中...' : '🔄 刷新' }}
+        </button>
+      </div>
     </section>
 
     <div class="tab-bar">
@@ -15,7 +18,6 @@
       <button :class="['tab-btn', { active: tab === 'lifecycle' }]" @click="tab = 'lifecycle'">🧬 生命周期</button>
       <button :class="['tab-btn', { active: tab === 'data-flow' }]" @click="tab = 'data-flow'">🔀 数据流</button>
       <button :class="['tab-btn', { active: tab === 'api' }]" @click="tab = 'api'">📡 API 监控</button>
-      <button :class="['tab-btn', { active: tab === 'tasks' }]" @click="tab = 'tasks'">📋 任务管理</button>
       <button :class="['tab-btn', { active: tab === 'live-safety' }]" @click="tab = 'live-safety'">🛡️ AI 安全</button>
     </div>
 
@@ -25,6 +27,17 @@
         <div class="summary-value">{{ item.value }}</div>
         <div class="summary-sub">{{ item.sub }}</div>
       </article>
+    </section>
+
+    <section class="ops-shortcuts">
+      <router-link to="/task-management" class="ops-shortcut-card">
+        <div class="ops-shortcut-title">⚙️ 任务管理</div>
+        <div class="ops-shortcut-sub">调度器任务、动态配置与业务自动触发任务已迁移为独立页面统一管理。</div>
+      </router-link>
+      <router-link to="/live-safety" class="ops-shortcut-card">
+        <div class="ops-shortcut-title">🛡️ Live Safety Guard</div>
+        <div class="ops-shortcut-sub">模型退化、数据陈旧与自主度节流建议可在独立面板中查看完整细节。</div>
+      </router-link>
     </section>
 
     <div v-if="tab === 'health'" class="tab-content">
@@ -587,10 +600,6 @@
       <p v-else class="info-message">暂无监控数据</p>
     </div>
 
-    <div v-if="tab === 'tasks'" class="tab-content">
-      <TaskManagementPage />
-    </div>
-
     <!-- V10.5.1: AI 安全 Tab -->
     <div v-if="tab === 'live-safety'" class="tab-content">
       <section class="monitor-section">
@@ -645,19 +654,19 @@
           <div class="module-grid">
             <article
               v-for="m in lsDegradation.metrics"
-              :key="m.metric_name"
+              :key="m.metric_type"
               class="module-card"
               :class="m.severity === 'OK' ? 'tone-healthy' : m.severity === 'WARNING' ? 'tone-warn' : 'tone-critical'"
             >
               <div class="module-head">
                 <div>
-                  <div class="module-title">{{ m.metric_name }}</div>
+                  <div class="module-title">{{ m.metric_type }}</div>
                   <div class="module-sub">当前 {{ m.current_value?.toFixed(3) ?? '—' }} / 基准 {{ m.baseline_value?.toFixed(3) ?? '—' }}</div>
                 </div>
                 <span class="status-pill" :class="statusClass(m.severity)">{{ m.severity }}</span>
               </div>
               <div class="module-metrics">
-                <span>漂移 {{ m.drift?.toFixed(3) ?? '—' }}</span>
+                <span>漂移 {{ m.drift_magnitude?.toFixed(3) ?? '—' }}</span>
                 <span>方向 {{ m.drift_direction ?? '—' }}</span>
               </div>
             </article>
@@ -711,8 +720,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   fetchAutonomyHealth,
   fetchLlmStats,
@@ -747,11 +756,13 @@ import type {
   ServiceDetailResponse,
   ServiceOverviewResponse,
 } from '../types/systemMonitor';
-import TaskManagementPage from './TaskManagementPage.vue';
 
 const wsStore = useWebSocketStore()
+const route = useRoute()
 const router = useRouter()
-const tab = ref<'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks' | 'live-safety'>('health')
+type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'live-safety'
+const monitorTabs: MonitorTabKey[] = ['health', 'lifecycle', 'data-flow', 'api', 'live-safety']
+const tab = ref<MonitorTabKey>('health')
 
 const loadingHealth = ref(false)
 const healthError = ref('')
@@ -984,8 +995,6 @@ function flowActionToneClass(node: DataFlowDetailResponse['nodes'][number]): str
   if ((node.queue_depth ?? 0) > 0) return 'action-active'
   return 'action-idle'
 }
-
-type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'tasks' | 'live-safety'
 
 type FlowNodeJumpTarget = {
   label: string
@@ -1320,7 +1329,24 @@ async function onRefreshAll() {
   }, 2000)
 }
 
+function syncTabFromRoute() {
+  const queryTab = String(route.query.tab || '').toLowerCase()
+  if (!queryTab) return
+
+  if (queryTab === 'tasks') {
+    router.replace('/task-management')
+    return
+  }
+
+  if (monitorTabs.includes(queryTab as MonitorTabKey)) {
+    tab.value = queryTab as MonitorTabKey
+  }
+}
+
+watch(() => route.query.tab, syncTabFromRoute, { immediate: true })
+
 onMounted(() => {
+  syncTabFromRoute()
   loadHealth()
   loadAutonomyHealth()
   loadMonitoringData()
@@ -1350,6 +1376,34 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(14, 165, 233, 0.12);
+  color: #e0f2fe;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.header-link-button:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(14, 165, 233, 0.2);
+  transform: translateY(-1px);
 }
 
 .section-header h2 {
@@ -1404,6 +1458,42 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-bottom: 20px;
+}
+
+.ops-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ops-shortcut-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: rgba(15, 23, 42, 0.74);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.ops-shortcut-card:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
+}
+
+.ops-shortcut-title {
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.ops-shortcut-sub {
+  color: #9ca3af;
+  font-size: 0.82rem;
+  line-height: 1.6;
 }
 
 .summary-card,
