@@ -149,17 +149,22 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '告警中心' }
   },
 
-  // ── 系统监控（V10.4 M2 合并：服务健康 + API 监控 + 任务管理 → 单页三Tab） ──
+  // ── AI 洞察 & 系统 ─────────────────────────────────────────
   {
     path: '/system-monitor',
     name: 'SystemMonitor',
     component: () => import('../views/SystemMonitorPage.vue'),
-    meta: { title: '系统监控' }
+    meta: { title: 'AI 洞察 & 系统' }
+  },
+  {
+    path: '/task-management',
+    name: 'TaskManagement',
+    component: () => import('../views/TaskManagementPage.vue'),
+    meta: { title: '任务管理' }
   },
   // 旧路由重定向（保持后向兼容）
   { path: '/api-monitoring',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'api'    } }) },
   { path: '/service-health',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'health' } }) },
-  { path: '/task-management', redirect: (to) => ({ path: '/system-monitor', query: { tab: 'tasks'  } }) },
 
   // V10.4.1 设计文档 spec URL → 实现 URL 对齐重定向
   { path: '/observability/execution-microscope', redirect: '/observability/execution' },

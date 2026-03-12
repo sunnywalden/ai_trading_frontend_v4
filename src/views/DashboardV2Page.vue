@@ -1,7 +1,5 @@
 <template>
   <div class="dashboard-v2">
-
-    <!-- ═══ AI 引擎状态横幅 ═══ -->
     <div class="ai-engine-banner" :class="autonomyBannerClass">
       <div class="banner-left">
         <span class="ai-brain-icon">⬡</span>
@@ -16,13 +14,10 @@
         <span class="cb-alert" v-if="autonomy.circuitBreakerActive">
           ⚡ {{ $t('autonomy.circuit_breaker_active') }}
         </span>
-        <!-- V10.5.1 Live Safety throttle pill -->
         <span
           v-if="throttle && throttle.downgrade_needed"
           class="throttle-alert"
           :class="`throttle-${(throttle.recommended_level || 'advisory').toLowerCase()}`"
-          @click="$router.push('/live-safety')"
-          title="Live Safety Guard 建议降级"
         >
           🛡️ THROTTLE → {{ throttle.recommended_level }}
         </span>
@@ -41,17 +36,15 @@
           <svg :class="{ spinning: store.loading }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
         </button>
         <router-link to="/autonomy" class="banner-link">{{ $t('nav.autonomy') }} →</router-link>
-        <router-link v-if="throttle" to="/live-safety" class="banner-link banner-link-safety">🔒 Live Safety</router-link>
+        <router-link to="/system-monitor" class="banner-link">AI 洞察 & 系统 →</router-link>
       </div>
     </div>
 
-    <!-- 加载状态 -->
     <div v-if="store.loading && !store.fullData" class="loading-container">
       <div class="terminal-spinner"></div>
-      <p class="loading-text">INITIALIZING MARKET DATA...</p>
+      <p class="loading-text">INITIALIZING CONTROL TOWER...</p>
     </div>
 
-    <!-- 错误状态 -->
     <div v-else-if="store.error && !store.fullData" class="error-container">
       <div class="error-icon">⚠</div>
       <h3>{{ $t('common.error_load') }}</h3>
@@ -59,440 +52,280 @@
       <button @click="handleRefresh" class="btn-retry">{{ $t('common.retry') }}</button>
     </div>
 
-    <!-- 主内容 -->
     <div v-else-if="store.fullData" class="dashboard-content">
-
-      <!-- ═══ V10.1 核心能力快捷入口 ═══ -->
-      <section class="section-capabilities">
-        <div class="capability-item" @click="$router.push('/options')">
-          <div class="cap-icon">💎</div>
-          <div class="cap-text">
-            <span class="cap-title">期权分析中心</span>
-            <span class="cap-desc">IV 曲面与异常大单监测</span>
+      <section class="section-links">
+        <router-link v-for="item in coreLinks" :key="item.to" :to="item.to" class="link-card">
+          <div class="link-icon">{{ item.icon }}</div>
+          <div class="link-content">
+            <div class="link-title">{{ item.title }}</div>
+            <div class="link-desc">{{ item.desc }}</div>
           </div>
-          <div class="cap-tag">V10.1</div>
-        </div>
-        <div class="capability-item" @click="$router.push('/paper')">
-          <div class="cap-icon">🧪</div>
-          <div class="cap-text">
-            <span class="cap-title">Paper Trading</span>
-            <span class="cap-desc">零风险实盘模拟训练</span>
-          </div>
-          <div class="cap-tag">LIVE</div>
-        </div>
-        <div class="capability-item" @click="$router.push('/etf-pool')">
-          <div class="cap-icon">📊</div>
-          <div class="cap-text">
-            <span class="cap-title">ETF 标的池管理</span>
-            <span class="cap-desc">多维度 ETF 机会筛选</span>
-          </div>
-          <div class="cap-tag">NEW</div>
-        </div>
-        <div class="capability-item" @click="$router.push('/backtest')">
-          <div class="cap-icon">📈</div>
-          <div class="cap-text">
-            <span class="cap-title">回测验证中心</span>
-            <span class="cap-desc">Walk-Forward 稳健性测试</span>
-          </div>
-          <div class="cap-tag">HOT</div>
-        </div>
-        <!-- V10.5.1 新能力入口 -->
-        <div class="capability-item" @click="$router.push('/alpha-lab')">
-          <div class="cap-icon">🧭</div>
-          <div class="cap-text">
-            <span class="cap-title">Alpha Lab</span>
-            <span class="cap-desc">净 Alpha · 衰减 · Shadow Book</span>
-          </div>
-          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
-        </div>
-        <div class="capability-item" @click="$router.push('/portfolio')">
-          <div class="cap-icon">⚖️</div>
-          <div class="cap-text">
-            <span class="cap-title">Portfolio 构建台</span>
-            <span class="cap-desc">风险预算 · 边际贡献 · 流动性</span>
-          </div>
-          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
-        </div>
-        <div
-          class="capability-item"
-          :class="{ 'cap-item-warn': throttle?.downgrade_needed }"
-          @click="$router.push('/live-safety')"
-        >
-          <div class="cap-icon">🛡️</div>
-          <div class="cap-text">
-            <span class="cap-title">Live Safety Guard</span>
-            <span class="cap-desc">
-              <template v-if="throttle?.downgrade_needed">⚠ 建议降级 → {{ throttle.recommended_level }}</template>
-              <template v-else>模型退化 · 数据陈旧 · 节流</template>
-            </span>
-          </div>
-          <div class="cap-tag cap-tag-v1051">V10.5.1</div>
-        </div>
+        </router-link>
       </section>
 
-      <!-- ═══ Section 1: KPI 核心指标带 ═══ -->
-      <section class="section-kpi">
-        <!-- 总资产 (最突出) -->
-        <div class="kpi-card kpi-primary">
-          <div class="kpi-label">{{ $t('dashboard.total_equity') }}</div>
-          <div class="kpi-value kpi-equity">{{ formatCurrency(store.totalEquity) }}</div>
-          <div class="kpi-sub">
-            <span :class="store.dailyPnl >= 0 ? 'pos' : 'neg'">
-              {{ formatPnL(store.dailyPnl) }}
-            </span>
-            <span class="kpi-pct" :class="store.dailyReturnPct >= 0 ? 'pos' : 'neg'">
-              ({{ store.dailyReturnPct >= 0 ? '+' : '' }}{{ store.dailyReturnPct.toFixed(2) }}%)
-            </span>
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <div class="section-eyebrow">TRADING HUB</div>
+            <h2>交易中枢</h2>
+            <p>只保留资金、风险、执行、持仓与计划等交易核心视角。</p>
+          </div>
+          <div class="section-actions">
+            <router-link to="/positions" class="section-link">持仓监控</router-link>
+            <router-link to="/trade-lifecycle" class="section-link">生命周期</router-link>
           </div>
         </div>
 
-        <!-- 今日盈亏 -->
-        <div class="kpi-card">
-          <div class="kpi-label">{{ $t('dashboard.daily_pnl') }}</div>
-          <div class="kpi-value" :class="store.dailyPnl >= 0 ? 'pos' : 'neg'">
-            {{ formatPnL(store.dailyPnl) }}
-          </div>
-          <div class="kpi-sub">
-            <span :class="store.dailyReturnPct >= 0 ? 'pos' : 'neg'">
-              {{ store.dailyReturnPct >= 0 ? '+' : '' }}{{ store.dailyReturnPct.toFixed(2) }}%
-            </span>
-          </div>
-        </div>
-
-        <!-- 本周收益 -->
-        <div class="kpi-card">
-          <div class="kpi-label">{{ $t('dashboard.weekly_return') }}</div>
-          <div class="kpi-value" :class="store.fullData.pnl.weekly_return_pct >= 0 ? 'pos' : 'neg'">
-            {{ store.fullData.pnl.weekly_return_pct >= 0 ? '+' : '' }}{{ store.fullData.pnl.weekly_return_pct.toFixed(2) }}%
-          </div>
-          <div class="kpi-sub kpi-dimmed">{{ formatCurrency(store.fullData.pnl.weekly_pnl) }}</div>
-        </div>
-
-        <!-- 本月收益 -->
-        <div class="kpi-card">
-          <div class="kpi-label">{{ $t('dashboard.monthly_return') }}</div>
-          <div class="kpi-value" :class="store.fullData.pnl.mtd_return_pct >= 0 ? 'pos' : 'neg'">
-            {{ store.fullData.pnl.mtd_return_pct >= 0 ? '+' : '' }}{{ store.fullData.pnl.mtd_return_pct.toFixed(2) }}%
-          </div>
-          <div class="kpi-sub kpi-dimmed">{{ formatCurrency(store.fullData.pnl.mtd_pnl) }}</div>
-        </div>
-
-        <!-- 年初以来 -->
-        <div class="kpi-card">
-          <div class="kpi-label">YTD</div>
-          <div class="kpi-value" :class="store.fullData.pnl.ytd_return_pct >= 0 ? 'pos' : 'neg'">
-            {{ store.fullData.pnl.ytd_return_pct >= 0 ? '+' : '' }}{{ store.fullData.pnl.ytd_return_pct.toFixed(2) }}%
-          </div>
-          <div class="kpi-sub kpi-dimmed">{{ formatCurrency(store.fullData.pnl.ytd_pnl) }}</div>
-        </div>
-
-        <!-- 风险等级 -->
-        <div class="kpi-card kpi-risk" :class="`risk-bg-${(store.riskLevel||'MEDIUM').toLowerCase()}`">
-          <div class="kpi-label">{{ $t('dashboard.risk_level') }}</div>
-          <div class="kpi-value risk-level-value" :class="`risk-${(store.riskLevel||'MEDIUM').toLowerCase()}`">
-            {{ riskLevelLabel(store.riskLevel) }}
-          </div>
-          <div class="kpi-sub">
-            <span class="kpi-dimmed">Max DD {{ store.fullData.risk.max_drawdown.toFixed(1) }}%</span>
-          </div>
-        </div>
-
-        <!-- V10.2-M1: 市场体制感知 -->
-        <div
-          class="kpi-card kpi-regime"
-          style="cursor:pointer"
-          :style="{ borderColor: regimeCardColor + '55' }"
-          @click="$router.push('/regime')"
-        >
-          <div class="kpi-label">🧠 市场体制</div>
-          <div
-            class="kpi-value"
-            style="font-size:18px; letter-spacing:0.04em"
-            :style="{ color: regimeCardColor }"
-          >
-            {{ regimeCardLabel }}
-          </div>
-          <div class="kpi-sub">
-            <span class="kpi-dimmed">置信度 {{ regimeCardConf }}</span>
-            <span style="margin-left:8px" :style="{ color: varMultColor }">VaR ×{{ regimeVarMult }}</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 2: 主要图表区 -->
-      <div class="section-charts-dual">
-        <!-- 左侧: 性能趋势 -->
-        <div class="card chart-container">
-          <div class="card-header">
-            <h3><span class="icon">📊</span> {{ $t('dashboard.equity_curve') }}</h3>
-            <button @click="handleModuleRefresh('trend')" class="btn-icon" :class="{ spinning: moduleLoading['trend'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <PerformanceTrendChart :data="store.fullData.performance_trend" />
-        </div>
-        <!-- 右侧: 盈亏归因 -->
-        <div class="card attribution-container" id="pnl-attribution">
-          <div class="card-header">
-            <h3><span class="icon">🔍</span> {{ $t('dashboard.pnl_attribution') }}</h3>
-            <button @click="handleModuleRefresh('attribution')" class="btn-icon" :class="{ spinning: moduleLoading['attribution'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <PnLAttributionPanel 
-            :performers="store.fullData.top_performers"
-            :losers="store.fullData.top_losers"
-            :strategies="store.fullData.top_strategies"
-          />
-        </div>
-      </div>
-
-      <!-- Section 3: 持仓与风险 -->
-      <div class="section-risk">
-        <!-- 左: Top持仓 -->
-        <div class="card">
-          <div class="card-header">
-            <h3><span class="icon">📦</span> {{ $t('dashboard.top_positions') }}</h3>
-            <button @click="handleModuleRefresh('positions')" class="btn-icon" :class="{ spinning: moduleLoading['positions'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <div v-if="store.fullData.positions_summary.length > 0" class="positions-list">
-            <PositionCard
-              v-for="position in store.fullData.positions_summary.slice(0, 5)"
-              :key="position.symbol"
-              :position="position"
-            />
-          </div>
-          <div v-else class="empty-state">
-            <p>{{ $t('dashboard.no_positions') }}</p>
-          </div>
-        </div>
-
-        <div class="risk-card">
-          <div class="card-header">
-            <h3><span class="icon">🎯</span> {{ $t('dashboard.greeks_exposure') }}</h3>
-            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <GreeksGauges :greeks="store.fullData.risk.greeks" />
-        </div>
-        <div class="risk-card">
-          <div class="card-header">
-            <h3><span class="icon">📉</span> {{ $t('dashboard.risk_metrics') }}</h3>
-            <button @click="handleModuleRefresh('risk')" class="btn-icon" :class="{ spinning: moduleLoading['risk'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-          </div>
-          <RiskMetricsPanel :metrics="store.fullData.risk" />
-        </div>
-      </div>
-
-      <!-- Section: VaR/CVaR 风险监控 (V10.1) -->
-      <div class="section-var" v-if="store.fullData">
-        <VaRRiskMonitor :account-id="store.fullData.account_id" />
-      </div>
-
-      <!-- Section: 信号配额 (V10.4.2) -->
-      <div class="section-signal-budget">
-        <SignalBudgetWidget :since-days="7" />
-      </div>
-
-    <!-- Section 4: 交易计划 -->
-    <div class="section-plans">
-      <!-- 活跃计划 -->
-      <div class="card">
-        <div class="card-header">
-          <div class="title-with-badge">
-            <h3><span class="icon">📋</span> {{ $t('dashboard.active_plans') }}</h3>
-            <span class="badge">{{ $t('dashboard.active_plans_count', { n: store.fullData.execution_stats.active_plans }) }}</span>
-          </div>
-          <button @click="handleModuleRefresh('plans')" class="btn-icon" :class="{ spinning: moduleLoading['plans'] }" :title="$t('common.refresh')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-          </button>
-        </div>
-        <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
-          <PlanCard
-            v-for="plan in store.fullData.active_plans"
-            :key="plan.plan_id"
-            :plan="plan"
-          />
-        </div>
-        <div v-else class="empty-state">
-          <p>{{ $t('dashboard.no_plans') }}</p>
-        </div>
-      </div>
-    </div>
-
-      <!-- Section 4.5: Smart Alert Center（V10.3.3 新增）-->
-      <section class="section-smart-alerts" v-if="warRoom.alerts.length > 0 || warRoom.loadingAlerts">
-        <div class="card">
-          <div class="card-header">
-            <h3>
-              <span class="icon">🚨</span>
-              Smart Alert Center
-              <span class="alert-grade-badge" v-if="warRoom.criticalAlerts.length > 0">CRIT {{ warRoom.criticalAlerts.length }}</span>
-            </h3>
-            <button @click="warRoom.fetchAlerts()" class="btn-icon" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
-            <router-link to="/war-room" class="see-all-link">War Room →</router-link>
-          </div>
-          <!-- 告警等级统计 -->
-          <div class="alert-grade-stats" v-if="warRoom.alertStats">
-            <div class="ags-item ags-crit" @click="filterGrade = filterGrade === 'CRITICAL' ? null : 'CRITICAL'">
-              <span class="ags-label">CRITICAL</span>
-              <span class="ags-count">{{ warRoom.alertStats.critical ?? 0 }}</span>
+        <section class="section-kpi">
+          <div class="kpi-card kpi-primary">
+            <div class="kpi-label">总资产</div>
+            <div class="kpi-value kpi-equity">{{ formatCurrency(store.totalEquity) }}</div>
+            <div class="kpi-sub">
+              <span :class="store.dailyPnl >= 0 ? 'pos' : 'neg'">{{ formatPnL(store.dailyPnl) }}</span>
+              <span class="kpi-pct" :class="store.dailyReturnPct >= 0 ? 'pos' : 'neg'">
+                {{ store.dailyReturnPct >= 0 ? '+' : '' }}{{ store.dailyReturnPct.toFixed(2) }}%
+              </span>
             </div>
-            <div class="ags-item ags-high" @click="filterGrade = filterGrade === 'HIGH' ? null : 'HIGH'">
-              <span class="ags-label">HIGH</span>
-              <span class="ags-count">{{ warRoom.alertStats.high ?? 0 }}</span>
-            </div>
-            <div class="ags-item ags-med" @click="filterGrade = filterGrade === 'MEDIUM' ? null : 'MEDIUM'">
-              <span class="ags-label">MEDIUM</span>
-              <span class="ags-count">{{ warRoom.alertStats.medium ?? 0 }}</span>
-            </div>
-            <div class="ags-item ags-low" @click="filterGrade = filterGrade === 'LOW' ? null : 'LOW'">
-              <span class="ags-label">LOW</span>
-              <span class="ags-count">{{ warRoom.alertStats.low ?? 0 }}</span>
-            </div>
-            <span v-if="filterGrade" class="ags-clear-filter" @click="filterGrade = null">✕ 清除筛选</span>
           </div>
-          <!-- 告警列表 -->
-          <div v-if="warRoom.loadingAlerts" class="alert-loading">加载中...</div>
-          <div v-else-if="!filteredAlerts.length" class="alert-empty">暂无活跃告警</div>
-          <div v-else class="alert-list-compact">
-            <div
-              v-for="alert in filteredAlerts.slice(0, 8)"
-              :key="alert.id"
-              class="alert-row"
-              :class="`alert-grade-${alert.grade.toLowerCase()}`"
-            >
-              <span class="ar-grade">{{ alert.grade }}</span>
-              <div class="ar-body">
-                <div class="ar-title">{{ alert.title }}</div>
-                <div class="ar-action">→ {{ alert.recommended_action_text }}</div>
+          <div class="kpi-card">
+            <div class="kpi-label">今日盈亏</div>
+            <div class="kpi-value" :class="store.dailyPnl >= 0 ? 'pos' : 'neg'">{{ formatPnL(store.dailyPnl) }}</div>
+            <div class="kpi-sub kpi-dimmed">周度 {{ store.fullData.pnl.weekly_return_pct >= 0 ? '+' : '' }}{{ store.fullData.pnl.weekly_return_pct.toFixed(2) }}%</div>
+          </div>
+          <div class="kpi-card kpi-risk" :class="`risk-bg-${(store.riskLevel || 'MEDIUM').toLowerCase()}`">
+            <div class="kpi-label">风险等级</div>
+            <div class="kpi-value risk-level-value" :class="`risk-${(store.riskLevel || 'MEDIUM').toLowerCase()}`">
+              {{ riskLevelLabel(store.riskLevel) }}
+            </div>
+            <div class="kpi-sub kpi-dimmed">Max DD {{ store.fullData.risk.max_drawdown.toFixed(1) }}%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">活跃持仓</div>
+            <div class="kpi-value">{{ store.fullData.positions_count }}</div>
+            <div class="kpi-sub kpi-dimmed">Top5 集中度 {{ store.fullData.concentration_top5.toFixed(1) }}%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">执行计划</div>
+            <div class="kpi-value">{{ store.fullData.execution_stats.active_plans }}</div>
+            <div class="kpi-sub kpi-dimmed">执行率 {{ store.fullData.execution_stats.execution_rate.toFixed(1) }}%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">今日成交</div>
+            <div class="kpi-value">{{ store.fullData.execution_stats.executed_today }}</div>
+            <div class="kpi-sub kpi-dimmed">平均滑点 {{ store.fullData.execution_stats.avg_slippage.toFixed(2) }} bps</div>
+          </div>
+        </section>
+
+        <div class="section-main-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3><span class="icon">📈</span> 权益曲线</h3>
+            </div>
+            <PerformanceTrendChart :data="store.fullData.performance_trend" />
+          </div>
+
+          <div class="card pipeline-card">
+            <div class="card-header">
+              <h3><span class="icon">🧭</span> 信号执行漏斗</h3>
+              <router-link to="/autonomy" class="card-link">自主中枢 →</router-link>
+            </div>
+            <SignalPipelineFlow :pipeline="store.fullData.signal_pipeline" />
+
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <span class="mini-label">待执行通知</span>
+                <strong>{{ store.fullData.signal_notifications }}</strong>
               </div>
-              <span class="ar-time">{{ formatAlertTime(alert.created_at) }}</span>
-              <div class="ar-actions">
-                <button v-if="!alert.acknowledged" @click="warRoom.ackAlert(String(alert.id))" class="ar-btn-ack" title="确认">✓</button>
-                <button @click="warRoom.dsmAlert(String(alert.id))" class="ar-btn-dsm" title="关闭">✕</button>
+              <div class="mini-stat">
+                <span class="mini-label">未读洞察</span>
+                <strong>{{ store.fullData.insights_unread }}</strong>
+              </div>
+              <div class="mini-stat">
+                <span class="mini-label">系统告警</span>
+                <strong :class="store.fullData.system_alerts > 0 ? 'neg' : 'pos'">{{ store.fullData.system_alerts }}</strong>
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Section 5: 市场热点 -->
-      <div class="section-hotspots" v-if="store.fullData.market_hotspots.length > 0">
-        <div class="card">
-          <div class="card-header">
-            <h3><span class="icon">🔥</span> {{ $t('dashboard.market_hotspots') }}</h3>
-            <button @click="handleModuleRefresh('hotspots')" class="btn-icon" :class="{ spinning: moduleLoading['hotspots'] }" :title="$t('common.refresh')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-            </button>
+        <div class="section-risk-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3><span class="icon">📦</span> 核心持仓</h3>
+              <router-link to="/positions" class="card-link">全部持仓 →</router-link>
+            </div>
+            <div v-if="store.fullData.positions_summary.length > 0" class="positions-list">
+              <PositionCard
+                v-for="position in store.fullData.positions_summary.slice(0, 5)"
+                :key="position.symbol"
+                :position="position"
+              />
+            </div>
+            <div v-else class="empty-state">暂无持仓</div>
           </div>
-          <div class="hotspots-grid">
-            <HotspotCard
-              v-for="(hotspot, idx) in store.fullData.market_hotspots"
-              :key="idx"
-              :hotspot="hotspot"
-            />
+
+          <div class="card">
+            <div class="card-header">
+              <h3><span class="icon">🎯</span> 风险暴露</h3>
+            </div>
+            <GreeksGauges :greeks="store.fullData.risk.greeks" />
+            <div class="metrics-divider"></div>
+            <RiskMetricsPanel :metrics="store.fullData.risk" />
           </div>
         </div>
-      </div>
+
+        <div class="section-support-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3><span class="icon">📋</span> 活跃计划</h3>
+              <router-link to="/autonomy" class="card-link">执行视图 →</router-link>
+            </div>
+            <div v-if="store.fullData.active_plans.length > 0" class="plans-list">
+              <PlanCard
+                v-for="plan in store.fullData.active_plans.slice(0, 4)"
+                :key="plan.plan_id"
+                :plan="plan"
+              />
+            </div>
+            <div v-else class="empty-state">暂无活跃计划</div>
+          </div>
+
+          <div class="card embedded-widget-card">
+            <div class="card-header">
+              <h3><span class="icon">📉</span> VaR 风险监控</h3>
+            </div>
+            <VaRRiskMonitor :account-id="store.fullData.account_id" />
+          </div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <div class="section-eyebrow">AI INSIGHTS & SYSTEM</div>
+            <h2>AI 洞察 & 系统</h2>
+            <p>聚焦洞察、API 健康、控制面状态与任务编排入口，不再混入研究/行情杂项。</p>
+          </div>
+          <div class="section-actions">
+            <router-link to="/system-monitor" class="section-link">系统观测</router-link>
+            <router-link to="/task-management" class="section-link">任务管理</router-link>
+          </div>
+        </div>
+
+        <section class="section-summary-grid">
+          <div class="summary-card">
+            <div class="summary-label">AI 洞察</div>
+            <div class="summary-value">{{ store.fullData.insights_unread }}</div>
+            <div class="summary-sub">{{ topInsights.length }} 条核心建议已进入首页快照</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">系统告警</div>
+            <div class="summary-value" :class="store.fullData.system_alerts > 0 ? 'neg' : 'pos'">{{ store.fullData.system_alerts }}</div>
+            <div class="summary-sub">{{ degradedApiCount }} 个 API/服务处于降级或异常</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Live Safety</div>
+            <div class="summary-value">{{ throttle?.recommended_level || 'FULL' }}</div>
+            <div class="summary-sub">{{ throttle?.downgrade_needed ? '当前建议降级' : '当前无需降级' }}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">任务管理</div>
+            <div class="summary-value">独立页</div>
+            <div class="summary-sub">调度器、动态配置与运营任务已从首页拆出</div>
+          </div>
+        </section>
+
+        <div class="section-ai-grid">
+          <div class="card insights-card">
+            <div class="card-header">
+              <h3><span class="icon">💡</span> 核心 AI 洞察</h3>
+              <router-link to="/system-monitor" class="card-link">更多系统洞察 →</router-link>
+            </div>
+            <div v-if="topInsights.length" class="insights-list">
+              <AIInsightCard v-for="insight in topInsights" :key="`${insight.title}-${insight.created_at}`" :insight="insight" />
+            </div>
+            <div v-else class="empty-state">暂无新的 AI 洞察</div>
+          </div>
+
+          <div class="card system-card">
+            <div class="card-header">
+              <h3><span class="icon">🖥️</span> 系统快照</h3>
+              <router-link to="/system-monitor" class="card-link">完整面板 →</router-link>
+            </div>
+            <div class="api-health-list">
+              <div v-for="apiItem in store.fullData.api_health" :key="apiItem.provider" class="api-health-row">
+                <div>
+                  <div class="api-name">{{ apiItem.provider }}</div>
+                  <div class="api-sub">延迟 {{ Math.round(apiItem.avg_latency_ms) }}ms · 成功率 {{ apiItem.success_rate.toFixed(1) }}%</div>
+                </div>
+                <span class="status-chip" :class="apiStatusClass(apiItem.status)">{{ apiStatusLabel(apiItem.status) }}</span>
+              </div>
+            </div>
+
+            <div class="ops-panel">
+              <router-link to="/task-management" class="ops-panel-link">
+                <strong>任务管理</strong>
+                <span>查看调度器总览、动态任务配置与运营自动化。</span>
+              </router-link>
+              <router-link to="/live-safety" class="ops-panel-link">
+                <strong>AI 安全</strong>
+                <span>查看节流建议、模型退化与数据陈旧矩阵。</span>
+              </router-link>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-widget-grid">
+          <div class="card embedded-widget-card">
+            <div class="card-header">
+              <h3><span class="icon">📡</span> 信号预算</h3>
+            </div>
+            <SignalBudgetWidget :since-days="7" />
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { liveSafetyApi, type ThrottleStatus } from '@/api/liveSafetyService'; // V10.5.1
-import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService'
+import type { APIHealth } from '@/api/client'
+import { liveSafetyApi, type ThrottleStatus } from '@/api/liveSafetyService'
+import AIInsightCard from '@/components/dashboard/AIInsightCard.vue'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
-import HotspotCard from '@/components/dashboard/HotspotCard.vue'
 import PerformanceTrendChart from '@/components/dashboard/PerformanceTrendChart.vue'
 import PlanCard from '@/components/dashboard/PlanCard.vue'
-import PnLAttributionPanel from '@/components/dashboard/PnLAttributionPanel.vue'
 import PositionCard from '@/components/dashboard/PositionCard.vue'
 import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
-import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'; // V10.4.2
+import SignalPipelineFlow from '@/components/dashboard/SignalPipelineFlow.vue'
+import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'
 import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
 import { useAutonomyStore } from '@/stores/autonomy'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
-import { useWarRoomStore } from '@/stores/warRoom'
-import { formatClientTime, formatClientDateTime } from '@/utils/datetime'
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { formatClientTime } from '@/utils/datetime'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 
 const store = useDashboardV2Store()
 const autonomy = useAutonomyStore()
-const warRoom = useWarRoomStore()
-const router = useRouter()
 const { t, locale } = useI18n()
 
-const moduleLoading = reactive<Record<string, boolean>>({})
-
-// V10.5.1 Live Safety throttle
 const throttle = ref<ThrottleStatus | null>(null)
-async function fetchThrottle() {
-  try {
-    const res = await liveSafetyApi.getThrottle(autonomy.currentLevel || 'FULL')
-    throttle.value = res.data
-  } catch { /* silent — non-blocking */ }
-}
 
-// V10.3.3 Smart Alert Center
-const filterGrade = ref<string | null>(null)
-const filteredAlerts = computed(() => {
-  const active = warRoom.alerts.filter(a => !a.dismissed)
-  if (!filterGrade.value) return active
-  return active.filter(a => a.grade === filterGrade.value)
-})
-function formatAlertTime(ts: string): string {
-  return formatClientDateTime(ts)
-}
+const coreLinks = [
+  { to: '/autonomy', title: '自主中枢', desc: '信号、决策与执行控制平面', icon: '🤖' },
+  { to: '/positions', title: '持仓监控', desc: '仓位、集中度与风险暴露', icon: '📊' },
+  { to: '/trade-lifecycle', title: '生命周期', desc: 'Plan / Position FSM 与异常跳转', icon: '🧬' },
+  { to: '/system-monitor', title: 'AI 洞察 & 系统', desc: '服务健康、数据流与 API 观测', icon: '🖥️' },
+  { to: '/task-management', title: '任务管理', desc: '调度器总览与动态任务配置', icon: '⚙️' },
+  { to: '/live-safety', title: 'AI 安全', desc: '节流建议、退化与数据陈旧', icon: '🛡️' },
+] as const
 
-// V10.2-M1: 体制 KPI 数据
-const regimeInfo     = ref<RegimeInfo | null>(null)
-const regimeVarMultN = ref<number>(1.0)
-
-const regimeCardLabel = computed(() => {
-  if (!regimeInfo.value) return '—'
-  return REGIME_LABELS[regimeInfo.value.regime] ?? regimeInfo.value.regime
-})
-const regimeCardConf = computed(() => {
-  if (!regimeInfo.value || typeof regimeInfo.value !== 'object') return '—'
-  const conf = regimeInfo.value.confidence
-  if (typeof conf !== 'number') return '—'
-  return (conf * 100).toFixed(0) + '%'
-})
-const regimeCardColor = computed(() => {
-  if (!regimeInfo.value) return '#555555'
-  return REGIME_COLORS[regimeInfo.value.regime as RegimeType] ?? '#aaaaaa'
-})
-const regimeVarMult = computed(() => regimeVarMultN.value.toFixed(2))
-const varMultColor = computed(() => {
-  if (regimeVarMultN.value > 1.05) return '#00ff88'
-  if (regimeVarMultN.value < 0.75) return '#ff4d4d'
-  return '#aaaaaa'
+const topInsights = computed(() => store.fullData?.ai_insights.slice(0, 3) ?? [])
+const degradedApiCount = computed(() => {
+  return (store.fullData?.api_health ?? []).filter(item => !isHealthyApi(item)).length
 })
 
-async function fetchRegime() {
-  try {
-    const res = await regimeApi.getCurrent()
-    if (res.data && 'regime' in res.data) {
-      regimeInfo.value     = res.data.regime
-      regimeVarMultN.value = res.data.var_multiplier ?? 1.0
-    } else {
-      regimeInfo.value     = res.data as any
-      regimeVarMultN.value = 1.0
-    }
-  } catch { /* silent */ }
-}
-
-// AI Engine Banner 背景样式（V10.5.1: 若 Live Safety 建议 FREEZE/ADVISORY 则覆盖为 critical）
 const autonomyBannerClass = computed(() => {
   if (autonomy.circuitBreakerActive) return 'banner-critical'
   if (throttle.value?.recommended_level === 'FREEZE' || throttle.value?.recommended_level === 'ADVISORY') return 'banner-critical'
@@ -503,13 +336,20 @@ const autonomyBannerClass = computed(() => {
   return 'banner-advisory'
 })
 
+async function fetchThrottle() {
+  try {
+    const res = await liveSafetyApi.getThrottle(autonomy.currentLevel || 'FULL')
+    throttle.value = res.data
+  } catch {
+    throttle.value = null
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
     store.loadFull(),
     autonomy.fetchStatus(),
-    fetchRegime(),          // V10.2-M1
-    warRoom.fetchAlerts(),  // V10.3.3 Smart Alert Center
-    fetchThrottle(),        // V10.5.1 Live Safety Guard
+    fetchThrottle(),
   ])
   store.startAutoRefresh()
 })
@@ -521,23 +361,7 @@ onUnmounted(() => {
 function handleRefresh() {
   store.loadFull()
   autonomy.fetchStatus()
-  fetchThrottle()  // V10.5.1
-}
-
-async function handleModuleRefresh(module: string) {
-  moduleLoading[module] = true
-  try {
-    await store.loadFull()
-  } finally {
-    moduleLoading[module] = false
-  }
-}
-
-function scrollToAttribution() {
-  const el = document.getElementById('pnl-attribution')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
+  fetchThrottle()
 }
 
 function formatCurrency(value: number): string {
@@ -555,52 +379,61 @@ function formatTime(date: Date): string {
 
 function riskLevelLabel(level: string): string {
   const labels: Record<string, string> = {
-    'LOW': t('dashboard.risk_labels.low'),
-    'MEDIUM': t('dashboard.risk_labels.medium'),
-    'HIGH': t('dashboard.risk_labels.high'),
-    'EXTREME': t('dashboard.risk_labels.extreme'),
+    LOW: t('dashboard.risk_labels.low'),
+    MEDIUM: t('dashboard.risk_labels.medium'),
+    HIGH: t('dashboard.risk_labels.high'),
+    EXTREME: t('dashboard.risk_labels.extreme'),
   }
   return labels[level] || level
+}
+
+function isHealthyApi(apiItem: APIHealth): boolean {
+  return ['healthy', 'ok', 'normal'].includes(String(apiItem.status || '').toLowerCase())
+}
+
+function apiStatusClass(status: string): string {
+  return isHealthyApi({
+    provider: '',
+    status,
+    success_rate: 0,
+    avg_latency_ms: 0,
+    rate_limit_remaining: 0,
+  }) ? 'status-healthy' : 'status-warn'
+}
+
+function apiStatusLabel(status: string): string {
+  const normalized = String(status || '').toLowerCase()
+  if (['healthy', 'ok', 'normal'].includes(normalized)) return '正常'
+  if (['critical', 'down', 'error'].includes(normalized)) return '异常'
+  if (['warn', 'warning', 'degraded'].includes(normalized)) return '降级'
+  return status || '未知'
 }
 </script>
 
 <style scoped>
-/* ════════════════════════════════════════
-   Design Tokens
-   ════════════════════════════════════════ */
 .dashboard-v2 {
   --d-bg: rgba(15, 23, 42, 0.85);
-  --d-bg-bright: rgba(22, 33, 58, 0.92);
   --d-border: rgba(56, 189, 248, 0.12);
   --d-border-hover: rgba(56, 189, 248, 0.28);
   --d-accent: #38bdf8;
   --d-profit: #10b981;
   --d-loss: #ef4444;
-  --d-warn: #f59e0b;
-  --d-text: #e2e8f0;
   --d-text-dim: #64748b;
   --d-text-bright: #f1f5f9;
   --d-radius: 10px;
-  padding: 0;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 20px;
 }
 
-/* ════════════════════════════════════════
-   AI Engine Banner
-   ════════════════════════════════════════ */
 .ai-engine-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  border-bottom: 1px solid var(--d-border);
   background: rgba(15, 23, 42, 0.96);
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
   border-radius: var(--d-radius);
   border: 1px solid var(--d-border);
   position: relative;
@@ -615,7 +448,6 @@ function riskLevelLabel(level: string): string {
   pointer-events: none;
 }
 
-/* Banner variants */
 .banner-full { border-color: rgba(16, 185, 129, 0.30); }
 .banner-full::before { background: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, transparent 60%); }
 .banner-semi { border-color: rgba(56, 189, 248, 0.30); }
@@ -626,10 +458,11 @@ function riskLevelLabel(level: string): string {
 
 @keyframes pulse-border {
   0%, 100% { border-color: rgba(239,68,68,0.45); }
-  50%       { border-color: rgba(239,68,68,0.9); }
+  50% { border-color: rgba(239,68,68,0.9); }
 }
 
-.banner-left {
+.banner-left,
+.banner-right {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -639,15 +472,29 @@ function riskLevelLabel(level: string): string {
 .ai-brain-icon {
   font-size: 1.1rem;
   color: var(--d-accent);
-  line-height: 1;
 }
 
-.banner-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--d-text-dim);
+.banner-label,
+.kpi-label,
+.section-eyebrow,
+.card-header h3,
+.summary-label {
   font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.banner-label,
+.last-update,
+.tc-label,
+.kpi-label,
+.summary-label,
+.section-head p,
+.link-desc,
+.api-sub,
+.summary-sub,
+.empty-state {
+  color: var(--d-text-dim);
 }
 
 .level-badge {
@@ -656,22 +503,23 @@ function riskLevelLabel(level: string): string {
   padding: 2px 8px;
   border-radius: 4px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  letter-spacing: 0.05em;
 }
-.level-full     { background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.35); }
-.level-semi     { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); }
+
+.level-full { background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.35); }
+.level-semi { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.35); }
 .level-advisory { background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid rgba(100,116,139,0.35); }
 
 .status-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 0.75rem;
   padding: 2px 8px;
   border-radius: 20px;
 }
-.status-pill.active  { background: rgba(16,185,129,0.12); color: #10b981; }
-.status-pill.paused  { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+.status-pill.active { background: rgba(16,185,129,0.12); color: #10b981; }
+.status-pill.paused { background: rgba(245,158,11,0.12); color: #f59e0b; }
 
 .status-dot-anim {
   width: 6px;
@@ -679,12 +527,12 @@ function riskLevelLabel(level: string): string {
   border-radius: 50%;
   background: currentColor;
 }
-.status-pill.active .status-dot-anim {
-  animation: blink-dot 2s ease-in-out infinite;
-}
+
+.status-pill.active .status-dot-anim { animation: blink-dot 2s ease-in-out infinite; }
+
 @keyframes blink-dot {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.25; }
+  50% { opacity: 0.25; }
 }
 
 .cb-alert {
@@ -695,39 +543,20 @@ function riskLevelLabel(level: string): string {
   border: 1px solid rgba(239,68,68,0.35);
   padding: 2px 8px;
   border-radius: 4px;
-  animation: flash-text 1s steps(1) infinite;
-}
-@keyframes flash-text {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
 }
 
-.banner-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* V10.5.1 throttle pill & capability tag */
 .throttle-alert {
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
   padding: 2px 8px;
   border-radius: 4px;
-  cursor: pointer;
-  animation: pulse-border 1.5s infinite;
   border: 1px solid rgba(239,68,68,0.6);
   background: rgba(239,68,68,0.12);
   color: #fca5a5;
-  white-space: nowrap;
 }
-.throttle-freeze   { border-color: rgba(239,68,68,0.7);  background: rgba(239,68,68,0.18);  color: #f87171; }
+
+.throttle-freeze { border-color: rgba(239,68,68,0.7); background: rgba(239,68,68,0.18); color: #f87171; }
 .throttle-advisory { border-color: rgba(245,158,11,0.7); background: rgba(245,158,11,0.12); color: #fcd34d; }
-.banner-link-safety { color: #a78bfa; }
-.cap-tag-v1051 { background: rgba(139,92,246,0.20); color: #a78bfa; }
-.cap-item-warn { border-color: rgba(245,158,11,0.4) !important; background: rgba(245,158,11,0.06) !important; }
 
 .trade-count {
   display: flex;
@@ -736,45 +565,56 @@ function riskLevelLabel(level: string): string {
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.78rem;
 }
-.tc-label { color: var(--d-text-dim); }
-.tc-value { color: var(--d-accent); font-weight: 700; }
-.tc-sep   { color: var(--d-text-dim); }
-.tc-max   { color: var(--d-text-dim); }
 
-.last-update {
-  font-size: 0.72rem;
-  color: var(--d-text-dim);
-  font-family: 'SF Mono', 'Fira Code', monospace;
+.tc-value { color: var(--d-accent); font-weight: 700; }
+.tc-sep,
+.tc-max { color: var(--d-text-dim); }
+
+.btn-refresh-sm,
+.section-link,
+.banner-link,
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .btn-refresh-sm {
-  display: flex;
-  align-items: center;
   background: rgba(56,189,248,0.08);
   border: 1px solid rgba(56,189,248,0.2);
   color: var(--d-text-dim);
   padding: 4px 8px;
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
 }
-.btn-refresh-sm:hover:not(:disabled) { border-color: var(--d-accent); color: var(--d-accent); }
-.btn-refresh-sm:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.banner-link {
-  font-size: 0.75rem;
+.btn-refresh-sm:hover:not(:disabled) {
+  border-color: var(--d-accent);
   color: var(--d-accent);
-  text-decoration: none;
-  padding: 3px 8px;
-  border: 1px solid rgba(56,189,248,0.22);
-  border-radius: 5px;
-  transition: all 0.2s;
 }
-.banner-link:hover { background: rgba(56,189,248,0.1); }
 
-/* ════════════════════════════════════════
-   Loading / Error
-   ════════════════════════════════════════ */
+.btn-refresh-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.banner-link,
+.section-link,
+.card-link {
+  color: var(--d-accent);
+  border: 1px solid rgba(56,189,248,0.22);
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.banner-link:hover,
+.section-link:hover,
+.card-link:hover {
+  background: rgba(56,189,248,0.1);
+}
+
 .loading-container,
 .error-container {
   display: flex;
@@ -798,13 +638,11 @@ function riskLevelLabel(level: string): string {
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
-  color: var(--d-text-dim);
   margin-top: 14px;
+  color: var(--d-text-dim);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .error-icon {
   font-size: 2.5rem;
@@ -820,306 +658,226 @@ function riskLevelLabel(level: string): string {
   border: 1px solid rgba(56,189,248,0.3);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
 }
-.btn-retry:hover { background: rgba(56,189,248,0.2); }
 
-/* ════════════════════════════════════════
-   Dashboard Content
-   ════════════════════════════════════════ */
 .dashboard-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-/* ════════════════════════════════════════
-   Capabilities Section (V10.1 Quick Access)
-   ════════════════════════════════════════ */
-.section-capabilities {
+.section-links,
+.section-summary-grid,
+.section-kpi,
+.section-main-grid,
+.section-risk-grid,
+.section-support-grid,
+.section-ai-grid,
+.section-widget-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 16px;
 }
 
-@media (max-width: 1400px) {
-  .section-capabilities { grid-template-columns: repeat(2, 1fr); }
+.section-links {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-@media (max-width: 768px) {
-  .section-capabilities { grid-template-columns: 1fr; }
-}
-
-.capability-item {
-  position: relative;
+.link-card,
+.card,
+.summary-card,
+.kpi-card,
+.section-block {
   background: var(--d-bg);
   border: 1px solid var(--d-border);
-  border-radius: 12px;
-  padding: 14px 18px;
+  border-radius: 14px;
+}
+
+.link-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.capability-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--d-accent);
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
-  background: rgba(56,189,248,0.03);
-}
-
-.cap-icon {
-  font-size: 1.8rem;
-}
-
-.cap-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.cap-title {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--d-text);
-  margin-bottom: 2px;
-  font-family: 'SF Pro Display', sans-serif;
-}
-
-.cap-desc {
-  font-size: 0.72rem;
-  color: var(--d-text-dim);
-}
-
-.cap-tag {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: var(--d-accent);
-  color: #000;
-  font-size: 0.6rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-bottom-left-radius: 5px;
-  opacity: 0.9;
-  letter-spacing: 0.05em;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-}
-
-/* ═══ KPI Section ═══ */
-.section-kpi {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 12px;
-}
-
-@media (max-width: 1280px) {
-  .section-kpi { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 768px) {
-  .section-kpi { grid-template-columns: 1fr 1fr; }
-}
-
-.kpi-card {
-  background: var(--d-bg);
-  border: 1px solid var(--d-border);
-  border-radius: var(--d-radius);
   padding: 16px 18px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.link-card:hover,
+.card:hover,
+.kpi-card:hover,
+.summary-card:hover {
+  border-color: var(--d-border-hover);
+  transform: translateY(-1px);
+}
+
+.link-icon {
+  font-size: 1.5rem;
+}
+
+.link-title,
+.section-head h2,
+.kpi-value,
+.summary-value,
+.api-name {
+  color: var(--d-text-bright);
+}
+
+.link-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.link-desc {
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.section-block {
+  padding: 20px;
+}
+
+.section-head {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: border-color 0.2s;
-  position: relative;
-  overflow: hidden;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
 }
-.kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--d-accent), transparent);
-  opacity: 0.35;
+
+.section-eyebrow {
+  color: var(--d-accent);
+  font-size: 0.68rem;
+  margin-bottom: 6px;
 }
-.kpi-card:hover { border-color: var(--d-border-hover); }
+
+.section-head h2 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+}
+
+.section-head p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.section-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.section-kpi {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 18px;
+}
+
+.kpi-card,
+.summary-card,
+.card {
+  padding: 16px 18px;
+}
 
 .kpi-primary {
-  border-color: rgba(56,189,248,0.22);
+  grid-column: span 2;
 }
-.kpi-primary::before { opacity: 0.7; }
 
-.kpi-label {
+.kpi-label,
+.summary-label {
   font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
   color: var(--d-text-dim);
-  text-transform: uppercase;
-  font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.kpi-value {
-  font-size: 1.35rem;
+.kpi-value,
+.summary-value {
+  margin-top: 8px;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--d-text-bright);
   font-family: 'SF Mono', 'Fira Code', monospace;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
 }
 
-.kpi-primary .kpi-value { font-size: 1.65rem; }
 .kpi-equity { color: var(--d-text-bright) !important; }
 
-.kpi-sub {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.8rem;
-  margin-top: 2px;
+.kpi-sub,
+.summary-sub {
+  margin-top: 6px;
+  font-size: 0.82rem;
 }
-.kpi-pct { font-size: 0.75rem; }
-.kpi-dimmed { color: var(--d-text-dim); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; }
 
-/* Profit / Loss colors */
+.kpi-dimmed { color: var(--d-text-dim); }
+
 .pos { color: var(--d-profit); }
 .neg { color: var(--d-loss); }
 
-/* Risk KPI */
-.risk-level-value { font-size: 1.1rem; }
-.risk-low     { color: #10b981; }
-.risk-medium  { color: #f59e0b; }
-.risk-high    { color: #ef4444; }
+.risk-low { color: #10b981; }
+.risk-medium { color: #f59e0b; }
+.risk-high { color: #ef4444; }
 .risk-extreme { color: #dc2626; }
-.risk-bg-low     { border-color: rgba(16,185,129,0.28); }
-.risk-bg-medium  { border-color: rgba(245,158,11,0.28); }
-.risk-bg-high    { border-color: rgba(239,68,68,0.28); }
+.risk-bg-low { border-color: rgba(16,185,129,0.28); }
+.risk-bg-medium { border-color: rgba(245,158,11,0.28); }
+.risk-bg-high { border-color: rgba(239,68,68,0.28); }
 .risk-bg-extreme { border-color: rgba(220,38,38,0.45); }
 
-/* ════════════════════════════════════════
-   Shared Card Styles
-   ════════════════════════════════════════ */
-.card {
-  background: var(--d-bg);
-  border: 1px solid var(--d-border);
-  border-radius: var(--d-radius);
-  padding: 18px 20px;
-  transition: border-color 0.2s;
+.section-main-grid {
+  grid-template-columns: 1.5fr 1fr;
+  margin-bottom: 18px;
 }
-.card:hover { border-color: var(--d-border-hover); }
+
+.section-risk-grid,
+.section-ai-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-bottom: 18px;
+}
+
+.section-support-grid,
+.section-widget-grid {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
   margin-bottom: 14px;
 }
 
 .card-header h3 {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--d-text-dim);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-}
-
-.card-header h4 {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.8rem;
   color: var(--d-text-dim);
-  margin: 0 0 12px;
-  text-transform: uppercase;
-}
-
-.title-with-badge {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.badge {
-  padding: 2px 8px;
-  background: rgba(56,189,248,0.12);
-  color: var(--d-accent);
-  border: 1px solid rgba(56,189,248,0.25);
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mini-stat {
+  padding: 12px;
   border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.08);
 }
 
-.badge-danger {
-  background: rgba(239,68,68,0.12);
-  color: var(--d-loss);
-  border-color: rgba(239,68,68,0.25);
-}
-
-/* ════════════════════════════════════════
-   Charts Row
-   ════════════════════════════════════════ */
-.section-charts-dual {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
-}
-@media (max-width: 1200px) {
-  .section-charts-dual { grid-template-columns: 1fr; }
-}
-
-.chart-container,
-.attribution-container {
-  min-height: 240px;
-}
-
-/* ════════════════════════════════════════
-   Risk Section
-   ════════════════════════════════════════ */
-.section-risk {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 16px;
-}
-
-.risk-card {
-  background: var(--d-bg);
-  border: 1px solid var(--d-border);
-  border-radius: var(--d-radius);
-  padding: 18px 20px;
-}
-
-.risk-card .card-header h3 {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+.mini-label {
+  display: block;
   color: var(--d-text-dim);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.74rem;
+  margin-bottom: 6px;
 }
 
-/* ════════════════════════════════════════
-   VaR Section
-   ════════════════════════════════════════ */
-.section-var {
-  margin-top: 0;
+.mini-stat strong {
+  color: var(--d-text-bright);
+  font-size: 1.1rem;
 }
 
-/* ════════════════════════════════════════
-   Signal Section
-   ════════════════════════════════════════ */
-.signals-list,
-.insights-list,
-.todos-list,
-.positions-list {
+.positions-list,
+.insights-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1127,166 +885,138 @@ function riskLevelLabel(level: string): string {
 
 .plans-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
 }
 
-/* ════════════════════════════════════════
-   Dual Column Section
-   ════════════════════════════════════════ */
-.section-dual,
-.section-plans {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 16px;
+.metrics-divider {
+  height: 1px;
+  margin: 16px 0;
+  background: rgba(56, 189, 248, 0.12);
 }
 
-/* ════════════════════════════════════════
-   Smart Alert Center (V10.3.3)
-   ════════════════════════════════════════ */
-.section-smart-alerts { margin-bottom: 0; }
-.section-smart-alerts .card-header h3 { display: flex; align-items: center; gap: 8px; }
-.alert-grade-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); animation: pulse-red 1.5s infinite; font-weight: 700; }
-@keyframes pulse-red { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-.see-all-link { font-size: 0.75rem; color: var(--d-accent); text-decoration: none; margin-left: auto; opacity: 0.8; }
-.see-all-link:hover { opacity: 1; }
-.alert-grade-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
-.ags-item { display: flex; flex-direction: column; align-items: center; padding: 6px 14px; border-radius: 6px; cursor: pointer; user-select: none; transition: opacity 0.15s; }
-.ags-item:hover { opacity: 0.82; }
-.ags-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 3px; }
-.ags-count { font-size: 1.1rem; font-weight: 700; }
-.ags-crit { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; }
-.ags-high { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); color: #f97316; }
-.ags-med  { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; }
-.ags-low  { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc; }
-.ags-clear-filter { font-size: 0.73rem; color: var(--d-text-dim); cursor: pointer; padding: 2px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; margin-left: 4px; }
-.ags-clear-filter:hover { color: var(--d-text); }
-.alert-loading, .alert-empty { text-align: center; color: var(--d-text-dim); font-size: 0.82rem; padding: 16px; }
-.alert-list-compact { display: flex; flex-direction: column; gap: 6px; }
-.alert-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 7px; border-left: 3px solid transparent; }
-.alert-grade-critical { background: rgba(239,68,68,0.06); border-left-color: #ef4444; }
-.alert-grade-high     { background: rgba(249,115,22,0.06); border-left-color: #f97316; }
-.alert-grade-medium   { background: rgba(245,158,11,0.05); border-left-color: #f59e0b; }
-.alert-grade-low      { background: rgba(99,102,241,0.05); border-left-color: #a5b4fc; }
-.ar-grade { font-size: 0.63rem; font-weight: 700; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.05); min-width: 52px; text-align: center; margin-top: 2px; flex-shrink: 0; }
-.ar-body { flex: 1; min-width: 0; }
-.ar-title { font-size: 0.82rem; color: var(--d-text-bright); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ar-action { font-size: 0.73rem; color: var(--d-warn); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ar-time { font-size: 0.68rem; color: var(--d-text-dim); flex-shrink: 0; margin-top: 2px; }
-.ar-actions { display: flex; gap: 4px; flex-shrink: 0; }
-.ar-btn-ack, .ar-btn-dsm { font-size: 0.68rem; padding: 2px 6px; border-radius: 3px; cursor: pointer; border: none; transition: background 0.12s; }
-.ar-btn-ack { background: rgba(16,185,129,0.15); color: #10b981; }
-.ar-btn-ack:hover { background: rgba(16,185,129,0.3); }
-.ar-btn-dsm { background: rgba(255,255,255,0.06); color: var(--d-text-dim); }
-.ar-btn-dsm:hover { background: rgba(255,255,255,0.12); }
-
-/* ════════════════════════════════════════
-   Hotspots
-   ════════════════════════════════════════ */
-.hotspots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+.api-health-list {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-/* ════════════════════════════════════════
-   Utility
-   ════════════════════════════════════════ */
-.empty-state {
-  text-align: center;
-  padding: 28px;
-  color: var(--d-text-dim);
-  font-size: 0.85rem;
+.api-health-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.08);
 }
 
-.link-more {
-  display: block;
-  text-align: center;
-  margin-top: 10px;
-  color: var(--d-accent);
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 500;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+.api-health-row:last-child {
+  border-bottom: none;
 }
-.link-more:hover { text-decoration: underline; }
 
-.btn-icon {
-  background: none;
-  border: none;
-  padding: 5px;
-  cursor: pointer;
-  color: var(--d-text-dim);
+.api-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.api-sub {
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+
+.status-chip {
   display: inline-flex;
   align-items: center;
-  border-radius: 5px;
-  transition: all 0.18s;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
-.btn-icon:hover:not(:disabled) {
-  color: var(--d-accent);
-  background: rgba(56,189,248,0.08);
+
+.status-healthy {
+  background: rgba(16,185,129,0.15);
+  color: #6ee7b7;
 }
-.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.spinning { animation: spin 1s linear infinite; }
-.clickable-kpi { cursor: pointer; }
+.status-warn {
+  background: rgba(245,158,11,0.15);
+  color: #fcd34d;
+}
 
-/* ── V10.4 M5: 375px 移动端适配 ── */
-@media (max-width: 375px) {
-  .dashboard-v2 {
-    padding: 6px;
-  }
+.ops-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
 
-  .dash-kpi-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
+.ops-panel-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  background: rgba(30, 41, 59, 0.55);
+  text-decoration: none;
+}
 
-  .dash-kpi-card {
-    padding: 10px 8px;
-  }
+.ops-panel-link strong {
+  color: var(--d-text-bright);
+}
 
-  .kpi-value {
-    font-size: 1.2rem;
-  }
+.ops-panel-link span {
+  color: var(--d-text-dim);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
 
-  .kpi-label {
-    font-size: 0.65rem;
-  }
+.embedded-widget-card :deep(.var-risk-monitor),
+.embedded-widget-card :deep(.signal-budget-widget) {
+  background: transparent;
+}
 
-  .dash-main-grid {
+.empty-state {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 1200px) {
+  .section-main-grid {
     grid-template-columns: 1fr;
-    gap: 8px;
+  }
+}
+
+@media (max-width: 960px) {
+  .kpi-primary {
+    grid-column: span 1;
   }
 
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .mini-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-v2 {
+    gap: 16px;
   }
 
-  .section-header h2 {
-    font-size: 1rem;
+  .section-block {
+    padding: 16px;
   }
 
-  .tab-bar {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .tab-btn {
-    font-size: 0.75rem;
-    padding: 6px 10px;
-  }
-
-  .chart-container {
-    height: 200px;
-  }
-
-  table th,
-  table td {
-    padding: 6px 8px;
-    font-size: 0.75rem;
+  .section-links,
+  .section-summary-grid,
+  .section-kpi,
+  .section-risk-grid,
+  .section-support-grid,
+  .section-ai-grid,
+  .section-widget-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
