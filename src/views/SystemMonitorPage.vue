@@ -189,6 +189,39 @@
                   <li><strong>Tags：</strong>{{ joinList(selectedServiceDetail.service.tags) }}</li>
                 </ul>
               </div>
+              <div v-if="selectedNonRealtimePolicy" class="detail-card">
+                <div class="detail-card-title">非实时数据策略</div>
+                <ul class="detail-list">
+                  <li>
+                    <strong>Runtime Signal：</strong>
+                    {{ formatCacheOnlyFlag(selectedNonRealtimePolicy.runtimeSignalCacheOnly) }}
+                  </li>
+                  <li>
+                    <strong>Runtime Advisory：</strong>
+                    {{ formatCacheOnlyFlag(selectedNonRealtimePolicy.runtimeAdvisoryCacheOnly) }}
+                  </li>
+                  <li>
+                    <strong>最近心跳：</strong>
+                    {{ formatRelativeTime(selectedServiceDetail.service.last_heartbeat_at) }}
+                  </li>
+                </ul>
+                <div class="policy-job-grid">
+                  <article
+                    v-for="job in selectedNonRealtimePolicy.jobs"
+                    :key="job.jobKey"
+                    class="policy-job-card"
+                    :class="[`policy-job-${job.status}`]"
+                  >
+                    <div class="policy-job-head">
+                      <span>{{ job.label }}</span>
+                      <span class="status-pill small" :class="policyJobStatusClass(job.status)">
+                        {{ policyJobStatusLabel(job.status) }}
+                      </span>
+                    </div>
+                    <div class="policy-job-sub">成功 {{ job.successCount }} · 失败 {{ job.failureCount }}</div>
+                  </article>
+                </div>
+              </div>
               <div class="detail-card">
                 <div class="detail-card-title">最近状态时间线</div>
                 <ul class="timeline-list compact">
@@ -764,6 +797,7 @@ import HealthStatusBar from '../components/HealthStatusBar.vue';
 import SystemOperationsNav from '../components/SystemOperationsNav.vue';
 import SystemHealthCard from '../components/SystemHealthCard.vue';
 import { useWebSocketStore } from '../stores/websocket';
+import { parseNonRealtimePolicySummary } from '../utils/systemMonitorPolicy';
 import type {
   DataFlowDetailResponse,
   DataFlowOverviewResponse,
@@ -818,6 +852,10 @@ const serviceError = ref('')
 const serviceOverview = ref<ServiceOverviewResponse | null>(null)
 const selectedServiceDetail = ref<ServiceDetailResponse | null>(null)
 
+const selectedNonRealtimePolicy = computed(() => {
+  return parseNonRealtimePolicySummary(selectedServiceDetail.value?.service)
+})
+
 const isRefreshing = computed(
   () => loadingHealth.value || loadingApi.value || autonomyHealthLoading.value || lifecycleLoading.value || dataFlowLoading.value || serviceLoading.value || lsLoading.value,
 )
@@ -860,6 +898,18 @@ const summaryItems = computed(() => {
           label: 'Tiger OHLCV',
           value: tigerService.status,
           sub: tigerGatewayMessage(tigerService),
+        })
+      }
+      const nonRealtimePolicy = serviceOverview.value.services.find(item => item.service_key === 'non_realtime_data_policy')
+      const parsedPolicy = parseNonRealtimePolicySummary(nonRealtimePolicy)
+      if (nonRealtimePolicy && parsedPolicy) {
+        const unhealthyJobs = parsedPolicy.jobs.filter(item => item.status !== 'ok').length
+        items.push({
+          label: '非实时数据策略',
+          value: nonRealtimePolicy.status,
+          sub: unhealthyJobs > 0
+            ? `${unhealthyJobs} 个预热任务异常`
+            : `Signal ${formatCacheOnlyFlag(parsedPolicy.runtimeSignalCacheOnly)} / Advisory ${formatCacheOnlyFlag(parsedPolicy.runtimeAdvisoryCacheOnly)}`,
         })
       }
       return items
@@ -1164,6 +1214,24 @@ function formatLatency(value?: number | null): string {
 
 function joinList(items: string[]): string {
   return items.length ? items.join(' / ') : '-'
+}
+
+function formatCacheOnlyFlag(value: boolean | null): string {
+  if (value === true) return '仅缓存'
+  if (value === false) return '允许实时回源'
+  return '未提供'
+}
+
+function policyJobStatusLabel(status: 'ok' | 'fail' | 'missing'): string {
+  if (status === 'ok') return '正常'
+  if (status === 'fail') return '失败'
+  return '缺失'
+}
+
+function policyJobStatusClass(status: 'ok' | 'fail' | 'missing'): string {
+  if (status === 'ok') return 'status-healthy'
+  if (status === 'fail') return 'status-critical'
+  return 'status-warn'
 }
 
 function moduleLabel(moduleKey: string): string {
@@ -1547,6 +1615,50 @@ onMounted(() => {
   margin-top: 4px;
   color: #cbd5e1;
   font-size: 0.85rem;
+}
+
+.policy-job-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.policy-job-card {
+  border-radius: 12px;
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.policy-job-ok {
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.policy-job-fail {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.policy-job-missing {
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.policy-job-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: #f8fafc;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.policy-job-sub {
+  color: #94a3b8;
+  font-size: 0.78rem;
 }
 
 .monitor-section {
