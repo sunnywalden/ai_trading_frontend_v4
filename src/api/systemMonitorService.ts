@@ -235,8 +235,8 @@ function buildServiceOverview(windowMinutes = 60): ServiceOverviewResponse {
       module_key: 'market_data',
       module_label: 'Market Data',
       status: 'HEALTHY',
-      total_services: 3,
-      healthy_count: 3,
+      total_services: 4,
+      healthy_count: 4,
       warn_count: 0,
       critical_count: 0,
       unknown_count: 0,
@@ -380,6 +380,33 @@ function buildServiceOverview(windowMinutes = 60): ServiceOverviewResponse {
       owners: ['observability'],
       tags: ['monitoring'],
     },
+    {
+      service_key: 'non_realtime_data_policy',
+      service_label: 'Non-Realtime Data Policy',
+      module_key: 'market_data',
+      service_kind: 'internal',
+      status: 'HEALTHY',
+      degraded: false,
+      latency_ms: null,
+      p95_latency_ms: null,
+      error_count_1h: 0,
+      error_count_24h: 0,
+      last_heartbeat_at: nowIso(-2),
+      last_success_at: nowIso(-2),
+      last_error_code: null,
+      last_error_message: null,
+      last_recovered_at: nowIso(-60),
+      dependencies: ['redis_cache', 'scheduler', 'market_data_provider'],
+      owners: ['market-data'],
+      tags: [
+        'policy',
+        'runtime-signal-cache-only:true',
+        'runtime-advisory-cache-only:true',
+        'historical_bars_cache:ok:succ=12:fail=0',
+        'key_statistics_cache:ok:succ=12:fail=0',
+        'fundamental_data_cache:ok:succ=10:fail=0',
+      ],
+    },
   ]
 
   return {
@@ -389,8 +416,8 @@ function buildServiceOverview(windowMinutes = 60): ServiceOverviewResponse {
       source: 'system-monitor-fallback',
       refresh_interval_seconds: 30,
     },
-    modules: [],
-    services: [],
+    modules,
+    services,
   }
 }
 
