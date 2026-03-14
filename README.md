@@ -2,22 +2,32 @@
 
 > AI 量化交易系统前端控制台 - 基于 Vue 3 + TypeScript + Vite 构建的实时风险监控与行为分析仪表盘
 
-## 🚀 V10.5.1 重大更新 - 机构级交易操作系统已上线
+## 🚀 V11.0.1 重大更新 - Capital Intelligence 控制台已上线
 
-**最新版本**: V10.5.1（2026-03-08）
+**最新版本**: V11.0.1（2026-03-14）
 
-V10.5.1 版本带来了**机构级交易能力**，系统已正式上线！
+V11.0.1 版本带来了围绕资本轮转、自感知与改进候选的控制台增强，当前重点体现在 `/autonomy` 页面。
 
 ### ✨ 核心改进
 
-- 🛡️ **Alpha Truth Stack**
-  - 策略净 alpha 监控、信号衰减分析与影子组合
+- 🧬 **MetaState 系统自知画像**
+  - 展示账户净值、闲置资本比例、阻断信号数、摩擦积累 ticker 数、False-Hold 告警数
 
-- 📐 **Portfolio Construction 2.0**
-  - 风险预算树与流动性感知仓位管理
+- 💸 **Capital Velocity 可视化**
+  - 展示摩擦积累信号、soft-relief 可用状态与 V11 rollout flags
 
-- ⚡ **Execution Policy Engine**
-  - 订单紧急度、参与率 (VWAP/TWAP) 与滑点预算控制
+- 🚨 **False-Hold Alerts**
+  - 直接暴露“应减未减、持续被压制”的持仓问题
+
+- 🧪 **Improvement Lab 候选**
+  - 展示自动生成的参数/模块改进候选、证据摘要与验证计划
+
+- 🎛️ **V11 Rollout Flags**
+  - `capital_velocity_v1101_enabled`
+  - `self_perception_v1101_enabled`
+  - `improvement_engine_v1101_enabled`
+  - `evolution_governance_v1101_enabled`
+  - `style_alignment_v1101_enabled`
 
 - 📐 **完整的响应式设计系统**
   - 7 个断点覆盖所有设备（手机 375px ~ 桌面 1920px）
@@ -161,7 +171,7 @@ npm run preview
 
 ## 🔌 后端 API 集成
 
-> 文档索引：更多文档请查看 `docs/README.md`（包含 UI/UX、实现总结、监控与部署等文档快速导航）
+> 文档索引：前端设计说明见 `docs/FRONTEND_DESIGN.md`；历史设计材料见 `docs/v3/`
 
 前端通过 Vite 代理与后端通信，所有 `/api` 请求会被转发到后端服务：
 
@@ -181,6 +191,10 @@ proxy: {
 | 端点 | 方法 | 说明 |
 | ------ | ------ | ------ |
 | `/health` | GET | 获取系统健康状态和运行模式 |
+| `/api/v1/autonomy/meta-state` | GET | 获取 V11.0.1 系统元状态快照 |
+| `/api/v1/autonomy/friction-state` | GET | 获取摩擦积累信号列表 |
+| `/api/v1/autonomy/false-hold-alerts` | GET | 获取 False-Hold 告警 |
+| `/api/v1/autonomy/improvement-candidates` | GET | 获取 Improvement Lab 候选 |
 | `/api/v1/run-auto-hedge-once` | POST | 执行一次自动对冲 |
 | `/api/v1/ai/state` | GET | 获取 AI 风控状态（限额、暴露、行为评分） |
 | `/api/v1/admin/behavior/rebuild` | POST | 重新计算行为评分（支持窗口天数参数） |

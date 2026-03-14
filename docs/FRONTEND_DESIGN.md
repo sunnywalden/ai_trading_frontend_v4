@@ -1,8 +1,9 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V10.5.4（规划中） | 当前已上线版本：V10.5.2 | 更新日期：2026-03-11  
-> 变更摘要（V10.5.4）：**Signal Pipeline Integrity & Control-Plane Hardening UI**——前端不新增导航组，而是在现有工作台上统一信号控制平面语义：`/alpha-lab` 与 `/portfolio` 强化 REAL/SYNTHETIC/BACKFILL 与 canonical payload 可视化，`/execution-policy` 与 `/autonomy` 强化唯一自动执行主链、native audit / reconstructed 来源标识、control-plane rollout 状态与 displacement pending 闭环解释，`/governance/pipeline` 对齐完整开发流程与 Observe → Shadow → Semi → Full 放量纪律；设计原则继续坚持“决策级可视化而非页面膨胀”，重点提升 why-now / why-source / why-path / why-not-live 的解释密度。  
+> 版本：V11.0.1（已上线） | 更新日期：2026-03-14  
+> 变更摘要（V11.0.1）：**Capital Intelligence & Self-Perception UI**——前端继续坚持“不新增一级导航”的原则，在既有 `/autonomy` 工作台中补齐系统自知画像（MetaState）、摩擦积累信号、False-Hold 告警、Improvement Lab 候选与 V11 rollout flags 展示；重点提升“为什么资金闲置、为什么信号被卡住、哪里值得改进”的解释密度。  
+> 变更摘要（V10.5.4 基线）：**Signal Pipeline Integrity & Control-Plane Hardening UI**——作为 V11.0.1 的前序控制平面基线，负责统一信号来源、canonical payload、native audit / reconstructed 标识与 rollout discipline。  
 > 变更摘要（V10.5.2）：**组合席位竞争引擎 UI（Capacity-Aware Admission Visualization）**——/portfolio 页新增席位竞争看板 Tab（候选信号 vs 现有持仓统一评分排名列表、overflow 淘汰清单、准入评分拆解 tooltip）；/autonomy 新增 CapacityArbiter 状态卡（本轮候选数、触发席位竞争次数、今日替换成功 / 拒绝计数、dry-run 状态徽章）；/order-book 新增 REJECTED_BY_CAPACITY_REPLACEMENT 拒绝原因徽章与原因详情抽屉；新增 /capacity-arbiter 路由（Preview 模拟面板 + Audit Log 历史 + Config 治理参数面板）；所有席位竞争事件接入 SSE 实时推送，用户可在不刷新页面的情况下观测替换决策流。
 > 变更摘要（V10.5.1）：**研究真相与交易纪律工作台**——前端新增四个面向机构级交易流程的核心工作台：`/alpha-lab`（Strategy Scorecard 2.0 + Signal Decay + Regime Breakdown + Shadow Book Compare）、增强版 `/portfolio`（升级为 Portfolio Construction Console，新增 Risk Budget / Marginal Contribution / Liquidity Usage 多 Tab）、`/execution-policy`（Execution Policy Snapshot + Pre-Trade Cost + Child-Order Timeline + Replay）、`/governance/pipeline`（Strategy Promotion Pipeline + Experiment Ledger + Rollout / Rollback Evidence）；信息架构坚持“决策级可视化而非页面膨胀”，一级导航仍维持 4 组，重点把现有 observability 资产重组为可解释、可审计、可晋级的研究与交易操作台。  
 > 变更摘要（V10.4.3）：**风险降低优先执行 + 信号质量优先队列 UI**——`/autonomy` 新增“🛟 减仓 / 平仓优先通道”状态卡（今日风险出场 / 快速通道 / 强制出场 / 失败拦截四指标）与“🏅 信号质量队列”状态卡（今日精英信号 / 高质量信号 / 日配额豁免 / 待处理精英信号）；信号流水线与审计日志新增 `STANDARD / FAST_CLOSE / FORCE_EXIT` 执行路径徽章、`LOW / MEDIUM / HIGH / ELITE` 质量徽章与 `日配额豁免` 标签，帮助用户识别哪些信号按质量优先进入漏斗，以及哪些精英级信号在日配额耗尽时仍被优先放行；风险管理来源信号统一显示为 `RISK_MGMT` 徽章。**追加需求**：`/system` 系统监控页新增交易生命周期监测、系统主要数据流转详细状态、主要模块与细粒度服务状态视图。  
@@ -182,7 +183,7 @@
 | 页面 | 路由 | 说明 |
 | ------ | ------ | ------ |
 | 交易仪表盘 | `/dashboard` | 首页，含 AI 运行状态、VaR/宏观风险水位（V10.1 真实数据）；V10.2 新增体制感知 KPI 卡；V10.3.3 新增智能告警分级面板 |
-| **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志；V10.2 新增体制感知横幅 Banner |
+| **AI 自主控制** | `/autonomy` | AI 运行状态、自主度切换、审计日志；V11.0.1 新增 MetaState 自知画像、摩擦积累信号、False-Hold 告警、Improvement Lab 候选与 V11 flags |
 | **市场体制感知** | `/regime` | 当前体制卡、五维雷达图、策略权重柱状图、体制历史时间轴 ★ V10.2-M1 新增 |
 | **事件日历** | `/events` | 盈利/FOMC/CPI/NFP 风险色环格、EPS 实际与估计对比、围栏状态徽章、人工覆盖模态框 ★ V10.2-M2 新增 |
 | **Trading Copilot** | `/copilot` | 对话式人机接口；V10.1 `action_intent` 执行闭环；V10.2-M7 Standard/Deep Research 模式切换 |
@@ -227,34 +228,34 @@
 
 ## 4. 页面设计详述
 
-### 4.0 V10.5.4 新增设计原则
+### 4.0 V11.0.1 新增设计原则
 
-V10.5.4 的前端设计目标不是继续横向扩页，而是把现有观察能力升级成统一控制平面。所有核心工作台都必须回答以下问题之一：
+V11.0.1 的前端目标不是横向继续扩页，而是把现有控制台升级成“资本效率 + 系统自感知”的解释工作台。`/autonomy` 必须能回答：
 
-- 为什么这个 alpha 值得信。
-- 为什么这个仓位应该是这个大小。
-- 为什么这笔订单应该用这个执行策略。
-- 为什么这个策略此刻允许进入 live，或者必须被回滚。
+- 为什么资金闲置。
+- 为什么信号被连续卡在阈值前。
+- 为什么某些持仓应该减仓却没有被释放。
+- 当前系统建议改哪里，而不是只显示“系统正常”。
 
 新增控制要求：
 
-- 所有核心卡片同时展示 **结果值 + 解释字段 + data_quality**，不能只给图、不解释口径。
-- 组合与执行视图必须增加 `why not larger / why scaled down / why not another algo` 解释链。
-- 所有工作台都应支持 gross → net → after cost 的口径切换，避免只展示“好看”的结果。
+- 所有 V11 卡片同时展示 **结果值 + 解释字段 + 开关状态**。
+- MetaState、False-Hold、Improvement Candidate 三类信息必须同屏联动。
+- rollout flags 必须显式区分 `ON / OFF`。
+- 仍然不新增一级导航，V11.0.1 主要增强 `/autonomy`。
 
 新增页面统一遵守以下约束：
 
-- 优先桌面端信息密度，不以移动端优先为目标。
 - 复用现有 Bloomberg 风格、色码和高密度表格语言。
 - 所有关键信息同时展示结果值与解释字段，不只给图，不只给结论。
 - 能作为高级视图挂载的页面，不强制拆成独立导航入口。
 
-### 4.0.1 V10.5.4 实施顺序（定稿）
+### 4.0.1 V11.0.1 当前实现范围
 
-- **先后端，后前端**：四个工作台的 UI 不先发明新状态，全部以后端返回的 truth / seat value / policy / evidence contract 为准。
-- **先展示，后控制**：UI rollout 必须遵循 `Observe → Shadow Control → Semi → Full`；页面先展示新字段，再逐步开放控制型按钮与 blocker 提示。
-- **不新增一级导航**：V10.5.4 仍然只升级 `/alpha-lab`、`/portfolio`、`/execution-policy`、`/governance/pipeline` 与 `/autonomy` 五个工作台，不额外膨胀导航结构。
-- **结果值 + 解释链 + data_quality 同屏**：所有新增 KPI 卡、表格列与 Drawer 必须同时给出结果值、why 字段与 `data_quality`，禁止只给图或只给结论。
+- **不新增一级导航**：V11.0.1 主要增强 `/autonomy`，保留现有信息架构。
+- **以后端契约为准**：前端严格消费 `/api/v1/autonomy/meta-state`、`/friction-state`、`/false-hold-alerts`、`/improvement-candidates`。
+- **先解释，再控制**：当前版本重点是观察与解释，不新增高风险控制按钮。
+- **Flags 可见**：V11 rollout flags 必须在 UI 上可见，帮助运维区分“功能未开启”和“功能无数据”。
 
 ### 4.1 交易仪表盘 (Dashboard V2)
 
@@ -727,6 +728,49 @@ V10.5.4 的前端设计目标不是继续横向扩页，而是把现有观察能
 - `GET /api/v1/autonomy/audit-log`
 - `GET /api/v1/autonomy/signal-pipeline`
 - `POST /api/v1/autonomy/revoke/{exec_id}`
+
+### 4.10A Autonomy MetaState & Improvement Lab —— V11.0.1 已上线
+
+**页面位置**：`/autonomy`
+
+**核心区域**：
+
+- **🧬 系统自知画像**
+  - 账户净值
+  - 闲置资本比例
+  - 总阻断信号数
+  - 摩擦积累 ticker 数
+  - 可 Soft Relief 数
+  - False-Hold 告警数
+
+- **V11 控制面 Flags**
+  - Capital Velocity
+  - Self-Perception
+  - Improvement Engine
+  - Evolution Governance
+  - Style Alignment
+
+- **摩擦积累信号表**
+  - 字段：标的、方向、体制、拒绝次数、最近置信度、Soft Relief 可用性
+
+- **False-Hold 告警表**
+  - 字段：标的、评分、建议、循环次数、告警时间
+
+- **Improvement Lab 候选表**
+  - 字段：类型、模块/参数、建议值、置信度、证据摘要
+
+**设计目标**：
+
+- 用一屏解释“资本为什么没转起来”
+- 区分“无数据”和“功能未开启”
+- 保留 Bloomberg 风格的高密度表格与状态徽章语言
+
+**API**：
+
+- `GET /api/v1/autonomy/meta-state`
+- `GET /api/v1/autonomy/friction-state`
+- `GET /api/v1/autonomy/false-hold-alerts`
+- `GET /api/v1/autonomy/improvement-candidates`
 
 ---
 
