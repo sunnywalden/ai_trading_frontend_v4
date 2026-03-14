@@ -262,6 +262,47 @@
         <div v-if="lifecycleLoading" class="loading-message">正在加载生命周期视图...</div>
         <p v-else-if="lifecycleError" class="error-message">{{ lifecycleError }}</p>
         <template v-else-if="lifecycleOverview">
+          <div class="detail-grid two-col" style="margin-bottom: 16px;">
+            <article class="detail-card">
+              <div class="detail-header">
+                <div>
+                  <h4>双视角一致性健康</h4>
+                  <p>broker/live 与 lifecycle 聚合是否已收敛；该探针为只读检查，不主动执行纠偏。</p>
+                </div>
+                <span
+                  v-if="lifecycleCoherence"
+                  class="status-pill"
+                  :class="lifecycleCoherenceStatusClass(lifecycleCoherence)"
+                >
+                  {{ lifecycleCoherenceStatusLabel(lifecycleCoherence) }}
+                </span>
+              </div>
+
+              <div v-if="lifecycleCoherenceLoading" class="loading-message">正在加载视角一致性快照...</div>
+              <p v-else-if="lifecycleCoherenceError" class="error-message">{{ lifecycleCoherenceError }}</p>
+              <template v-else-if="lifecycleCoherence">
+                <div class="module-metrics" style="margin-top: 0;">
+                  <span>Source {{ lifecycleCoherence.source }}</span>
+                  <span>Broker {{ lifecycleCoherence.broker_active_positions }}</span>
+                  <span>Lifecycle {{ lifecycleCoherence.lifecycle_active_positions }}</span>
+                  <span>Mismatch {{ lifecycleCoherence.mismatch_symbols.length }}</span>
+                  <span>Hydrated {{ lifecycleCoherence.hydrated_positions_created }}</span>
+                </div>
+                <div class="module-metrics">
+                  <span>Closed Plans {{ lifecycleCoherence.stale_plans_closed }}</span>
+                  <span>Closed Positions {{ lifecycleCoherence.stale_positions_closed }}</span>
+                  <span>Mode {{ lifecycleCoherence.run_mode }}</span>
+                </div>
+                <div v-if="lifecycleCoherence.mismatch_symbols.length" class="secondary-cell" style="margin-top: 12px;">
+                  Mismatch symbols：{{ lifecycleCoherence.mismatch_symbols.join(' · ') }}
+                </div>
+                <div v-if="lifecycleCoherence.notes.length" class="secondary-cell" style="margin-top: 8px; line-height: 1.6;">
+                  {{ lifecycleCoherence.notes.join(' · ') }}
+                </div>
+              </template>
+            </article>
+          </div>
+
           <div class="headline-grid">
             <article class="headline-card">
               <div class="headline-label">活跃 intents</div>
@@ -772,47 +813,54 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  fetchAutonomyHealth,
-  fetchLlmStats,
-  fetchMonitoringHealth,
-  fetchMonitoringReport,
-  fetchMonitoringStats,
-  type ApiStats,
-  type AutonomyHealthReport,
-  type LlmStats,
-  type MonitoringReport,
+    fetchAutonomyHealth,
+    fetchLlmStats,
+    fetchMonitoringHealth,
+    fetchMonitoringReport,
+    fetchMonitoringStats,
+    type ApiStats,
+    type AutonomyHealthReport,
+    type LlmStats,
+    type MonitoringReport,
 } from '../api/client';
+import { reconcileLifecycleCoherence, type LifecycleCoherenceSummary } from '../api/lifecycleService';
 import { liveSafetyApi, type DegradationReport, type FreshnessMatrix, type ThrottleStatus } from '../api/liveSafetyService'; // V10.5.1
 import {
-  fetchSystemDataFlowDetail,
-  fetchSystemDataFlowOverview,
-  fetchSystemLifecycleDetail,
-  fetchSystemLifecycleOverview,
-  fetchSystemServiceDetail,
-  fetchSystemServiceOverview,
+    fetchSystemDataFlowDetail,
+    fetchSystemDataFlowOverview,
+    fetchSystemLifecycleDetail,
+    fetchSystemLifecycleOverview,
+    fetchSystemServiceDetail,
+    fetchSystemServiceOverview,
 } from '../api/systemMonitorService';
 import AlertsPanel from '../components/AlertsPanel.vue';
 import ApiProviderCard from '../components/ApiProviderCard.vue';
 import HealthStatusBar from '../components/HealthStatusBar.vue';
-import SystemOperationsNav from '../components/SystemOperationsNav.vue';
 import SystemHealthCard from '../components/SystemHealthCard.vue';
+import SystemOperationsNav from '../components/SystemOperationsNav.vue';
 import { useWebSocketStore } from '../stores/websocket';
-import { parseNonRealtimePolicySummary } from '../utils/systemMonitorPolicy';
 import type {
-  DataFlowDetailResponse,
-  DataFlowOverviewResponse,
-  LifecycleIntentDetailResponse,
-  LifecycleOverviewResponse,
-  MonitorStatus,
-  ServiceDetailResponse,
-  ServiceOverviewResponse,
+    DataFlowDetailResponse,
+    DataFlowOverviewResponse,
+    LifecycleIntentDetailResponse,
+    LifecycleOverviewResponse,
+    MonitorStatus,
+    ServiceDetailResponse,
+    ServiceOverviewResponse,
 } from '../types/systemMonitor';
+import { parseNonRealtimePolicySummary } from '../utils/systemMonitorPolicy';
 
 const wsStore = useWebSocketStore()
 const route = useRoute()
 const router = useRouter()
 type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'live-safety'
-const monitorTabs: MonitorTabKey[] = ['health', 'lifecycle', 'data-flow', 'api', 'live-safety']
+const monitorTabs = new Set<MonitorTabKey>([
+  'health',
+  'lifecycle',
+  'data-flow',
+  'api',
+  'live-safety',
+])
 const tab = ref<MonitorTabKey>('health')
 
 const loadingHealth = ref(false)
@@ -840,6 +888,9 @@ const lifecycleWindow = ref(60)
 const lifecycleOnlyExceptions = ref(false)
 const lifecycleOverview = ref<LifecycleOverviewResponse | null>(null)
 const selectedLifecycleDetail = ref<LifecycleIntentDetailResponse | null>(null)
+const lifecycleCoherence = ref<LifecycleCoherenceSummary | null>(null)
+const lifecycleCoherenceLoading = ref(false)
+const lifecycleCoherenceError = ref('')
 
 const dataFlowLoading = ref(false)
 const dataFlowError = ref('')
@@ -931,6 +982,18 @@ const summaryItems = computed(() => {
       ]
     : []
 
+  const coherenceItems: Array<{ label: string; value: string; sub: string }> = lifecycleCoherence.value
+    ? [
+        {
+          label: '视角一致性',
+          value: lifecycleCoherenceStatusLabel(lifecycleCoherence.value),
+          sub: lifecycleCoherence.value.mismatch_detected
+            ? `Symbols ${lifecycleCoherence.value.mismatch_symbols.join(' / ')}`
+            : `Broker ${lifecycleCoherence.value.broker_active_positions} / Lifecycle ${lifecycleCoherence.value.lifecycle_active_positions}`,
+        },
+      ]
+    : []
+
   const flowItems: Array<{ label: string; value: string; sub: string }> = dataFlowOverview.value
     ? (() => {
     const unhealthyFlows = dataFlowOverview.value.flows.filter(item => item.status !== 'HEALTHY')
@@ -948,8 +1011,32 @@ const summaryItems = computed(() => {
     })()
     : []
 
-  return [...serviceItems, ...lifecycleItems, ...flowItems]
+  return [...serviceItems, ...lifecycleItems, ...coherenceItems, ...flowItems]
 })
+
+function lifecycleCoherenceStatusLabel(summary: LifecycleCoherenceSummary): string {
+  if (summary.mismatch_detected) return 'MISMATCH'
+  if (
+    summary.stale_plans_closed > 0
+    || summary.stale_positions_closed > 0
+    || summary.hydrated_positions_created > 0
+  ) {
+    return 'AUTO-HEAL'
+  }
+  return 'ALIGNED'
+}
+
+function lifecycleCoherenceStatusClass(summary: LifecycleCoherenceSummary): string {
+  if (summary.mismatch_detected) return 'status-critical'
+  if (
+    summary.stale_plans_closed > 0
+    || summary.stale_positions_closed > 0
+    || summary.hydrated_positions_created > 0
+  ) {
+    return 'status-warn'
+  }
+  return 'status-healthy'
+}
 
 function statusRank(status: string): number {
   const normalized = String(status || 'UNKNOWN').toUpperCase()
@@ -1355,6 +1442,19 @@ async function loadLifecycleOverview() {
   }
 }
 
+async function loadLifecycleCoherence() {
+  lifecycleCoherenceLoading.value = true
+  lifecycleCoherenceError.value = ''
+  try {
+    lifecycleCoherence.value = await reconcileLifecycleCoherence(false)
+  } catch (e: any) {
+    lifecycleCoherence.value = null
+    lifecycleCoherenceError.value = e?.message || '❌ 获取视角一致性失败'
+  } finally {
+    lifecycleCoherenceLoading.value = false
+  }
+}
+
 async function openLifecycleDetail(intentId: number) {
   try {
     selectedLifecycleDetail.value = await fetchSystemLifecycleDetail(intentId)
@@ -1421,6 +1521,7 @@ async function onRefreshAll() {
     loadAutonomyHealth(),
     loadMonitoringData(),
     loadLifecycleOverview(),
+    loadLifecycleCoherence(),
     loadDataFlowOverview(),
     loadServiceOverview(),
     loadLiveSafety(),
@@ -1440,7 +1541,7 @@ function syncTabFromRoute() {
     return
   }
 
-  if (monitorTabs.includes(queryTab as MonitorTabKey)) {
+  if (monitorTabs.has(queryTab as MonitorTabKey)) {
     tab.value = queryTab as MonitorTabKey
   }
 }
@@ -1453,6 +1554,7 @@ onMounted(() => {
   loadAutonomyHealth()
   loadMonitoringData()
   loadLifecycleOverview()
+  loadLifecycleCoherence()
   loadDataFlowOverview()
   loadServiceOverview()
   loadLiveSafety()  // V10.5.1

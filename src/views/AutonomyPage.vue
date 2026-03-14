@@ -17,7 +17,7 @@
             class="success-button"
             @click="handleResume"
           >▶ 恢复运行</button>
-          <button class="refresh-button" @click="autonomyStore.fetchStatus()">刷新</button>
+          <button class="refresh-button" @click="handleRefreshPage">刷新</button>
         </div>
       </div>
     </section>
@@ -107,6 +107,65 @@
           </div>
         </div>
       </div>    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div>
+          <h3 style="margin:0 0 4px;">🧭 生命周期一致性健康</h3>
+          <p style="margin:0; font-size:12px; color:#8b97ad;">
+            监控 broker/live 与本地 lifecycle 聚合是否一致。自动协同由后台每 5 分钟执行一次，这里显示的是当前只读健康快照。
+          </p>
+        </div>
+        <span :class="coherenceBadgeClass">
+          {{ coherenceBadgeLabel }}
+        </span>
+      </div>
+
+      <div v-if="coherenceHealthLoading" class="loading-message">加载中...</div>
+      <div v-else-if="coherenceHealthError" class="error-message">{{ coherenceHealthError }}</div>
+      <template v-else-if="coherenceHealth">
+        <div class="closing-flow-grid">
+          <div class="closing-flow-metric">
+            <div class="closing-flow-label">数据源</div>
+            <div class="closing-flow-value" style="font-size: 16px;">{{ coherenceHealth.source }}</div>
+          </div>
+          <div class="closing-flow-metric">
+            <div class="closing-flow-label">Broker / Lifecycle</div>
+            <div class="closing-flow-value">{{ coherenceHealth.broker_active_positions }} / {{ coherenceHealth.lifecycle_active_positions }}</div>
+          </div>
+          <div class="closing-flow-metric">
+            <div class="closing-flow-label">Mismatch Symbols</div>
+            <div class="closing-flow-value" :class="coherenceHealth.mismatch_detected ? 'text-warning' : 'text-success'">
+              {{ coherenceHealth.mismatch_symbols.length }}
+            </div>
+          </div>
+          <div class="closing-flow-metric">
+            <div class="closing-flow-label">最近自动协同</div>
+            <div class="closing-flow-value" style="font-size: 16px;">
+              Plans {{ coherenceHealth.stale_plans_closed }} · Positions {{ coherenceHealth.stale_positions_closed }}
+            </div>
+            <div v-if="coherenceHealth.hydrated_positions_created > 0" class="stat-sub text-success">
+              Hydrated {{ coherenceHealth.hydrated_positions_created }}
+            </div>
+          </div>
+        </div>
+
+        <div v-if="coherenceHealth.mismatch_symbols.length > 0" style="display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px;">
+          <span
+            v-for="symbol in coherenceHealth.mismatch_symbols"
+            :key="symbol"
+            class="mini-note"
+            style="color:#fff7ed; background: rgba(146, 64, 14, 0.92);"
+          >
+            {{ symbol }}
+          </span>
+        </div>
+
+        <div v-if="coherenceHealth.notes.length > 0" style="font-size: 12px; color: #9fb0c7; margin-top: 12px;">
+          {{ coherenceHealth.notes.join(' · ') }}
+        </div>
+      </template>
+    </div>
 
     <div v-if="status?.closing_flow" class="card closing-flow-card" style="margin-bottom: 24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -710,6 +769,7 @@
 <script setup lang="ts">
 import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, MetaStateSnapshot, SignalPipelineItem } from '@/api/autonomyService';
 import { autonomyApi } from '@/api/autonomyService';
+import { reconcileLifecycleCoherence, type LifecycleCoherenceSummary } from '@/api/lifecycleService';
 import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
 import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel'; // V10.5.2
 import { useAutonomyStore } from '@/stores/autonomy';
@@ -720,6 +780,9 @@ import { computed, onMounted, ref } from 'vue';
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
 const autonomyLevels: AutonomyLevel[] = ['FULL', 'SEMI', 'ADVISORY']
+const coherenceHealth = ref<LifecycleCoherenceSummary | null>(null)
+const coherenceHealthLoading = ref(false)
+const coherenceHealthError = ref<string | null>(null)
 
 function getErrorMessage(error: unknown, fallback = '加载失败') {
   if (typeof error === 'object' && error !== null) {
@@ -740,6 +803,49 @@ function getErrorMessage(error: unknown, fallback = '加载失败') {
     }
   }
   return fallback
+}
+
+const coherenceBadgeLabel = computed(() => {
+  if (coherenceHealthLoading.value) return 'LOADING'
+  if (!coherenceHealth.value) return 'UNKNOWN'
+  if (coherenceHealth.value.mismatch_detected) return 'MISMATCH'
+  if (
+    coherenceHealth.value.stale_plans_closed > 0
+    || coherenceHealth.value.stale_positions_closed > 0
+    || coherenceHealth.value.hydrated_positions_created > 0
+  ) {
+    return 'AUTO-HEAL'
+  }
+  return 'ALIGNED'
+})
+
+const coherenceBadgeClass = computed(() => {
+  if (coherenceHealthLoading.value) return 'quality-badge quality-badge-medium'
+  if (!coherenceHealth.value) return 'quality-badge quality-badge-low'
+  if (coherenceHealth.value.mismatch_detected) {
+    return 'quality-badge quality-badge-elite'
+  }
+  if (
+    coherenceHealth.value.stale_plans_closed > 0
+    || coherenceHealth.value.stale_positions_closed > 0
+    || coherenceHealth.value.hydrated_positions_created > 0
+  ) {
+    return 'quality-badge quality-badge-medium'
+  }
+  return 'quality-badge quality-badge-high'
+})
+
+async function fetchLifecycleCoherenceHealth() {
+  coherenceHealthLoading.value = true
+  coherenceHealthError.value = null
+  try {
+    coherenceHealth.value = await reconcileLifecycleCoherence(false)
+  } catch (error: unknown) {
+    coherenceHealth.value = null
+    coherenceHealthError.value = getErrorMessage(error)
+  } finally {
+    coherenceHealthLoading.value = false
+  }
 }
 
 // V11.0.1: 系统自知画像 MetaState
@@ -992,53 +1098,76 @@ const levelDescs: Record<AutonomyLevel, string> = {
 
 async function handleSetLevel(level: AutonomyLevel) {
   await autonomyStore.setLevel(level)
-  await autonomyStore.fetchStatus()
+  await handleRefreshPage()
 }
 
 async function handlePause() {
   await autonomyStore.pause()
+  await handleRefreshPage()
 }
 
 async function handleResume() {
   await autonomyStore.resume()
+  await handleRefreshPage()
 }
 
 async function handleTriggerRebalance() {
   await autonomyStore.triggerRebalance()
-  await autonomyStore.fetchSignalPipeline()
-  await autonomyStore.fetchStatus()
-  await autonomyStore.fetchMarketUniverseStatus()
+  await Promise.all([
+    autonomyStore.fetchSignalPipeline(),
+    autonomyStore.fetchStatus(),
+    autonomyStore.fetchMarketUniverseStatus(),
+    fetchLifecycleCoherenceHealth(),
+  ])
 }
 
 async function handleTriggerDecisionCycle() {
   await autonomyStore.triggerDecisionCycle()
-  await autonomyStore.fetchSignalPipeline()
-  await autonomyStore.fetchStatus()
-  await autonomyStore.fetchMarketUniverseStatus()
+  await Promise.all([
+    autonomyStore.fetchSignalPipeline(),
+    autonomyStore.fetchStatus(),
+    autonomyStore.fetchMarketUniverseStatus(),
+    fetchLifecycleCoherenceHealth(),
+  ])
 }
 
 async function handleTriggerFullCycle() {
   await autonomyStore.triggerFullCycle()
-  await autonomyStore.fetchSignalPipeline()
-  await autonomyStore.fetchStatus()
-  await autonomyStore.fetchMarketUniverseStatus()
+  await Promise.all([
+    autonomyStore.fetchSignalPipeline(),
+    autonomyStore.fetchStatus(),
+    autonomyStore.fetchMarketUniverseStatus(),
+    fetchLifecycleCoherenceHealth(),
+  ])
 }
 
 async function handleRevoke(execId: string) {
   await autonomyStore.revokeOrder(execId)
+  await Promise.all([
+    autonomyStore.fetchAuditLog({ limit: 50 }),
+    autonomyStore.fetchStatus(),
+    fetchLifecycleCoherenceHealth(),
+  ])
 }
 
 function formatDate(s: string) {
   return formatClientDateTime(s)
 }
 
+async function handleRefreshPage() {
+  await Promise.all([
+    autonomyStore.fetchStatus(),
+    autonomyStore.fetchAuditLog({ limit: 50 }),
+    autonomyStore.fetchSignalPipeline(),
+    autonomyStore.fetchMarketUniverseStatus(),
+    fetchLifecycleCoherenceHealth(),
+    fetchRegime(),
+    fetchMetaState(),
+  ])
+}
+
 onMounted(async () => {
-  await autonomyStore.fetchStatus()
-  await autonomyStore.fetchAuditLog({ limit: 50 })
-  await autonomyStore.fetchSignalPipeline()
-  await autonomyStore.fetchMarketUniverseStatus()
-  fetchRegime()      // V10.2-M1: 异步获取体制，不阻塞主查询
-  fetchMetaState()   // V11.0.1: 异步获取系统自知画像
+  await handleRefreshPage()
 })
 </script>
 
