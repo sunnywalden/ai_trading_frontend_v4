@@ -203,6 +203,67 @@ export interface MarketUniverseStatusResponse {
   checked_at: string
 }
 
+// ── V11.0.1 Capital Intelligence 类型 ────────────────────────────────────
+
+export interface FrictionSignalState {
+  symbol: string
+  direction: string
+  regime: string
+  rejection_count: number
+  last_conviction: number | null
+  threshold_at_rejection: number | null
+  soft_relief_used_count: number
+  composite_score: number | null
+  resonance_bonus: number | null
+  soft_relief_eligible: boolean
+}
+
+export interface FrictionStateResponse {
+  throttled_signals: FrictionSignalState[]
+  count: number
+  feature_enabled: boolean
+}
+
+export interface FalseHoldAlert {
+  account_id: string
+  symbol: string
+  score: number
+  recommendation: string
+  cycle_count: number
+  alerted_at: string
+}
+
+export interface FalseHoldAlertsResponse {
+  alerts: FalseHoldAlert[]
+  count: number
+  feature_enabled: boolean
+}
+
+export interface MetaStateCapitalState {
+  equity: number
+  positions_count?: number
+  gross_notional?: number
+  gross_exposure_pct?: number
+  idle_cash_ratio: number
+}
+
+export interface MetaStateModelState {
+  active_friction_tickers: number
+  soft_relief_eligible_count: number
+  false_hold_count: number
+  total_blocked_signals: number
+}
+
+export interface MetaStateSnapshot {
+  snapshot_id: string
+  generated_at: string
+  throttled_signals: FrictionSignalState[]
+  false_hold_alerts: FalseHoldAlert[]
+  capital_state: MetaStateCapitalState
+  model_state: MetaStateModelState
+  _cached?: boolean
+}
+
 export interface AuditLogEntry {
   id: number
   decision_type: string
@@ -266,4 +327,14 @@ export const autonomyApi = {
 
   getMarketUniverseStatus: () =>
     api.get<MarketUniverseStatusResponse>('/v1/market-universe/status'),
+
+  // V11.0.1 Capital Intelligence
+  getMetaState: () =>
+    api.get<MetaStateSnapshot>('/v1/autonomy/meta-state'),
+
+  getFrictionState: () =>
+    api.get<FrictionStateResponse>('/v1/autonomy/friction-state'),
+
+  getFalseHoldAlerts: () =>
+    api.get<FalseHoldAlertsResponse>('/v1/autonomy/false-hold-alerts'),
 }

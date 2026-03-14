@@ -367,6 +367,124 @@
       </div>
     </div>
 
+    <!-- V11.0.1 系统自知画像 MetaState Panel -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">🧬 系统自知画像</h3>
+        <button class="refresh-button" style="font-size: 12px;" @click="fetchMetaState">刷新</button>
+      </div>
+
+      <div v-if="metaStateLoading" class="loading-message">加载中...</div>
+      <div v-else-if="metaStateError" class="error-message">{{ metaStateError }}</div>
+      <div v-else-if="metaState">
+        <!-- 资本利用率摘要 -->
+        <div class="closing-flow-grid" style="margin-bottom: 16px;">
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">账户净值</div>
+            <div class="closing-flow-value">${{ metaState.capital_state.equity?.toLocaleString() ?? '--' }}</div>
+          </div>
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">闲置资本比例</div>
+            <div
+              class="closing-flow-value"
+              :class="metaState.capital_state.idle_cash_ratio > 0.25 ? 'text-warning' : 'text-success'"
+            >
+              {{ ((metaState.capital_state.idle_cash_ratio ?? 0) * 100).toFixed(1) }}%
+            </div>
+          </div>
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">总挡位数 / 阻断信号</div>
+            <div
+              class="closing-flow-value"
+              :class="metaState.model_state.total_blocked_signals > 0 ? 'text-danger' : 'text-success'"
+            >
+              {{ metaState.model_state.total_blocked_signals }}
+            </div>
+          </div>
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">摩擦积累 Ticker</div>
+            <div class="closing-flow-value">{{ metaState.model_state.active_friction_tickers }}</div>
+          </div>
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">可 Soft Relief</div>
+            <div class="closing-flow-value text-success">{{ metaState.model_state.soft_relief_eligible_count }}</div>
+          </div>
+          <div class="closing-flow-item">
+            <div class="closing-flow-label">False-Hold 告警</div>
+            <div class="closing-flow-value" :class="metaState.model_state.false_hold_count > 0 ? 'text-danger' : ''">
+              {{ metaState.model_state.false_hold_count }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 摩擦积累信号表格 -->
+        <div v-if="metaState.throttled_signals.length > 0" style="margin-bottom: 12px;">
+          <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">摩擦积累信号（置信度阈值持续阻断）</div>
+          <table class="signal-table">
+            <thead>
+              <tr>
+                <th>标的</th>
+                <th>方向</th>
+                <th>体制</th>
+                <th>拒绝次数</th>
+                <th>最近置信度</th>
+                <th>Soft Relief</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in metaState.throttled_signals" :key="`${s.symbol}_${s.direction}`">
+                <td>{{ s.symbol }}</td>
+                <td>{{ s.direction }}</td>
+                <td>{{ s.regime }}</td>
+                <td :class="s.rejection_count >= 3 ? 'text-danger' : ''">{{ s.rejection_count }}</td>
+                <td>{{ s.last_conviction ?? '--' }}</td>
+                <td>
+                  <span v-if="s.soft_relief_eligible" class="badge-success" style="font-size: 10px;">可用</span>
+                  <span v-else class="text-muted" style="font-size: 10px;">否</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- False-Hold 告警列表 -->
+        <div v-if="metaState.false_hold_alerts.length > 0">
+          <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">False-Hold 告警（REDUCE 信号被持续阻断）</div>
+          <table class="signal-table">
+            <thead>
+              <tr>
+                <th>标的</th>
+                <th>评分</th>
+                <th>建议</th>
+                <th>循环次数</th>
+                <th>告警时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="a in metaState.false_hold_alerts" :key="a.symbol">
+                <td>{{ a.symbol }}</td>
+                <td>{{ a.score }}</td>
+                <td>{{ a.recommendation }}</td>
+                <td :class="a.cycle_count >= 3 ? 'text-danger' : 'text-warning'">{{ a.cycle_count }}</td>
+                <td style="font-size: 11px; color: #888;">{{ a.alerted_at ? new Date(a.alerted_at).toLocaleString() : '--' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="metaState.throttled_signals.length === 0 && metaState.false_hold_alerts.length === 0" class="text-muted" style="font-size: 13px;">
+          当前无阻断信号，系统运行正常 ✓
+        </div>
+
+        <div style="font-size: 11px; color: #555; margin-top: 8px;">
+          快照 ID: {{ metaState.snapshot_id }} &nbsp;|&nbsp;
+          更新于: {{ metaState.generated_at ? new Date(metaState.generated_at).toLocaleString() : '--' }}
+          <span v-if="metaState._cached" style="color: #fa0; margin-left: 6px;">(缓存)</span>
+        </div>
+      </div>
+      <div v-else class="text-muted" style="font-size: 13px;">暂无元状态数据，点击刷新加载</div>
+    </div>
+
     <!-- 信号流水线 -->
     <div class="card" style="margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -548,7 +666,8 @@
 </template>
 
 <script setup lang="ts">
-import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, SignalPipelineItem } from '@/api/autonomyService';
+import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, MetaStateSnapshot, SignalPipelineItem } from '@/api/autonomyService';
+import { autonomyApi } from '@/api/autonomyService';
 import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
 import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel.vue'; // V10.5.2
 import { useAutonomyStore } from '@/stores/autonomy';
@@ -558,6 +677,24 @@ import { computed, onMounted, ref } from 'vue';
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
+
+// V11.0.1: 系统自知画像 MetaState
+const metaState = ref<MetaStateSnapshot | null>(null)
+const metaStateLoading = ref(false)
+const metaStateError = ref<string | null>(null)
+
+async function fetchMetaState() {
+  metaStateLoading.value = true
+  metaStateError.value = null
+  try {
+    const res = await autonomyApi.getMetaState()
+    metaState.value = res.data
+  } catch (e: any) {
+    metaStateError.value = e?.response?.data?.detail ?? e?.message ?? '加载失败'
+  } finally {
+    metaStateLoading.value = false
+  }
+}
 
 // V10.2-M1: 体制感知
 const regimeInfo     = ref<RegimeInfo | null>(null)
@@ -823,7 +960,8 @@ onMounted(async () => {
   await autonomyStore.fetchAuditLog({ limit: 50 })
   await autonomyStore.fetchSignalPipeline()
   await autonomyStore.fetchMarketUniverseStatus()
-  fetchRegime()  // V10.2-M1: 异步获取体制，不阻塞主查询
+  fetchRegime()      // V10.2-M1: 异步获取体制，不阻塞主查询
+  fetchMetaState()   // V11.0.1: 异步获取系统自知画像
 })
 </script>
 
