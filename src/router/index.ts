@@ -156,12 +156,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/SystemMonitorPage.vue'),
     meta: { title: '系统监控' }
   },
-  {
-    path: '/task-management',
-    name: 'TaskManagement',
-    component: () => import('../views/TaskManagementPage.vue'),
-    meta: { title: '任务管理' }
-  },
+  // V11.1.1: /task-management 合并到 SystemMonitorPage 的 tasks tab
+  { path: '/task-management', redirect: () => ({ path: '/system-monitor', query: { tab: 'tasks' } }) },
   // 旧路由重定向（保持后向兼容）
   { path: '/api-monitoring',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'api'    } }) },
   { path: '/service-health',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'health' } }) },
@@ -267,18 +263,11 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '信号哨所 · Signal Watchtower' }
   },
 
-  // ── 已合并页面重定向（向后兼容） ────────────────────────────
+  // ── 系统类简写 redirect（保留，无对应孤儿文件）────────────
   { path: '/system',           redirect: '/system-monitor' },
-  { path: '/dashboard-v1',     redirect: '/dashboard' },
-  { path: '/hotspots',         redirect: '/opportunities' },
-  { path: '/behavior',         redirect: '/opportunities' },
-  { path: '/ai-advisor',       redirect: '/autonomy' },
-  { path: '/advice',           redirect: '/copilot' },
-  { path: '/stress-test',      redirect: '/backtest' },
-  { path: '/execution-algo',   redirect: '/quant-loop' },
-  { path: '/execution-center', redirect: '/autonomy' },
-  { path: '/plans',            redirect: '/autonomy' },
   { path: '/monitoring',       redirect: '/system-monitor' },
+  // ── 命名演化兼容 redirect（保留）────────────────────────────
+  { path: '/advice',           redirect: '/copilot' },
 
   // ── 认证 ─────────────────────────────────────────────────────
   {
