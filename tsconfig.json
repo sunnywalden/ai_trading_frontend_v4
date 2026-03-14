@@ -11,6 +11,7 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
@@ -19,8 +20,7 @@
       "vue/*": ["node_modules/vue/*"],
       "echarts": ["node_modules/echarts/index"],
       "echarts/*": ["node_modules/echarts/*"]
-    },
-    "ignoreDeprecations": "6.0"
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

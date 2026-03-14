@@ -31,6 +31,41 @@
       </button>
     </div>
 
+    <div
+      v-if="coherenceBannerVisible"
+      class="coherence-banner"
+      :class="coherenceBannerClass"
+    >
+      <div class="coherence-banner__title">
+        {{ coherenceBannerTitle }}
+      </div>
+      <div class="coherence-banner__meta">
+        <span>Source: {{ lifecycle.coherence?.source || lifecycle.positionBoard?.source || 'UNKNOWN' }}</span>
+        <span>
+          Broker / Lifecycle: {{ lifecycle.coherence?.broker_active_positions ?? 0 }} /
+          {{ lifecycle.coherence?.lifecycle_active_positions ?? 0 }}
+        </span>
+        <span v-if="(lifecycle.coherence?.stale_plans_closed ?? 0) > 0 || (lifecycle.coherence?.stale_positions_closed ?? 0) > 0">
+          Auto-Heal: Plans {{ lifecycle.coherence?.stale_plans_closed ?? 0 }} · Positions {{ lifecycle.coherence?.stale_positions_closed ?? 0 }}
+        </span>
+        <span v-if="(lifecycle.coherence?.hydrated_positions_created ?? 0) > 0">
+          Hydrated Positions: {{ lifecycle.coherence?.hydrated_positions_created ?? 0 }}
+        </span>
+      </div>
+      <div
+        v-if="(lifecycle.coherence?.mismatch_symbols?.length ?? 0) > 0"
+        class="coherence-banner__symbols"
+      >
+        Mismatch Symbols: {{ lifecycle.coherence?.mismatch_symbols?.join(', ') }}
+      </div>
+      <div
+        v-if="(lifecycle.coherence?.notes?.length ?? 0) > 0"
+        class="coherence-banner__notes"
+      >
+        {{ lifecycle.coherence?.notes?.join(' · ') }}
+      </div>
+    </div>
+
     <!-- =============== 视角 1: 标的视角 =============== -->
     <div v-if="activeView === 'POSITION'" class="view-content position-view">
       <!-- 标的/持仓看板 -->
@@ -125,13 +160,13 @@
 </template>
 
 <script setup lang="ts">
-import DecisionProvenanceDrawer from '@/components/DecisionProvenanceDrawer.vue'
-import DualFSMPanel from '@/components/DualFSMPanel.vue'
-import PipelineKanbanBoard from '@/components/PipelineKanbanBoard.vue'
-import PositionBoardKanban from '@/components/PositionBoardKanban.vue'
+import DecisionProvenanceDrawer from '@/components/DecisionProvenanceDrawer'
+import DualFSMPanel from '@/components/DualFSMPanel'
+import PipelineKanbanBoard from '@/components/PipelineKanbanBoard'
+import PositionBoardKanban from '@/components/PositionBoardKanban'
 import { useLifecycleStore } from '@/stores/lifecycle'
 import { useQuantLoopStore } from '@/stores/quantLoop'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const lifecycle = useLifecycleStore()
 const quantLoop = useQuantLoopStore()
@@ -143,6 +178,47 @@ const fsmPage      = ref(1)
 const fsmType      = ref<'PLAN' | 'POSITION' | 'ALL'>('ALL')
 
 let autoRefreshTimer: number | undefined
+
+const coherenceBannerVisible = computed(() => {
+  const coherence = lifecycle.coherence
+  if (!coherence) return false
+  return Boolean(
+    coherence.mismatch_detected ||
+    coherence.stale_plans_closed > 0 ||
+    coherence.stale_positions_closed > 0 ||
+    coherence.hydrated_positions_created > 0,
+  )
+})
+
+const coherenceBannerClass = computed(() => {
+  const coherence = lifecycle.coherence
+  if (!coherence) return 'is-info'
+  if (coherence.mismatch_detected) return 'is-warning'
+  if (
+    coherence.stale_plans_closed > 0 ||
+    coherence.stale_positions_closed > 0 ||
+    coherence.hydrated_positions_created > 0
+  ) {
+    return 'is-success'
+  }
+  return 'is-info'
+})
+
+const coherenceBannerTitle = computed(() => {
+  const coherence = lifecycle.coherence
+  if (!coherence) return '生命周期协同状态'
+  if (coherence.mismatch_detected) {
+    return '已检测到 broker/live 与本地生命周期失配，系统正在自动协同'
+  }
+  if (
+    coherence.stale_plans_closed > 0 ||
+    coherence.stale_positions_closed > 0 ||
+    coherence.hydrated_positions_created > 0
+  ) {
+    return '自动协同已收口部分陈旧计划 / 仓位记录'
+  }
+  return '生命周期协同状态正常'
+})
 
 function formatHoldTime(secs: number | null | undefined): string {
   if (secs == null) return ''
@@ -171,7 +247,7 @@ function openProvenance(planId: number) {
 
 function onFsmFilterChange(type: 'PLAN' | 'POSITION' | 'ALL') {
   fsmType.value = type
-  lifecycle.setEventFsmType(type !== 'ALL' ? type : undefined)
+  lifecycle.setEventFsmType(type === 'ALL' ? undefined : type)
 }
 
 function onFsmPageChange(page: number) {
@@ -181,7 +257,7 @@ function onFsmPageChange(page: number) {
 
 onMounted(() => {
   refresh()
-  autoRefreshTimer = window.setInterval(refresh, 30_000)
+  autoRefreshTimer = globalThis.setInterval(refresh, 30_000)
 })
 
 onUnmounted(() => {
@@ -219,8 +295,8 @@ onUnmounted(() => {
 .title-icon { font-size: 18px; }
 .version-badge {
   font-size: 10px;
-  background: rgba(99,102,241,0.2);
-  color: #a5b4fc;
+  background: rgba(49, 46, 129, 0.92);
+  color: #eef2ff;
   padding: 1px 6px;
   border-radius: 10px;
   border: 1px solid rgba(99,102,241,0.35);
@@ -267,12 +343,12 @@ onUnmounted(() => {
   gap: 6px;
 }
 .dim-tab:hover {
-  background: rgba(255,255,255,0.03);
-  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
 }
 .dim-tab.active {
-  background: rgba(56,189,248,0.1);
-  color: #38bdf8;
+  background: rgba(8, 47, 73, 0.96);
+  color: #e0f2fe;
   font-weight: 600;
   border: 1px solid rgba(56,189,248,0.2);
 }
@@ -284,6 +360,42 @@ onUnmounted(() => {
   gap: 16px;
   flex: 1;
   overflow: hidden;
+}
+
+.coherence-banner {
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  background: rgba(30, 41, 59, 0.75);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coherence-banner.is-warning {
+  border-color: rgba(251, 191, 36, 0.32);
+  background: rgba(120, 76, 10, 0.15);
+}
+
+.coherence-banner.is-success {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(6, 95, 70, 0.16);
+}
+
+.coherence-banner__title {
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coherence-banner__meta,
+.coherence-banner__symbols,
+.coherence-banner__notes {
+  color: #94a3b8;
+  font-size: 11px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* ---- Kanban ---- */
@@ -316,8 +428,8 @@ onUnmounted(() => {
 
 .total-badge {
   font-size: 10px;
-  background: rgba(16,185,129,0.15);
-  color: #10b981;
+  background: rgba(6, 95, 70, 0.96);
+  color: #ecfdf5;
   padding: 1px 6px;
   border-radius: 9px;
 }

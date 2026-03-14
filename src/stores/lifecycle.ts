@@ -6,8 +6,10 @@ import {
     getPlanFsmSummary,
     getPositionBoard,
     getPositionFsmSummary,
+    reconcileLifecycleCoherence,
     type DecisionProvenance,
     type FsmEventPage,
+    type LifecycleCoherenceSummary,
     type PipelineDistribution,
     type PlanFsmSummary,
     type PositionBoard,
@@ -42,6 +44,7 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
   const pipeline        = ref<PipelineDistribution | null>(null)
   const planFsm         = ref<PlanFsmSummary | null>(null)
   const positionFsm     = ref<PositionFsmSummary | null>(null)
+  const coherence       = ref<LifecycleCoherenceSummary | null>(null)
   const fsmEvents       = ref<FsmEventPage | null>(null)
   const provenance      = ref<DecisionProvenance | null>(null)
   const provenanceOpen  = ref(false)
@@ -125,6 +128,12 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
       posError.value = null
     }
     try {
+      try {
+        coherence.value = await reconcileLifecycleCoherence(true)
+      } catch {
+        coherence.value = null
+      }
+
       if (accountId) {
         const [p, pf, posf, pb, posResp, summaryResp] = await Promise.all([
           getPipelineDistribution(),
@@ -273,13 +282,17 @@ export const useLifecycleStore = defineStore('lifecycle', () => {
     positionTimeline.value = []
   }
 
-  async function manualClosePosition(positionId: number, actor?: string, note?: string) {
+  const manualClosePosition = async (
+    positionId: number,
+    actor?: string,
+    note?: string,
+  ) => {
     await positionsApi.manualClose(positionId, { actor, note })
   }
 
   return {
     // legacy FSM state
-    pipeline, planFsm, positionFsm, fsmEvents, provenance,
+    pipeline, planFsm, positionFsm, coherence, fsmEvents, provenance,
     provenanceOpen, selectedPlanId, loading, provenanceLoading, error,
     eventPage, eventSize, eventFsmType,
     // legacy computed

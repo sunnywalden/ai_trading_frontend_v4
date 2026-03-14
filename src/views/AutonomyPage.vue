@@ -244,11 +244,11 @@
       <h3 style="margin: 0 0 16px;">自主级别设置</h3>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <div
-          v-for="lvl in ['FULL', 'SEMI', 'ADVISORY']"
+          v-for="lvl in autonomyLevels"
           :key="lvl"
           class="level-option"
           :class="{ active: status?.level === lvl }"
-          @click="handleSetLevel(lvl as any)"
+          @click="handleSetLevel(lvl)"
         >
           <div class="level-title">{{ levelLabels[lvl] }}</div>
           <div class="level-desc">{{ levelDescs[lvl] }}</div>
@@ -694,7 +694,7 @@
               <button
                 v-if="log.order_id && !log.revoked_at"
                 class="small-button danger"
-                @click="handleRevoke(log.order_id!)"
+                @click="handleRevoke(String(log.order_id))"
               >撤销</button>
             </td>
           </tr>
@@ -711,7 +711,7 @@
 import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, MetaStateSnapshot, SignalPipelineItem } from '@/api/autonomyService';
 import { autonomyApi } from '@/api/autonomyService';
 import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
-import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel.vue'; // V10.5.2
+import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel'; // V10.5.2
 import { useAutonomyStore } from '@/stores/autonomy';
 import { formatClientDateTime } from '@/utils/datetime';
 import { storeToRefs } from 'pinia';
@@ -719,6 +719,28 @@ import { computed, onMounted, ref } from 'vue';
 
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
+const autonomyLevels: AutonomyLevel[] = ['FULL', 'SEMI', 'ADVISORY']
+
+function getErrorMessage(error: unknown, fallback = '加载失败') {
+  if (typeof error === 'object' && error !== null) {
+    const response = 'response' in error ? error.response : undefined
+    if (
+      typeof response === 'object'
+      && response !== null
+      && 'data' in response
+      && typeof response.data === 'object'
+      && response.data !== null
+      && 'detail' in response
+      && typeof response.detail === 'string'
+    ) {
+      return response.detail
+    }
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message
+    }
+  }
+  return fallback
+}
 
 // V11.0.1: 系统自知画像 MetaState
 const metaState = ref<MetaStateSnapshot | null>(null)
@@ -731,8 +753,8 @@ async function fetchMetaState() {
   try {
     const res = await autonomyApi.getMetaState()
     metaState.value = res.data
-  } catch (e: any) {
-    metaStateError.value = e?.response?.data?.detail ?? e?.message ?? '加载失败'
+  } catch (error: unknown) {
+    metaStateError.value = getErrorMessage(error)
   } finally {
     metaStateLoading.value = false
   }
@@ -740,7 +762,7 @@ async function fetchMetaState() {
 
 // V10.2-M1: 体制感知
 const regimeInfo     = ref<RegimeInfo | null>(null)
-const regimeVarMultN = ref<number>(1.0)
+const regimeVarMultN = ref<number>(1)
 
 // 冷却保护
 const showCooldownDetail = ref(false)
@@ -798,13 +820,8 @@ const varMultColor = computed(() => {
 async function fetchRegime() {
   try {
     const res = await regimeApi.getCurrent()
-    if (res.data && 'regime' in res.data) {
-      regimeInfo.value     = res.data.regime
-      regimeVarMultN.value = res.data.var_multiplier ?? 1.0
-    } else {
-      regimeInfo.value     = res.data as any
-      regimeVarMultN.value = 1.0
-    }
+    regimeInfo.value = res.data.regime
+    regimeVarMultN.value = res.data.var_multiplier ?? 1
   } catch { /* silent */ }
 }
 
@@ -962,12 +979,12 @@ function originBadgeClass(origin?: string | null) {
   return 'quality-badge quality-badge-low'
 }
 
-const levelLabels: Record<string, string> = {
+const levelLabels: Record<AutonomyLevel, string> = {
   FULL: '全自主 (FULL)',
   SEMI: '半自主 (SEMI)',
   ADVISORY: '顾问 (ADVISORY)',
 }
-const levelDescs: Record<string, string> = {
+const levelDescs: Record<AutonomyLevel, string> = {
   FULL: 'AI 全权自动执行，无需人工确认',
   SEMI: 'AI 自动执行，30 分钟内可撤销',
   ADVISORY: 'AI 仅提供建议，需人工批准',
@@ -1060,28 +1077,28 @@ onMounted(async () => {
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .data-table th, .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color, #2d2d4e); text-align: left; }
 .data-table th { color: #888; font-weight: 500; }
-.badge-success { background: rgba(76,175,80,0.15); color: #4caf50; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.badge-danger { background: rgba(244,67,54,0.15); color: #f44336; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-success { background: rgba(22, 101, 52, 0.88); color: #ecfdf5; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-danger { background: rgba(153, 27, 27, 0.9); color: #fef2f2; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
 .danger-button { background: #c62828; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 .success-button { background: #2e7d32; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 .refresh-button { background: transparent; border: 1px solid #4a6fa5; color: #4a90e2; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
 .small-button { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: none; cursor: pointer; }
-.small-button.danger { background: rgba(244,67,54,0.15); color: #f44336; }
-.badge-info { background: rgba(74,144,226,0.15); color: #4a90e2; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.badge-warning { background: rgba(255,152,0,0.15); color: #ff9800; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.badge-default { background: rgba(150,150,150,0.15); color: #aaa; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.small-button.danger { background: rgba(153, 27, 27, 0.9); color: #fef2f2; }
+.badge-info { background: rgba(30, 64, 175, 0.88); color: #eff6ff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-warning { background: rgba(146, 64, 14, 0.92); color: #fff7ed; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.badge-default { background: rgba(71, 85, 105, 0.92); color: #f8fafc; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
 .trigger-button {
-  background: rgba(74,144,226,0.15); color: #4a90e2;
+  background: rgba(30, 64, 175, 0.88); color: #eff6ff;
   border: 1px solid rgba(74,144,226,0.4); padding: 8px 18px; border-radius: 6px;
   cursor: pointer; font-size: 13px; transition: all 0.2s;
 }
-.trigger-button:hover:not(:disabled) { background: rgba(74,144,226,0.3); }
+.trigger-button:hover:not(:disabled) { background: rgba(37, 99, 235, 0.92); }
 .trigger-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .trigger-button--primary {
-  background: rgba(80,200,120,0.15); color: #50c878;
+  background: rgba(22, 101, 52, 0.88); color: #ecfdf5;
   border-color: rgba(80,200,120,0.5);
 }
-.trigger-button--primary:hover:not(:disabled) { background: rgba(80,200,120,0.3); }
+.trigger-button--primary:hover:not(:disabled) { background: rgba(21, 128, 61, 0.92); }
 
 .full-cycle-summary {
   margin-top: 12px;
@@ -1119,8 +1136,8 @@ onMounted(async () => {
   padding: 3px 8px;
   border-radius: 999px;
   border: 1px solid rgba(80, 200, 120, 0.4);
-  color: #aef5c8;
-  background: rgba(80, 200, 120, 0.1);
+  color: #ecfdf5;
+  background: rgba(22, 101, 52, 0.88);
   font-size: 11px;
 }
 
@@ -1144,38 +1161,38 @@ onMounted(async () => {
 }
 
 .badge-source-strategy {
-  color: #7fc3ff;
-  background: rgba(74, 144, 226, 0.2);
+  color: #eff6ff;
+  background: rgba(30, 64, 175, 0.88);
   border: 1px solid rgba(74, 144, 226, 0.45);
 }
 
 .badge-source-ai {
-  color: #c9a6ff;
-  background: rgba(154, 120, 255, 0.18);
+  color: #f5f3ff;
+  background: rgba(107, 33, 168, 0.88);
   border: 1px solid rgba(154, 120, 255, 0.4);
 }
 
 .badge-source-risk {
-  color: #ffb366;
-  background: rgba(255, 152, 0, 0.18);
+  color: #fff7ed;
+  background: rgba(146, 64, 14, 0.9);
   border: 1px solid rgba(255, 152, 0, 0.38);
 }
 
 .badge-source-manual {
-  color: #a8d8ff;
-  background: rgba(120, 180, 240, 0.16);
+  color: #eff6ff;
+  background: rgba(30, 64, 175, 0.82);
   border: 1px solid rgba(120, 180, 240, 0.36);
 }
 
 .badge-source-research {
-  color: #8ff2ca;
-  background: rgba(80, 200, 120, 0.14);
+  color: #ecfdf5;
+  background: rgba(22, 101, 52, 0.88);
   border: 1px solid rgba(80, 200, 120, 0.35);
 }
 
 .badge-source-arb {
-  color: #ffd36e;
-  background: rgba(255, 211, 110, 0.14);
+  color: #fffbeb;
+  background: rgba(133, 77, 14, 0.92);
   border: 1px solid rgba(255, 211, 110, 0.35);
 }
 
@@ -1310,20 +1327,20 @@ onMounted(async () => {
 }
 
 .path-badge-standard {
-  color: #8fa8d8;
-  background: rgba(143, 168, 216, 0.12);
+  color: #eff6ff;
+  background: rgba(51, 65, 85, 0.92);
   border-color: rgba(143, 168, 216, 0.24);
 }
 
 .path-badge-fast {
-  color: #7fe0b8;
-  background: rgba(80, 200, 120, 0.14);
+  color: #ecfdf5;
+  background: rgba(22, 101, 52, 0.88);
   border-color: rgba(80, 200, 120, 0.3);
 }
 
 .path-badge-force {
-  color: #ffd18a;
-  background: rgba(255, 152, 0, 0.14);
+  color: #fff7ed;
+  background: rgba(146, 64, 14, 0.92);
   border-color: rgba(255, 152, 0, 0.32);
 }
 
@@ -1333,8 +1350,8 @@ onMounted(async () => {
   padding: 2px 7px;
   border-radius: 999px;
   font-size: 10px;
-  color: #b8c2d7;
-  background: rgba(184, 194, 215, 0.1);
+  color: #f8fafc;
+  background: rgba(51, 65, 85, 0.92);
 }
 
 .quality-badge {
@@ -1348,26 +1365,26 @@ onMounted(async () => {
 }
 
 .quality-badge-elite {
-  color: #ffe08a;
-  background: rgba(255, 208, 77, 0.14);
+  color: #fffbeb;
+  background: rgba(133, 77, 14, 0.92);
   border-color: rgba(255, 208, 77, 0.34);
 }
 
 .quality-badge-high {
-  color: #87e5c2;
-  background: rgba(87, 209, 153, 0.14);
+  color: #ecfdf5;
+  background: rgba(22, 101, 52, 0.88);
   border-color: rgba(87, 209, 153, 0.34);
 }
 
 .quality-badge-medium {
-  color: #8fb8ff;
-  background: rgba(74, 144, 226, 0.14);
+  color: #eff6ff;
+  background: rgba(30, 64, 175, 0.88);
   border-color: rgba(74, 144, 226, 0.34);
 }
 
 .quality-badge-low {
-  color: #b8c2d7;
-  background: rgba(184, 194, 215, 0.1);
+  color: #f8fafc;
+  background: rgba(51, 65, 85, 0.92);
   border-color: rgba(184, 194, 215, 0.2);
 }
 </style>

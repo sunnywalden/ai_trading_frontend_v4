@@ -2,6 +2,10 @@
 import { api } from './client'
 
 export type AutonomyLevel = 'FULL' | 'SEMI' | 'ADVISORY'
+export type LooseString = string & { readonly __openString?: never }
+export type ExecutionPath = 'STANDARD' | 'FAST_CLOSE' | 'FORCE_EXIT' | LooseString
+export type SignalQualityTier = 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | LooseString
+export type MarketCode = 'US' | 'HK' | LooseString
 
 export interface CooldownSymbol {
   symbol: string
@@ -83,11 +87,11 @@ export interface SignalPipelineItem {
   priority: number
   notes: string | null
   order_id: string | null
-  execution_path?: 'STANDARD' | 'FAST_CLOSE' | 'FORCE_EXIT' | string
+  execution_path?: ExecutionPath
   closing_intent?: boolean
   force_exit?: boolean
   bypass_reason?: string | null
-  signal_quality_tier?: 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | string | null
+  signal_quality_tier?: SignalQualityTier | null
   signal_quality_score?: number | null
   signal_quality_quota_exempt?: boolean
   strategy_id?: string | null
@@ -188,7 +192,7 @@ export interface TriggerCapacityGuardResponse {
 }
 
 export interface MarketUniverseMarketStatus {
-  market: 'US' | 'HK' | string
+  market: MarketCode
   active_symbols: number
   last_synced_at?: string | null
   stale: boolean
@@ -296,12 +300,12 @@ export interface AuditLogEntry {
   order_id?: string
   revoked_at?: string
   circuit_breaker_triggered: boolean
-  execution_path?: 'STANDARD' | 'FAST_CLOSE' | 'FORCE_EXIT' | string
+  execution_path?: ExecutionPath
   closing_intent?: boolean
   force_exit?: boolean
   bypass_reason?: string | null
   risk_gate_detail?: Record<string, any> | null
-  signal_quality_tier?: 'LOW' | 'MEDIUM' | 'HIGH' | 'ELITE' | string | null
+  signal_quality_tier?: SignalQualityTier | null
   signal_quality_score?: number | null
   signal_quality_quota_exempt?: boolean
   signal_origin_mode?: string | null
