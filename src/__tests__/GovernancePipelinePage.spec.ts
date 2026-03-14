@@ -16,6 +16,8 @@ vi.mock('@/api/v1051Service', () => ({
         },
         funnel: {
           discovery: 5,
+          limited: 1,
+          retired: 1,
           paper: 4,
           shadow_live: 3,
           challenger: 2,
@@ -33,6 +35,7 @@ vi.mock('@/api/v1051Service', () => ({
             last_run_at: null,
             run_count: 12,
             stage: 'CHALLENGER',
+            governance_note: '继续观察 2 周后再进 FULL',
             evidence_chain: {
               backtest: true,
               paper: true,
@@ -72,5 +75,7 @@ describe('GovernancePipelinePage', () => {
     expect(await findByText('验证治理硬门后进入 FULL')).toBeTruthy()
     expect(await findByText('Hard Gate Ready')).toBeTruthy()
     expect(await findByText('READY')).toBeTruthy()
+    expect(await findByText('Limited')).toBeTruthy()
+    expect(await findByText('Retired')).toBeTruthy()
   })
 })
