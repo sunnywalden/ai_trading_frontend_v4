@@ -62,6 +62,28 @@ export interface PositionFsmSummary {
   engine_stats: EngineStats
   total: number
   as_of: string
+  source?: string | null
+  mismatch_detected?: boolean
+  mismatch_symbols?: string[]
+}
+
+export interface LifecycleCoherenceSummary {
+  account_id?: string | null
+  source: string
+  active_positions: number
+  broker_active_positions: number
+  lifecycle_active_positions: number
+  mismatch_detected: boolean
+  mismatch_symbols: string[]
+  stale_plans_closed: number
+  stale_positions_closed: number
+  hydrated_positions_created: number
+  reconciled_plan_ids: number[]
+  reconciled_position_ids: number[]
+  hydrated_position_ids: number[]
+  run_mode: string
+  notes: string[]
+  as_of: string
 }
 
 // ── FSM Events 类型 ──────────────────────────────────────────────────────────
@@ -149,6 +171,9 @@ export interface PositionBoard {
   columns: PositionBoardColumn[]
   total_active: number
   as_of: string
+  source?: string | null
+  mismatch_detected?: boolean
+  mismatch_symbols?: string[]
 }
 
 // ── Stage 名称映射 ─────────────────────────────────────────────────────────────
@@ -198,5 +223,12 @@ export async function getDecisionProvenance(planId: number): Promise<DecisionPro
 
 export async function getPositionBoard(): Promise<PositionBoard> {
   const res = await api.get('/v1/lifecycle/position-board')
+  return res.data
+}
+
+export async function reconcileLifecycleCoherence(auto_heal = true): Promise<LifecycleCoherenceSummary> {
+  const res = await api.post('/v1/lifecycle/coherence/reconcile', null, {
+    params: { auto_heal },
+  })
   return res.data
 }
