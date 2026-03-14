@@ -254,6 +254,24 @@ export interface MetaStateModelState {
   total_blocked_signals: number
 }
 
+export interface ImprovementCandidate {
+  id: number
+  account_id: string
+  candidate_type: string
+  target_module: string
+  target_param: string
+  current_value?: number | null
+  suggested_value?: number | null
+  confidence: number
+  trigger_source?: string | null
+  status: string
+  evidence_summary?: string | null
+  expected_impact?: string | null
+  validation_plan?: string | null
+  reviewed_at?: string | null
+  created_at?: string | null
+}
+
 export interface MetaStateSnapshot {
   snapshot_id: string
   generated_at: string
@@ -261,6 +279,7 @@ export interface MetaStateSnapshot {
   false_hold_alerts: FalseHoldAlert[]
   capital_state: MetaStateCapitalState
   model_state: MetaStateModelState
+  improvement_candidates?: ImprovementCandidate[]
   _cached?: boolean
 }
 
@@ -337,4 +356,7 @@ export const autonomyApi = {
 
   getFalseHoldAlerts: () =>
     api.get<FalseHoldAlertsResponse>('/v1/autonomy/false-hold-alerts'),
+
+  getImprovementCandidates: (params?: { status?: string; limit?: number }) =>
+    api.get<{ items: ImprovementCandidate[]; count: number; feature_enabled: boolean }>('/v1/autonomy/improvement-candidates', { params }),
 }

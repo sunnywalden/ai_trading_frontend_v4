@@ -21,6 +21,14 @@
         <strong>{{ snapshot.funnel.discovery }}</strong>
       </article>
       <article class="funnel-card">
+        <span>Limited</span>
+        <strong>{{ snapshot.funnel.limited || 0 }}</strong>
+      </article>
+      <article class="funnel-card">
+        <span>Retired</span>
+        <strong>{{ snapshot.funnel.retired || 0 }}</strong>
+      </article>
+      <article class="funnel-card">
         <span>Paper</span>
         <strong>{{ snapshot.funnel.paper }}</strong>
       </article>
@@ -126,7 +134,10 @@
                   <span v-if="!item.promotion_blockers.length" class="stage-pill production">CLEAR</span>
                 </div>
               </td>
-              <td>{{ item.rollback_suggestion }}</td>
+              <td>
+                {{ item.rollback_suggestion }}
+                <div v-if="item.governance_note" class="subline">{{ item.governance_note }}</div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -290,6 +301,8 @@ onMounted(loadSnapshot)
 .stage-pill.paper { background: rgba(26, 85, 133, 0.92); color: #eef6ff; }
 .stage-pill.shadow_live { background: rgba(34, 96, 146, 0.92); color: #eef6ff; }
 .stage-pill.discovery { background: rgba(58, 77, 93, 0.92); color: #f4f7fb; }
+.stage-pill.limited { background: rgba(122, 86, 40, 0.92); color: #fff4df; }
+.stage-pill.retired { background: rgba(93, 46, 46, 0.92); color: #ffe9e9; }
 .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .insight-metrics { display: flex; gap: 18px; margin-bottom: 16px; }
 .insight-metrics div { display: grid; gap: 4px; }

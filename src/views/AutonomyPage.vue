@@ -417,6 +417,20 @@
           </div>
         </div>
 
+        <div v-if="v11RolloutFlags.length > 0" style="margin-bottom: 14px;">
+          <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">V11 控制面 Flags</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span
+              v-for="flag in v11RolloutFlags"
+              :key="flag.key"
+              class="mini-note"
+              :style="flag.enabled ? 'color:#87e5c2;border-color:#57d19955;background:rgba(87,209,153,0.12);' : 'color:#b8c2d7;'"
+            >
+              {{ flag.label }} · {{ flag.enabled ? 'ON' : 'OFF' }}
+            </span>
+          </div>
+        </div>
+
         <!-- 摩擦积累信号表格 -->
         <div v-if="metaState.throttled_signals.length > 0" style="margin-bottom: 12px;">
           <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">摩擦积累信号（置信度阈值持续阻断）</div>
@@ -467,6 +481,34 @@
                 <td>{{ a.recommendation }}</td>
                 <td :class="a.cycle_count >= 3 ? 'text-danger' : 'text-warning'">{{ a.cycle_count }}</td>
                 <td style="font-size: 11px; color: #888;">{{ a.alerted_at ? new Date(a.alerted_at).toLocaleString() : '--' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="metaState.improvement_candidates?.length" style="margin-top: 14px;">
+          <div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">Improvement Lab 候选（自动生成）</div>
+          <table class="signal-table">
+            <thead>
+              <tr>
+                <th>类型</th>
+                <th>模块 / 参数</th>
+                <th>建议值</th>
+                <th>置信度</th>
+                <th>证据</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in metaState.improvement_candidates" :key="item.id">
+                <td>{{ item.candidate_type }}</td>
+                <td>{{ item.target_module }} / {{ item.target_param }}</td>
+                <td>
+                  {{ item.current_value ?? '--' }} → {{ item.suggested_value ?? '--' }}
+                </td>
+                <td>{{ (item.confidence * 100).toFixed(0) }}%</td>
+                <td :title="item.validation_plan || ''" style="font-size: 11px; color: #aaa;">
+                  {{ item.evidence_summary || item.expected_impact || '—' }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -713,6 +755,24 @@ const pendingSignalCount = computed(() =>
 const validatedSignalCount = computed(() => signalPipelineCounts.value['VALIDATED'] ?? 0)
 const executedSignalCount = computed(() => signalPipelineCounts.value['EXECUTED'] ?? 0)
 const failedSignalCount = computed(() => signalPipelineCounts.value['FAILED'] ?? 0)
+const v11RolloutFlags = computed(() => {
+  const flags = status.value?.rollout?.flags ?? {}
+  const labels: Record<string, string> = {
+    capital_velocity_v1101_enabled: 'Capital Velocity',
+    self_perception_v1101_enabled: 'Self-Perception',
+    improvement_engine_v1101_enabled: 'Improvement Engine',
+    evolution_governance_v1101_enabled: 'Evolution Governance',
+    style_alignment_v1101_enabled: 'Style Alignment',
+  }
+
+  return Object.entries(flags)
+    .filter(([key]) => key.includes('v1101'))
+    .map(([key, enabled]) => ({
+      key,
+      enabled: Boolean(enabled),
+      label: labels[key] ?? key,
+    }))
+})
 
 const regimeBannerLabel = computed(() => {
   if (!regimeInfo.value) return '—'

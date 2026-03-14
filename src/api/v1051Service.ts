@@ -140,6 +140,8 @@ export interface GovernanceSnapshot {
   }
   funnel: {
     discovery: number
+    limited?: number
+    retired?: number
     paper: number
     shadow_live: number
     challenger: number
@@ -155,6 +157,7 @@ export interface GovernanceSnapshot {
     last_run_at?: string | null
     run_count: number
     stage: string
+    governance_note?: string | null
     evidence_chain: {
       backtest: boolean
       paper: boolean
