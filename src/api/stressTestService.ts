@@ -32,9 +32,10 @@ export interface StressTestResult {
 }
 
 export const stressTestApi = {
+  // V11.1.1: migrated from /v1/stress-test/ to /v1/backtest/stress-test/
   run: (req: StressTestRequest) =>
-    api.post<StressTestResult>('/v1/stress-test/run', req),
+    api.post<StressTestResult>('/v1/backtest/stress-test/run', req),
 
   getScenarios: () =>
-    api.get<{ scenarios: StressScenario[] }>('/v1/stress-test/scenarios'),
+    api.get<{ scenarios: StressScenario[] }>('/v1/backtest/stress-test/scenarios'),
 }

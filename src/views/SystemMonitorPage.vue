@@ -5,7 +5,7 @@
     <section class="section-header">
       <div>
         <h2>系统监控</h2>
-        <p>聚焦服务健康、交易生命周期、主数据流与 API 监控；AI 安全与任务管理已拆分为独立二级页面。</p>
+        <p>聚焦服务健康、交易生命周期、主数据流与 API 监控；任务管理已整合至本页 "任务管理" Tab，AI 安全保留在独立二级页面。</p>
       </div>
       <div class="header-actions">
         <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
@@ -20,6 +20,7 @@
       <button :class="['tab-btn', { active: tab === 'data-flow' }]" @click="tab = 'data-flow'">🔀 数据流</button>
       <button :class="['tab-btn', { active: tab === 'api' }]" @click="tab = 'api'">📡 API 监控</button>
       <button :class="['tab-btn', { active: tab === 'live-safety' }]" @click="tab = 'live-safety'">🛡️ AI 安全</button>
+      <button :class="['tab-btn', { active: tab === 'tasks' }]" @click="tab = 'tasks'">⚙️ 任务管理</button>
     </div>
 
     <section v-if="summaryItems.length" class="summary-strip">
@@ -805,6 +806,11 @@
       </section>
     </div>
 
+    <!-- V11.1.1: 任务管理 Tab (embedded) -->
+    <div v-if="tab === 'tasks'" class="tab-content">
+      <TaskManagementPage :embedded="true" />
+    </div>
+
     <div v-if="successMsg" class="success-toast">{{ successMsg }}</div>
   </div>
 </template>
@@ -849,17 +855,19 @@ import type {
     ServiceOverviewResponse,
 } from '../types/systemMonitor';
 import { parseNonRealtimePolicySummary } from '../utils/systemMonitorPolicy';
+import TaskManagementPage from '../views/TaskManagementPage.vue'; // V11.1.1 embedded tab
 
 const wsStore = useWebSocketStore()
 const route = useRoute()
 const router = useRouter()
-type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'live-safety'
+type MonitorTabKey = 'health' | 'lifecycle' | 'data-flow' | 'api' | 'live-safety' | 'tasks'
 const monitorTabs = new Set<MonitorTabKey>([
   'health',
   'lifecycle',
   'data-flow',
   'api',
   'live-safety',
+  'tasks',
 ])
 const tab = ref<MonitorTabKey>('health')
 
@@ -1535,11 +1543,6 @@ async function onRefreshAll() {
 function syncTabFromRoute() {
   const queryTab = String(route.query.tab || '').toLowerCase()
   if (!queryTab) return
-
-  if (queryTab === 'tasks') {
-    router.replace('/task-management')
-    return
-  }
 
   if (monitorTabs.has(queryTab as MonitorTabKey)) {
     tab.value = queryTab as MonitorTabKey

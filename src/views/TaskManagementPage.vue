@@ -1,8 +1,8 @@
 <template>
-  <div class="pe-page">
-    <SystemOperationsNav />
+  <div class="pe-page" :class="{ 'pe-page--embedded': embedded }">
+    <SystemOperationsNav v-if="!embedded" />
 
-    <div class="pe-header">
+    <div v-if="!embedded" class="pe-header">
       <div class="header-left">
         <h2 class="page-title"><span class="icon">⚙️</span> {{ $t('nav.task_management') }}</h2>
         <p class="page-subtitle">统一查看 APScheduler 真实任务，并管理可配置的业务自动触发任务；作为系统监控体系的独立二级页面。</p>
@@ -271,23 +271,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import SystemOperationsNav from '@/components/SystemOperationsNav.vue'
-import { formatClientDateTime } from '@/utils/datetime'
+import SystemOperationsNav from '@/components/SystemOperationsNav.vue';
+import { formatClientDateTime } from '@/utils/datetime';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
-  createTaskTriggerConfig,
-  deleteTaskTriggerConfig,
-  fetchSchedulerJobsList,
-  listTaskTriggerConfigs,
-  pauseSchedulerJob,
-  resumeSchedulerJob,
-  toggleTaskTriggerConfig,
-  updateTaskTriggerConfig,
-  type SchedulerJobDetail,
-  type TaskTriggerConfig,
-  type TaskType,
-  type TriggerMode
-} from '../api/client'
+    createTaskTriggerConfig,
+    deleteTaskTriggerConfig,
+    fetchSchedulerJobsList,
+    listTaskTriggerConfigs,
+    pauseSchedulerJob,
+    resumeSchedulerJob,
+    toggleTaskTriggerConfig,
+    updateTaskTriggerConfig,
+    type SchedulerJobDetail,
+    type TaskTriggerConfig,
+    type TaskType,
+    type TriggerMode
+} from '../api/client';
+
+const { embedded = false } = defineProps<{ embedded?: boolean }>()
 
 const configs = ref<TaskTriggerConfig[]>([])
 const loading = ref(false)
@@ -523,6 +525,7 @@ onMounted(() => {
 
 <style scoped>
 .pe-page { padding: 24px; max-width: 1400px; margin: 0 auto; color: #e5e7eb; }
+.pe-page--embedded { padding: 0; max-width: unset; margin: 0; }
 .pe-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
 .page-title { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
 .page-subtitle { margin: 4px 0 0; color: #9ca3af; font-size: 0.95rem; }
