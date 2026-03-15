@@ -768,11 +768,13 @@
 <script setup lang="ts">
 import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, MetaStateSnapshot, SignalPipelineItem } from '@/api/autonomyService';
 import { autonomyApi } from '@/api/autonomyService';
-import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue';
-import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue';
 import { reconcileLifecycleCoherence, type LifecycleCoherenceSummary } from '@/api/lifecycleService';
 import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
 import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel'; // V10.5.2
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue';
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue';
 import { useAutonomyStore } from '@/stores/autonomy';
 import { formatClientDateTime } from '@/utils/datetime';
 import { storeToRefs } from 'pinia';
@@ -948,6 +950,8 @@ const autonomySummaryItems = computed(() => {
     return [{ label: '工作台状态', value: '待初始化', sub: '正在等待状态快照', tone: '' }]
   }
 
+  const brokerTrades = status.value.daily_trades_today_broker
+
   return [
     {
       label: '自主级别',
@@ -964,9 +968,9 @@ const autonomySummaryItems = computed(() => {
     {
       label: '今日 AI 交易',
       value: `${status.value.daily_trades_today_autonomous ?? status.value.daily_trades_today} / ${status.value.max_daily_trades}`,
-      sub: status.value.daily_trades_today_broker != null
-        ? `券商已成交 ${status.value.daily_trades_today_broker}`
-        : '暂无券商成交补充数据',
+      sub: brokerTrades == null
+        ? '暂无券商成交补充数据'
+        : `券商已成交 ${brokerTrades}`,
       tone: '',
     },
     {
@@ -994,7 +998,8 @@ const autonomyExplainText = computed(() => {
     return `当前存在 ${metaState.value?.model_state.false_hold_count ?? 0} 条 False-Hold 告警，说明该减仓的仓位没有被及时释放。`
   }
   if ((metaState.value?.capital_state.idle_cash_ratio ?? 0) > 0.25) {
-    return `当前闲置资本 ${(metaState.value?.capital_state.idle_cash_ratio ?? 0 * 100).toFixed ? ((metaState.value?.capital_state.idle_cash_ratio ?? 0) * 100).toFixed(1) : '0.0'}%，建议联动 Portfolio 与 Alpha Lab 检查资本利用率。`
+    const idleCashRatioPct = ((metaState.value?.capital_state.idle_cash_ratio ?? 0) * 100).toFixed(1)
+    return `当前闲置资本 ${idleCashRatioPct}%，建议联动 Portfolio 与 Alpha Lab 检查资本利用率。`
   }
   return '当前自主级别、信号质量与元状态总体稳定，可继续观察资金利用率与信号阻断链。'
 })

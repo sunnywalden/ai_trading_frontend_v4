@@ -260,9 +260,11 @@
 </template>
 
 <script setup lang="ts">
-import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue'
-import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue'
 import { portfolioApi, type PortfolioConstructionSnapshot, type SnapshotHistoryItem } from '@/api/portfolioService'
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue'
+// @ts-ignore Vue SFC default export is provided by the Vue compiler.
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { useQuantLoopStore } from '@/stores/quantLoop'
 import { formatClientDateTime } from '@/utils/datetime'
@@ -369,7 +371,10 @@ const portfolioSummaryItems = computed(() => {
 
 const portfolioExplainValue = computed(() => {
   const sharpe = construction.value?.latest_snapshot?.metrics.sharpe ?? result.value?.metrics.sharpe
-  return sharpe != null ? `Sharpe ${sharpe.toFixed(2)}` : '等待构建结果'
+  if (sharpe == null) {
+    return '等待构建结果'
+  }
+  return `Sharpe ${sharpe.toFixed(2)}`
 })
 
 const portfolioExplainText = computed(() => {
