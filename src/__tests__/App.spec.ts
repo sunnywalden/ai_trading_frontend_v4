@@ -78,4 +78,18 @@ describe('App.vue token expiry banner', () => {
     await fireEvent.click(dismiss);
     expect(container.querySelector('.expiry-banner')).toBeFalsy();
   });
+
+  it('renders a visible logout action in the sidebar header', () => {
+    const { container } = render(App, {
+      global: {
+        plugins: [createPinia()],
+        stubs: ['router-link', 'router-view', 'AdminInfoModal', 'SituationalAwarenessBar', 'CopilotFloatingWidget', 'PositionDetailModal']
+      }
+    });
+
+    const headerButtons = container.querySelectorAll('.header-tools .tool-btn')
+
+    expect(headerButtons.length).toBe(3)
+    expect(container.querySelector('.header-tools .tool-btn--danger')).toBeTruthy()
+  })
 });

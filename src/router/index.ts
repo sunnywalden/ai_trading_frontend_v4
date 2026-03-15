@@ -83,20 +83,20 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const ACCESS_RULES: Array<{ pattern: RegExp } & RouteAccessMeta> = [
-  { pattern: /^\/research$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], permissions: ['research.home.read'], accessMode: 'standard', workbenchDomain: 'research', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
-  { pattern: /^\/(alpha-lab|opportunities|macro|regime|events|backtest|etf-pool|options|signal-watchtower)$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/strategies(\/.*)?$/, roles: ['RESEARCHER', 'TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/portfolio$/, roles: ['RESEARCHER', 'SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'research' },
+  { pattern: /^\/research$/, roles: ['RESEARCHER'], permissions: ['research.home.read'], accessMode: 'standard', workbenchDomain: 'research', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
+  { pattern: /^\/(alpha-lab|opportunities|macro|regime|events|backtest|etf-pool|options|signal-watchtower)$/, roles: ['RESEARCHER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/strategies(\/.*)?$/, roles: ['RESEARCHER', 'TRADER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/portfolio$/, roles: ['RESEARCHER', 'SUPERVISOR'], accessMode: 'summary', workbenchDomain: 'research' },
 
-  { pattern: /^\/trading$/, roles: ['TRADER', 'ADMINISTRATOR'], permissions: ['trading.home.read'], accessMode: 'standard', workbenchDomain: 'trading', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
-  { pattern: /^\/(order-book|execution-policy|trade-lifecycle|positions|position-evaluation|paper|journal|alerts)$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/attribution$/, roles: ['TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'trading' },
-  { pattern: /^\/observability\/execution$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/observability\/risk$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/observability\/signal$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'readonly', workbenchDomain: 'research' },
+  { pattern: /^\/trading$/, roles: ['TRADER'], permissions: ['trading.home.read'], accessMode: 'standard', workbenchDomain: 'trading', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
+  { pattern: /^\/(order-book|execution-policy|trade-lifecycle|positions|position-evaluation|paper|journal|alerts)$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/attribution$/, roles: ['TRADER', 'SUPERVISOR'], accessMode: 'summary', workbenchDomain: 'trading' },
+  { pattern: /^\/observability\/execution$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/observability\/risk$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/observability\/signal$/, roles: ['RESEARCHER'], accessMode: 'readonly', workbenchDomain: 'research' },
 
-  { pattern: /^\/executive$/, roles: ['SUPERVISOR', 'ADMINISTRATOR'], permissions: ['executive.home.read'], accessMode: 'summary', workbenchDomain: 'executive', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
-  { pattern: /^\/reports\/(executive|risk|performance)$/, roles: ['SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'executive', featureFlag: 'EXECUTIVE_REPORTS_V1121_ENABLED' },
+  { pattern: /^\/executive$/, roles: ['SUPERVISOR'], permissions: ['executive.home.read'], accessMode: 'summary', workbenchDomain: 'executive', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
+  { pattern: /^\/reports\/(executive|risk|performance)$/, roles: ['SUPERVISOR'], accessMode: 'summary', workbenchDomain: 'executive', featureFlag: 'EXECUTIVE_REPORTS_V1121_ENABLED' },
 
   { pattern: /^\/admin$/, roles: ['ADMINISTRATOR'], permissions: ['admin.home.read'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
   { pattern: /^\/admin\/broker-accounts$/, roles: ['ADMINISTRATOR'], permissions: ['admin.broker_account.manage'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ACCOUNT_ADMIN_UI_V1131_ENABLED' },
@@ -106,14 +106,14 @@ const ACCESS_RULES: Array<{ pattern: RegExp } & RouteAccessMeta> = [
 
   { pattern: /^\/dashboard$/, roles: ['RESEARCHER', 'TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'common' },
   { pattern: /^\/copilot$/, roles: ['RESEARCHER', 'TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], permissions: ['common.copilot.read'], accessMode: 'summary', workbenchDomain: 'common' },
-  { pattern: /^\/autonomy$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/quant-loop$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/war-room$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
-  { pattern: /^\/governance\/pipeline$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/ai-hub\/agents$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/ai-hub\/(calibration|weights)$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/ai-hub\/post-mortem$/, roles: ['RESEARCHER', 'TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
-  { pattern: /^\/evolution$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/autonomy$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/quant-loop$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/war-room$/, roles: ['TRADER'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/governance\/pipeline$/, roles: ['RESEARCHER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/agents$/, roles: ['RESEARCHER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/(calibration|weights)$/, roles: ['RESEARCHER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/post-mortem$/, roles: ['RESEARCHER', 'TRADER'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/evolution$/, roles: ['RESEARCHER'], accessMode: 'standard', workbenchDomain: 'research' },
 ]
 
 export function resolveRouteAccess(path: string): RouteAccessMeta {

@@ -6,6 +6,14 @@
         <div class="header-tools">
           <button class="tool-btn" @click="toggleTheme" :title="$t('auth.switch_theme')">{{ themeLabel }}</button>
           <button class="tool-btn" @click="toggleLanguage" :title="$t('auth.switch_language')">{{ currentLocaleLabel }}</button>
+          <button
+            v-if="loggedIn"
+            class="tool-btn tool-btn--danger"
+            @click="onLogout"
+            :title="$t('auth.logout')"
+          >
+            {{ $t('auth.logout') }}
+          </button>
         </div>
       </div>
       <p class="sidebar-subtitle">{{ $t('nav.control_tower') }}</p>
@@ -547,6 +555,17 @@ function applyTheme() {
   background: rgba(51, 65, 85, 0.85);
   color: #f8fafc;
 }
+
+.tool-btn--danger {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.tool-btn--danger:hover {
+  background: rgba(127, 29, 29, 0.72);
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fff1f2;
+}
 .sidebar-subtitle {
   font-size: 0.75rem;
   color: #6b7280;
@@ -691,10 +710,15 @@ function applyTheme() {
 .auth-block {
   margin-top: auto;
   padding-top: 10px;
+  padding-bottom: 4px;
   border-top: 1px solid rgba(31, 41, 55, 0.06);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(6, 10, 27, 0.72), rgba(6, 10, 27, 0.98) 24%);
+  backdrop-filter: blur(8px);
 }
 .user-info {
   display: flex;
