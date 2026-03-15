@@ -28,6 +28,28 @@
 - `auth` store 现在优先消费后端 `/api/v1/auth/me` 返回的 `feature_flags`，因此 `ROLE_HOME_V1121_ENABLED`、`ROLE_NAV_GATING_V1121_ENABLED`、`ROLE_ACTION_GATING_V1121_ENABLED`、`EXECUTIVE_REPORTS_V1121_ENABLED`、`ADMIN_CONSOLE_V1121_ENABLED` 都会直接影响前台行为。
 - 当 `ROLE_NAV_GATING_V1121_ENABLED=false` 时，角色路由裁剪会回退到旧导航体验；当 `ROLE_ACTION_GATING_V1121_ENABLED=false` 时，按钮级权限组件会停止前台裁剪，但后端授权仍然是最终真源。
 
+## 当前角色页面矩阵（2026-03 校准）
+
+- `Researcher`
+  - 可见：`/research`、研究页、`/governance/pipeline`、`/ai-hub/calibration`、`/ai-hub/weights`、`/evolution`、`/copilot`
+  - 不可见：`/trading`、`/autonomy`、`/quant-loop`、`/war-room`、系统治理页
+- `Trader`
+  - 可见：`/trading`、订单/执行/持仓页、`/autonomy`、`/quant-loop`、`/war-room`、`/copilot`
+  - 可见但偏摘要：`/attribution`、`/dashboard`
+  - 不可见：研究治理页（如 `calibration / weights / evolution`）、管理员治理页
+- `Supervisor`
+  - 可见：`/executive`、`/reports/*`、`/dashboard`、`/attribution`、`/copilot`、`/portfolio`
+  - 不可见：`/autonomy`、`/quant-loop`、`/war-room`、`/governance/pipeline`、`/ai-hub/*`、系统治理页
+- `Administrator`
+  - 可见：管理员工作台、系统治理页，以及各角色工作台入口
+  - 仍以审计和治理为主，不鼓励把管理员账号当日常交易账号
+
+本次校准原则：
+
+- 页面若仍包含“触发执行 / 切换级别 / 运行策略 / 系统治理”能力，就不再对 `Supervisor` 开放
+- 暂无“摘要版”的页面（如当前 `AutonomyPage.vue`）优先收紧角色，而不是让摘要角色误入全功能页
+- 后端高风险入口也同步按角色收口，避免只隐藏导航却仍可直接请求 API
+
 ## 新页面
 
 - `ResearchHomePage.vue`
