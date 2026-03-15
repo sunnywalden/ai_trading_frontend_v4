@@ -1,10 +1,12 @@
 import { fireEvent, render } from '@testing-library/vue';
+import { createPinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../router', () => ({
   default: {
     push: vi.fn(),
   },
+  resolveRouteAccess: () => ({}),
 }));
 
 vi.mock('vue-router', async () => {
@@ -58,6 +60,7 @@ describe('App.vue token expiry banner', () => {
   it('shows expiry banner when token is expiring soon', async () => {
     const { container, getByText, findByText } = render(App, {
       global: {
+        plugins: [createPinia()],
         stubs: ['router-link', 'router-view', 'AdminInfoModal', 'SituationalAwarenessBar', 'CopilotFloatingWidget', 'PositionDetailModal']
       }
     });

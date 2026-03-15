@@ -12,11 +12,11 @@
 
       <nav class="nav-menu">
         <!-- 指挥室 独立顶级入口 -->
-        <router-link to="/dashboard" class="nav-button command-room" active-class="active">
+        <router-link :to="roleEntry.path" class="nav-button command-room" active-class="active">
           <span class="nav-icon">🏛️</span>
           <div class="nav-label-block">
-            <span class="nav-label">{{ $t('nav.module_command') }}</span>
-            <span class="nav-subdesc">{{ $t('nav.module_command_desc') }}</span>
+            <span class="nav-label">{{ roleEntry.label }}</span>
+            <span class="nav-subdesc">{{ roleEntry.desc }}</span>
           </div>
         </router-link>
 
@@ -53,6 +53,11 @@
           <button class="small-btn" @click="dismissBanner">{{ $t('common.confirm') }}</button>
           <button class="small-btn" @click="openTokenModal">{{ $t('common.edit') }}</button>
         </div>
+      </div>
+
+      <div v-if="loggedIn && authStore.user?.mustChangePassword" class="password-banner">
+        <span>当前账号为首次登录或被重置密码，建议立即完成密码修改。</span>
+        <button class="small-btn" @click="router.push('/auth/change-password')">立即修改</button>
       </div>
 
       <div class="auth-block">
@@ -101,7 +106,7 @@
       </div>
     </aside>
     <main class="main">
-      <SituationalAwarenessBar v-if="loggedIn" />
+      <SituationalAwarenessBar v-if="showSituationalAwarenessBar" />
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -136,75 +141,88 @@ import CopilotFloatingWidget from './components/CopilotFloatingWidget.vue';
 import PositionDetailModal from './components/PositionDetailModal.vue';
 // @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import SituationalAwarenessBar from './components/SituationalAwarenessBar.vue';
-import router from './router';
+import router, { resolveRouteAccess } from './router';
+import { useAuthStore } from './stores/auth';
 import { useWebSocketStore } from './stores/websocket';
 
 const { t, locale } = useI18n();
 const route = useRoute()
 const wsStore = useWebSocketStore();
+const authStore = useAuthStore();
 
 interface NavItem { path: string; label: string; icon: string }
 interface NavGroup { title: string; desc?: string; items: NavItem[] }
 
-const navGroups = computed<NavGroup[]>(() => [
-  {
-    // 交易中枢：交易台 + 可观测性 & War Room（V10.4 4-group spec）
-    title: t('nav.module_desk'),
-    desc: t('nav.module_desk_desc'),
-    items: [
-      { path: '/positions',                label: t('nav.positions'),           icon: '📊' },
-      { path: '/position-evaluation',      label: t('nav.position_evaluation'), icon: '🔬' },
-      { path: '/events',                   label: t('nav.events'),              icon: '📅' },
-      { path: '/quant-loop',               label: t('nav.quant_loop'),          icon: '🔄' },
-      { path: '/paper',                    label: t('nav.paper'),               icon: '🧪' },
-      { path: '/attribution',              label: t('nav.attribution'),         icon: '🎯' },
-      { path: '/trade-lifecycle',          label: t('nav.trade_lifecycle'),     icon: '�' },
-      { path: '/order-book',               label: t('nav.order_book'),          icon: '📋' },
-      { path: '/observability/execution',  label: t('nav.exec_microscope'),     icon: '🔬' },
-      { path: '/execution-policy',         label: 'Execution Policy',           icon: '🧠' },
-      { path: '/observability/signal',     label: t('nav.signal_intelligence'), icon: '📡' },
-      { path: '/observability/risk',       label: t('nav.risk_cluster'),        icon: '⚡' },
-      { path: '/war-room',                 label: t('nav.war_room'),            icon: '⚔️' },
-      { path: '/signal-watchtower',           label: t('nav.signal_watchtower'),   icon: '🔭' },  // V10.4.2
-    ],
-  },
-  {
-    // 研究 & 分析
-    title: t('nav.module_research'),
-    desc: t('nav.module_research_desc'),
-    items: [
-      { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
-      { path: '/macro',         label: t('nav.macro'),         icon: '🌍' },
-      { path: '/strategies',    label: t('nav.strategies'),    icon: '📚' },
-      { path: '/etf-pool',      label: t('nav.etf_pool'),      icon: '📊' },
-      { path: '/backtest',      label: t('nav.backtest'),      icon: '📈' },
-      { path: '/alpha-lab',     label: 'Alpha Lab',            icon: '🧭' },
-      { path: '/portfolio',     label: t('nav.portfolio'),     icon: '⚖️' },
-      { path: '/options',       label: t('nav.options'),       icon: '💎' },
-    ],
-  },
-  {
-    // AI 洞察 & 系统：AI中枢 + 系统区（regime / alerts / system-monitor）
-    title: t('nav.module_ai'),
-    desc: t('nav.module_ai_desc'),
-    items: [
-      { path: '/autonomy',           label: t('nav.autonomy'),        icon: '🤖' },
-      { path: '/copilot',            label: t('nav.copilot'),         icon: '💬' },
-      { path: '/evolution',          label: t('nav.evolution'),       icon: '🧬' },
-      { path: '/journal',            label: t('nav.journal'),         icon: '📓' },
-      { path: '/ai-hub/agents',      label: t('nav.multi_agent'),     icon: '🤝' },
-      { path: '/ai-hub/calibration', label: t('nav.calibration'),     icon: '🎯' },
-      { path: '/ai-hub/weights',     label: t('nav.factor_weights'),  icon: '⚖️' },
-      { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'),     icon: '🔭' },
-      { path: '/governance/pipeline', label: 'Promotion Pipeline',    icon: '🛡️' },
-      { path: '/system-monitor',     label: '系统监控',               icon: '🖥️' },
-      { path: '/live-safety',        label: 'AI 安全',               icon: '🔒' },
-      { path: '/task-management',    label: '任务管理',               icon: '⚙️' },
-      { path: '/regime',             label: t('nav.regime'),          icon: '🌊' },
-      { path: '/alerts',             label: t('nav.alerts'),          icon: '🔔' },
-    ],
-  },
-])
+const navGroups = computed<NavGroup[]>(() => {
+  const groups: NavGroup[] = [
+    {
+      title: t('nav.module_desk'),
+      desc: t('nav.module_desk_desc'),
+      items: [
+        { path: '/positions', label: t('nav.positions'), icon: '📊' },
+        { path: '/position-evaluation', label: t('nav.position_evaluation'), icon: '🔬' },
+        { path: '/events', label: t('nav.events'), icon: '📅' },
+        { path: '/quant-loop', label: t('nav.quant_loop'), icon: '🔄' },
+        { path: '/paper', label: t('nav.paper'), icon: '🧪' },
+        { path: '/attribution', label: t('nav.attribution'), icon: '🎯' },
+        { path: '/trade-lifecycle', label: t('nav.trade_lifecycle'), icon: '🧬' },
+        { path: '/order-book', label: t('nav.order_book'), icon: '📋' },
+        { path: '/observability/execution', label: t('nav.exec_microscope'), icon: '🔬' },
+        { path: '/execution-policy', label: 'Execution Policy', icon: '🧠' },
+        { path: '/observability/signal', label: t('nav.signal_intelligence'), icon: '📡' },
+        { path: '/observability/risk', label: t('nav.risk_cluster'), icon: '⚡' },
+        { path: '/war-room', label: t('nav.war_room'), icon: '⚔️' },
+        { path: '/signal-watchtower', label: t('nav.signal_watchtower'), icon: '🔭' },
+      ],
+    },
+    {
+      title: t('nav.module_research'),
+      desc: t('nav.module_research_desc'),
+      items: [
+        { path: '/research', label: 'Research Home', icon: '🧪' },
+        { path: '/opportunities', label: t('nav.opportunities'), icon: '🔍' },
+        { path: '/macro', label: t('nav.macro'), icon: '🌍' },
+        { path: '/strategies', label: t('nav.strategies'), icon: '📚' },
+        { path: '/etf-pool', label: t('nav.etf_pool'), icon: '📊' },
+        { path: '/backtest', label: t('nav.backtest'), icon: '📈' },
+        { path: '/alpha-lab', label: 'Alpha Lab', icon: '🧭' },
+        { path: '/portfolio', label: t('nav.portfolio'), icon: '⚖️' },
+        { path: '/options', label: t('nav.options'), icon: '💎' },
+      ],
+    },
+    {
+      title: t('nav.module_ai'),
+      desc: t('nav.module_ai_desc'),
+      items: [
+        { path: '/trading', label: 'Trading Home', icon: '📈' },
+        { path: '/executive', label: 'Executive Home', icon: '🧾' },
+        { path: '/admin', label: 'Admin Home', icon: '🛠️' },
+        { path: '/admin/permissions', label: '权限目录', icon: '🪪' },
+        { path: '/autonomy', label: t('nav.autonomy'), icon: '🤖' },
+        { path: '/copilot', label: t('nav.copilot'), icon: '💬' },
+        { path: '/evolution', label: t('nav.evolution'), icon: '🧬' },
+        { path: '/journal', label: t('nav.journal'), icon: '📓' },
+        { path: '/ai-hub/agents', label: t('nav.multi_agent'), icon: '🤝' },
+        { path: '/ai-hub/calibration', label: t('nav.calibration'), icon: '🎯' },
+        { path: '/ai-hub/weights', label: t('nav.factor_weights'), icon: '⚖️' },
+        { path: '/ai-hub/post-mortem', label: t('nav.post_mortem'), icon: '🔭' },
+        { path: '/governance/pipeline', label: 'Promotion Pipeline', icon: '🛡️' },
+        { path: '/system-monitor', label: '系统监控', icon: '🖥️' },
+        { path: '/live-safety', label: 'AI 安全', icon: '🔒' },
+        { path: '/task-management', label: '任务管理', icon: '⚙️' },
+        { path: '/regime', label: t('nav.regime'), icon: '🌊' },
+        { path: '/alerts', label: t('nav.alerts'), icon: '🔔' },
+      ],
+    },
+  ]
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => authStore.canAccessRoute(resolveRouteAccess(item.path))),
+    }))
+    .filter((group) => group.items.length > 0)
+})
 
 // --- Collapsible nav groups ---
 const openGroups = reactive<Record<string, boolean>>({})
@@ -254,8 +272,27 @@ function safeStorageSet(storage: Storage | undefined, key: string, value: string
   }
 }
 
-const loggedIn = ref(isLoggedIn());
-const username = ref(getCurrentUsername());
+const roleEntry = computed(() => {
+  if (authStore.user?.mustChangePassword) {
+    return { path: '/auth/change-password', label: 'Security Check', desc: '先修改密码，再继续使用角色工作台' }
+  }
+  const role = authStore.role
+  const map: Record<string, { path: string; label: string; desc: string }> = {
+    RESEARCHER: { path: '/research', label: 'Research Workbench', desc: '研究信号、策略与回测' },
+    TRADER: { path: '/trading', label: 'Trading Workbench', desc: '订单、执行、持仓与异常' },
+    SUPERVISOR: { path: '/executive', label: 'Executive Workbench', desc: '收益、风险与高层摘要' },
+    ADMINISTRATOR: { path: '/admin', label: 'Admin Workbench', desc: '系统、用户、角色与审计' },
+  }
+  return map[role] ?? { path: '/dashboard', label: t('nav.module_command'), desc: t('nav.module_command_desc') }
+})
+
+const showSituationalAwarenessBar = computed(() => {
+  if (!loggedIn.value || !authStore.user) return false
+  return authStore.canAccessRoute(resolveRouteAccess('/order-book'))
+})
+
+const loggedIn = computed(() => authStore.loggedIn);
+const username = computed(() => authStore.user?.displayName || authStore.user?.username || getCurrentUsername());
 const expiryText = ref('');
 const theme = ref(safeStorageGet(globalThis.localStorage, 'theme', 'dark'));
 const themeLabel = computed(() => theme.value === 'dark' ? t('auth.light_mode') : t('auth.dark_mode'));
@@ -363,14 +400,18 @@ async function copyToken() {
 }
 
 function handleAuthLogout() {
+  authStore.hydrateFromToken();
   router.push('/login');
 }
 
 let timer: number | undefined;
 onMounted(() => {
+  authStore.hydrateFromToken();
+  if (isLoggedIn()) {
+    authStore.refreshProfile();
+  }
   timer = globalThis.setInterval(() => {
-    username.value = getCurrentUsername();
-    loggedIn.value = isLoggedIn();
+    authStore.hydrateFromToken();
     updateExpiry();
   }, 1000);
   updateExpiry();
@@ -626,6 +667,18 @@ function applyTheme() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.8rem;
+}
+.password-banner {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(110, 231, 183, 0.38);
+  color: #ecfeff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   font-size: 0.8rem;
 }
 .expiry-actions { display: flex; gap: 6px; }

@@ -29,14 +29,14 @@
 
       <form @submit.prevent="onSubmit" class="login-form" novalidate>
         <div class="field">
-          <label class="label">{{ t('login.username') }}</label>
-          <input v-model="username" type="text" class="input" :placeholder="t('login.username_placeholder')" autocomplete="username" required />
+          <label class="label" for="login-username">{{ t('login.username') }}</label>
+          <input id="login-username" v-model="username" type="text" class="input" :placeholder="t('login.username_placeholder')" autocomplete="username" required />
         </div>
 
         <div class="field">
-          <label class="label">{{ t('login.password') }}</label>
+          <label class="label" for="login-password">{{ t('login.password') }}</label>
           <div class="password-wrapper">
-            <input :type="showPassword ? 'text' : 'password'" v-model="password" class="input" :placeholder="t('login.password_placeholder')" autocomplete="current-password" required />
+            <input id="login-password" :type="showPassword ? 'text' : 'password'" v-model="password" class="input" :placeholder="t('login.password_placeholder')" :autocomplete="showPassword ? 'off' : 'current-password'" required />
             <button type="button" class="toggle" @click="showPassword = !showPassword" :aria-pressed="showPassword" :title="showPassword ? t('login.hide_password') : t('login.show_password')">{{ showPassword ? '🙈' : '👁️' }}</button>
           </div>
         </div>
@@ -60,9 +60,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { loginUser } from '../api/client';
 
 const { t } = useI18n();
@@ -73,6 +74,7 @@ const loading = ref(false);
 const showPassword = ref(false);
 const remember = ref(true);
 const router = useRouter();
+const authStore = useAuthStore();
 
 async function onSubmit() {
   loading.value = true;
@@ -80,17 +82,19 @@ async function onSubmit() {
   try {
     const data = await loginUser(username.value, password.value, remember.value);
     if (data && data.access_token) {
-      // 登录成功，跳转到首页
-      router.push({ path: '/' });
+      await authStore.refreshProfile();
+      router.push({ path: authStore.homePath });
     } else {
       error.value = t('login.login_failed');
     }
   } catch (e: any) {
     const rawDetail = e?.response?.data?.detail || e?.message;
-    // FastAPI 422 的 detail 是数组，取第一条 msg；其余情况转成字符串
-    const detail = Array.isArray(rawDetail)
-      ? (rawDetail[0]?.msg || rawDetail[0]?.type || t('login.login_error'))
-      : (rawDetail ? String(rawDetail) : '');
+    let detail = '';
+    if (Array.isArray(rawDetail)) {
+      detail = rawDetail[0]?.msg || rawDetail[0]?.type || t('login.login_error');
+    } else if (rawDetail) {
+      detail = String(rawDetail);
+    }
     error.value = detail ? t('login.error_detail', { detail }) : t('login.login_error');
   } finally {
     loading.value = false;
@@ -209,8 +213,8 @@ function onHelp() {
   gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: linear-gradient(90deg,#0284c7,#2563eb);
-  color: #fff;
+  background: linear-gradient(90deg,#075985,#1d4ed8);
+  color: #f8fafc;
   border: none;
   cursor: pointer;
   font-weight: 600;
