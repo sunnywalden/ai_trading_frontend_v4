@@ -84,6 +84,36 @@ describe('auth access rules', () => {
     expect(store.canAccessRoute(resolveRouteAccess('/admin/permissions'))).toBe(false)
   })
 
+  it('gates broker account admin page behind v11.3.1 admin ui flag', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'admin',
+      displayName: 'Admin',
+      role: 'ADMINISTRATOR',
+      permissions: ['*', 'admin.broker_account.manage'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+        ACCOUNT_ADMIN_UI_V1131_ENABLED: false,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/admin/broker-accounts'))).toBe(false)
+
+    store.user.featureFlags = {
+      ...store.user.featureFlags,
+      ACCOUNT_ADMIN_UI_V1131_ENABLED: true,
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/admin/broker-accounts'))).toBe(true)
+  })
+
   it('blocks supervisor from live safety admin page', () => {
     const store = useAuthStore()
     store.user = {
@@ -182,5 +212,46 @@ describe('auth access rules', () => {
     }
 
     expect(store.homePath).toBe('/auth/change-password')
+  })
+
+  it('evaluates account grants for view and operate helpers', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'trader',
+      displayName: 'Trader',
+      role: 'TRADER',
+      permissions: ['trading.home.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      accessibleAccounts: [
+        {
+          accountId: 'acc-001',
+          displayName: 'Primary',
+          accountType: 'LIVE',
+          market: 'US',
+          grantLevel: 'OPERATE',
+          isActive: true,
+        },
+      ],
+      accountGrants: {
+        'acc-001': 'OPERATE',
+        'acc-002': 'VIEW',
+      },
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+        MULTI_ACCOUNT_V1131_ENABLED: true,
+      },
+    }
+
+    expect(store.canOperateAccount('acc-001')).toBe(true)
+    expect(store.canOperateAccount('acc-002')).toBe(false)
+    expect(store.canViewAccount('acc-001')).toBe(true)
+    expect(store.canViewAccount('acc-002')).toBe(true)
+    expect(store.canViewAccount('acc-404')).toBe(false)
   })
 })

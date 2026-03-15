@@ -1,9 +1,10 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V11.1.1（当前实现） | 更新日期：2026-03-15  
-> 生产基线：V11.0.1（已上线）  
-> 变更摘要（V11.1.1 当前实现）：**Trader Workbench Convergence & Architecture Simplification UI**——围绕 `src/components/workbench` 落地统一 `WorkbenchShell` 与 `ExplainabilityStrip`，当前已把 `/dashboard`、`/order-book`、`/system-monitor`、`/portfolio`、`/autonomy` 五个主工作台收敛到一致的标题区、摘要区、数据质量语义与建议动作语言；同时以 typed workbench contract 对接新的 read-model 接口，把 `/task-management` 收口到 `SystemMonitorPage` 的 tasks Tab，并通过 Vite `manualChunks` 将 `echarts` / `element-plus` / `axios` 拆出主入口包。  
+> 版本：V11.2.1（当前实现 & 生产基线，已上线） | 更新日期：2026-03-15  
+> 下一版本规划：V11.3.1 Multi-Account Support & Account-Scoped Data Governance  
+> 变更摘要（V11.2.1 当前实现）：**RBAC & Role Workbench UI**——在 V11.1.1 工作台基线上落地完整角色权限 UI：新增 `PermissionButton` / `PermissionGuard` 组件（`ROLE_ACTION_GATING_V1121_ENABLED` flag 控制）；四类角色工作台首页（`/research`、`/trading`、`/executive`、`/admin`）由 `auth` store 的 `role` 字段驱动首页路由；`ROLE_NAV_GATING_V1121_ENABLED` 控制侧边栏可见范围（Supervisor 只能访问 `/executive`、`/reports/*`、`/dashboard`、`/attribution`、`/portfolio`、`/copilot`，Researcher 等不可见运营/治理类页面）；`/auth/change-password` 强制改密页（`must_change_password=true` 时路由守卫强制跳转）；`/admin/permissions` 管理页（Administrator only）；`/api/v1/auth/me` 响应中 `feature_flags`、`must_change_password`、`is_system_seed` 驱动所有上述门控。  
+> 变更摘要（V11.1.1 已上线）：**Trader Workbench Convergence & Architecture Simplification UI**——围绕 `src/components/workbench` 落地统一 `WorkbenchShell` 与 `ExplainabilityStrip`，当前已把 `/dashboard`、`/order-book`、`/system-monitor`、`/portfolio`、`/autonomy` 五个主工作台收敛到一致的标题区、摘要区、数据质量语义与建议动作语言；同时以 typed workbench contract 对接新的 read-model 接口，把 `/task-management` 收口到 `SystemMonitorPage` 的 tasks Tab，并通过 Vite `manualChunks` 将 `echarts` / `element-plus` / `axios` 拆出主入口包。  
 > 变更摘要（V11.0.1）：**Capital Intelligence & Self-Perception UI**——前端继续坚持“不新增一级导航”的原则，在既有 `/autonomy` 工作台中补齐系统自知画像（MetaState）、摩擦积累信号、False-Hold 告警、Improvement Lab 候选与 V11 rollout flags 展示；重点提升“为什么资金闲置、为什么信号被卡住、哪里值得改进”的解释密度。  
 > 变更摘要（V10.5.4 基线）：**Signal Pipeline Integrity & Control-Plane Hardening UI**——作为 V11.0.1 的前序控制平面基线，负责统一信号来源、canonical payload、native audit / reconstructed 标识与 rollout discipline。  
 > 变更摘要（V10.5.2）：**组合席位竞争引擎 UI（Capacity-Aware Admission Visualization）**——/portfolio 页新增席位竞争看板 Tab（候选信号 vs 现有持仓统一评分排名列表、overflow 淘汰清单、准入评分拆解 tooltip）；/autonomy 新增 CapacityArbiter 状态卡（本轮候选数、触发席位竞争次数、今日替换成功 / 拒绝计数、dry-run 状态徽章）；/order-book 新增 REJECTED_BY_CAPACITY_REPLACEMENT 拒绝原因徽章与原因详情抽屉；新增 /capacity-arbiter 路由（Preview 模拟面板 + Audit Log 历史 + Config 治理参数面板）；所有席位竞争事件接入 SSE 实时推送，用户可在不刷新页面的情况下观测替换决策流。
