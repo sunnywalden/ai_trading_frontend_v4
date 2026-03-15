@@ -7,15 +7,6 @@ function manualChunks(id: string) {
     return undefined;
   }
 
-  if (
-    id.includes('/vue/')
-    || id.includes('/vue-router/')
-    || id.includes('/pinia/')
-    || id.includes('/vue-i18n/')
-  ) {
-    return 'vendor-vue-core';
-  }
-
   if (id.includes('/echarts/')) {
     return 'vendor-echarts';
   }
@@ -28,7 +19,7 @@ function manualChunks(id: string) {
     return 'vendor-axios';
   }
 
-  return 'vendor-misc';
+  return undefined;
 }
 
 export default defineConfig({
