@@ -1,9 +1,46 @@
 <template>
-  <div class="page-container">
-    <section class="section-header">
-      <h2>Portfolio Construction Console</h2>
-      <p>把优化输出、风险预算、调仓漂移和执行质量放在一张桌面上，而不是只看一次求解结果。</p>
-    </section>
+  <WorkbenchShell
+    class="page-container"
+    icon="⚖️"
+    title="Portfolio Construction Console"
+    subtitle="把优化输出、风险预算、调仓漂移和执行质量放在一张桌面上，而不是只看一次求解结果。"
+    :last-updated="portfolioWorkbenchLastUpdated"
+    :data-quality="portfolioWorkbenchDataQuality"
+    :degraded="Boolean(portfolioStore.error)"
+    :stale="portfolioWorkbenchStale"
+    :loading="portfolioShellLoading"
+    loading-text="正在加载组合构建工作台..."
+  >
+    <template #title-badge>
+      <span class="method-badge">{{ portfolioActiveMethod }}</span>
+    </template>
+
+    <template #actions>
+      <button class="primary-button secondary-button" @click="handleRefreshPortfolio">
+        刷新构建数据
+      </button>
+    </template>
+
+    <template #summary-cards>
+      <article v-for="item in portfolioSummaryItems" :key="item.label" class="card summary-card">
+        <div class="metric-label">{{ item.label }}</div>
+        <div class="summary-card__value" :class="item.tone">{{ item.value }}</div>
+        <div class="summary-card__sub">{{ item.sub }}</div>
+      </article>
+    </template>
+
+    <ExplainabilityStrip
+      :result-value="portfolioExplainValue"
+      :explanation="portfolioExplainText"
+      source-type="live"
+      :data-quality="portfolioWorkbenchDataQuality"
+      :last-updated="portfolioWorkbenchLastUpdated"
+      :suggested-action="portfolioSuggestedAction"
+      :actionable="true"
+      @action="handlePortfolioSuggestedAction"
+    />
+
+    <div class="portfolio-workbench">
 
     <div v-if="construction" class="construction-layout">
       <div class="card overview-card">
@@ -12,7 +49,7 @@
             <h3 style="margin: 0 0 8px;">构建摘要</h3>
             <p class="overview-copy">最新快照方法 {{ construction.latest_snapshot?.method || 'N/A' }}，从当前仓位迁移到目标仓位的结构成本已拆开展示。</p>
           </div>
-          <button class="primary-button secondary-button" @click="loadConstruction">刷新构建数据</button>
+          <button class="primary-button secondary-button" @click="handleRefreshPortfolio">刷新构建数据</button>
         </div>
         <div class="metrics-row">
           <div class="metric-item">
@@ -218,21 +255,26 @@
         </tbody>
       </table>
     </div>
-  </div>
+    </div>
+  </WorkbenchShell>
 </template>
 
 <script setup lang="ts">
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue'
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue'
 import { portfolioApi, type PortfolioConstructionSnapshot, type SnapshotHistoryItem } from '@/api/portfolioService'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { useQuantLoopStore } from '@/stores/quantLoop'
 import { formatClientDateTime } from '@/utils/datetime'
 import { storeToRefs } from 'pinia'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const CapacityArbitrationPanel = defineAsyncComponent(
   () => import('@/components/CapacityArbitrationPanel.vue'),
 )
 
+const router = useRouter()
 const portfolioStore = usePortfolioStore()
 const quantLoopStore = useQuantLoopStore()
 const { result } = storeToRefs(portfolioStore)
@@ -245,7 +287,111 @@ const chartDom = ref<HTMLElement>()
 const history = ref<SnapshotHistoryItem[]>([])
 const historyLoading = ref(false)
 const construction = ref<PortfolioConstructionSnapshot | null>(null)
+const constructionLoading = ref(false)
+const portfolioRefreshAt = ref<string | null>(null)
 const accountId = computed(() => quantLoopStore.systemStatus?.account_id || '')
+
+function formatWorkbenchTime(raw?: string | null) {
+  if (!raw) return '—'
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime())
+    ? raw
+    : date.toLocaleString('zh-CN', { hour12: false })
+}
+
+const portfolioShellLoading = computed(() => {
+  return (constructionLoading.value || portfolioStore.loading)
+    && !construction.value
+    && !result.value
+})
+
+const portfolioActiveMethod = computed(() => {
+  return construction.value?.latest_snapshot?.method || result.value?.method || '未优化'
+})
+
+const portfolioWorkbenchLastUpdated = computed(() => {
+  return formatWorkbenchTime(
+    construction.value?.latest_snapshot?.created_at
+      || result.value?.created_at
+      || portfolioRefreshAt.value,
+  )
+})
+
+const portfolioWorkbenchDataQuality = computed(() => {
+  if (construction.value?.execution_quality.sample_size) return 'high'
+  if (construction.value || result.value) return 'medium'
+  return 'unknown'
+})
+
+const portfolioWorkbenchStale = computed(() => {
+  const raw = construction.value?.latest_snapshot?.created_at
+    || result.value?.created_at
+    || portfolioRefreshAt.value
+  if (!raw) return false
+  const timestamp = new Date(raw).getTime()
+  return Number.isFinite(timestamp) && Date.now() - timestamp > 6 * 60 * 60 * 1000
+})
+
+const portfolioSummaryItems = computed(() => {
+  if (!construction.value) {
+    return [
+      { label: '工作台状态', value: '待初始化', sub: '先执行一次优化或刷新构建快照', tone: '' },
+    ]
+  }
+
+  return [
+    {
+      label: '预估换手',
+      value: pct(construction.value.construction.turnover),
+      sub: '当前仓位迁移到目标权重的结构成本',
+      tone: construction.value.construction.turnover > 0.3 ? 'text-warning' : 'text-primary',
+    },
+    {
+      label: '集中度 HHI',
+      value: construction.value.construction.concentration_hhi.toFixed(3),
+      sub: '越高越集中，越低越分散',
+      tone: construction.value.construction.concentration_hhi > 0.18 ? 'text-warning' : '',
+    },
+    {
+      label: '执行质量',
+      value: construction.value.execution_quality.avg_quality_score.toFixed(1),
+      sub: `样本 ${construction.value.execution_quality.sample_size} 笔`,
+      tone: 'text-success',
+    },
+    {
+      label: '有效持仓数',
+      value: construction.value.construction.effective_names.toFixed(2),
+      sub: `当前账户 ${accountId.value || 'N/A'}`,
+      tone: '',
+    },
+  ]
+})
+
+const portfolioExplainValue = computed(() => {
+  const sharpe = construction.value?.latest_snapshot?.metrics.sharpe ?? result.value?.metrics.sharpe
+  return sharpe != null ? `Sharpe ${sharpe.toFixed(2)}` : '等待构建结果'
+})
+
+const portfolioExplainText = computed(() => {
+  if (!construction.value) {
+    return '组合构建工作台会把目标权重、风险预算与执行摩擦汇总成一条可解释的配置链。'
+  }
+
+  const build = construction.value.construction
+  const execution = construction.value.execution_quality
+  return `当前换手 ${pct(build.turnover)}、集中度 ${build.concentration_hhi.toFixed(3)}、平均 IS ${execution.avg_total_is_bps.toFixed(1)}bps。重点是判断“该不该调仓”以及“值得为这次调仓付出多少执行成本”。`
+})
+
+const portfolioSuggestedAction = computed(() => {
+  if (!construction.value) return '先运行一次优化，生成目标权重与风险预算。'
+  if (construction.value.execution_quality.avg_total_is_bps > 20) {
+    return '打开执行策略控制台，检查高摩擦标的与 child-order 策略。'
+  }
+  if (construction.value.construction.concentration_hhi > 0.18) {
+    return '打开 Alpha Lab 或 Opportunities，检查权重是否过度集中。'
+  }
+  return '打开智能订单簿，确认本轮再平衡是否值得进入执行阶段。'
+})
 
 function pct(value: number) {
   return `${(value * 100).toFixed(1)}%`
@@ -257,11 +403,14 @@ function signedPct(value: number) {
 }
 
 async function loadConstruction() {
+  constructionLoading.value = true
   try {
     const res = await portfolioApi.getConstruction()
     construction.value = res.data
   } catch (e) {
     console.warn('[Portfolio] construction load failed', e)
+  } finally {
+    constructionLoading.value = false
   }
 }
 
@@ -295,6 +444,32 @@ async function handleOptimize() {
   })
 }
 
+async function handleRefreshPortfolio() {
+  await Promise.all([
+    quantLoopStore.fetchSystemStatus(),
+    portfolioStore.fetchLatest(),
+    loadHistory(),
+    loadConstruction(),
+  ])
+  portfolioRefreshAt.value = new Date().toISOString()
+}
+
+function handlePortfolioSuggestedAction() {
+  if (!construction.value) {
+    handleOptimize()
+    return
+  }
+  if (construction.value.execution_quality.avg_total_is_bps > 20) {
+    router.push('/execution-policy')
+    return
+  }
+  if (construction.value.construction.concentration_hhi > 0.18) {
+    router.push('/alpha-lab')
+    return
+  }
+  router.push('/order-book')
+}
+
 // 有效前沿图 (ECharts)
 watch(result, async (r) => {
   if (!r?.frontier?.length || !chartDom.value) return
@@ -323,14 +498,12 @@ watch(result, async (r) => {
 })
 
 onMounted(() => {
-  quantLoopStore.fetchSystemStatus()
-  portfolioStore.fetchLatest()
-  loadHistory()
-  loadConstruction()
+  handleRefreshPortfolio()
 })
 </script>
 
 <style scoped>
+.portfolio-workbench { display: flex; flex-direction: column; gap: 24px; }
 .construction-layout { display: grid; gap: 20px; margin-bottom: 24px; }
 .construction-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .overview-card { background: linear-gradient(135deg, rgba(27, 44, 64, 0.95), rgba(29, 29, 59, 0.95)); }
@@ -371,6 +544,8 @@ onMounted(() => {
 .weight-chip { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 6px; font-size: 11px; }
 .danger-chip { background: rgba(153, 51, 51, 0.78); color: #fff3f3; }
 .metrics-row.compact { margin-bottom: 0; }
+.summary-card__value { font-size: 20px; font-weight: 700; margin: 6px 0 4px; }
+.summary-card__sub { font-size: 12px; color: #94a3b8; line-height: 1.5; }
 
 @media (max-width: 1024px) {
   .construction-panels, .result-layout { grid-template-columns: 1fr; }

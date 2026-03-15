@@ -156,8 +156,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/SystemMonitorPage.vue'),
     meta: { title: '系统监控' }
   },
-  // V11.1.1: /task-management 合并到 SystemMonitorPage 的 tasks tab
-  { path: '/task-management', redirect: () => ({ path: '/system-monitor', query: { tab: 'tasks' } }) },
+  // V11.1.1: /task-management 收口到 SystemMonitorPage 的 tasks tab（保留直达入口，避免新增 redirect 债务）
+  {
+    path: '/task-management',
+    name: 'TaskManagement',
+    component: () => import('../views/SystemMonitorPage.vue'),
+    meta: { title: '任务管理' }
+  },
   // 旧路由重定向（保持后向兼容）
   { path: '/api-monitoring',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'api'    } }) },
   { path: '/service-health',  redirect: (to) => ({ path: '/system-monitor', query: { tab: 'health' } }) },
@@ -288,7 +293,10 @@ import { isLoggedIn } from '../api/client';
 
 router.beforeEach((to, from, next) => {
   if (to.meta.title) {
-    document.title = `${to.meta.title} - AI 量化自主交易系统`;
+    const routeTitle = typeof to.meta.title === 'string'
+      ? to.meta.title
+      : 'AI 量化自主交易系统'
+    document.title = `${routeTitle} - AI 量化自主交易系统`;
   }
 
   // 允许匿名访问的页面

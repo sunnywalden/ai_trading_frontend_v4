@@ -1,17 +1,28 @@
 <template>
-  <div class="iob-page">
-    <!-- 页头 -->
-    <div class="page-header">
-      <div class="page-title">
-        <span class="title-icon">📋</span>
-        智能订单簿
-        <span class="version-badge">V10.3</span>
-      </div>
+  <WorkbenchShell
+    class="order-book-shell"
+    icon="📋"
+    title="智能订单簿"
+    subtitle="把执行动作、审计链路与订单状态放进统一工作台，回答“这笔单现在应该怎么管”。"
+    :last-updated="lastUpdated"
+    :data-quality="orderBookDataQuality"
+    :degraded="Boolean(ob.error)"
+    :stale="orderBookStale"
+    :loading="loading && !ob.response"
+    loading-text="正在刷新智能订单簿..."
+  >
+    <template #title-badge>
+      <span class="version-badge">V10.3</span>
+    </template>
+
+    <template #actions>
       <div class="header-actions">
         <span class="last-updated">更新: {{ lastUpdated }}</span>
         <button class="refresh-btn" :class="{ spinning: loading }" @click="refresh" title="F5刷新">↻</button>
       </div>
-    </div>
+    </template>
+
+    <div class="iob-page">
 
     <div v-if="hasFocusContext" class="focus-banner">
       <div>
@@ -34,6 +45,18 @@
         <button class="focus-btn ghost" @click="clearFocus">清除聚焦</button>
       </div>
     </div>
+
+    <ExplainabilityStrip
+      v-if="ob.summary"
+      :result-value="orderBookExplainValue"
+      :explanation="orderBookExplainText"
+      source-type="live"
+      :data-quality="orderBookDataQuality"
+      :last-updated="lastUpdated"
+      :suggested-action="orderBookSuggestedAction"
+      :actionable="true"
+      @action="handleOrderBookSuggestedAction"
+    />
 
     <!-- 汇总栏 -->
     <div v-if="ob.summary" class="summary-bar">
@@ -163,13 +186,16 @@
         </div>
       </Transition>
     </Teleport>
-  </div>
+    </div>
+  </WorkbenchShell>
 </template>
 
 <script setup lang="ts">
 import type { OrderBookRow } from '@/api/orderBookService'
 // @ts-ignore Vue SFC default export is provided by the Vue compiler.
 import OrderBookTable from '@/components/OrderBookTable.vue'
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue'
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue'
 import { useOrderBookStore } from '@/stores/orderBook'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -180,6 +206,7 @@ const router = useRouter()
 
 const loading      = ref(false)
 const lastUpdated  = ref('—')
+const lastUpdatedAt = ref<Date | null>(null)
 const stopLossOpen = ref(false)
 const stopLossRow  = ref<OrderBookRow | null>(null)
 const newStopLoss  = ref<number>(0)
@@ -238,6 +265,40 @@ const focusMatchLabel = computed(() => {
   if (focusIntentId.value) return '命中方式: Intent 精确定位'
   return ''
 })
+
+const orderBookDataQuality = computed(() => {
+  if (ob.error) return 'low'
+  if (ob.summary) return 'high'
+  return 'unknown'
+})
+
+const orderBookStale = computed(() => {
+  if (!lastUpdatedAt.value) return false
+  return Date.now() - lastUpdatedAt.value.getTime() > 2 * 60 * 1000
+})
+
+const orderBookExplainValue = computed(() => {
+  if (!ob.summary) return '—'
+  return `${ob.summary.total_active} active / ${ob.summary.total_monitoring} monitor`
+})
+
+const orderBookExplainText = computed(() => {
+  if (!ob.summary) {
+    return '订单簿聚合摘要将展示活跃单、监控单与未平仓盈亏。'
+  }
+  if (ob.summary.total_monitoring > ob.summary.total_active) {
+    return `当前监控中订单多于活跃执行订单，建议优先回看生命周期与执行策略的阻塞原因。`
+  }
+  return `当前活跃执行 ${ob.summary.total_active} 笔，平均置信 ${ob.summary.avg_confidence != null ? ob.summary.avg_confidence.toFixed(1) + '%' : '—'}，未平仓 PnL ${fmtPnl(ob.summary.total_unrealized_pnl)}。`
+})
+
+const orderBookSuggestedAction = computed(() => {
+  if (!ob.summary) return '刷新订单簿，获取最新执行快照。'
+  if (ob.summary.total_monitoring > ob.summary.total_active) {
+    return '打开生命周期中心，排查监控单与 stuck intent。'
+  }
+  return '打开执行策略控制台，回看当前主执行算法与成本预算。'
+})
 const focusAuditNote = computed(() => {
   if (focusMatchMode.value === 'order_id' && focusOrderId.value) {
     return `当前订单簿保留了 Broker Order ${focusOrderId.value} 的精确审计链路。`
@@ -292,10 +353,23 @@ async function refresh() {
   try {
     syncRouteFilters()
     await Promise.all([ob.fetchOrders(), ob.fetchSummary()])
-    lastUpdated.value = new Date().toLocaleTimeString('zh-CN')
+    lastUpdatedAt.value = new Date()
+    lastUpdated.value = lastUpdatedAt.value.toLocaleTimeString('zh-CN')
   } finally {
     loading.value = false
   }
+}
+
+function handleOrderBookSuggestedAction() {
+  if (!ob.summary) {
+    refresh()
+    return
+  }
+  if (ob.summary.total_monitoring > ob.summary.total_active) {
+    router.push('/trade-lifecycle')
+    return
+  }
+  router.push('/execution-policy')
 }
 
 function onFilterChange(newFilters: any) {
