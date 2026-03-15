@@ -12,7 +12,7 @@ describe('auth access rules', () => {
   it('maps research route to researcher/admin access', () => {
     const rule = resolveRouteAccess('/research')
 
-    expect(rule.roles).toEqual(['RESEARCHER', 'ADMINISTRATOR'])
+    expect(rule.roles).toEqual(['RESEARCHER'])
     expect(rule.permissions).toEqual(['research.home.read'])
   })
 
@@ -60,6 +60,35 @@ describe('auth access rules', () => {
 
     expect(store.canAccessRoute(resolveRouteAccess('/admin/users'))).toBe(true)
     expect(store.canAccessRoute(resolveRouteAccess('/system-monitor'))).toBe(true)
+  })
+
+  it('keeps administrator inside admin and common workbench domains', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'admin',
+      displayName: 'Admin',
+      role: 'ADMINISTRATOR',
+      permissions: ['*'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/dashboard'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/copilot'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/admin'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/positions'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/signal-watchtower'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/trading'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/research'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/executive'))).toBe(false)
   })
 
   it('disables admin console routes when feature flag is off', () => {
