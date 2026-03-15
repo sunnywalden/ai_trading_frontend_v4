@@ -10,6 +10,34 @@
       </div>
       <p class="sidebar-subtitle">{{ $t('nav.control_tower') }}</p>
 
+      <div
+        v-if="showAccountSelector"
+        class="account-switcher"
+      >
+        <label class="account-switcher__label" for="account-switcher">
+          当前账户
+        </label>
+        <select
+          id="account-switcher"
+          class="account-switcher__select"
+          :value="authStore.currentAccountId || ''"
+          @change="handleAccountChange"
+        >
+          <option
+            v-for="account in authStore.accessibleAccounts"
+            :key="account.accountId"
+            :value="account.accountId"
+          >
+            {{ account.displayName || account.accountId }} · {{ account.grantLevel }}
+          </option>
+        </select>
+        <div v-if="currentAccountMeta" class="account-switcher__meta">
+          <span>{{ currentAccountMeta.market || 'US' }}</span>
+          <span>{{ currentAccountMeta.accountType || 'LIVE' }}</span>
+          <span>{{ currentAccountMeta.grantLevel }}</span>
+        </div>
+      </div>
+
       <nav class="nav-menu">
         <!-- 指挥室 独立顶级入口 -->
         <router-link :to="roleEntry.path" class="nav-button command-room" active-class="active">
@@ -109,7 +137,10 @@
       <SituationalAwarenessBar v-if="showSituationalAwarenessBar" />
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <component :is="Component" />
+          <component
+            :is="Component"
+            :key="`${route.fullPath}:${authStore.currentAccountId || 'default'}`"
+          />
         </transition>
       </router-view>
 
@@ -197,6 +228,7 @@ const navGroups = computed<NavGroup[]>(() => {
         { path: '/trading', label: 'Trading Home', icon: '📈' },
         { path: '/executive', label: 'Executive Home', icon: '🧾' },
         { path: '/admin', label: 'Admin Home', icon: '🛠️' },
+        { path: '/admin/broker-accounts', label: '经纪账户', icon: '🏦' },
         { path: '/admin/permissions', label: '权限目录', icon: '🪪' },
         { path: '/autonomy', label: t('nav.autonomy'), icon: '🤖' },
         { path: '/copilot', label: t('nav.copilot'), icon: '💬' },
@@ -284,6 +316,17 @@ const roleEntry = computed(() => {
     ADMINISTRATOR: { path: '/admin', label: 'Admin Workbench', desc: '系统、用户、角色与审计' },
   }
   return map[role] ?? { path: '/dashboard', label: t('nav.module_command'), desc: t('nav.module_command_desc') }
+})
+
+const showAccountSelector = computed(() => {
+  return authStore.isFeatureEnabled('MULTI_ACCOUNT_V1131_ENABLED')
+    && authStore.accessibleAccounts.length > 1
+})
+
+const currentAccountMeta = computed(() => {
+  return authStore.accessibleAccounts.find(
+    (item) => item.accountId === authStore.currentAccountId,
+  ) ?? null
 })
 
 const showSituationalAwarenessBar = computed(() => {
@@ -433,6 +476,11 @@ onUnmounted(() => {
 });
 
 function onLogout() { logout(); router.push('/login'); }
+function handleAccountChange(event: Event) {
+  const nextAccountId = (event.target as HTMLSelectElement).value || null
+  authStore.selectAccount(nextAccountId)
+}
+
 function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark';
   safeStorageSet(globalThis.localStorage, 'theme', theme.value);
@@ -503,6 +551,44 @@ function applyTheme() {
   font-size: 0.75rem;
   color: #6b7280;
   margin: 0 0 8px;
+}
+
+.account-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+}
+
+.account-switcher__label {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.account-switcher__select {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.96);
+  color: #e2e8f0;
+  padding: 8px 10px;
+}
+
+.account-switcher__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #7dd3fc;
+}
+
+.account-switcher__meta span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(8, 145, 178, 0.18);
 }
 
 .nav-menu {

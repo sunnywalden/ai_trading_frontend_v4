@@ -117,6 +117,26 @@ export function setAuthToken(token: string | null, remember: boolean = true) {
   } catch (e) {}
 }
 
+export function setCurrentAccountId(accountId: string | null) {
+  try {
+    if (accountId) {
+      sessionStorage.setItem('current_account_id', accountId)
+      localStorage.setItem('current_account_id', accountId)
+    } else {
+      sessionStorage.removeItem('current_account_id')
+      localStorage.removeItem('current_account_id')
+    }
+  } catch (e) {}
+}
+
+export function getCurrentAccountId(): string | null {
+  try {
+    return sessionStorage.getItem('current_account_id') || localStorage.getItem('current_account_id');
+  } catch (e) {
+    return null;
+  }
+}
+
 export function getAuthToken(): string | null {
   try {
     // 优先使用 sessionStorage（短期会话），其次是 localStorage（记住登录）
@@ -207,6 +227,7 @@ export async function loginUser(username: string, password: string, remember: bo
 
 export function logout() {
   setAuthToken(null);
+  setCurrentAccountId(null)
   try { sessionStorage.removeItem('auth_token'); } catch (e) {}
   try { localStorage.removeItem('auth_token'); } catch (e) {}
   if (typeof window !== 'undefined') {
@@ -221,6 +242,11 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers || {};
     config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  const accountId = getCurrentAccountId()
+  if (accountId) {
+    config.headers = config.headers || {}
+    config.headers['X-Account-ID'] = accountId
   }
   return config;
 });

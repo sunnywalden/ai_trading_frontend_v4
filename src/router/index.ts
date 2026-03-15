@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/trading', name: 'TradingHome', component: () => import('../views/TradingHomePage.vue'), meta: { title: 'Trading Workbench' } },
   { path: '/executive', name: 'ExecutiveHome', component: () => import('../views/ExecutiveHomePage.vue'), meta: { title: 'Executive Workbench' } },
   { path: '/admin', name: 'AdminHome', component: () => import('../views/AdminHomePage.vue'), meta: { title: 'Admin Workbench' } },
+  { path: '/admin/broker-accounts', name: 'AdminBrokerAccounts', component: () => import('../views/AdminBrokerAccountsPage.vue'), meta: { title: '经纪账户管理' } },
   { path: '/admin/users', name: 'AdminUsers', component: () => import('../views/AdminUsersPage.vue'), meta: { title: '用户管理' } },
   { path: '/admin/roles', name: 'AdminRoles', component: () => import('../views/AdminRolesPage.vue'), meta: { title: '角色管理' } },
   { path: '/admin/permissions', name: 'AdminPermissions', component: () => import('../views/AdminPermissionsPage.vue'), meta: { title: '权限目录' } },
@@ -98,6 +99,7 @@ const ACCESS_RULES: Array<{ pattern: RegExp } & RouteAccessMeta> = [
   { pattern: /^\/reports\/(executive|risk|performance)$/, roles: ['SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'executive', featureFlag: 'EXECUTIVE_REPORTS_V1121_ENABLED' },
 
   { pattern: /^\/admin$/, roles: ['ADMINISTRATOR'], permissions: ['admin.home.read'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ROLE_HOME_V1121_ENABLED' },
+  { pattern: /^\/admin\/broker-accounts$/, roles: ['ADMINISTRATOR'], permissions: ['admin.broker_account.manage'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ACCOUNT_ADMIN_UI_V1131_ENABLED' },
   { pattern: /^\/admin\/(users|roles|permissions|audit)$/, roles: ['ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ADMIN_CONSOLE_V1121_ENABLED' },
   { pattern: /^\/(system-monitor|task-management)$/, roles: ['ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'admin' },
   { pattern: /^\/live-safety$/, roles: ['ADMINISTRATOR'], permissions: ['admin.system.read'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ADMIN_CONSOLE_V1121_ENABLED' },

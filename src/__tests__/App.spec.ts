@@ -22,9 +22,11 @@ vi.mock('../api/client', () => {
     isLoggedIn: () => true,
     getCurrentUsername: () => 'admin',
     getAuthToken: () => 'header.payload.signature',
+    getCurrentAccountId: () => null,
     getTokenPayload: () => ({ sub: 'admin', exp: Math.floor((Date.now() + 2 * 60 * 1000) / 1000) }),
     getTokenExpiryMs: () => Date.now() + 2 * 60 * 1000,
     isTokenExpired: () => false,
+    setCurrentAccountId: vi.fn(),
     logout: vi.fn(),
   };
 });
@@ -43,14 +45,12 @@ describe('App.vue token expiry banner', () => {
     vi.useFakeTimers();
     // ensure Notification is stubbed
     class MockNotification {
-      static permission = 'default';
-      static requestPermission = () => Promise.resolve('granted');
-      onclick: (() => void) | null = null;
+      static readonly permission = 'default';
+      static readonly requestPermission = () => Promise.resolve('granted');
 
-      constructor(_title?: string, _options?: NotificationOptions) {}
+      onclick: (() => void) | null = null;
     }
-    // @ts-ignore
-    global.Notification = MockNotification;
+    globalThis.Notification = MockNotification as unknown as typeof Notification;
   });
 
   afterEach(() => {

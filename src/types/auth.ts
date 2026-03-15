@@ -7,8 +7,22 @@ export type FeatureFlagName =
   | 'ROLE_ACTION_GATING_V1121_ENABLED'
   | 'EXECUTIVE_REPORTS_V1121_ENABLED'
   | 'ADMIN_CONSOLE_V1121_ENABLED'
+  | 'MULTI_ACCOUNT_V1131_ENABLED'
+  | 'BROKER_ACCOUNT_REGISTRY_V1131_ENABLED'
+  | 'ACCOUNT_DATA_ISOLATION_V1131_ENABLED'
+  | 'ACCOUNT_ADMIN_UI_V1131_ENABLED'
 
 export type FeatureFlags = Record<FeatureFlagName, boolean>
+
+export interface AccessibleAccount {
+  id?: number | null
+  accountId: string
+  displayName?: string | null
+  accountType?: string | null
+  market?: string | null
+  grantLevel: string
+  isActive?: boolean
+}
 
 export interface AuthUser {
   id?: number | null
@@ -21,6 +35,9 @@ export interface AuthUser {
   isSystemSeed?: boolean
   mustChangePassword?: boolean
   featureFlags?: Partial<FeatureFlags>
+  accessibleAccounts?: AccessibleAccount[]
+  defaultAccountId?: string | null
+  accountGrants?: Record<string, string>
 }
 
 export interface RouteAccessMeta {
