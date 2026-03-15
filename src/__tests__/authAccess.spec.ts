@@ -1,0 +1,131 @@
+import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it } from 'vitest'
+
+import { resolveRouteAccess } from '@/router'
+import { useAuthStore } from '@/stores/auth'
+
+describe('auth access rules', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('maps research route to researcher/admin access', () => {
+    const rule = resolveRouteAccess('/research')
+
+    expect(rule.roles).toEqual(['RESEARCHER', 'ADMINISTRATOR'])
+    expect(rule.permissions).toEqual(['research.home.read'])
+  })
+
+  it('allows supervisor executive summary but blocks admin console', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'supervisor',
+      displayName: 'Supervisor',
+      role: 'SUPERVISOR',
+      permissions: ['executive.home.read', 'executive.report.risk.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/executive'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/admin'))).toBe(false)
+  })
+
+  it('allows admin wildcard permission to reach admin routes', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'admin',
+      displayName: 'Admin',
+      role: 'ADMINISTRATOR',
+      permissions: ['*'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/admin/users'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/system-monitor'))).toBe(true)
+  })
+
+  it('disables admin console routes when feature flag is off', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'admin',
+      displayName: 'Admin',
+      role: 'ADMINISTRATOR',
+      permissions: ['*'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: false,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/admin/permissions'))).toBe(false)
+  })
+
+  it('blocks supervisor from live safety admin page', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'supervisor',
+      displayName: 'Supervisor',
+      role: 'SUPERVISOR',
+      permissions: ['executive.home.read', 'executive.report.risk.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/live-safety'))).toBe(false)
+  })
+
+  it('forces home path to change-password when user must rotate password', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'researcher',
+      displayName: 'Researcher',
+      role: 'RESEARCHER',
+      permissions: ['research.home.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      mustChangePassword: true,
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.homePath).toBe('/auth/change-password')
+  })
+})

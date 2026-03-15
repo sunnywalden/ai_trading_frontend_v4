@@ -107,6 +107,9 @@ export function setAuthToken(token: string | null, remember: boolean = true) {
       } else {
         sessionStorage.setItem('auth_token', token);
       }
+      if (typeof globalThis.window !== 'undefined') {
+        try { globalThis.window.dispatchEvent(new CustomEvent('auth-login')); } catch {}
+      }
     } else {
       localStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_token');
