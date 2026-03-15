@@ -14,7 +14,14 @@ import type {
     ServiceModuleSummary,
     ServiceOverviewResponse
 } from '../types/systemMonitor'
+import type { ApiStats, MonitoringReport } from './client'
 import { api } from './client'
+
+export interface SystemMonitorWorkbenchResponse {
+  monitoring_report: MonitoringReport
+  api_stats: ApiStats[]
+  time_range: string
+}
 
 export interface MonitorQueryOptions {
   window_minutes?: number
@@ -88,7 +95,7 @@ function buildLifecycleDetail(intentId: number): LifecycleIntentDetailResponse {
   const timeline: LifecycleTimelineEvent[] = stageLabels.slice(0, 10).map((label, index) => ({
     seq: index + 1,
     stage_id: index,
-    stage_key: label.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+    stage_key: label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '_'),
     stage_label: label,
     fsm_type: index >= 8 ? 'PLAN' : null,
     fsm_from: index === 8 ? 'AI_GENERATED' : null,
@@ -453,6 +460,29 @@ function buildServiceDetail(serviceName: string): ServiceDetailResponse {
   }
 }
 
+function buildSystemMonitorWorkbench(
+  timeRange: string,
+): SystemMonitorWorkbenchResponse {
+  return {
+    monitoring_report: {
+      generated_at: nowIso(),
+      summary: {
+        total_providers: 0,
+        critical_alerts: 0,
+        warnings: 0,
+        total_errors_today: 0,
+      },
+      daily_stats: [],
+      critical_alerts: [],
+      warnings: [],
+      recent_errors: [],
+      rate_limit_policies: {},
+    },
+    api_stats: [],
+    time_range: timeRange,
+  }
+}
+
 export async function fetchSystemLifecycleOverview(options: MonitorQueryOptions = {}): Promise<LifecycleOverviewResponse> {
   try {
     const { data } = await api.get<LifecycleOverviewResponse>('/v1/system-monitor/lifecycle', { params: options })
@@ -510,5 +540,20 @@ export async function fetchSystemServiceDetail(serviceName: string): Promise<Ser
   } catch (error) {
     if (!shouldFallback(error)) throw error
     return buildServiceDetail(serviceName)
+  }
+}
+
+export async function fetchSystemMonitorWorkbench(
+  timeRange: 'day' | 'hour' | 'minute' = 'day',
+): Promise<SystemMonitorWorkbenchResponse> {
+  try {
+    const { data } = await api.get<SystemMonitorWorkbenchResponse>(
+      '/v1/system-monitor/workbench',
+      { params: { time_range: timeRange } },
+    )
+    return data
+  } catch (error) {
+    if (!shouldFallback(error)) throw error
+    return buildSystemMonitorWorkbench(timeRange)
   }
 }

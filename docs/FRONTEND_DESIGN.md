@@ -1,7 +1,9 @@
 # 前端 UI/UX 设计文档
 
 > **AI量化交易闭环系统** - Frontend Design  
-> 版本：V11.0.1（已上线） | 更新日期：2026-03-14  
+> 版本：V11.1.1（当前实现） | 更新日期：2026-03-15  
+> 生产基线：V11.0.1（已上线）  
+> 变更摘要（V11.1.1 当前实现）：**Trader Workbench Convergence & Architecture Simplification UI**——围绕 `src/components/workbench` 落地统一 `WorkbenchShell` 与 `ExplainabilityStrip`，把 `/dashboard`、`/order-book`、`/system-monitor` 三个主工作台收敛到一致的标题区、摘要区、数据质量语义与建议动作语言；同时以 typed workbench contract 对接新的 read-model 接口，并把 `/task-management` 收口到 `SystemMonitorPage` 的 tasks Tab。  
 > 变更摘要（V11.0.1）：**Capital Intelligence & Self-Perception UI**——前端继续坚持“不新增一级导航”的原则，在既有 `/autonomy` 工作台中补齐系统自知画像（MetaState）、摩擦积累信号、False-Hold 告警、Improvement Lab 候选与 V11 rollout flags 展示；重点提升“为什么资金闲置、为什么信号被卡住、哪里值得改进”的解释密度。  
 > 变更摘要（V10.5.4 基线）：**Signal Pipeline Integrity & Control-Plane Hardening UI**——作为 V11.0.1 的前序控制平面基线，负责统一信号来源、canonical payload、native audit / reconstructed 标识与 rollout discipline。  
 > 变更摘要（V10.5.2）：**组合席位竞争引擎 UI（Capacity-Aware Admission Visualization）**——/portfolio 页新增席位竞争看板 Tab（候选信号 vs 现有持仓统一评分排名列表、overflow 淘汰清单、准入评分拆解 tooltip）；/autonomy 新增 CapacityArbiter 状态卡（本轮候选数、触发席位竞争次数、今日替换成功 / 拒绝计数、dry-run 状态徽章）；/order-book 新增 REJECTED_BY_CAPACITY_REPLACEMENT 拒绝原因徽章与原因详情抽屉；新增 /capacity-arbiter 路由（Preview 模拟面板 + Audit Log 历史 + Config 治理参数面板）；所有席位竞争事件接入 SSE 实时推送，用户可在不刷新页面的情况下观测替换决策流。
@@ -256,6 +258,17 @@ V11.0.1 的前端目标不是横向继续扩页，而是把现有控制台升级
 - **以后端契约为准**：前端严格消费 `/api/v1/autonomy/meta-state`、`/friction-state`、`/false-hold-alerts`、`/improvement-candidates`。
 - **先解释，再控制**：当前版本重点是观察与解释，不新增高风险控制按钮。
 - **Flags 可见**：V11 rollout flags 必须在 UI 上可见，帮助运维区分“功能未开启”和“功能无数据”。
+
+### 4.0.2 V11.1.1 当前实现范围
+
+- **Shared workbench shell**：`/dashboard`、`/order-book`、`/system-monitor` 统一使用 `WorkbenchShell`
+- **Explainability by default**：三个主工作台统一使用 `ExplainabilityStrip`，同步展示结果值、解释、数据质量、最后更新时间与建议动作
+- **Typed workbench contract**：
+  - Dashboard 消费 `fetchDashboardWorkbenchSummary()`
+  - Order Book 消费聚合后的 workbench summary / explainability
+  - System Monitor 消费 `fetchSystemMonitorWorkbench()`
+- **Task convergence**：`/task-management` 不再维护独立页面逻辑，当前实现通过 `SystemMonitorPage` 的 tasks Tab 承载，同时保留直达路由避免外链失效
+- **最佳实践约束**：新页面壳层、解释条、状态语言与建议动作统一沉到共享组件，不在各页面复制 header / summary / shell 结构
 
 ### 4.1 交易仪表盘 (Dashboard V2)
 

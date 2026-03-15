@@ -1599,6 +1599,46 @@ export interface DashboardQuickUpdate {
   system_alerts_count: number;
 }
 
+export interface DashboardWorkbenchAction {
+  action_type: string;
+  message: string;
+  link?: string | null;
+}
+
+export interface DashboardCapitalVelocity {
+  account_id: string;
+  score: number;
+  turnover_rate: number;
+  win_rate: number;
+  idle_cash_ratio: number;
+  efficiency_grade: string;
+  regime: string;
+  computed_at: string;
+  signal_count: number;
+  is_idle_alert: boolean;
+  details: Record<string, any>;
+}
+
+export interface DashboardWorkbenchSummaryResponse {
+  account_id: string;
+  summary: {
+    status: string;
+    account_id: string;
+    total_equity: number;
+    cash: number;
+    market_value: number;
+    daily_pnl: number;
+    daily_return_pct: number;
+    mtd_return_pct: number;
+    ytd_return_pct: number;
+    plan_execution_rate: number;
+    active_plans_count: number;
+    risk_level: string;
+    pending_actions: DashboardWorkbenchAction[];
+  };
+  capital_velocity: DashboardCapitalVelocity;
+}
+
 export async function fetchDashboardV2Full(): Promise<DashboardV2Response> {
   const { data } = await api.get<DashboardV2Response>('/v1/dashboard/v2/full');
   return data;
@@ -1606,6 +1646,11 @@ export async function fetchDashboardV2Full(): Promise<DashboardV2Response> {
 
 export async function fetchDashboardV2Quick(): Promise<DashboardQuickUpdate> {
   const { data } = await api.get<DashboardQuickUpdate>('/v1/dashboard/v2/quick');
+  return data;
+}
+
+export async function fetchDashboardWorkbenchSummary(): Promise<DashboardWorkbenchSummaryResponse> {
+  const { data } = await api.get<DashboardWorkbenchSummaryResponse>('/v1/dashboard/v2/workbench-summary');
   return data;
 }
 

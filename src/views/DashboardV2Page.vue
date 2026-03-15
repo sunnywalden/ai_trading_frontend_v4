@@ -1,5 +1,32 @@
 <template>
-  <div class="dashboard-v2">
+  <WorkbenchShell
+    class="dashboard-workbench"
+    icon="🧭"
+    title="Command Center"
+    subtitle="集中查看资本效率、交易状态与系统控制面，让关键问题在一屏内闭环。"
+    :last-updated="dashboardWorkbenchLastUpdated"
+    :data-quality="dashboardWorkbenchDataQuality"
+    :degraded="dashboardWorkbenchDegraded"
+    :stale="dashboardWorkbenchStale"
+    :loading="store.loading && !store.fullData"
+    loading-text="INITIALIZING CONTROL TOWER..."
+    :error="store.error && !store.fullData ? store.error : ''"
+  >
+    <template #title-badge>
+      <span class="level-badge" :class="`level-${(autonomy.currentLevel || 'advisory').toLowerCase()}`">
+        {{ autonomy.currentLevel || '—' }}
+      </span>
+    </template>
+
+    <template #actions>
+      <button @click="handleRefresh" class="btn-refresh-sm" :disabled="store.loading">
+        <svg :class="{ spinning: store.loading }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+      </button>
+      <router-link to="/autonomy" class="banner-link">{{ $t('nav.autonomy') }} →</router-link>
+      <router-link to="/system-monitor" class="banner-link">系统监控 →</router-link>
+    </template>
+
+    <div class="dashboard-v2">
     <div class="ai-engine-banner" :class="autonomyBannerClass">
       <div class="banner-left">
         <span class="ai-brain-icon">⬡</span>
@@ -32,27 +59,20 @@
         <span class="last-update" v-if="store.lastFullUpdate">
           {{ formatTime(store.lastFullUpdate) }}
         </span>
-        <button @click="handleRefresh" class="btn-refresh-sm" :disabled="store.loading">
-          <svg :class="{ spinning: store.loading }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
-        </button>
-        <router-link to="/autonomy" class="banner-link">{{ $t('nav.autonomy') }} →</router-link>
-        <router-link to="/system-monitor" class="banner-link">系统监控 →</router-link>
       </div>
     </div>
 
-    <div v-if="store.loading && !store.fullData" class="loading-container">
-      <div class="terminal-spinner"></div>
-      <p class="loading-text">INITIALIZING CONTROL TOWER...</p>
-    </div>
+    <ExplainabilityStrip
+      v-if="store.fullData && dashboardWorkbench"
+      :result-value="dashboardExplainValue"
+      :explanation="dashboardExplainText"
+      source-type="live"
+      :data-quality="dashboardWorkbenchDataQuality"
+      :last-updated="dashboardWorkbenchLastUpdated"
+      :suggested-action="dashboardSuggestedAction"
+    />
 
-    <div v-else-if="store.error && !store.fullData" class="error-container">
-      <div class="error-icon">⚠</div>
-      <h3>{{ $t('common.error_load') }}</h3>
-      <p>{{ store.error }}</p>
-      <button @click="handleRefresh" class="btn-retry">{{ $t('common.retry') }}</button>
-    </div>
-
-    <div v-else-if="store.fullData" class="dashboard-content">
+    <div v-if="store.fullData" class="dashboard-content">
       <section class="section-links">
         <router-link v-for="item in coreLinks" :key="item.to" :to="item.to" class="link-card">
           <div class="link-icon">{{ item.icon }}</div>
@@ -286,11 +306,16 @@
         </div>
       </section>
     </div>
-  </div>
+    </div>
+  </WorkbenchShell>
 </template>
 
 <script setup lang="ts">
-import type { APIHealth } from '@/api/client'
+import {
+    fetchDashboardWorkbenchSummary,
+    type APIHealth,
+    type DashboardWorkbenchSummaryResponse,
+} from '@/api/client'
 import { liveSafetyApi, type ThrottleStatus } from '@/api/liveSafetyService'
 import AIInsightCard from '@/components/dashboard/AIInsightCard.vue'
 import GreeksGauges from '@/components/dashboard/GreeksGauges.vue'
@@ -301,6 +326,8 @@ import RiskMetricsPanel from '@/components/dashboard/RiskMetricsPanel.vue'
 import SignalPipelineFlow from '@/components/dashboard/SignalPipelineFlow.vue'
 import SignalBudgetWidget from '@/components/SignalBudgetWidget.vue'
 import VaRRiskMonitor from '@/components/VaRRiskMonitor.vue'
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue'
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue'
 import { useAutonomyStore } from '@/stores/autonomy'
 import { useDashboardV2Store } from '@/stores/dashboardV2'
 import { formatClientTime } from '@/utils/datetime'
@@ -312,6 +339,7 @@ const autonomy = useAutonomyStore()
 const { t, locale } = useI18n()
 
 const throttle = ref<ThrottleStatus | null>(null)
+const dashboardWorkbench = ref<DashboardWorkbenchSummaryResponse | null>(null)
 
 const coreLinks = [
   { to: '/autonomy', title: '自主中枢', desc: '信号、决策与执行控制平面', icon: '🤖' },
@@ -346,11 +374,73 @@ async function fetchThrottle() {
   }
 }
 
+async function fetchDashboardWorkbench() {
+  try {
+    dashboardWorkbench.value = await fetchDashboardWorkbenchSummary()
+  } catch {
+    dashboardWorkbench.value = null
+  }
+}
+
+const dashboardWorkbenchLastUpdated = computed(() => {
+  const raw = dashboardWorkbench.value?.capital_velocity.computed_at
+    || store.fullData?.last_refresh_at
+    || store.lastFullUpdate
+  if (!raw) return '—'
+  const date = raw instanceof Date ? raw : new Date(raw)
+  return Number.isNaN(date.getTime())
+    ? String(raw)
+    : date.toLocaleString('zh-CN', { hour12: false })
+})
+
+const dashboardWorkbenchDataQuality = computed(() => {
+  if (!dashboardWorkbench.value) return 'unknown'
+  if (throttle.value?.downgrade_needed || degradedApiCount.value > 0) return 'medium'
+  return 'high'
+})
+
+const dashboardWorkbenchDegraded = computed(() => degradedApiCount.value > 0)
+
+const dashboardWorkbenchStale = computed(() => {
+  const raw = dashboardWorkbench.value?.capital_velocity.computed_at
+    || store.fullData?.last_refresh_at
+  if (!raw) return false
+  const timestamp = new Date(raw).getTime()
+  return Number.isFinite(timestamp) && Date.now() - timestamp > 2 * 60 * 1000
+})
+
+const dashboardExplainValue = computed(() => {
+  const velocity = dashboardWorkbench.value?.capital_velocity
+  if (!velocity) return riskLevelLabel(store.riskLevel)
+  return `CVS ${velocity.score.toFixed(1)} · ${velocity.efficiency_grade}`
+})
+
+const dashboardExplainText = computed(() => {
+  const velocity = dashboardWorkbench.value?.capital_velocity
+  const summary = dashboardWorkbench.value?.summary
+  if (!velocity || !summary) {
+    return '资本效率、风险等级与活跃计划将汇总到统一工作台摘要。'
+  }
+  if (velocity.is_idle_alert) {
+    return `闲置资本 ${(velocity.idle_cash_ratio * 100).toFixed(1)}%，当前活跃计划 ${summary.active_plans_count} 个，建议优先检查资本分配与研究漏斗。`
+  }
+  return `资本速度 ${velocity.efficiency_grade} 档，风险等级 ${summary.risk_level}，当前活跃计划 ${summary.active_plans_count} 个。`
+})
+
+const dashboardSuggestedAction = computed(() => {
+  const velocity = dashboardWorkbench.value?.capital_velocity
+  if (degradedApiCount.value > 0) return '打开系统监控，先处理异常 API / 服务。'
+  if (throttle.value?.downgrade_needed) return '打开 AI 安全面板，评估自主度节流原因。'
+  if (velocity?.is_idle_alert) return '打开 Portfolio / Alpha Lab，检查资本分配和研究候选。'
+  return '继续观察交易中枢与自主中枢，关注执行计划与信号漏斗。'
+})
+
 onMounted(async () => {
   await Promise.all([
     store.loadFull(),
     autonomy.fetchStatus(),
     fetchThrottle(),
+    fetchDashboardWorkbench(),
   ])
   store.startAutoRefresh()
 })
@@ -359,10 +449,13 @@ onUnmounted(() => {
   store.stopAutoRefresh()
 })
 
-function handleRefresh() {
-  store.loadFull()
-  autonomy.fetchStatus()
-  fetchThrottle()
+async function handleRefresh() {
+  await Promise.all([
+    store.loadFull(),
+    autonomy.fetchStatus(),
+    fetchThrottle(),
+    fetchDashboardWorkbench(),
+  ])
 }
 
 function formatCurrency(value: number): string {

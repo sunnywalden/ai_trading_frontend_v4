@@ -1,26 +1,42 @@
 <template>
-  <div class="page-container">
-    <section class="section-header">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h2>AI 自主中枢</h2>
-          <p>管理 AI 自动交易级别、查看决策审计日志</p>
-        </div>
-        <div style="display: flex; gap: 12px;">
-          <button
-            v-if="!autonomyStore.isPaused"
-            class="danger-button"
-            @click="handlePause"
-          >⏸ 紧急暂停</button>
-          <button
-            v-else
-            class="success-button"
-            @click="handleResume"
-          >▶ 恢复运行</button>
-          <button class="refresh-button" @click="handleRefreshPage">刷新</button>
-        </div>
+  <WorkbenchShell
+    class="page-container"
+    icon="🤖"
+    title="AI 自主中枢"
+    subtitle="管理 AI 自动交易级别、跟踪系统自知画像，并把风险、执行与治理状态放进一个统一工作台。"
+    :last-updated="autonomyWorkbenchLastUpdated"
+    :data-quality="autonomyWorkbenchDataQuality"
+    :degraded="autonomyWorkbenchDegraded"
+    :stale="autonomyWorkbenchStale"
+    :loading="autonomyStore.loading && !status"
+  >
+    <template #title-badge>
+      <span class="quality-badge quality-badge-medium">{{ status?.rollout?.stage || 'OBSERVE' }}</span>
+    </template>
+
+    <template #actions>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button
+          v-if="!autonomyStore.isPaused"
+          class="danger-button"
+          @click="handlePause"
+        >⏸ 紧急暂停</button>
+        <button
+          v-else
+          class="success-button"
+          @click="handleResume"
+        >▶ 恢复运行</button>
+        <button class="refresh-button" @click="handleRefreshPage">刷新</button>
       </div>
-    </section>
+    </template>
+
+    <template #summary-cards>
+      <article v-for="item in autonomySummaryItems" :key="item.label" class="stat-card">
+        <div class="stat-label">{{ item.label }}</div>
+        <div class="stat-value" :class="item.tone">{{ item.value }}</div>
+        <div v-if="item.sub" class="stat-sub text-muted">{{ item.sub }}</div>
+      </article>
+    </template>
 
     <!-- V10.2-M1: 体制感知横幅 Banner -->
     <div
@@ -42,71 +58,54 @@
       <router-link to="/regime" class="regime-banner-link">查看详情 →</router-link>
     </div>
 
-    <!-- 状态卡片 -->
-    <div v-if="status" class="stats-grid" style="margin-bottom: 24px;">
-      <div class="stat-card">
-        <div class="stat-label">自主级别</div>
-        <div class="stat-value" :class="`level-${status.level.toLowerCase()}`">{{ status.level }}</div>
+    <ExplainabilityStrip
+      :result-value="autonomyExplainValue"
+      :explanation="autonomyExplainText"
+      source-type="live"
+      :data-quality="autonomyWorkbenchDataQuality"
+      :last-updated="autonomyWorkbenchLastUpdated"
+      :suggested-action="autonomySuggestedAction"
+      :actionable="true"
+      @action="handleAutonomySuggestedAction"
+    />
+
+    <div
+      v-if="status"
+      class="stat-card"
+      :class="{ 'stat-card--warn': cooldownActive }"
+      style="cursor: pointer; position: relative; margin-bottom: 24px;"
+      @click="showCooldownDetail = !showCooldownDetail"
+    >
+      <div class="stat-label">冷却保护</div>
+      <div class="stat-value" :class="cooldownActive ? 'text-warning' : 'text-success'">
+        {{ cooldownActive ? cooldownSymbols.length + ' 标的限速中' : '无限制' }}
       </div>
-      <div class="stat-card">
-        <div class="stat-label">运行状态</div>
-        <div class="stat-value" :class="status.paused ? 'text-warning' : 'text-success'">
-          {{ status.paused ? '已暂停' : '运行中' }}
-        </div>
-        <div v-if="!status.paused && cooldownActive" class="stat-sub text-warning">
-          {{ cooldownSymbols.length }} 标的冷却限速中
-        </div>
+      <div v-if="cooldownActive" class="stat-sub text-muted">
+        点击查看详情
       </div>
-      <div class="stat-card">
-        <div class="stat-label">今日 AI 交易次数</div>
-        <div class="stat-value">{{ status.daily_trades_today_autonomous ?? status.daily_trades_today }} / {{ status.max_daily_trades }}</div>
-        <div v-if="status.daily_trades_today_broker != null" class="stat-sub text-muted">
-          券商已成交（{{ status.daily_trades_today_broker_tz ?? 'UTC' }} {{ status.daily_trades_today_broker_date ?? '' }}）: {{ status.daily_trades_today_broker }}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">熔断器</div>
-        <div class="stat-value" :class="status.circuit_breaker_triggered ? 'text-danger' : 'text-success'">
-          {{ status.circuit_breaker_triggered ? '已触发' : '正常' }}
-        </div>
-      </div>      <!-- 冷却保护卡片 -->
       <div
-        class="stat-card"
-        :class="{ 'stat-card--warn': cooldownActive }"
-        style="cursor: pointer; position: relative;"
-        @click="showCooldownDetail = !showCooldownDetail"
+        v-if="showCooldownDetail && cooldownActive"
+        class="cooldown-detail"
+        @click.stop
       >
-        <div class="stat-label">冷却保护</div>
-        <div class="stat-value" :class="cooldownActive ? 'text-warning' : 'text-success'">
-          {{ cooldownActive ? cooldownSymbols.length + ' 标的限速中' : '无限制' }}
+        <div class="cooldown-detail-title">❄️ 冷却保护中（重复下单防护）</div>
+        <table class="cooldown-table">
+          <thead><tr><th>标的</th><th>方向</th><th>剩余冷却</th></tr></thead>
+          <tbody>
+            <tr v-for="cd in cooldownSymbols" :key="cd.symbol + cd.direction">
+              <td>{{ cd.symbol }}</td>
+              <td :style="{ color: cd.direction === 'BUY' ? '#00ff88' : '#ff4d4d' }">
+                {{ cd.direction }}
+              </td>
+              <td>{{ cd.remaining_minutes }}分钟</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="cooldown-detail-note">
+          冷却时长: {{ status.cooldown_minutes ?? 120 }}分钟，到期后自动解除
         </div>
-        <div v-if="cooldownActive" class="stat-sub text-muted">
-          点击查看详情
-        </div>
-        <!-- 冷却详情展开牌 -->
-        <div
-          v-if="showCooldownDetail && cooldownActive"
-          class="cooldown-detail"
-          @click.stop
-        >
-          <div class="cooldown-detail-title">❄️ 冷却保护中（重复下单防护）</div>
-          <table class="cooldown-table">
-            <thead><tr><th>标的</th><th>方向</th><th>剩余冷却</th></tr></thead>
-            <tbody>
-              <tr v-for="cd in cooldownSymbols" :key="cd.symbol + cd.direction">
-                <td>{{ cd.symbol }}</td>
-                <td :style="{ color: cd.direction === 'BUY' ? '#00ff88' : '#ff4d4d' }">
-                  {{ cd.direction }}
-                </td>
-                <td>{{ cd.remaining_minutes }}分钟</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="cooldown-detail-note">
-            冷却时长: {{ status.cooldown_minutes ?? 120 }}分钟，到期后自动解除
-          </div>
-        </div>
-      </div>    </div>
+      </div>
+    </div>
 
     <div class="card" style="margin-bottom: 24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -763,12 +762,14 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </WorkbenchShell>
 </template>
 
 <script setup lang="ts">
 import type { AuditLogEntry, AutonomyLevel, CooldownSymbol, MetaStateSnapshot, SignalPipelineItem } from '@/api/autonomyService';
 import { autonomyApi } from '@/api/autonomyService';
+import ExplainabilityStrip from '@/components/workbench/ExplainabilityStrip.vue';
+import WorkbenchShell from '@/components/workbench/WorkbenchShell.vue';
 import { reconcileLifecycleCoherence, type LifecycleCoherenceSummary } from '@/api/lifecycleService';
 import { REGIME_COLORS, REGIME_LABELS, regimeApi, type RegimeInfo, type RegimeType } from '@/api/regimeService';
 import CapacityArbitrationPanel from '@/components/CapacityArbitrationPanel'; // V10.5.2
@@ -776,13 +777,16 @@ import { useAutonomyStore } from '@/stores/autonomy';
 import { formatClientDateTime } from '@/utils/datetime';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const autonomyStore = useAutonomyStore()
 const { status } = storeToRefs(autonomyStore)
 const autonomyLevels: AutonomyLevel[] = ['FULL', 'SEMI', 'ADVISORY']
 const coherenceHealth = ref<LifecycleCoherenceSummary | null>(null)
 const coherenceHealthLoading = ref(false)
 const coherenceHealthError = ref<string | null>(null)
+const autonomyRefreshAt = ref<string | null>(null)
 
 function getErrorMessage(error: unknown, fallback = '加载失败') {
   if (typeof error === 'object' && error !== null) {
@@ -900,6 +904,106 @@ const v11RolloutFlags = computed(() => {
       enabled: Boolean(enabled),
       label: labels[key] ?? key,
     }))
+})
+
+function formatWorkbenchTime(raw?: string | null) {
+  if (!raw) return '—'
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime())
+    ? raw
+    : date.toLocaleString('zh-CN', { hour12: false })
+}
+
+const autonomyWorkbenchLastUpdated = computed(() => {
+  return formatWorkbenchTime(
+    metaState.value?.generated_at
+      || autonomyStore.marketUniverseStatus?.checked_at
+      || autonomyRefreshAt.value,
+  )
+})
+
+const autonomyWorkbenchDataQuality = computed(() => {
+  if (!status.value) return 'unknown'
+  if (metaState.value?._cached || coherenceHealth.value?.mismatch_detected) return 'medium'
+  return 'high'
+})
+
+const autonomyWorkbenchDegraded = computed(() => {
+  return Boolean(
+    status.value?.paused
+      || status.value?.circuit_breaker_triggered
+      || coherenceHealth.value?.mismatch_detected,
+  )
+})
+
+const autonomyWorkbenchStale = computed(() => {
+  const raw = metaState.value?.generated_at || autonomyRefreshAt.value
+  if (!raw) return false
+  const timestamp = new Date(raw).getTime()
+  return Number.isFinite(timestamp) && Date.now() - timestamp > 10 * 60 * 1000
+})
+
+const autonomySummaryItems = computed(() => {
+  if (!status.value) {
+    return [{ label: '工作台状态', value: '待初始化', sub: '正在等待状态快照', tone: '' }]
+  }
+
+  return [
+    {
+      label: '自主级别',
+      value: status.value.level,
+      sub: status.value.rollout?.stage || 'OBSERVE',
+      tone: `level-${status.value.level.toLowerCase()}`,
+    },
+    {
+      label: '运行状态',
+      value: status.value.paused ? '已暂停' : '运行中',
+      sub: !status.value.paused && cooldownActive.value ? `${cooldownSymbols.value.length} 标的冷却限速中` : '控制面在线',
+      tone: status.value.paused ? 'text-warning' : 'text-success',
+    },
+    {
+      label: '今日 AI 交易',
+      value: `${status.value.daily_trades_today_autonomous ?? status.value.daily_trades_today} / ${status.value.max_daily_trades}`,
+      sub: status.value.daily_trades_today_broker != null
+        ? `券商已成交 ${status.value.daily_trades_today_broker}`
+        : '暂无券商成交补充数据',
+      tone: '',
+    },
+    {
+      label: '阻断 / False-Hold',
+      value: `${metaState.value?.model_state.total_blocked_signals ?? 0} / ${metaState.value?.model_state.false_hold_count ?? 0}`,
+      sub: '总阻断信号 / False-Hold 告警',
+      tone: (metaState.value?.model_state.false_hold_count ?? 0) > 0 ? 'text-danger' : '',
+    },
+  ]
+})
+
+const autonomyExplainValue = computed(() => {
+  if (!status.value) return '等待状态'
+  return `${status.value.level} · ${status.value.paused ? 'PAUSED' : 'LIVE'}`
+})
+
+const autonomyExplainText = computed(() => {
+  if (!status.value) {
+    return '自主中枢会把级别、阻断原因、元状态和执行链路放进统一解释视图。'
+  }
+  if (status.value.circuit_breaker_triggered) {
+    return '熔断器当前已触发，系统优先保护资本与风险边界，应先排查触发原因再恢复自动执行。'
+  }
+  if ((metaState.value?.model_state.false_hold_count ?? 0) > 0) {
+    return `当前存在 ${metaState.value?.model_state.false_hold_count ?? 0} 条 False-Hold 告警，说明该减仓的仓位没有被及时释放。`
+  }
+  if ((metaState.value?.capital_state.idle_cash_ratio ?? 0) > 0.25) {
+    return `当前闲置资本 ${(metaState.value?.capital_state.idle_cash_ratio ?? 0 * 100).toFixed ? ((metaState.value?.capital_state.idle_cash_ratio ?? 0) * 100).toFixed(1) : '0.0'}%，建议联动 Portfolio 与 Alpha Lab 检查资本利用率。`
+  }
+  return '当前自主级别、信号质量与元状态总体稳定，可继续观察资金利用率与信号阻断链。'
+})
+
+const autonomySuggestedAction = computed(() => {
+  if (status.value?.circuit_breaker_triggered) return '检查 Portfolio 和 Order Book，确认风险保护是否需要人工干预。'
+  if ((metaState.value?.model_state.false_hold_count ?? 0) > 0) return '打开 Order Book，优先核对被阻断的减仓 / 平仓链路。'
+  if ((metaState.value?.capital_state.idle_cash_ratio ?? 0) > 0.25) return '打开 Portfolio，检查资本利用率与配置约束。'
+  return '打开 Signal Watchtower，继续观察信号质量与阻断原因。'
 })
 
 const regimeBannerLabel = computed(() => {
@@ -1164,6 +1268,23 @@ async function handleRefreshPage() {
     fetchRegime(),
     fetchMetaState(),
   ])
+  autonomyRefreshAt.value = new Date().toISOString()
+}
+
+function handleAutonomySuggestedAction() {
+  if (status.value?.circuit_breaker_triggered) {
+    router.push('/portfolio')
+    return
+  }
+  if ((metaState.value?.model_state.false_hold_count ?? 0) > 0) {
+    router.push('/order-book')
+    return
+  }
+  if ((metaState.value?.capital_state.idle_cash_ratio ?? 0) > 0.25) {
+    router.push('/portfolio')
+    return
+  }
+  router.push('/signal-watchtower')
 }
 
 onMounted(async () => {

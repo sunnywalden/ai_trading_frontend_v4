@@ -1,18 +1,41 @@
 <template>
-  <div class="page-container">
+  <WorkbenchShell
+    class="page-container"
+    icon="🖥️"
+    title="System Monitor"
+    subtitle="聚焦服务健康、交易生命周期、主数据流与 API 监控；任务管理已整合为统一工作台 Tab。"
+    :last-updated="systemWorkbenchLastUpdated"
+    :data-quality="systemWorkbenchDataQuality"
+    :degraded="systemWorkbenchDegraded"
+    :stale="systemWorkbenchStale"
+    :loading="isShellLoading"
+  >
+    <template #actions>
+      <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
+        {{ isRefreshing ? '刷新中...' : '🔄 刷新' }}
+      </button>
+    </template>
+
+    <template #summary-cards>
+      <article v-for="item in summaryItems" :key="item.label" class="summary-card">
+        <div class="summary-label">{{ item.label }}</div>
+        <div class="summary-value">{{ item.value }}</div>
+        <div class="summary-sub">{{ item.sub }}</div>
+      </article>
+    </template>
+
     <SystemOperationsNav />
 
-    <section class="section-header">
-      <div>
-        <h2>系统监控</h2>
-        <p>聚焦服务健康、交易生命周期、主数据流与 API 监控；任务管理已整合至本页 "任务管理" Tab，AI 安全保留在独立二级页面。</p>
-      </div>
-      <div class="header-actions">
-        <button class="refresh-button" @click="onRefreshAll" :disabled="isRefreshing">
-          {{ isRefreshing ? '刷新中...' : '🔄 刷新' }}
-        </button>
-      </div>
-    </section>
+    <ExplainabilityStrip
+      :result-value="systemExplainValue"
+      :explanation="systemExplainText"
+      source-type="live"
+      :data-quality="systemWorkbenchDataQuality"
+      :last-updated="systemWorkbenchLastUpdated"
+      :suggested-action="systemSuggestedAction"
+      :actionable="true"
+      @action="handleSystemSuggestedAction"
+    />
 
     <div class="tab-bar">
       <button :class="['tab-btn', { active: tab === 'health' }]" @click="tab = 'health'">🩺 服务健康</button>
@@ -22,14 +45,6 @@
       <button :class="['tab-btn', { active: tab === 'live-safety' }]" @click="tab = 'live-safety'">🛡️ AI 安全</button>
       <button :class="['tab-btn', { active: tab === 'tasks' }]" @click="tab = 'tasks'">⚙️ 任务管理</button>
     </div>
-
-    <section v-if="summaryItems.length" class="summary-strip">
-      <article v-for="item in summaryItems" :key="item.label" class="summary-card">
-        <div class="summary-label">{{ item.label }}</div>
-        <div class="summary-value">{{ item.value }}</div>
-        <div class="summary-sub">{{ item.sub }}</div>
-      </article>
-    </section>
 
     <section class="ops-shortcuts">
       <router-link to="/live-safety" class="ops-shortcut-card">
@@ -812,7 +827,7 @@
     </div>
 
     <div v-if="successMsg" class="success-toast">{{ successMsg }}</div>
-  </div>
+  </WorkbenchShell>
 </template>
 
 <script setup lang="ts">
@@ -822,8 +837,6 @@ import {
     fetchAutonomyHealth,
     fetchLlmStats,
     fetchMonitoringHealth,
-    fetchMonitoringReport,
-    fetchMonitoringStats,
     type ApiStats,
     type AutonomyHealthReport,
     type LlmStats,
@@ -836,14 +849,18 @@ import {
     fetchSystemDataFlowOverview,
     fetchSystemLifecycleDetail,
     fetchSystemLifecycleOverview,
+    fetchSystemMonitorWorkbench,
     fetchSystemServiceDetail,
     fetchSystemServiceOverview,
+    type SystemMonitorWorkbenchResponse,
 } from '../api/systemMonitorService';
 import AlertsPanel from '../components/AlertsPanel.vue';
 import ApiProviderCard from '../components/ApiProviderCard.vue';
 import HealthStatusBar from '../components/HealthStatusBar.vue';
 import SystemHealthCard from '../components/SystemHealthCard.vue';
 import SystemOperationsNav from '../components/SystemOperationsNav.vue';
+import ExplainabilityStrip from '../components/workbench/ExplainabilityStrip.vue';
+import WorkbenchShell from '../components/workbench/WorkbenchShell.vue';
 import { useWebSocketStore } from '../stores/websocket';
 import type {
     DataFlowDetailResponse,
@@ -883,6 +900,7 @@ const report = ref<MonitoringReport | null>(null)
 const timeRange = ref<'day' | 'hour' | 'minute'>('day')
 const providerStats = ref<ApiStats[] | null>(null)
 const successMsg = ref('')
+const systemMonitorWorkbench = ref<SystemMonitorWorkbenchResponse | null>(null)
 
 const llmStats = ref<LlmStats | null>(null)
 const llmHours = ref(24)
@@ -918,6 +936,14 @@ const selectedNonRealtimePolicy = computed(() => {
 const isRefreshing = computed(
   () => loadingHealth.value || loadingApi.value || autonomyHealthLoading.value || lifecycleLoading.value || dataFlowLoading.value || serviceLoading.value || lsLoading.value,
 )
+
+const isShellLoading = computed(() => {
+  return loadingHealth.value
+    && !report.value
+    && !serviceOverview.value
+    && !lifecycleOverview.value
+    && !dataFlowOverview.value
+})
 
 // V10.5.1 Live Safety data
 const lsLoading = ref(false)
@@ -1021,6 +1047,84 @@ const summaryItems = computed(() => {
 
   return [...serviceItems, ...lifecycleItems, ...coherenceItems, ...flowItems]
 })
+
+const systemWorkbenchLastUpdated = computed(() => {
+  return report.value?.generated_at || lastUpdated.value || '—'
+})
+
+const systemWorkbenchDataQuality = computed(() => {
+  if (report.value?.summary.critical_alerts) return 'low'
+  const degradedServices = serviceOverview.value?.services.some(item => item.degraded) ?? false
+  if ((report.value?.summary.warnings ?? 0) > 0 || degradedServices) return 'medium'
+  if (report.value || serviceOverview.value || lifecycleOverview.value) return 'high'
+  return 'unknown'
+})
+
+const systemWorkbenchDegraded = computed(() => {
+  return Boolean(
+    (report.value?.summary.critical_alerts ?? 0) > 0
+      || (serviceOverview.value?.services.some(item => item.degraded) ?? false)
+      || healthStatus.value.toUpperCase() === 'CRITICAL',
+  )
+})
+
+const systemWorkbenchStale = computed(() => {
+  const raw = report.value?.generated_at || lastUpdated.value
+  if (!raw || raw === '-') return false
+  const timestamp = new Date(raw).getTime()
+  return Number.isFinite(timestamp) && Date.now() - timestamp > 5 * 60 * 1000
+})
+
+const systemExplainValue = computed(() => {
+  if (report.value) {
+    return `${report.value.summary.critical_alerts} critical / ${report.value.summary.warnings} warn`
+  }
+  return String(healthStatus.value || 'unknown').toUpperCase()
+})
+
+const systemExplainText = computed(() => {
+  const criticalAlerts = report.value?.summary.critical_alerts ?? 0
+  const warningAlerts = report.value?.summary.warnings ?? 0
+  const lifecycleExceptions = lifecycleOverview.value?.headline.exception_count ?? 0
+  const degradedServices = serviceOverview.value?.services.filter(item => item.degraded).length ?? 0
+
+  if (criticalAlerts > 0) {
+    return `当前存在 ${criticalAlerts} 条 critical API 告警，建议优先检查 API 监控与限流策略。`
+  }
+  if (degradedServices > 0) {
+    return `当前有 ${degradedServices} 个服务处于降级状态，建议先查看服务健康与依赖链。`
+  }
+  if (lifecycleExceptions > 0) {
+    return `交易生命周期存在 ${lifecycleExceptions} 条异常样本，建议进一步下钻异常链路。`
+  }
+  if (warningAlerts > 0) {
+    return `系统处于可用但有预警状态，当前有 ${warningAlerts} 条 warning 告警。`
+  }
+  return '系统健康、主数据流与 API 监控当前整体稳定，可继续观察任务与 AI 安全状态。'
+})
+
+const systemSuggestedAction = computed(() => {
+  if ((report.value?.summary.critical_alerts ?? 0) > 0) return '切到 API 监控，优先处理 critical 告警。'
+  if (serviceOverview.value?.services.some(item => item.degraded)) return '切到服务健康，排查降级服务与依赖链。'
+  if ((lifecycleOverview.value?.headline.exception_count ?? 0) > 0) return '切到生命周期，查看 stuck intent 与异常跳转。'
+  return '切到任务管理，确认调度器与运营任务是否健康。'
+})
+
+function handleSystemSuggestedAction() {
+  if ((report.value?.summary.critical_alerts ?? 0) > 0) {
+    tab.value = 'api'
+    return
+  }
+  if (serviceOverview.value?.services.some(item => item.degraded)) {
+    tab.value = 'health'
+    return
+  }
+  if ((lifecycleOverview.value?.headline.exception_count ?? 0) > 0) {
+    tab.value = 'lifecycle'
+    return
+  }
+  tab.value = 'tasks'
+}
 
 function lifecycleCoherenceStatusLabel(summary: LifecycleCoherenceSummary): string {
   if (summary.mismatch_detected) return 'MISMATCH'
@@ -1406,8 +1510,8 @@ async function loadMonitoringData() {
   loadingApi.value = true
   apiError.value = ''
   try {
-    report.value = await fetchMonitoringReport()
-    await Promise.all([loadStats(), loadLlmStats()])
+    await refreshSystemMonitorWorkbench(timeRange.value)
+    await loadLlmStats()
   } catch (e: any) {
     if (e.code === 'ECONNABORTED' || e.message?.includes('timeout')) {
       apiError.value = '⏱️ 请求超时，请稍后再试！'
@@ -1421,9 +1525,17 @@ async function loadMonitoringData() {
   }
 }
 
+async function refreshSystemMonitorWorkbench(
+  requestedRange: 'day' | 'hour' | 'minute' = timeRange.value,
+) {
+  systemMonitorWorkbench.value = await fetchSystemMonitorWorkbench(requestedRange)
+  report.value = systemMonitorWorkbench.value.monitoring_report
+  providerStats.value = systemMonitorWorkbench.value.api_stats
+}
+
 async function loadStats() {
   try {
-    providerStats.value = await fetchMonitoringStats(timeRange.value)
+    await refreshSystemMonitorWorkbench(timeRange.value)
   } catch {
     providerStats.value = null
   }
@@ -1541,6 +1653,11 @@ async function onRefreshAll() {
 }
 
 function syncTabFromRoute() {
+  if (route.path === '/task-management') {
+    tab.value = 'tasks'
+    return
+  }
+
   const queryTab = String(route.query.tab || '').toLowerCase()
   if (!queryTab) return
 
@@ -1549,7 +1666,7 @@ function syncTabFromRoute() {
   }
 }
 
-watch(() => route.query.tab, syncTabFromRoute, { immediate: true })
+watch(() => [route.path, route.query.tab], syncTabFromRoute, { immediate: true })
 
 onMounted(() => {
   syncTabFromRoute()
@@ -1634,8 +1751,8 @@ onMounted(() => {
 }
 
 .tab-btn.active {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
+  background: rgba(14, 116, 144, 0.92);
+  color: #f8fafc;
   font-weight: 600;
 }
 
@@ -1814,7 +1931,7 @@ onMounted(() => {
   padding: 10px 20px;
   background: linear-gradient(135deg, #38bdf8, #0ea5e9);
   border: 1px solid rgba(56, 189, 248, 0.5);
-  color: #fff;
+  color: #082f49;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -1861,23 +1978,23 @@ onMounted(() => {
 }
 
 .status-healthy {
-  background: rgba(52, 211, 153, 0.18);
-  color: #34d399;
+  background: rgba(6, 95, 70, 0.92);
+  color: #ecfdf5;
 }
 
 .status-warn {
-  background: rgba(251, 191, 36, 0.18);
-  color: #fbbf24;
+  background: rgba(133, 77, 14, 0.92);
+  color: #fffbeb;
 }
 
 .status-critical {
-  background: rgba(248, 113, 113, 0.18);
-  color: #f87171;
+  background: rgba(127, 29, 29, 0.92);
+  color: #fef2f2;
 }
 
 .status-unknown {
-  background: rgba(148, 163, 184, 0.18);
-  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.92);
+  color: #f8fafc;
 }
 
 .providers-grid,
@@ -1969,8 +2086,8 @@ onMounted(() => {
 }
 
 .flow-live-chip {
-  background: rgba(16, 185, 129, 0.2);
-  color: #86efac;
+  background: rgba(6, 95, 70, 0.92);
+  color: #ecfdf5;
   border: 1px solid rgba(52, 211, 153, 0.35);
 }
 
@@ -1983,7 +2100,7 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
-  color: #93c5fd;
+  color: #dbeafe;
   font-size: 0.82rem;
 }
 
@@ -2033,8 +2150,8 @@ onMounted(() => {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(56, 189, 248, 0.18);
-  color: #7dd3fc;
+  background: rgba(14, 116, 144, 0.9);
+  color: #f0f9ff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2157,23 +2274,23 @@ onMounted(() => {
 }
 
 .action-critical {
-  background: rgba(248, 113, 113, 0.14);
-  color: #fecaca;
+  background: rgba(127, 29, 29, 0.9);
+  color: #fef2f2;
 }
 
 .action-warn {
-  background: rgba(251, 191, 36, 0.14);
-  color: #fde68a;
+  background: rgba(133, 77, 14, 0.92);
+  color: #fffbeb;
 }
 
 .action-active {
-  background: rgba(56, 189, 248, 0.14);
-  color: #bae6fd;
+  background: rgba(14, 116, 144, 0.92);
+  color: #f0f9ff;
 }
 
 .action-idle {
-  background: rgba(100, 116, 139, 0.18);
-  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.9);
+  color: #f8fafc;
 }
 
 .action-stack {
@@ -2185,8 +2302,8 @@ onMounted(() => {
 
 .jump-button {
   border: 1px solid rgba(56, 189, 248, 0.28);
-  background: rgba(14, 165, 233, 0.14);
-  color: #e0f2fe;
+  background: rgba(12, 74, 110, 0.95);
+  color: #f0f9ff;
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 0.76rem;
@@ -2306,14 +2423,14 @@ onMounted(() => {
 }
 
 .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.92);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fef2f2;
 }
 
 /* V10.5.1 Live Safety tab helpers */
-.warn-cell { color: #fcd34d; }
-.crit-cell { color: #f87171; font-weight: 600; }
+.warn-cell { color: #fde68a; }
+.crit-cell { color: #fee2e2; font-weight: 600; }
 .dim-cell  { color: #64748b; }
 
 .ws-status-bar {
@@ -2327,14 +2444,14 @@ onMounted(() => {
 }
 
 .ws-ok {
-  background: rgba(52, 211, 153, 0.12);
-  color: #34d399;
+  background: rgba(6, 95, 70, 0.92);
+  color: #ecfdf5;
   border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .ws-err {
-  background: rgba(248, 113, 113, 0.12);
-  color: #f87171;
+  background: rgba(127, 29, 29, 0.92);
+  color: #fef2f2;
   border: 1px solid rgba(248, 113, 113, 0.3);
 }
 
@@ -2390,15 +2507,15 @@ onMounted(() => {
 }
 
 .llm-kpi-value.ok {
-  color: #34d399;
+  color: #d1fae5;
 }
 
 .llm-kpi-value.warn {
-  color: #fbbf24;
+  color: #fef3c7;
 }
 
 .llm-kpi-value.err {
-  color: #f87171;
+  color: #fee2e2;
 }
 
 .llm-breakdown {
@@ -2455,8 +2572,8 @@ onMounted(() => {
   top: 80px;
   right: 20px;
   padding: 16px 24px;
-  background: rgba(34, 197, 94, 0.95);
-  color: #fff;
+  background: rgba(21, 128, 61, 0.96);
+  color: #f0fdf4;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   font-weight: 600;
