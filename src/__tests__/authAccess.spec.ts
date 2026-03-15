@@ -104,6 +104,61 @@ describe('auth access rules', () => {
     }
 
     expect(store.canAccessRoute(resolveRouteAccess('/live-safety'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/quant-loop'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/war-room'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/governance/pipeline'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/ai-hub/weights'))).toBe(false)
+  })
+
+  it('keeps research governance pages with researcher and blocks trader-only operations', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'researcher',
+      displayName: 'Researcher',
+      role: 'RESEARCHER',
+      permissions: ['research.home.read', 'common.copilot.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/governance/pipeline'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/ai-hub/calibration'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/quant-loop'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/autonomy'))).toBe(false)
+  })
+
+  it('allows trader operations but hides research-only ai hub pages', () => {
+    const store = useAuthStore()
+    store.user = {
+      username: 'trader',
+      displayName: 'Trader',
+      role: 'TRADER',
+      permissions: ['trading.home.read', 'common.copilot.read'],
+      permissionsVersion: 1,
+      status: 'ACTIVE',
+      featureFlags: {
+        RBAC_V1121_ENABLED: true,
+        ROLE_HOME_V1121_ENABLED: true,
+        ROLE_NAV_GATING_V1121_ENABLED: true,
+        ROLE_ACTION_GATING_V1121_ENABLED: true,
+        EXECUTIVE_REPORTS_V1121_ENABLED: true,
+        ADMIN_CONSOLE_V1121_ENABLED: true,
+      },
+    }
+
+    expect(store.canAccessRoute(resolveRouteAccess('/autonomy'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/quant-loop'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/war-room'))).toBe(true)
+    expect(store.canAccessRoute(resolveRouteAccess('/ai-hub/calibration'))).toBe(false)
+    expect(store.canAccessRoute(resolveRouteAccess('/evolution'))).toBe(false)
   })
 
   it('forces home path to change-password when user must rotate password', () => {

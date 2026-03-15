@@ -17,15 +17,23 @@
 </template>
 
 <script setup lang="ts">
+import { resolveRouteAccess } from '@/router'
+import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
-const items = [
+const baseItems = [
   { to: '/system-monitor', title: '系统监控', desc: '服务健康、生命周期、数据流与 API 观测', icon: '🖥️' },
   { to: '/live-safety', title: 'AI 安全', desc: '模型退化、数据陈旧与自主度节流', icon: '🛡️' },
   { to: '/task-management', title: '任务管理', desc: '调度器总览、动态配置与运营自动化', icon: '⚙️' },
 ] as const
+
+const items = computed(() =>
+  baseItems.filter((item) => authStore.canAccessRoute(resolveRouteAccess(item.to))),
+)
 </script>
 
 <style scoped>

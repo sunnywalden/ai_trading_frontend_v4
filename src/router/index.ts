@@ -103,7 +103,15 @@ const ACCESS_RULES: Array<{ pattern: RegExp } & RouteAccessMeta> = [
   { pattern: /^\/live-safety$/, roles: ['ADMINISTRATOR'], permissions: ['admin.system.read'], accessMode: 'standard', workbenchDomain: 'admin', featureFlag: 'ADMIN_CONSOLE_V1121_ENABLED' },
 
   { pattern: /^\/dashboard$/, roles: ['RESEARCHER', 'TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'common' },
-  { pattern: /^\/(autonomy|copilot|quant-loop|ai-hub\/agents|ai-hub\/calibration|ai-hub\/weights|ai-hub\/post-mortem|war-room|governance\/pipeline|evolution)$/, roles: ['RESEARCHER', 'TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], accessMode: 'summary', workbenchDomain: 'common' },
+  { pattern: /^\/copilot$/, roles: ['RESEARCHER', 'TRADER', 'SUPERVISOR', 'ADMINISTRATOR'], permissions: ['common.copilot.read'], accessMode: 'summary', workbenchDomain: 'common' },
+  { pattern: /^\/autonomy$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/quant-loop$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/war-room$/, roles: ['TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'trading' },
+  { pattern: /^\/governance\/pipeline$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/agents$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/(calibration|weights)$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/ai-hub\/post-mortem$/, roles: ['RESEARCHER', 'TRADER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
+  { pattern: /^\/evolution$/, roles: ['RESEARCHER', 'ADMINISTRATOR'], accessMode: 'standard', workbenchDomain: 'research' },
 ]
 
 export function resolveRouteAccess(path: string): RouteAccessMeta {
