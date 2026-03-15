@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'node:path';
+import { defineConfig } from 'vite';
 
 function manualChunks(id: string) {
   if (!id.includes('node_modules')) {
