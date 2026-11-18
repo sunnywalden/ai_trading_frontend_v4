@@ -158,8 +158,9 @@ npm run build
   - 启动前端：`npm run dev`（保持在 `http://localhost:5173`）
   - 打开 Cypress：`npm run cypress:open` 或 在 CI 中运行 `npm run test:e2e`
   - 已包含示例测试：登录流与 token 即将过期横幅验证
+  - 登录流不内置口令。运行前提供 `CYPRESS_ADMIN_USERNAME` 与 `CYPRESS_ADMIN_PASSWORD`（Cypress 映射为 `ADMIN_USERNAME` / `ADMIN_PASSWORD`）。任一缺失时，需要登录的用例会跳过，且不会使用仓库内的默认口令。token 横幅用例只使用本地伪造 token，不访问真实账号。
 
-在开发模式下，默认后端用户名/密码为 `admin`/`admin`（请在生产环境使用 `.env` 覆盖后端配置，且使用 HTTPS）。
+登录口令只从运行环境读取，不要写入仓库、README 或示例文件。生产环境请通过后端配置认证并使用 HTTPS。
 
 构建产物将输出到 `dist/` 目录。
 
